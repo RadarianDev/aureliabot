@@ -103,4 +103,7 @@ constructor against a temp SQLite file.
   order. `PartyData.EmptySeats` is Westminster's internal layout state, not an input.
 - `WestminsterGenerator` keeps per-run state that is never cleared, so use a **new instance per
   render**.
+- `ProvinceMapGenerator` colours the province map from three aligned PNGs in `assets/map/` (base,
+  province index, text overlay), keyed by each province's index colour. The assets, method and art
+  rules are in the "Province map" part of the spec's Election section.
 - Linux hosting additionally needs the `SkiaSharp.NativeAssets.Linux` package.
