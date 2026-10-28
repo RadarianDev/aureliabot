@@ -84,7 +84,7 @@ public partial class DatabaseService
         using var conn = new SqliteConnection(_connectionString);
         conn.Open();
         var cmd = conn.CreateCommand();
-        cmd.CommandText = $"SELECT {SelectFactionColumns} FROM factions WHERE party_id = $id ORDER BY popularity DESC, name;";
+        cmd.CommandText = $"SELECT {SelectFactionColumns} FROM factions WHERE party_id = $id ORDER BY popularity DESC, seats DESC;";
         cmd.Parameters.AddWithValue("$id", partyId);
         var list = new List<Faction>();
         using var r = cmd.ExecuteReader();
