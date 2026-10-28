@@ -2,9 +2,6 @@ using System;
 using System.Collections.Generic;
 using Microsoft.Data.Sqlite;
 
-// Per-guild channel whitelist gating which channels the bot will respond to commands in — see
-// Bot.HandleInteractionAsync for enforcement. Unlike everything else in DatabaseService this has
-// no relationship to a "state"; it's keyed on the Discord guild/channel ids directly.
 public partial class DatabaseService
 {
     public bool AddWhitelistedChannel(ulong guildId, ulong channelId, ulong addedByUserId)
@@ -48,9 +45,6 @@ public partial class DatabaseService
         return list;
     }
 
-    // A guild with no whitelisted channels at all is unrestricted (see the CREATE TABLE comment in
-    // InitializeDatabase) — only once at least one channel is whitelisted does this narrow to
-    // exactly that set.
     public bool IsChannelAllowed(ulong guildId, ulong channelId)
     {
         using var conn = new SqliteConnection(_connectionString);

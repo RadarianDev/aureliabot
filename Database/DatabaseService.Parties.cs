@@ -4,8 +4,6 @@ using Microsoft.Data.Sqlite;
 
 public record Party(long Id, string Name, string Colour, ulong? EmojiId);
 
-// Political parties. A party's members are the factions whose party_id points at it — see
-// GetPartyMembers, and SetFactionParty in DatabaseService.Factions.cs for joining/leaving.
 public partial class DatabaseService
 {
     private const string SelectPartyColumns = "id, name, colour, emoji_id";
@@ -16,7 +14,6 @@ public partial class DatabaseService
         r.GetString(2),
         r.IsDBNull(3) ? null : ulong.Parse(r.GetString(3)));
 
-    // Returns the new party's id, or null if a party with that name (case-insensitive) already exists.
     public long? CreateParty(string name, string colour, ulong? emojiId = null)
     {
         using var conn = new SqliteConnection(_connectionString);
@@ -33,7 +30,6 @@ public partial class DatabaseService
         return cmd.ExecuteScalar() is long id ? id : null;
     }
 
-    // Member factions become independents (party_id -> NULL via ON DELETE SET NULL).
     public bool DeleteParty(long partyId)
     {
         using var conn = new SqliteConnection(_connectionString);
@@ -93,7 +89,6 @@ public partial class DatabaseService
         return list;
     }
 
-    // Returns false if the party doesn't exist or another party already has that name.
     public bool UpdateParty(long partyId, string name, string colour, ulong? emojiId)
     {
         using var conn = new SqliteConnection(_connectionString);

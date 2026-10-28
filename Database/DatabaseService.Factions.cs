@@ -4,8 +4,6 @@ using Microsoft.Data.Sqlite;
 
 public record Faction(ulong UserId, double Popularity, long Seats, long? PartyId);
 
-// Player factions ("faction" is just the in-game word for a player), one per Discord user. Party membership lives here (factions.party_id) rather
-// than on the party — see the CREATE TABLE comment in InitializeDatabase.
 public partial class DatabaseService
 {
     private const string SelectFactionColumns = "user_id, popularity, seats, party_id";
@@ -16,7 +14,6 @@ public partial class DatabaseService
         r.GetInt64(2),
         r.IsDBNull(3) ? null : r.GetInt64(3));
 
-    // Returns false if the user already has a faction.
     public bool CreateFaction(ulong userId, double popularity = 0, long seats = 0)
     {
         using var conn = new SqliteConnection(_connectionString);
@@ -88,8 +85,6 @@ public partial class DatabaseService
         return cmd.ExecuteNonQuery() > 0;
     }
 
-    // Moves a faction into a party, or out of any party when partyId is null. Joining a party
-    // implicitly leaves the previous one. Throws SqliteException (foreign key) if partyId doesn't exist.
     public bool SetFactionParty(ulong userId, long? partyId)
     {
         using var conn = new SqliteConnection(_connectionString);

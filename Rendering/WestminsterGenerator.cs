@@ -238,7 +238,6 @@ public class WestminsterGenerator
         {
             if (options.FullWidth && wingRowsMap[wing] > 1)
             {
-                // 1. Initial baseline sort: Align coordinates into strict vertical columns
                 if (wing == "right")
                     posList[wing].Sort((a, b) => a.Y.CompareTo(b.Y));
                 else
@@ -254,20 +253,14 @@ public class WestminsterGenerator
                 }
                 else
                 {
-                    // --- FIX APPLIED HERE ---
-                    // Instead of calculating fragmented gaps per party, we sort the physical grid coordinates
-                    // to ensure empty seats are pushed exclusively to the outermost trailing edge.
-
                     posList[wing].Sort((a, b) => a.X.CompareTo(b.X));
 
                     int currentRows = wingRowsMap[wing];
 
-                    // Re-order coordinates so they fill columns from the inside out (back rows to front rows)
-                    // but ensure that empty slots accumulate purely at the bottom-right/top-right outer fringes.
                     posList[wing] = posList[wing]
                         .Select((pos, idx) => new { pos, idx })
-                        .OrderBy(item => item.idx / currentRows) // Group by column block
-                        .ThenBy(item => wing == "right" ? item.pos.Y : -item.pos.Y) // Stack cleanly top-to-bottom
+                        .OrderBy(item => item.idx / currentRows)
+                        .ThenBy(item => wing == "right" ? item.pos.Y : -item.pos.Y)
                         .Select(item => item.pos)
                         .ToList();
 
@@ -275,13 +268,11 @@ public class WestminsterGenerator
                     int totalSeatsNeeded = sumDelegates[wing];
                     int globalGaps = totalAvailableSlots - totalSeatsNeeded;
 
-                    // Mask out the absolute excess seats from the very end of the coordinates list
-                    // rather than scattering them between party boundaries.
                     for (int i = totalSeatsNeeded; i < totalAvailableSlots; i++)
                     {
                         if (i < posList[wing].Count)
                         {
-                            posList[wing][i].X = 999; // Mask out-of-bounds slot
+                            posList[wing][i].X = 999;
                         }
                     }
                 }

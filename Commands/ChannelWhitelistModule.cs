@@ -2,11 +2,6 @@ using Discord;
 using Discord.Interactions;
 using System.Linq;
 
-// /whitelist: lets server managers restrict which channels the bot responds to commands in. An
-// empty whitelist (the default) leaves every channel open — see
-// DatabaseService.IsChannelAllowed/Bot.HandleInteractionAsync for the enforcement side. Exempted
-// from that enforcement itself (see Bot.cs), so managers can never lock themselves out of managing
-// the whitelist from a non-whitelisted channel.
 [Group("whitelist", "Manage which channels the bot responds to commands in")]
 public class ChannelWhitelistModule : InteractionModuleBase<SocketInteractionContext>
 {

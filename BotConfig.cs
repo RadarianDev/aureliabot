@@ -1,9 +1,5 @@
 using Microsoft.Extensions.Configuration;
 
-// Strongly-typed bot configuration, loaded once at startup and registered as a DI singleton.
-// Values come from (in increasing priority): appsettings.json, appsettings.Local.json,
-// and environment variables. The token is a secret and should live in appsettings.Local.json
-// (gitignored) or the DISCORD_BOT_TOKEN environment variable — never in committed source.
 public class BotConfig
 {
     public string Token { get; set; } = "";
@@ -21,8 +17,6 @@ public class BotConfig
 
         return new BotConfig
         {
-            // Env var "Discord__Token" also binds to "Discord:Token"; DISCORD_BOT_TOKEN is a
-            // convenience fallback.
             Token = config["Discord:Token"]
                 ?? Environment.GetEnvironmentVariable("DISCORD_BOT_TOKEN")
                 ?? "",
