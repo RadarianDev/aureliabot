@@ -2,33 +2,35 @@ using System;
 using System.Collections.Generic;
 using Microsoft.Data.Sqlite;
 
-public record Faction(ulong UserId, string Name, double Popularity, long? PartyId);
+public record Faction(ulong UserId, string Name, double Popularity, long Seats, long? PartyId);
 
 // Player factions, one per Discord user. Party membership lives here (factions.party_id) rather
 // than on the party — see the CREATE TABLE comment in InitializeDatabase.
 public partial class DatabaseService
 {
-    private const string SelectFactionColumns = "user_id, name, popularity, party_id";
+    private const string SelectFactionColumns = "user_id, name, popularity, seats, party_id";
 
     private static Faction ReadFaction(SqliteDataReader r) => new(
         ulong.Parse(r.GetString(0)),
         r.GetString(1),
         r.GetDouble(2),
-        r.IsDBNull(3) ? null : r.GetInt64(3));
+        r.GetInt64(3),
+        r.IsDBNull(4) ? null : r.GetInt64(4));
 
     // Returns false if the user already has a faction.
-    public bool CreateFaction(ulong userId, string name, double popularity = 0)
+    public bool CreateFaction(ulong userId, string name, double popularity = 0, long seats = 0)
     {
         using var conn = new SqliteConnection(_connectionString);
         conn.Open();
         var cmd = conn.CreateCommand();
         cmd.CommandText = @"
-            INSERT INTO factions (user_id, name, popularity)
-            VALUES ($user, $name, $popularity)
+            INSERT INTO factions (user_id, name, popularity, seats)
+            VALUES ($user, $name, $popularity, $seats)
             ON CONFLICT(user_id) DO NOTHING;";
         cmd.Parameters.AddWithValue("$user", userId.ToString());
         cmd.Parameters.AddWithValue("$name", name);
         cmd.Parameters.AddWithValue("$popularity", popularity);
+        cmd.Parameters.AddWithValue("$seats", seats);
         return cmd.ExecuteNonQuery() > 0;
     }
 
@@ -85,6 +87,17 @@ public partial class DatabaseService
         cmd.CommandText = "UPDATE factions SET popularity = $popularity WHERE user_id = $user;";
         cmd.Parameters.AddWithValue("$user", userId.ToString());
         cmd.Parameters.AddWithValue("$popularity", popularity);
+        return cmd.ExecuteNonQuery() > 0;
+    }
+
+    public bool SetFactionSeats(ulong userId, long seats)
+    {
+        using var conn = new SqliteConnection(_connectionString);
+        conn.Open();
+        var cmd = conn.CreateCommand();
+        cmd.CommandText = "UPDATE factions SET seats = $seats WHERE user_id = $user;";
+        cmd.Parameters.AddWithValue("$user", userId.ToString());
+        cmd.Parameters.AddWithValue("$seats", seats);
         return cmd.ExecuteNonQuery() > 0;
     }
 

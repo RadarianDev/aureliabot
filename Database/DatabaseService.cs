@@ -61,6 +61,7 @@ public partial class DatabaseService
                 user_id TEXT PRIMARY KEY,
                 name TEXT NOT NULL,
                 popularity REAL NOT NULL DEFAULT 0,
+                seats INTEGER NOT NULL DEFAULT 0,
                 party_id INTEGER REFERENCES parties(id) ON DELETE SET NULL
             );");
         Exec(connection, "CREATE INDEX IF NOT EXISTS ix_factions_party ON factions (party_id);");
