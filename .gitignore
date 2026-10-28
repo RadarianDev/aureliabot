@@ -1,0 +1,14 @@
+# Local secrets (Discord token, etc.) — never commit
+**/appsettings.Local.json
+
+# SQLite database files
+*.db
+*.db-shm
+*.db-wal
+
+# Build output
+bin/
+obj/
+
+# Visual Studio
+.vs/
