@@ -1,98 +1,90 @@
 # Rules of Aurelia
+## What You Know
+- The state is public in numbers: money (the **economy**, **budget**, every ministry's funds and every price), **popularity**, **seats** and the armed forces.
+- The mood of the people is told only in words, through **events**, **polls** and province **conditions**: public opinion, salience, **discontent** and **Anzarian Favour**. **Foreign Threat** is only ever hinted at.
+- Every **event** lists its effects with UP and DOWN arrows. Numbers are shown with an amount; the people's mood shows only the arrow.
 ## Turns
-- The game consists of **turns**, which last a real day. 
-- One **turn** is an in game season (Spring, Summer, Autumn, Winter).
-- A special turn is called the **pre-election turn**, which lasts 3 days.
-- A **year** are four **turns**.
-- Every **turn** opens with the news of the season: the **events** that happened, the outcomes of **crises**, and what the Assembly decided.
+- A **turn** lasts one real day and is one season (Spring, Summer, Autumn, Winter). Four turns make a **year**.
+- Every turn opens with the news: new **events**, the outcomes of last turn's **crises** and actions, and what the Assembly decided.
+- The **pre-election turn** lasts three days and ends in an **election**. A term is four years.
 ## Factions
-- Players form **factions**, which are described by a **character** that leads it.
-- A **faction** also has a **popularity**, and **seats** when in parliament.
-- Every **character** has a **home province**, where they hold a *safe borough*: as long as their faction stands in an election with a party, it is guaranteed one **seat**.
+- Each player is a **faction**, led by a **character** with a **home province**. The GM registers every player, with the character and home province agreed between them.
+- A faction has **popularity**, and **seats** once elected. Seats belong to the faction, not its party.
+- Popularity fades: every season it slides a little back towards 10, so standing has to be kept up, and a faction that fell low slowly recovers.
+- The GM may reward excellent roleplay, such as a propaganda poster, a well-written manifesto or a stirring speech, with popularity. Rewards are announced publicly.
 ## Parties
-- **Parties** are formed from multiple **factions**.
-- Two or more factions can form a party at any time by applying in #party-registry and getting approved by the GM.
-- A faction can leave a party at any time, but joining a party can only be done during the **pre-election turn**.
-- A party that drops below two factions is not dissolved automatically; the GM decides its fate.
-## Assembly
-- The *Aurelian Assembly* is the core of polsims made by me.
-- After **elections**, each faction is assigned a number of **seats** based on the election algorithm.
-- The total seats in the Assembly are 180, but this can be changed through reform.
-- A *vote of no confidence* can be held, which declares new **snap elections**: the next turn becomes the **pre-election turn**, and a new 4 year term starts after it.
-- **Reforms** are passed like any other law: an issue such as *Electoral Reform* or a new tax, which changes the rules of the game when it passes.
-## Variables
-- A **variable** is a metric of the game state.
-- Variables include:
-	- **Economy:** An abstract unit of Aurelian production. **Budget** is derived from economy through a tax coefficient set by law.
-	- **Anzarian Favour:** How positively Anzarian nobles views the union with Aurelia. Too low can risk a revolt. *Shown to players only in words, from content to defiant.*
-	- **Foreign Threat:** How world tensions apply to Aurelia. Too high is usually a signature of an imminent conflict. *Hidden from players.*
-	- **Discontent:** How unhappy are people in Aurelia feeling and how much they riot. *Unique for each province.*
-## Provinces & Conditions
-- Aurelia has ten **provinces**, each with its own population, **discontent** and **conditions**.
-- A **condition** describes the state of a province, such as *Lawless*, *Epidemic*, *Strike* or *Coastal*. Conditions are public, and anyone can look them up.
-- Conditions shape **public opinion** in their province, can raise or lower how restless it is, and can help or hurt the **economy**. *How much they do so is hidden.*
-- **Events** and **crises** bring conditions and take them away.
-- **Crime** is a condition too: a *Lawless* province.
-## Issues & The Political Programme
-- The game is governed by **issues**, which are topics the common people care about.
-- An issue has a **public opinion** and a **salience** metric. Both are hidden to the players, but hinted at through **events**, news and the **conditions** of each province.
-- Players never see these as numbers. A **poll** reports them in words, such as *"the Factory Act is a burning question in North Arpal, and the people are strongly for it"*.
-- **Public opinion** is global, but is shaped by **conditions** in each province.
-- A **party** is tasked with creating a **political programme** that consists of a list of opinions on **issues**. Valid opinions are *Strongly For*, *For*, *Against*, or *Strongly Against*. An issue left off the programme means the party has no stance on it.
-- The full **political programme** weighs a party's collective popularity for the election algorithm.
-- During the **pre-election turn**, the programme is the party's *manifesto* and can be changed freely. Outside of it, turning a stance around (from *For* to *Against*, or the reverse) is announced publicly and costs every party member some **popularity**.
-- An **issue** can enter a game via an **event**, or leave when resolved (usually through a parliament vote or via an **event**).
-## Events
-- An **event** is piece of lore with effects, which include changing **public opinion** or **salience** of an **issue**, bringing a new **issue**, resolving an existing one, including changes to **variables** or province **conditions**.
-- An **event** can also start a **crisis**.
-- **Events** spawn at the start of a **turn** and are GM made.
-- Every **event** shows a summary of its effects. A variable going up or down is marked with an UP or DOWN arrow. Values players can see show the amount too; hidden ones, such as **public opinion** or **salience**, show only the arrow.
-## Crises
-- A **crisis** is tied to an **issue** and is assigned to a **minister** who has to resolve it through one from two or more answers.
-- **Crises** arrive with **events** at the start of a **turn**, and the minister has until the end of that turn to answer.
-- Each answer leans *For* or *Against* the **issue**, or is *Neutral*. Leaning the way the people lean earns the **minister's faction** popularity, leaning against them costs it, and a *Neutral* answer is the safe, usually costly, way to stall.
-- Answers have a price, paid from the minister's **ministry**. If the ministry cannot pay, the answer goes ahead with a *complication*.
-- A **minister** who does not answer at all lets the crisis run its course, and loses popularity.
-- A **crisis** has the potential to shift **public opinion** or **salience** of an **issue**, bring a new one or resolve an existing one, including changes to **variables**, province **conditions**, or the **minister's faction popularity**.
-## Campaign
-- **Factions** can do one **campaign action** per turn (one per day in the **pre-election turn**):
-	- **Campaign** on an issue in a province to gain **popularity**, if the people there agree with you.
-	- **Attack** a rival's stance on an issue where the people disagree with them. If they don't, the attack backfires.
-	- **Poll** an issue in a province to learn the public mood.
-- Factions that are in opposition (members of non-government parties) can also do **opposition actions**, which usually grant popularity at the expense of the government. 
-	- Each season, an opposition faction gets one opposition action, either:
-		- a **question** to a minister, who has to answer it publicly; an unanswered question costs the minister popularity and rewards the asker, or
-		- a **shadow response** to a crisis, saying what they would have done; being right when the minister was wrong earns popularity.
-	- Once a year, an opposition faction can also propose a **private bill**.
-	- Opposition factions can table a **vote of no confidence**.
-- Independent factions outside the cabinet are neither government nor opposition.
+- Two or more factions form a **party** at any time in #party-registry, once every founder confirms.
+- A party has no leader. A faction can join only during the pre-election turn, with the agreement of a majority of the party's factions.
+- A faction can leave at any time and keeps its seats. A party left with one faction dissolves.
+- Only parties stand in elections. A faction outside a party is an **independent**.
+## The World
+- Aurelia has ten **provinces**, each with a population, **discontent** and **conditions**.
+- A **condition** is a public fact about a province, such as *Lawless*, *Epidemic*, *Strike* or *Coastal*. Conditions push local opinion, discontent and the economy; by how much is hidden.
+- National **variables**:
+	- **Economy:** Aurelian production. It grows every year, but restless provinces slow it down, each counting by its population. The **budget** is the economy times a tax rate set by law, paid out once a year.
+	- **Anzarian Favour:** how the Anzarian nobles feel about the union, from *content* to *defiant*. Too low risks revolt.
+	- **Foreign Threat:** world tension around Aurelia. Too high means war is coming.
+## Issues & Programmes
+- **Issues** are what the people care about. Each has a **public opinion** (for or against), which conditions shift province by province, and a national **salience** (how much it matters).
+- Every issue carries a **motion**, the law it would make. Issues arrive through events and crises, and leave when their motion passes or an event settles them.
+- Every party keeps a **programme**: a stance on any issues it chooses, from *Strongly For*, *For*, *Against* or *Strongly Against*. An issue left off means no stance.
+- Any member proposes the programme, and it takes effect once a majority of the party's factions back it.
+- In the pre-election turn the programme can change freely. At any other time, flipping a stance between for and against is announced publicly and costs every member popularity.
+## Events & Crises
+- **Events** are written by the GM and appear at the start of a turn. They change issues, variables and conditions, and can start a **crisis**.
+- A **crisis** is tied to an issue and goes to one **minister**. They have until the end of the turn to pick one of its answers.
+- An empty ministry's crises and questions go to the **chancellor**.
+- Each answer leans *For* or *Against* the issue, or is *Neutral*. A crisis is judged by the people of its province: leaning with them gains popularity, leaning against them costs it, and *Neutral* is the safe but usually expensive way to stall.
+- Answers cost money from the minister's ministry. If it can't pay, the answer still happens, with a *complication*.
+- No answer lets the crisis run its course, and the minister loses popularity.
+## Actions
+- Each turn, a faction takes two **actions** of different kinds (two per day in the pre-election turn):
+	- **Campaign** on an issue: gain popularity if the nation agrees with you.
+	- **Attack** a rival's stance: if the nation disagrees with them, they lose popularity. Otherwise it backfires, and you lose some.
+	- **Poll** an issue, nationally or in one province.
+- A faction campaigns on its party's stance by default. It may take a different one, but that is announced as going **off-programme**.
+- A faction's **stance** on an issue is the last one it took in public: its party's programme, a campaign, or a vote (voting Yes on a bill is *For*, No is *Against*). That is the stance rivals can attack. Factions of the same party can't attack each other.
+- The nation is judged as a whole, each province counting by its population. The more factions campaign on the same side of an issue in a turn, the less each gains.
+- All actions are revealed together when the turn ends.
+## Government & Opposition
+- A party is in **government** if any of its factions holds a cabinet post, and so is every cabinet member. Every other party is in **opposition**. Independents outside the cabinet are neither.
+- Each turn, an opposition faction also gets one **opposition action**:
+	- **Question** a minister, who must answer publicly within two turns. An unanswered question costs the minister and rewards the asker.
+	- **Shadow** a crisis by saying what you would have done. Being right where the minister was wrong earns popularity.
+	- **Propose a bill**, once a year.
+## The Assembly
+- The *Aurelian Assembly* has 180 seats.
+- A **bill** puts an issue's motion to a vote. Ministers and the chancellor propose government bills; an opposition faction can propose one a year as its opposition action.
+- A vote stays open until the end of the next turn. Each faction votes all its seats one way, and a bill passes when more seats vote for it than against.
+- A passed bill becomes **law**: the issue closes, its effects apply, and its proposer gains popularity if the people back it, or loses some if they don't.
+- Laws can change the rules themselves, from taxes to the number of seats.
+- An opposition faction can table a **vote of no confidence**. It goes to a vote once its backers hold a sixth of the seats, and lapses if they don't within two turns. It passes with more than half of all seats, and the next turn becomes a pre-election turn.
+- A rejected bill's issue rests for a year before it can be voted on again.
 ## Elections
-- An **election** is resolved after the **pre-election turn**.
-- The *election algorithm* works as such:
-	- The combined **popularity** of all **party factions** is added up to form the *gross party popularity*, which is weighed by the party's **political programme** to form the *net party popularity*.
-	- The *net party popularity* decides the distribution of seats per party. For a party, the **popularity** of each **faction** decides the distribution of **seats** per **faction**.
-	- The count is done province by province: a faction is stronger in its **home province**, and a programme counts for more where the local mood agrees with it.
-	- Every standing faction also keeps its *safe borough* seat.
-- The results come with a seat chart of the Assembly and a map coloured by the party that won each province.
-## Government
-- After an **election**, *His Majesty King Arthas II* (the GM) will appoint a **character** to become a **chancellor**.
-- A **chancellor** is tasked with building a *cabinet of ministers*, which will later receive a confidence vote from the Assembly to begin their **4 year term**.
-- Until the Assembly votes, the previous **chancellor** and his *cabinet* can execute government power.
-- The **government** receives a new income to the **budget** every **year**.
-- **Ministers** and **chancellor** can propose laws to the **Assembly.**
-- His Majesty's acts, such as appointing a **chancellor** or summoning a new Assembly, are announced as *royal proclamations*.
-### Minister of Treasury
-- Tasked with dividing the **budget** among the **ministries** and the **navy contributions**.
-- Increasing **navy contributions** increases **Anzarian Favour**, lowering contributions decreases it. Keeping them the same changes nothing, and Favour slowly settles towards the mood of the Anzarian nobles.
-- Money left unallocated, or unspent at the end of the year, goes to the *reserve*, which the Treasury can grant to any ministry.
-### Minister of War
-- Tasked with maintaining the **Army**. Spends his part of the budget on division upkeep, purchasing equipment and training.
-### Minister of Interior
-- Tasked with maintaining **Order**. Situates **gendarmerie** divisions in provinces, cracks down on **discontent** and tackles **crime**.
-- A **crackdown** is a gamble: the gendarmerie in a province face the crowd. If they prevail, **discontent** falls and a *Lawless* province is brought to order. If they fail, discontent rises and the minister's faction loses popularity.
-- The gendarmerie's upkeep is paid from the Interior's part of the budget.
-- The Interior can also place **informants** in provinces, who report the local mood, but may be discovered.
-### Minister of Commerce and Labor
-- Tasked with **projects**, which usually take a various time to complete. Spends his part of the **budget** on pushing the progress of projects.
-- A project is paid for season by season. If the ministry cannot pay, the project stalls.
-- Finishing **projects** usually has a positive effect on **variables** and **issues**.
+- Seats are counted province by province, by population. Apart from the safe boroughs, each province's seats are split between parties by how strong each party is there.
+- A party's strength is its factions' combined popularity, weighed by how well its programme fits the local mood: stances on salient issues the province agrees with count for most. A stance shared by many parties counts for less.
+- A faction counts for more in its **home province**.
+- Inside a party, seats go to factions by popularity.
+- Every faction in a standing party also wins a *safe borough* seat in its home province.
+- Results are posted with a seat chart and a map coloured by the party that won each province.
+## Cabinet
+- After an election, *His Majesty King Arthas II* (the GM) appoints a **chancellor**, who names a cabinet of four **ministers**: Treasury, War, Interior, and Commerce and Labor. A faction holds at most one post, and the chancellor holds none. The Assembly then votes on the cabinet. If it fails, the chancellor tries again.
+- Until a cabinet is confirmed, the previous one stays in office.
+- The chancellor and ministers share a private #cabinet chat, which they lose access to when they leave office.
+- Anyone in the cabinet can resign at any time. The post stays empty until filled.
+- The King's acts are announced as *royal proclamations*.
+### Treasury
+- Divides the yearly budget between the ministries and the **navy contributions** each Winter, for the year that starts in Spring. If it doesn't, last year's split repeats.
+- Raising navy contributions raises Anzarian Favour, cutting them lowers it. Left unchanged, Favour drifts back towards the nobles' mood.
+- Unallocated money, and money unspent at the end of the year, goes to the *reserve*, which the Treasury can grant to any ministry.
+### Forces
+- The army's **divisions** and the Interior's **gendarmerie** work alike. A unit is a die: raising it is bought once, training it gives the die more sides, and stationing it in another province is free.
+- Every unit costs upkeep each year. If its ministry can't pay, its units lose training.
+### War
+- Keeps the **divisions**. They are what stands between Aurelia and a high Foreign Threat.
+### Interior
+- Keeps the **gendarmerie**, who hold the provinces against riots.
+- A **crackdown** is a gamble in one province: if the gendarmerie prevail, discontent falls and *Lawless* is lifted; if they fail, discontent rises and the minister loses popularity.
+### Commerce and Labor
+- Runs **projects**, paid turn by turn. A project that can't be paid stalls.
+- Finished projects improve the economy and the provinces, and earn the minister popularity.

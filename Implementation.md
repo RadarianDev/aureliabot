@@ -20,7 +20,7 @@ Things only the GM can do, all needed before stage 2 can be tested live:
 - [ ] Give the bot **Manage Channels** and **Manage Roles**, and drag its role above where the
       party roles will go. Move any other coloured roles below that point.
 - [ ] Create the categories (factions, parties, archive), the channels (#news, #dashboard,
-      #assembly, #campaign-log, #party-registry, #cabinet, #gm), and a GM role. Deny Connect on the turn tracker
+      #assembly, #campaign-log, #party-registry, #cabinet, #gm), a GM role and a Cabinet role (`/gm setup` does all of this). Deny Connect on the turn tracker
       voice channel `1565059818731995166`.
 - [x] Province populations and geography: in [Lore.md](Lore.md).
 - [x] Province ids, starting conditions and coastal flags: in [config/provinces.yaml](config/provinces.yaml).
@@ -60,7 +60,7 @@ Program.cs, Bot.cs                 DI registrations, poller start-up, member joi
 BotConfig.cs                       unchanged
 config/                            constants.yaml, provinces.yaml, conditions.yaml, projects.yaml (copied to output;
                                    provinces and conditions already written)
-content/                           starting templates for /gm import: issues/*.yaml, events/*.yaml (not copied)
+content/                           starting templates for /content import: issues/*.yaml, events/*.yaml (not copied)
 assets/map/                        already done
 Game/
   GameConstants.cs                 records mirroring constants.yaml, plus ConstantsStore (load, reload, Current)
@@ -69,26 +69,28 @@ Game/
                                    elections), next-resolution time
   Effects.cs                       Effect record, EffectParser (text and YAML), key validation
   ProgrammeParser.cs               pure: message text + open issues -> parsed programme or line errors
-  EffectSummary.cs                 pure: effects -> player-facing summary lines (emoji, names, hidden
-                                   values as direction only); used for events, crises, laws, projects
-  Wording.cs                       pure: opinion, salience and Favour numbers -> words (spec section 9)
+  EffectSummary.cs                 pure: effects -> player-facing summary lines (emoji, names, the
+                                   people's mood and Threat as direction only); used for events, crises,
+                                   laws, projects
+  Wording.cs                       pure: opinion, salience, discontent and Favour numbers -> words
+                                   (spec section 9)
   Formulas.cs                      pure static: provincial opinion, stance score, salience factor, campaign,
-                                   attack, crisis, law, drift, programme flips, crackdown, fiscal and
-                                   navy maths
+                                   attack, crisis, law, drift (opinion, discontent, Favour, popularity),
+                                   programme flips, crackdown, fiscal (with the unrest drag) and navy maths
   ElectionCalculator.cs            pure: spec section 8, input records in, ElectionResult out
   SeededRandomSource.cs            IRandomSource over System.Random(seed)
 Database/
   DatabaseService.cs               InitializeDatabase() holds the whole schema (stage 0)
   DatabaseService.Settings.cs      channel/category/role settings, game state row
   DatabaseService.Factions.cs      extended
-  DatabaseService.Parties.cs       extended (leader, role/channel ids, join requests, programmes)
+  DatabaseService.Parties.cs       extended (role/channel ids, join requests, programmes)
   DatabaseService.Issues.cs        issues, templates, stance log, province conditions
   DatabaseService.Events.cs        events, templates, the queue
   DatabaseService.Actions.cs       campaign/attack/poll submissions
   DatabaseService.Government.cs    cabinet, bills, votes, opposition actions, questions, no confidence
   DatabaseService.Crises.cs        crises, answers, templates, responses, shadow responses
   DatabaseService.Treasury.cs      purses, upkeep, reserve, projects and instalments
-  DatabaseService.Forces.cs        divisions, gendarmerie, pending orders, crackdowns, province informants
+  DatabaseService.Forces.cs        divisions and gendarmerie (one unit model), pending orders, crackdowns
   DatabaseService.Resolution.cs    Resolve(...) and its …Tx steps; campaign-day variant
   DatabaseService.Log.cs           LogEntry writes and reads
 Services/
@@ -97,20 +99,26 @@ Services/
   Publisher.cs                     turns a ResolutionReport into posts, private messages, dashboard edit
   TurnTrackerService.cs            rename queue, latest-name-wins, rate-limit aware
   PartySyncService.cs              idempotent role + chat reconciliation per party
+  CabinetSyncService.cs            idempotent Cabinet role membership from the sitting cabinet
   FactionChannelService.cs         create/repair private faction channels
   AlertService.cs                  posts to #gm
 Commands/
-  FactionModule.cs, PartyModule.cs, CampaignModule.cs, VoteModule.cs, OppositionModules.cs,
-  MinisterModules.cs, MapModule.cs, ProvinceModule.cs, …Autocomplete.cs
+  FactionModule.cs, PartyModule.cs, CampaignModule.cs, AssemblyModule.cs (/bill, /vote, buttons),
+  OppositionModule.cs, MinisterModules.cs, MapModule.cs, InfoModules.cs (/province, /issue,
+  /crisis info, /party info), StatusModule.cs (/me, /help), …Autocomplete.cs
+  Preconditions.cs                 role checks shared by every module
+  Confirmations.cs                 shared Confirm/Cancel button flow for guarded commands
   Gm/GmModule.cs                   [Group("gm")] partial class; each subgroup a nested class in its own file:
-  Gm/GmModule.Party.cs, Gm/GmModule.Issue.cs, Gm/GmModule.Event.cs, Gm/GmModule.Crisis.cs,
-  Gm/GmModule.Resolve.cs, …
+  Gm/GmModule.Party.cs, Gm/GmModule.Event.cs, Gm/GmModule.Resolve.cs, Gm/GmModule.Setup.cs, …
+  Content/ContentModule.cs         [Group("content")] partial class, same layout: ContentModule.Issue.cs,
+  Content/ContentModule.Event.cs, Content/ContentModule.Crisis.cs (with the crisis builder buttons), …
 Rendering/                         ArchGenerator (seat chart), ProvinceMapGenerator (map), unchanged
 AureliaBot.Tests/                  xUnit, mirrors SundamarBot.Tests
 ```
 
-`/gm` has to be one partial class because Discord.Net cannot spread one top-level group over
-several module classes. It stays under Discord's 25-subcommand limit (23 entries today).
+`/gm` and `/content` each have to be one partial class because Discord.Net cannot spread one
+top-level group over several module classes. Splitting authoring into `/content` keeps both well
+under Discord's 25-entry limit per group (`/gm` has 19 entries, `/content` 11).
 
 ## 4. Key designs
 
@@ -172,11 +180,17 @@ code runs after a command, on startup, and from `/gm party sync`.
 1. Role: create if `roleId` is missing or the role is gone; set name, colour, hoisted.
 2. Members: add the role to every active member, remove it from everyone else who has it.
 3. Chat: create if missing under the party category; set overwrites (deny @everyone, allow the party
-   role, the GM role and the bot; Manage Messages for the leader).
+   role, the GM role and the bot; Pin Messages for the party role).
 4. Store any new ids. Any Discord refusal goes to `AlertService` and leaves the database unchanged.
 
 Deletion archives the chat (move to the archive category, read-only for the GM role) and deletes the
-role. `UserJoined` re-runs the sync for the rejoining player's party; `UserLeft` raises the alert.
+role. `UserJoined` re-runs the sync for the rejoining player's party and the cabinet; `UserLeft` raises the alert.
+
+`CabinetSyncService.SyncAsync()` works the same way for the one Cabinet role: holders are the
+sitting cabinet's Chancellor and ministers (spec section 5, Cabinet role). It runs after every
+cabinet change (approval, imposition, appointment, resignation, retirement), on startup and from
+`/gm party sync`. It only manages membership: the role is uncoloured and not hoisted, and #cabinet's
+overwrites (the Cabinet role, the GM role and the bot) are set once by `/gm setup`.
 Both need the Server Members intent added to `GatewayIntents` in `Bot.cs`.
 
 `TurnTrackerService` keeps only the latest requested name and a timestamp list of recent renames,
@@ -203,7 +217,7 @@ which clamps every value.
 - Every command that creates channels or roles, renders an image, or touches many rows starts with
   `DeferAsync`.
 - Permission checks: GM commands use `[RequireUserPermission(GuildPermission.ManageGuild)]`; role
-  checks (minister, Chancellor, party leader, opposition) are small precondition attributes in
+  checks (minister, Chancellor, party member, opposition) are small precondition attributes in
   `Commands/Preconditions.cs`, so every module shares them.
 - Long text goes through modals (`[ModalInteraction]`), never through slash options.
 
@@ -243,38 +257,57 @@ DST change), undo restoring a known state.
 
 ### Stage 2: factions and parties
 
-- `/faction create|info`, `FactionChannelService`.
-- `/gm party create|edit|add|remove|delete|sync|programme`, `/gm faction edit|retire`.
-- `/gm party create` with two or more founders, approving an application from #party-registry.
-- `/party join|leave|leader`, join requests with buttons in the party chat; joining only during a
-  pre-election.
-- `/gm party programme`: resolve the message link (guild, channel and message ids) to a message,
-  run `ProgrammeParser`, show a private preview (with flips and their cost) with Apply/Cancel
-  buttons, then replace the programme, apply flip penalties outside a pre-election, log it, post it
-  as a manifesto or a line change, and reply to the original message.
+- `/faction info`, `/gm faction create` (the only way a faction is made), the shared "not registered
+  yet" refusal for players without a faction, `FactionChannelService`, `/gm setup`.
+- `Confirmations` and `Preconditions`, used by every later stage.
+- `/gm party create|edit|add|remove|delete|sync|programme`, `/gm faction edit|retire`, `/gm reward`
+  (a royal commendation in #news).
+- `/party apply`: application post in #party-registry, co-founder Confirm/Decline buttons, the party
+  founded once every co-founder confirms, colour-similarity warning, withdrawal after the
+  confirmation window.
+- `/party join|leave`, join requests with Accept/Decline buttons in the party chat, decided by a
+  majority of active members (`PartyJoinAnswer`); joining only during a pre-election.
+- Dissolution: one `DissolveIfUnderTwoTx` check run after every leave, retire and GM move, sharing
+  the `/gm party delete` path.
+- `/party programme` (any member) and `/gm party programme`: resolve the message link (guild,
+  channel and message ids) to a message, run `ProgrammeParser`, show a private preview (with flips
+  and their cost). A member's submission goes to the party chat with Endorse buttons and a running
+  count, and applies once a majority of active members (the submitter included) endorse it; the GM
+  command applies directly. On apply, replace the programme, apply flip penalties outside a
+  pre-election, log it, post it as a manifesto or a line change, and reply to the original message.
+- `/party info`, and first versions of `/me` and `/help` (each later stage adds its own lines).
 - `PartySyncService`, member join/leave handlers.
 - Dashboard first version (parties, seats, calendar).
 
 Tests: membership rules (creation needs two independent founders, joining is refused outside a
-pre-election, leader leaving passes leadership to the most popular member, retire clears party and
-ministry), programme flips (only sign changes cost, nothing costs during a pre-election), and
+pre-election, a join needs a majority of accepts and a majority of declines refuses it, retire clears
+party and ministry, a party left with one active member dissolves and its last member keeps its
+seats), party applications (one decline withdraws, every confirmation founds the party), programme
+submissions (a newer one supersedes a pending one, a majority of endorsements applies it, a
+two-member party needs both), programme flips (only sign changes cost, nothing costs during a pre-election), and
 `ProgrammeParser`: the spec's example message, header lines ignored, title and id matching, emphasis
 and capitalisation variants, missing issues having no stance, and every error case (unknown, closed
 or repeated issue, bad opinion including *Silent*) reported together.
 
 ### Stage 3: issues, events and campaigning
 
-- Issue and event templates (create/set/effects/ready/list/archive/delete/preview) and live issues.
-- Event queue, `/gm event queue|cancel`, events firing at the start of a turn and opening or closing
-  issues; province conditions (biases, resting discontent, growth) and `/province info`.
-- `/campaign`, `/attack`, `/poll` (answered in words through `Wording`), simultaneous resolution,
-  stance log, drift and decay.
+- `/content` issue and event templates (create with optional or slugged id, set, effects, ready,
+  list, archive, delete, preview) and live issues.
+- Event queue, `/gm event queue|list|cancel` with delays, events firing at the start of a turn and
+  opening or closing issues; province conditions (biases, resting discontent, growth),
+  `/province info`, `/issue info`, `/gm apply`.
+- `/campaign`, `/attack`, `/poll` (answered in words through `Wording`), simultaneous resolution
+  with campaign crowding, stance log, drift and decay; campaigns and attacks posted to
+  #campaign-log with the resolution.
 
-Tests: `Formulas` (every branch of the stance score, home doubling, attack backfire, condition
-biases and resting discontent), simultaneous resolution being independent of submission order,
+Tests: `Formulas` (every branch of the stance score, population-weighted national opinion, campaign crowding, attack backfire, condition
+biases and resting discontent, popularity drifting toward the start from above and below and never on
+campaign days), the two-actions rule (a second action of the same kind replaces the
+first, a third kind is refused while two are pending), simultaneous resolution being independent of
+submission order,
 events firing in queue order and never on campaign days, `Wording` thresholds, and `EffectSummary`
-(visible values with amounts, hidden values direction only, opinion and baseline indistinguishable,
-action lines, zero effects dropped).
+(public numbers such as purses with amounts, mood values including discontent direction only,
+opinion and baseline indistinguishable, action lines, zero effects dropped).
 
 ### Stage 4: elections
 
@@ -287,39 +320,58 @@ action lines, zero effects dropped).
 ### Stage 5: government
 
 - Cabinet lifecycle, `/chancellor nominate`, `/gm chancellor appoint`, `/gm cabinet impose`,
-  `/gm proclaim`, royal proclamation posts.
-- Bills, `/vote` with a running tally, laws, cooldowns, no confidence and snap elections.
-- Opposition actions (one a season, spent on a question or a shadow response), questions with the
-  minister's penalty and the asker's reward.
+  `/gm proclaim`, royal proclamation posts, `/minister resign`, `/ministry status`,
+  `CabinetSyncService` wired to every cabinet change.
+- `/bill propose` (kind from the proposer's role), vote buttons on #assembly posts with a running
+  tally and `/vote` as fallback, laws, cooldowns, no confidence with Cosign buttons, the share-based
+  threshold and lapsing, and snap elections.
+- `/opposition question|shadow|noconfidence|cosign` (one opposition action a season, spent on a
+  question, a shadow response or a private bill through `/bill propose`; shadows private until
+  resolution), questions with the minister's penalty and the asker's reward.
+- One `ResponsibleMinister(ministry)` lookup, the holder or else the Chancellor, used by crises,
+  questions, autocomplete and reminders.
 
-Tests: vote counting (abstentions, ties, filled seats for no confidence), caretaker rules, a passed
+Tests: vote counting (abstentions, ties, filled seats for no confidence), the tabling threshold
+following the Assembly size, a gathering motion lapsing without a cooldown, resignation (vacant
+ministry, cancelled pending nomination), caretaker rules, Cabinet role holders (nominees excluded
+until approval, a caretaker keeping it, an appointment to a vacant Chancellorship granting it at
+once, a resignation removing it), a passed
 no-confidence motion making the next season the pre-election, independents being neither government
-nor opposition, the shared opposition action limit, question deadline shifting on a change of
-minister.
+nor opposition, the shared opposition action limit (a private bill uses it, and only one bill a
+year), a vacant ministry's question going to the Chancellor, question deadline shifting on a change
+of minister.
 
 ### Stage 6: crises
 
-- Crisis templates (multi-modal creation, two or more answers including Neutral), posting through
+- `/crisis info`; `/crisis respond` with the purse check and complication warning.
+- Crisis templates (the builder's chained modals, two or more answers including Neutral), posting through
   the `crisis.*` event effect with the deadline at the next resolution, responses kept private until
   resolution, clean/complicated/default outcomes with effect summaries, shadow scoring, vacant
-  ministries.
+  ministries' crises answered by the Chancellor.
 
 Tests: Neutral answers and Neutral shadow responses gain and lose nothing, a Neutral minister
-answer counts as not on the right sign for shadows.
+answer counts as not on the right sign for shadows, a vacant ministry's crisis scores the
+Chancellor's faction, and the default applies with no penalty only when the Chancellorship is vacant
+too.
 
 ### Stage 7: budget and standing work
 
 - Fiscal year, game-start budget, condition growth, purses, upkeep from the War and Interior purses,
-  Navy contribution changes and Favour drift, reserve and grants.
-- Divisions and gendarmerie with pending orders, crackdown rolls, projects paid in instalments
-  (stalling when unpaid), province informants reporting in words.
+  Navy contribution changes and Favour drift, reserve and grants; `/treasury allocate` as a
+  pre-filled modal with a reserve and Favour preview.
+- Divisions and gendarmerie as one unit model parameterised by their constants (raise, train,
+  station, disband), pending orders, crackdown rolls, projects paid in instalments (stalling when
+  unpaid).
 
-Tests: Favour reacting only to a change in the Navy share, crackdown success and failure with a
-scripted random source.
+Tests: Favour reacting only to a change in the Navy share, the unrest drag (weighted by population,
+only discontent above `discontent.rest` counts, the spec's whole-nation-at-7 example costing 2%), unpaid upkeep emptying the purse and
+costing every unit of that branch one training step but never below base sides, retraining a lost
+step at that step's cost, crackdown success and failure with a scripted random source.
 
 ### Stage 8: GM tools
 
-- YAML import/export, alerts list from spec section 10, reminders, `/gm roll battle|riot`, `/gm peek`.
+- `/content import|export|clone` (import from an attachment or a pasted modal), `/gm agenda`, alerts
+  list from spec section 10, reminders, `/gm roll battle|riot`, `/gm peek`, undo's Resubmit buttons.
 
 ## 6. Working with subagents
 
@@ -339,7 +391,7 @@ final merge, and anything that needs a live Discord test.
 | 4 | `ElectionCalculator` + tests | Results posting and `/map` | |
 | 5 | Vote counting + tests | Cabinet and question commands | Bills and no confidence |
 | 6 | Crisis outcome formulas + tests | Crisis template modals | |
-| 7 | Fiscal and Favour maths + tests | Forces, pending orders and crackdowns | Projects and informants |
+| 7 | Fiscal and Favour maths + tests | Forces, pending orders and crackdowns | Projects |
 | 8 | `EffectParser` YAML import/export | Alerts and reminders | Battle and riot rolls |
 
 Pure-logic tracks (`Formulas`, `ElectionCalculator`, `GameCalendar`, fiscal maths) are the best
@@ -370,5 +422,8 @@ None block a stage. Everything is decided in the spec, `config/` and `content/`.
 | --- | --- |
 | Condition biases and the issues' starting opinion and salience (`config/conditions.yaml`, `content/issues/`): run `/gm election preview` and polls across provinces, and look for provinces that agree on everything | Stage 4 |
 | Crackdown balance (`crackdown.cost`, `reduction`, `backlash`, `failurePopularity`) | Stage 7 |
-| Wording thresholds for opinion and salience (spec section 9) | Stage 3 |
+| Wording thresholds for opinion, salience and discontent (spec section 9) | Stage 3 |
+| Upkeep against the default War and Interior shares, so training is lost only when a Treasury underfunds on purpose | Stage 7 |
 | Programme flip penalty and Favour drift | Stages 2 and 7 |
+| Popularity drift against campaign gains: at 0.05 an idle faction keeps about 81% of its lead over 10 after a year and 44% after a term; a faction campaigning well every turn should still settle well above 10 | Stage 3 |
+| Unrest drag (`discontent.growthDrag`) against base growth | Stage 7 |
