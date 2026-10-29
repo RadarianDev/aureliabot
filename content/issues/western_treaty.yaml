@@ -1,0 +1,11 @@
+id: western_treaty
+title: The Western Trade Treaty
+motion: Ratify a free-trade treaty with our western neighbour.
+for: Open markets, full harbours.
+against: Foreign goods undercut Aurelian work.
+opinion: 0.1
+baseline: 0.1
+salience: 1
+pass:
+  text: The customs posts on the western road are lowered, and the carts roll through.
+  effects: { economy: 2, threat: -3, discontent.iracterie: 1 }

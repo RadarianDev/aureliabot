@@ -1,0 +1,60 @@
+aurenten:
+  name: Aurenten
+  population: 3.21
+  mapKey: "#FF0098"
+  description: The central heartland, fertile river basins under sprawling towns.
+  conditions: [urban, farmland]
+iracterie:
+  name: Iracterie
+  population: 2.71
+  mapKey: "#FF9900"
+  description: Rich valleys and broad plains, dug up for coal and ore.
+  conditions: [industrial, farmland]
+north_arpal:
+  name: North Arpal
+  population: 2.29
+  mapKey: "#CCFF00"
+  description: Mountain passes and transit corridors to the southern realm.
+  conditions: [frontier, crossroads, rugged, coastal]
+agrinenten:
+  name: Agrinenten
+  population: 2.05
+  mapKey: "#00FF65"
+  description: Gentle plains and river valleys, the land bridge to Anzaria.
+  conditions: [farmland, anzarian_border, crossroads]
+ocidanten:
+  name: Ocidanten
+  population: 1.99
+  mapKey: "#FF0000"
+  description: Western farmland and hills along the trade routes to the western nation.
+  conditions: [frontier, farmland, crossroads, coastal]
+soralenten:
+  name: Soralenten
+  population: 1.82
+  mapKey: "#CB00FF"
+  description: A narrow corridor of border hills between Anzaria and the south.
+  conditions: [frontier, anzarian_border, rugged]
+silvicarie:
+  name: Silvicarie
+  population: 1.74
+  mapKey: "#0065FF"
+  description: Forested peninsular hills and sheltered inlets on the southern bay.
+  conditions: [forested, rugged, coastal]
+provencie_sacs:
+  name: Provencie Sacs
+  population: 1.61
+  mapKey: "#3300FF"
+  description: Sheltered inland plains between the western frontier and the core.
+  conditions: [farmland]
+tovrerie:
+  name: Tovrerie
+  population: 1.23
+  mapKey: "#00FFFF"
+  description: Marshy lowlands on the southern bay, below the border foothills.
+  conditions: [frontier, marshland, coastal]
+provencie_gares:
+  name: Provencie Gares
+  population: 1.18
+  mapKey: "#32FF00"
+  description: Windswept cliffs at the far eastern edge of the kingdom.
+  conditions: [frontier, remote, coastal]

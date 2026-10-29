@@ -21,7 +21,13 @@ advancement, test fixture, help embeds).
 Code should be self-explanatory: avoid comments, and rely on clear naming and structure instead.
 Document large mechanics and features in dedicated `.md` files rather than in code comments.
 Existing mechanic docs:
-- [Parties.md](Parties.md): factions, parties, membership and seats.
+- [Human Rules.md](Human%20Rules.md): the player-facing rules, written by the GM. They win over
+  every other doc; where the spec contradicts them, fix the spec.
+- [Aurelian Assembly Bot Spec.md](Aurelian%20Assembly%20Bot%20Spec.md): the full game spec the bot is
+  being built towards. Where it differs from the current code, the spec is the target.
+- [Implementation.md](Implementation.md): code layout, build stages and how to split work across
+  subagents, for building the spec.
+- [Parties.md](Parties.md): factions, parties, membership and seats, as currently implemented.
 
 `SQLitePCLRaw.bundle_e_sqlite3` is pinned to 2.1.12 in the csproj on purpose. It overrides the
 2.1.11 that `Microsoft.Data.Sqlite` pulls in transitively, whose bundled SQLite is vulnerable to

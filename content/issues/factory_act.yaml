@@ -1,0 +1,11 @@
+id: factory_act
+title: The Factory Act
+motion: Limit factory work to ten hours a day, and ban the employment of children under twelve.
+for: Protect the workers and their children.
+against: Leave industry free to compete.
+opinion: 0.3
+baseline: 0.3
+salience: 3
+pass:
+  text: Inspectors enter the mills for the first time, and the owners count the cost.
+  effects: { economy: -1, discontent.iracterie: -1, discontent.aurenten: -1 }

@@ -1,0 +1,12 @@
+id: grain_duties
+title: Grain Duties
+motion: Repeal the duties on imported grain.
+for: Cheap bread for the towns.
+against: Protect Aurelian farmers.
+opinion: 0.0
+baseline: 0.0
+salience: 3
+pass:
+  text: Foreign grain floods the markets, and the price of a loaf falls by a third.
+  effects: { economy: 1, discontent.aurenten: -1, discontent.iracterie: -1,
+             discontent.agrinenten: 1, discontent.provencie_sacs: 1, discontent.ocidanten: 1 }

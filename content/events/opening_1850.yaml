@@ -1,0 +1,9 @@
+id: opening_1850
+title: The King Summons the Assembly
+text: >-
+  By His Majesty's command, the Aurelian Assembly is called to sit for the first time. Across the
+  ten provinces, candidates take to the hustings, and the questions of the age are on every tongue.
+effects: { open.factory_act: true, open.grain_duties: true, open.electoral_reform: true,
+           open.anzarian_question: true, open.public_health: true, open.railway_charter: true,
+           open.conscription: true, open.western_treaty: true, open.education_act: true,
+           open.press_act: true, open.poor_law: true, open.combination_act: true }

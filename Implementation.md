@@ -1,0 +1,374 @@
+# Implementation Plan
+
+How to build the bot described in [Aurelian Assembly Bot Spec.md](Aurelian%20Assembly%20Bot%20Spec.md).
+The spec says **what** the game does; this file says **how** the code is laid out, what gets built
+in which order, and how the work splits across Claude sessions and subagents.
+
+Read first: [CLAUDE.md](CLAUDE.md) (conventions), [Human Rules.md](Human%20Rules.md) (the player-facing
+rules, which win over the spec where they differ), the spec, and
+[DiscordBotOne/CLAUDE.md](DiscordBotOne/CLAUDE.md) (a larger bot built on the same skeleton, used
+as the pattern library below).
+
+## 1. Before the first session
+
+Things only the GM can do, all needed before stage 2 can be tested live:
+
+- [ ] Bot token in `appsettings.Local.json` (`Discord:Token`). The guild id is already set.
+- [ ] In the Discord developer portal, enable the **Server Members** and **Message Content**
+      privileged intents. The second lets `/gm party programme` read the linked message's text, and
+      both go into `GatewayIntents` in `Bot.cs`.
+- [ ] Give the bot **Manage Channels** and **Manage Roles**, and drag its role above where the
+      party roles will go. Move any other coloured roles below that point.
+- [ ] Create the categories (factions, parties, archive), the channels (#news, #dashboard,
+      #assembly, #campaign-log, #party-registry, #cabinet, #gm), and a GM role. Deny Connect on the turn tracker
+      voice channel `1565059818731995166`.
+- [x] Province populations and geography: in [Lore.md](Lore.md).
+- [x] Province ids, starting conditions and coastal flags: in [config/provinces.yaml](config/provinces.yaml).
+- [x] Condition catalogue: in [config/conditions.yaml](config/conditions.yaml).
+- [x] Opening issues and event: in `content/`.
+- [ ] Upload the UP and DOWN custom emoji to the server and put them in `constants.yaml` as
+      `display.upEmoji` / `display.downEmoji` (`<:name:id>`). Until then the Unicode arrows are used.
+
+## 2. Patterns to reuse
+
+Everything below already exists in this repo or in DiscordBotOne. Copy the pattern, don't invent a
+new one.
+
+| Need | Pattern | Where to look |
+| --- | --- | --- |
+| Persistence | `partial class DatabaseService`, one file per domain; positional `record` + `SelectXColumns` + `ReadX(reader)` | [Database/DatabaseService.Parties.cs](Database/DatabaseService.Parties.cs) |
+| Multi-step writes | One connection and transaction; private static `…Tx(SqliteConnection conn, SqliteTransaction tx, …)` helpers | `DiscordBotOne/Database/DatabaseService.Navy.cs`, `…Orders.cs` |
+| Schema changes | `CREATE TABLE IF NOT EXISTS` in `InitializeDatabase()`; `AddColumnIfMissing` for existing tables | [Database/DatabaseService.cs](Database/DatabaseService.cs) |
+| Scheduled work | `PeriodicTimer` poller started with a fire-and-forget `Task.Run` from `Bot.RunAsync`, catching every exception inside the loop, checking once on startup | `DiscordBotOne/AutoAdvanceTurnService.cs` |
+| Discord side effects | A service holding `DiscordSocketClient`, registered in DI; `DatabaseService` never touches Discord types | `DiscordBotOne/MarketBoardService.cs` |
+| Randomness | `IRandomSource` injected into resolution; a scripted fake in tests | `DiscordBotOne/Database/DatabaseService.Combat.cs`, `DiscordBotOne/SundamarBot.Tests/ScriptedRandomSource.cs` |
+| Slow commands | `await DeferAsync()` first, then `FollowupAsync` | `DiscordBotOne/Commands/DealsModule.cs` |
+| Autocomplete | Separate `…Autocomplete` handler classes | `DiscordBotOne/Commands/*Autocomplete.cs` |
+| Buttons | `[ComponentInteraction("prefix:action:*")]` in the owning module | `DiscordBotOne/Commands/DealsModule.cs` |
+| Tests | xUnit project in a subfolder; `DatabaseFixture` on a temp SQLite file via the `internal` connection-string constructor | `DiscordBotOne/SundamarBot.Tests/` |
+
+House rules from CLAUDE.md that every session must follow: no code comments, mechanics documented
+in `.md` files, Discord ids stored as `TEXT`, invariant culture (already pinned in `Program.cs`),
+and never edit `DiscordBotOne/` or `DiscordBotTwo/`.
+
+## 3. Layout
+
+New and changed files, by folder. Names are binding, because parallel sessions code against them.
+
+```
+Program.cs, Bot.cs                 DI registrations, poller start-up, member join/leave handlers
+BotConfig.cs                       unchanged
+config/                            constants.yaml, provinces.yaml, conditions.yaml, projects.yaml (copied to output;
+                                   provinces and conditions already written)
+content/                           starting templates for /gm import: issues/*.yaml, events/*.yaml (not copied)
+assets/map/                        already done
+Game/
+  GameConstants.cs                 records mirroring constants.yaml, plus ConstantsStore (load, reload, Current)
+  GameEnums.cs                     Season, Stance, Ministry, IssueStatus, CrisisStatus, VoteChoice, …
+  GameCalendar.cs                  season/year arithmetic, term and pre-election logic (incl. snap
+                                   elections), next-resolution time
+  Effects.cs                       Effect record, EffectParser (text and YAML), key validation
+  ProgrammeParser.cs               pure: message text + open issues -> parsed programme or line errors
+  EffectSummary.cs                 pure: effects -> player-facing summary lines (emoji, names, hidden
+                                   values as direction only); used for events, crises, laws, projects
+  Wording.cs                       pure: opinion, salience and Favour numbers -> words (spec section 9)
+  Formulas.cs                      pure static: provincial opinion, stance score, salience factor, campaign,
+                                   attack, crisis, law, drift, programme flips, crackdown, fiscal and
+                                   navy maths
+  ElectionCalculator.cs            pure: spec section 8, input records in, ElectionResult out
+  SeededRandomSource.cs            IRandomSource over System.Random(seed)
+Database/
+  DatabaseService.cs               InitializeDatabase() holds the whole schema (stage 0)
+  DatabaseService.Settings.cs      channel/category/role settings, game state row
+  DatabaseService.Factions.cs      extended
+  DatabaseService.Parties.cs       extended (leader, role/channel ids, join requests, programmes)
+  DatabaseService.Issues.cs        issues, templates, stance log, province conditions
+  DatabaseService.Events.cs        events, templates, the queue
+  DatabaseService.Actions.cs       campaign/attack/poll submissions
+  DatabaseService.Government.cs    cabinet, bills, votes, opposition actions, questions, no confidence
+  DatabaseService.Crises.cs        crises, answers, templates, responses, shadow responses
+  DatabaseService.Treasury.cs      purses, upkeep, reserve, projects and instalments
+  DatabaseService.Forces.cs        divisions, gendarmerie, pending orders, crackdowns, province informants
+  DatabaseService.Resolution.cs    Resolve(...) and its …Tx steps; campaign-day variant
+  DatabaseService.Log.cs           LogEntry writes and reads
+Services/
+  ResolutionService.cs             the poller: due check, snapshot, Resolve, then publish the report
+  SnapshotService.cs               backup, prune to 30, restore for undo
+  Publisher.cs                     turns a ResolutionReport into posts, private messages, dashboard edit
+  TurnTrackerService.cs            rename queue, latest-name-wins, rate-limit aware
+  PartySyncService.cs              idempotent role + chat reconciliation per party
+  FactionChannelService.cs         create/repair private faction channels
+  AlertService.cs                  posts to #gm
+Commands/
+  FactionModule.cs, PartyModule.cs, CampaignModule.cs, VoteModule.cs, OppositionModules.cs,
+  MinisterModules.cs, MapModule.cs, ProvinceModule.cs, …Autocomplete.cs
+  Gm/GmModule.cs                   [Group("gm")] partial class; each subgroup a nested class in its own file:
+  Gm/GmModule.Party.cs, Gm/GmModule.Issue.cs, Gm/GmModule.Event.cs, Gm/GmModule.Crisis.cs,
+  Gm/GmModule.Resolve.cs, …
+Rendering/                         ArchGenerator (seat chart), ProvinceMapGenerator (map), unchanged
+AureliaBot.Tests/                  xUnit, mirrors SundamarBot.Tests
+```
+
+`/gm` has to be one partial class because Discord.Net cannot spread one top-level group over
+several module classes. It stays under Discord's 25-subcommand limit (23 entries today).
+
+## 4. Key designs
+
+### 4.1 Config
+
+`ConstantsStore` loads `config/*.yaml` with YamlDotNet (camelCase naming convention) into immutable
+records, validates them (for example: every province id in `startingForces` exists, every `mapKey`
+is unique), and exposes `Current`. `/gm reload` builds a new instance and swaps it atomically;
+a validation failure keeps the old one and reports the error. Values already in the database are
+never touched by a reload.
+
+### 4.2 Calendar and scheduling
+
+- `GameCalendar` is pure: `Next(season, year)`, `IsPreElection(state)`, `TermEnd(state)`,
+  `NextResolutionAt(lastResolution, constants, seasonLengthDays)`. Time zone via
+  `TimeZoneInfo.FindSystemTimeZoneById(constants.TimeZone)` (IANA ids work on Windows .NET).
+- `ResolutionService` polls every minute. Each tick:
+  1. skip if paused;
+  2. if a campaign day is due, run the campaign-day variant;
+  3. if `nextResolutionAt <= now`, run one full resolution, then schedule the next one from the
+     current time, so a missed day runs once and is never replayed (alert the GM when the
+     resolution was more than one poll interval late).
+- `/gm resolve now` calls the same entry point as the poller, behind a single `SemaphoreSlim`, so
+  the two can never overlap.
+
+### 4.3 Resolution pipeline
+
+```
+ResolutionService
+  -> SnapshotService.Backup()                     before anything else
+  -> DatabaseService.Resolve(constants, random)   one connection, one transaction, spec section 7 steps 1-11
+       returns ResolutionReport                   nothing is sent to Discord inside
+  -> Publisher.Publish(report)                    after commit: news, results, private reports, dashboard, map
+  -> TurnTrackerService.Request(name)
+  -> AlertService for report.Alerts
+```
+
+- `ResolutionReport` is a plain record holding everything to post: news lines, fired events, crisis outcomes,
+  vote results, election result (with `ElectionResult` and the province winners), private messages
+  keyed by faction, cabinet report, alerts, and the seed.
+- Each spec step is one `…Tx` method in `DatabaseService.Resolution.cs`, which loads what it needs,
+  calls `Formulas`/`ElectionCalculator`, writes back, and appends to the report.
+- **Simultaneous actions** (spec section 5): load all pending actions and the start-of-turn state
+  first, compute every delta, then apply them in one pass, then raise salience.
+- If any step throws, the transaction rolls back, the snapshot is left as the latest one, nothing
+  is published, and the GM gets an alert with the exception.
+- If publishing fails half way, the game state is already correct. Log it and alert the GM; there
+  is no automatic re-post.
+- The seed is generated per resolution, stored in `GameState.rngSeed`, and reused on a re-run after
+  undo.
+
+### 4.4 Discord synchronisation
+
+Party roles and chats, faction channels and the turn tracker follow one rule: **the database is
+the truth, and a sync method makes Discord match it.** Each sync method is idempotent, so the same
+code runs after a command, on startup, and from `/gm party sync`.
+
+`PartySyncService.SyncAsync(partyId)`:
+1. Role: create if `roleId` is missing or the role is gone; set name, colour, hoisted.
+2. Members: add the role to every active member, remove it from everyone else who has it.
+3. Chat: create if missing under the party category; set overwrites (deny @everyone, allow the party
+   role, the GM role and the bot; Manage Messages for the leader).
+4. Store any new ids. Any Discord refusal goes to `AlertService` and leaves the database unchanged.
+
+Deletion archives the chat (move to the archive category, read-only for the GM role) and deletes the
+role. `UserJoined` re-runs the sync for the rejoining player's party; `UserLeft` raises the alert.
+Both need the Server Members intent added to `GatewayIntents` in `Bot.cs`.
+
+`TurnTrackerService` keeps only the latest requested name and a timestamp list of recent renames,
+and waits when two renames already happened in the last 10 minutes.
+
+### 4.5 Snapshots and undo
+
+- Backup with `SqliteConnection.BackupDatabase` into `snapshots/<yyyy-MM-dd-HHmm>-<Season><Year>.db`;
+  keep the newest 30.
+- Undo: pause the schedule, `SqliteConnection.ClearAllPools()`, copy the snapshot over the live
+  file, delete that resolution's posts (message ids are kept in the log), re-pin the old dashboard,
+  list the lost commands from `LogEntry` to the GM, and leave the game paused.
+
+### 4.6 Effects
+
+`EffectParser` handles both `discontent.north_arpal -2, economy -1, open.public_health` (modal text)
+and YAML maps, returns `IReadOnlyList<Effect>`, and rejects unknown keys and unknown ids. The
+`open.*` and `close.*` action keys take no value, and `condition.*` accepts only +1 or −1. Applying
+effects is one `ApplyEffectsTx` method used by laws, events, crisis answers, projects and `/gm set`,
+which clamps every value.
+
+### 4.7 Commands
+
+- Every command that creates channels or roles, renders an image, or touches many rows starts with
+  `DeferAsync`.
+- Permission checks: GM commands use `[RequireUserPermission(GuildPermission.ManageGuild)]`; role
+  checks (minister, Chancellor, party leader, opposition) are small precondition attributes in
+  `Commands/Preconditions.cs`, so every module shares them.
+- Long text goes through modals (`[ModalInteraction]`), never through slash options.
+
+## 5. Stages
+
+Each stage ends with `dotnet build` clean, `dotnet test` green, and a manual check on the real
+server. Stage numbers match spec section 11, with stage 0 added.
+
+### Stage 0: contracts (one session, no subagents)
+
+Everything later work codes against. Small but must be right first.
+
+- `Game/GameEnums.cs`, `Game/GameConstants.cs` + YAML files with the spec's values, `ConstantsStore`.
+- The **full schema** in `InitializeDatabase()`, all tables from spec section 3, plus
+  `AddColumnIfMissing` for the existing `factions` and `parties` tables. Writing it once up front
+  avoids every parallel session editing the same method.
+- `IRandomSource` (`RollDie(int faces)`, `NextDouble()`), `SeededRandomSource`.
+- `ResolutionReport` record and an empty `Resolve` that only advances the calendar.
+- `AureliaBot.Tests` project (csproj `Remove` globs and `InternalsVisibleTo` as CLAUDE.md
+  describes), `DatabaseFixture`, `ScriptedRandomSource`, one smoke test.
+- Service skeletons registered in `Bot.cs`.
+
+Done when: build and smoke test pass, and the bot starts against a fresh database.
+
+### Stage 1: foundation
+
+- `ResolutionService` poller, `/gm resolve now|delay|pause|resume`, season length override.
+- `SnapshotService`, `/gm undo`.
+- `/gm channel set`, whitelist integration.
+- `TurnTrackerService`, wired to resolution, undo, pause and resume.
+- `/gm reload`, `/gm set` for game-state fields.
+- Test command that advances the season.
+
+Tests: `GameCalendar` (term boundaries, pre-election length, a snap election moving the
+pre-election and restarting the term, year roll-over after Winter, next-resolution time across a
+DST change), undo restoring a known state.
+
+### Stage 2: factions and parties
+
+- `/faction create|info`, `FactionChannelService`.
+- `/gm party create|edit|add|remove|delete|sync|programme`, `/gm faction edit|retire`.
+- `/gm party create` with two or more founders, approving an application from #party-registry.
+- `/party join|leave|leader`, join requests with buttons in the party chat; joining only during a
+  pre-election.
+- `/gm party programme`: resolve the message link (guild, channel and message ids) to a message,
+  run `ProgrammeParser`, show a private preview (with flips and their cost) with Apply/Cancel
+  buttons, then replace the programme, apply flip penalties outside a pre-election, log it, post it
+  as a manifesto or a line change, and reply to the original message.
+- `PartySyncService`, member join/leave handlers.
+- Dashboard first version (parties, seats, calendar).
+
+Tests: membership rules (creation needs two independent founders, joining is refused outside a
+pre-election, leader leaving passes leadership to the most popular member, retire clears party and
+ministry), programme flips (only sign changes cost, nothing costs during a pre-election), and
+`ProgrammeParser`: the spec's example message, header lines ignored, title and id matching, emphasis
+and capitalisation variants, missing issues having no stance, and every error case (unknown, closed
+or repeated issue, bad opinion including *Silent*) reported together.
+
+### Stage 3: issues, events and campaigning
+
+- Issue and event templates (create/set/effects/ready/list/archive/delete/preview) and live issues.
+- Event queue, `/gm event queue|cancel`, events firing at the start of a turn and opening or closing
+  issues; province conditions (biases, resting discontent, growth) and `/province info`.
+- `/campaign`, `/attack`, `/poll` (answered in words through `Wording`), simultaneous resolution,
+  stance log, drift and decay.
+
+Tests: `Formulas` (every branch of the stance score, home doubling, attack backfire, condition
+biases and resting discontent), simultaneous resolution being independent of submission order,
+events firing in queue order and never on campaign days, `Wording` thresholds, and `EffectSummary`
+(visible values with amounts, hidden values direction only, opinion and baseline indistinguishable,
+action lines, zero effects dropped).
+
+### Stage 4: elections
+
+- `ElectionCalculator` with the spec's worked example as the first test (A 15, B 10, C 5), plus
+  apportionment, the √n crowding term, tie-breaks, zero popularity.
+- Results posting: seat chart (`ArchGenerator`, parties largest first), province map
+  (`ProvinceMapGenerator`), `ProvinceResult` rows, `/map`, `/gm election preview`.
+- Election boundary cancellations.
+
+### Stage 5: government
+
+- Cabinet lifecycle, `/chancellor nominate`, `/gm chancellor appoint`, `/gm cabinet impose`,
+  `/gm proclaim`, royal proclamation posts.
+- Bills, `/vote` with a running tally, laws, cooldowns, no confidence and snap elections.
+- Opposition actions (one a season, spent on a question or a shadow response), questions with the
+  minister's penalty and the asker's reward.
+
+Tests: vote counting (abstentions, ties, filled seats for no confidence), caretaker rules, a passed
+no-confidence motion making the next season the pre-election, independents being neither government
+nor opposition, the shared opposition action limit, question deadline shifting on a change of
+minister.
+
+### Stage 6: crises
+
+- Crisis templates (multi-modal creation, two or more answers including Neutral), posting through
+  the `crisis.*` event effect with the deadline at the next resolution, responses kept private until
+  resolution, clean/complicated/default outcomes with effect summaries, shadow scoring, vacant
+  ministries.
+
+Tests: Neutral answers and Neutral shadow responses gain and lose nothing, a Neutral minister
+answer counts as not on the right sign for shadows.
+
+### Stage 7: budget and standing work
+
+- Fiscal year, game-start budget, condition growth, purses, upkeep from the War and Interior purses,
+  Navy contribution changes and Favour drift, reserve and grants.
+- Divisions and gendarmerie with pending orders, crackdown rolls, projects paid in instalments
+  (stalling when unpaid), province informants reporting in words.
+
+Tests: Favour reacting only to a change in the Navy share, crackdown success and failure with a
+scripted random source.
+
+### Stage 8: GM tools
+
+- YAML import/export, alerts list from spec section 10, reminders, `/gm roll battle|riot`, `/gm peek`.
+
+## 6. Working with subagents
+
+The main session owns the shared contracts and the merge; subagents get narrow, file-disjoint
+tasks. Run parallel subagents with `isolation: "worktree"` so they never edit the same checkout.
+
+**Never delegate:** stage 0, schema changes, `Bot.cs`, `GameConstants`, `ResolutionReport`, the
+final merge, and anything that needs a live Discord test.
+
+**Good parallel tasks**, by stage:
+
+| Stage | Track A | Track B | Track C |
+| --- | --- | --- | --- |
+| 1 | `GameCalendar` + tests | `SnapshotService` + undo | `TurnTrackerService` |
+| 2 | Faction commands + channel service | `PartySyncService` | Party commands and join buttons |
+| 3 | `Formulas` + tests | Issue template commands | Campaign/attack/poll commands |
+| 4 | `ElectionCalculator` + tests | Results posting and `/map` | |
+| 5 | Vote counting + tests | Cabinet and question commands | Bills and no confidence |
+| 6 | Crisis outcome formulas + tests | Crisis template modals | |
+| 7 | Fiscal and Favour maths + tests | Forces, pending orders and crackdowns | Projects and informants |
+| 8 | `EffectParser` YAML import/export | Alerts and reminders | Battle and riot rolls |
+
+Pure-logic tracks (`Formulas`, `ElectionCalculator`, `GameCalendar`, fiscal maths) are the best
+fit: they need no Discord, their tests prove them, and they touch no shared files.
+
+**Brief template** for each subagent:
+
+```
+Goal: <one task from the table>, for AureliaBot.
+Read: CLAUDE.md, Implementation.md sections 2-4, spec section(s) <n>.
+Files you own: <list>. Do not edit any other file; if you need a change elsewhere
+(schema, Bot.cs, GameConstants, ResolutionReport), stop and report what you need.
+Follow the patterns in Implementation.md section 2. No code comments.
+Done when: dotnet build has no new warnings, dotnet test passes, and you report
+the public signatures you added and any spec ambiguity you hit.
+```
+
+**Review:** after each stage, give a fresh agent the diff and the relevant spec sections (not your
+summary of them) and ask it to find mismatches. Fix, then do the live check on the server.
+
+## 7. Open questions
+
+None block a stage. Everything is decided in the spec, `config/` and `content/`.
+
+**Tune in playtesting.** These have working values that should be checked on a real game:
+
+| Value | Check at |
+| --- | --- |
+| Condition biases and the issues' starting opinion and salience (`config/conditions.yaml`, `content/issues/`): run `/gm election preview` and polls across provinces, and look for provinces that agree on everything | Stage 4 |
+| Crackdown balance (`crackdown.cost`, `reduction`, `backlash`, `failurePopularity`) | Stage 7 |
+| Wording thresholds for opinion and salience (spec section 9) | Stage 3 |
+| Programme flip penalty and Favour drift | Stages 2 and 7 |

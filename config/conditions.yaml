@@ -1,0 +1,79 @@
+urban:
+  name: Urban
+  description: Crowded towns, where news travels fast and bread is bought, not grown.
+  biases: { factory_act: 0.2, grain_duties: 0.3, electoral_reform: 0.2, public_health: 0.3,
+            press_act: 0.2, poor_law: -0.2, combination_act: 0.2 }
+industrial:
+  name: Industrial
+  description: Pits, foundries and mills, and the men and children who work them.
+  biases: { factory_act: 0.3, grain_duties: 0.2, combination_act: 0.3, railway_charter: 0.2,
+            western_treaty: -0.2, poor_law: -0.1 }
+farmland:
+  name: Farmland
+  description: Wheat and pasture, held by landlords and worked by tenants.
+  biases: { grain_duties: -0.4, conscription: -0.2, electoral_reform: -0.1, western_treaty: -0.1,
+            factory_act: -0.1 }
+frontier:
+  name: Frontier
+  description: A border with a foreign power, watched from both sides.
+  biases: { conscription: 0.3, press_act: -0.1 }
+anzarian_border:
+  name: Anzarian Border
+  description: Anzarian lords, kin and markets lie just across the line.
+  biases: { anzarian_question: 0.3, conscription: 0.1, railway_charter: 0.1 }
+crossroads:
+  name: Crossroads
+  description: Roads and rivers carry the kingdom's trade through here.
+  biases: { railway_charter: 0.3, western_treaty: 0.3, grain_duties: 0.1 }
+rugged:
+  name: Rugged
+  description: Hills and uplands, hard to farm and harder to travel.
+  biases: { railway_charter: 0.1, grain_duties: 0.1, poor_law: -0.1 }
+forested:
+  name: Forested
+  description: Timber country, felling oak for ships and sleepers.
+  biases: { western_treaty: 0.2, railway_charter: 0.1 }
+marshland:
+  name: Marshland
+  description: Fens and lowlands, where the fever returns every summer.
+  biases: { public_health: 0.4 }
+  discontentRest: 0.5
+  growth: -0.001
+remote:
+  name: Remote
+  description: Far from the capital, and feeling it.
+  biases: { railway_charter: 0.3, electoral_reform: 0.2, anzarian_question: -0.1 }
+  discontentRest: 0.5
+coastal:
+  name: Coastal
+  description: A harbour province, open to the sea.
+  biases: { western_treaty: 0.2, grain_duties: 0.2 }
+lawless:
+  name: Lawless
+  description: Gangs rule the back streets, and the watch looks away.
+  biases: { conscription: 0.1, press_act: -0.1, poor_law: 0.1 }
+  discontentRest: 1
+  growth: -0.002
+epidemic:
+  name: Epidemic
+  description: Fever spreads through the crowded quarters.
+  biases: { public_health: 0.4, factory_act: 0.1 }
+  discontentRest: 1
+strike:
+  name: Strike
+  description: Picket lines stand at the gates, and nothing moves.
+  biases: { factory_act: 0.2, combination_act: 0.2 }
+  discontentRest: 1
+  growth: -0.002
+famine:
+  name: Famine
+  description: The harvest failed, and the price of bread has doubled.
+  biases: { grain_duties: 0.4, poor_law: -0.3 }
+  discontentRest: 2
+  growth: -0.003
+boom:
+  name: Boom
+  description: New money, new chimneys, and work for anyone who wants it.
+  biases: { railway_charter: 0.1 }
+  discontentRest: -1
+  growth: 0.003

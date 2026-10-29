@@ -1,0 +1,11 @@
+id: poor_law
+title: The Poor Law
+motion: Replace parish relief with national workhouses.
+for: Thrift, order and lower rates.
+against: Cruelty to the poor.
+opinion: -0.2
+baseline: -0.2
+salience: 2
+pass:
+  text: The first workhouses open their gates, and the queues at the parish doors vanish.
+  effects: { economy: 1, discontent.aurenten: 1, discontent.iracterie: 1 }

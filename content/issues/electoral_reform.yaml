@@ -1,0 +1,11 @@
+id: electoral_reform
+title: Electoral Reform
+motion: Widen the franchise to every householder, and enlarge the Assembly by twenty seats.
+for: Let the nation speak.
+against: Keep the vote with men of property.
+opinion: 0.2
+baseline: 0.2
+salience: 2
+pass:
+  text: Thousands of new voters are entered on the rolls, and the Assembly hall is rebuilt to seat them.
+  effects: { seats: 20, discontent.aurenten: -1, discontent.provencie_gares: -1 }

@@ -1,0 +1,11 @@
+id: railway_charter
+title: The Railway Charter
+motion: Guarantee the dividends of a national railway company from the Treasury.
+for: Iron roads to every province.
+against: Speculators' profits at the public's risk.
+opinion: 0.3
+baseline: 0.3
+salience: 2
+pass:
+  text: The Royal Aurelian Railway Company is chartered, and its shares sell out in a morning.
+  effects: { economy: 2, reserve: -3, discontent.provencie_gares: -1 }
