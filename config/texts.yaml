@@ -1,2 +1,1051 @@
+# Every text the bot sends, grouped by area. Edit the wording freely: the bot reloads this file a
+# moment after it is saved. Keep the {placeholders}: the bot fills them in (a name, a number, a date).
+# Keep the keys (the names before the colons) as they are: the code looks texts up by key.
+# Markdown works: **bold**, *italics*, ## headings, > quotes. A text spanning several lines uses |-.
+
 common:
   notRegistered: You are not registered yet; ask the GM.
+  retired: "Your faction has retired from politics."
+  needsPartyMember: "This needs a party member; you are an independent."
+  unregisteredAlert: "{user} ({username}) tried a game command but has no faction. Register them with `/gm faction create`."
+
+display:
+  none: "none"
+  independent: "independent"
+  notScheduled: "not scheduled"
+  crowns: "{amount} cr"
+
+party:
+  tally: "Accepts {accepts} of {needed} needed · Declines {declines}"
+  apply:
+    notPreElection: "You can apply to join a party only during a pre-election. The next pre-election is {preElection}."
+    notPreElectionOpens: "You can apply to join a party only during a pre-election. The next pre-election is {preElection}, which opens {opens}."
+    noSuchParty: "There is no party called \"{party}\"."
+    alreadyMember: "You are already a member of {party}. Only an independent can apply; leave first with `/party leave`."
+    aParty: "a party"
+    noChat: "{party} has no party chat to post your application in. The GM has been told; try again once it is repaired."
+    alreadyPending: "You already have an application pending with {party}. Its members are still answering."
+    notIndependent: "Only an independent can apply; leave your party first with `/party leave`."
+    partyGone: "There is no party called \"{party}\" any more."
+    postFailed: "Your application to {party} is recorded, but I could not post it in the party chat. The GM has been told."
+    posted: "Your application to join {party} is posted in its chat. You join as soon as {majority} of its {members} members accept, and it is declined as soon as {majority} decline. Joining does not change your seats. An application still pending when the election runs, at the end of {season} ({when}), is dropped."
+  leave:
+    yourParty: "your party"
+    confirm: "You will leave {party} and become independent. You keep your {seats} seats; seats only change at an election."
+    dissolvesOne: "{party} would be left with {remaining} active member, so it dissolves at once, and the dissolution is announced in #news."
+    dissolvesMany: "{party} would be left with {remaining} active members, so it dissolves at once, and the dissolution is announced in #news."
+    rejoin: "You could only join a party again during a pre-election."
+    button: "Leave the party"
+    alreadyIndependent: "You are already independent. Nothing was changed."
+    doneDissolved: "You have left {party} and are now independent, keeping your {seats} seats. With fewer than two active members left, {party} has dissolved."
+    done: "You have left {party} and are now independent, keeping your {seats} seats."
+    posted: "{faction} has left the party."
+  join:
+    post: |-
+      **Application to join {party}**
+      {applicant} applies to join the party.
+      {tally}
+    accept: "Accept"
+    decline: "Decline"
+    gone: "This application no longer exists."
+    thisParty: "this party"
+    notMember: "Only active members of {party} can answer its applications."
+    closed: "This application is already closed ({status}). Nothing was changed."
+    closingAccepted: "**Accepted.**"
+    closingDeclined: "**Declined.**"
+    closingDropped: "**Dropped:** the applicant is no longer an independent."
+    verbAccepted: "accepted"
+    verbDeclined: "declined"
+    joinedMajority: "You {verb}. That makes a majority: {applicant} has joined {party}."
+    declinedMajority: "You {verb}. That makes a majority: the application from {applicant} is declined."
+    dropped: "You {verb}, but {applicant} is no longer an independent, so the application is dropped."
+    recorded: "You {verb} the application from {applicant}. {tally}. You can change your answer while it is open."
+    declinedApplicant: "{party} has declined your application. You remain independent."
+    welcome: "{applicant} joins {party}. Welcome to the party."
+    acceptedApplicant: "{party} has accepted your application: you are now a member. Your seats are unchanged."
+  status:
+    accepted: "accepted"
+    declined: "declined"
+    dropped: "dropped"
+    pending: "pending"
+  alert:
+    noChat: "{user} tried to apply to {party}, but the party has no chat I can reach. Repair it with `/gm setup`."
+    postFailed: "Could not post {user}'s application (request {request}) in {party}'s chat: {error}"
+    leaveSyncFailed: "Party sync failed after <@{user}> left {party}: {error}"
+    dissolutionFailed: "Handling the dissolution of {party} failed: {error}"
+    joinSyncFailed: "Party sync failed after <@{user}> joined party {party}: {error}"
+    tellFailed: "Could not tell <@{user}> about their party application: {error}"
+
+campaign:
+  describe:
+    issue: "*{issue}*"
+    campaign: "a campaign {stance} on {issue}"
+    campaignOff: "a campaign {stance} on {issue} (off-programme)"
+    noStance: "with no stance"
+    attack: "an attack on {target}'s stance on {issue}"
+    nobody: "nobody"
+    pollNational: "a poll on {issue} nationally"
+    pollProvince: "a poll on {issue} in {province}"
+  resolves: "It resolves at the next resolution, {when}, simultaneously with everyone else's actions; results are revealed then."
+  needStanceIndependent: "As an independent you must give a stance to campaign on *{issue}*."
+  needStanceSilent: "Your party's programme takes no stance on *{issue}*, so you must give one. It will not count as off-programme."
+  offProgrammeConfirm: "Your party's programme is **{programme}** on *{issue}*. Campaigning **{stance}** goes **off-programme**, and will be logged publicly as off-programme in #campaign-log at the next resolution, {when}. Confirm?"
+  offProgrammeButton: "Campaign off-programme"
+  noSuchFaction: "There is no such faction. Pick a rival from the list."
+  attackRefusal: "You cannot attack {rival} on *{issue}*: {reason}."
+  noSuchProvince: "There is no province called \"{province}\"."
+  noLongerPending: "That action is no longer pending; it was already cancelled, replaced or resolved."
+  cancelled: "Cancelled {action}. You have a free action slot until the next resolution, {when}."
+  tooMany: "You already have {count} pending actions, the most you can have, each of a different kind: {actions}. Cancel one in `/me` to free a slot, or submit an action of a kind already pending to replace it."
+  issueNotOpen: "That issue is no longer open."
+  stanceRequired: "You must give a stance on this issue."
+  provinceNotInPlay: "That province is not in play yet."
+  attackRefused: "The attack was refused: {reason}."
+  recorded: "Recorded {action}."
+  replaces: "This replaces your pending {action}, which is cancelled."
+  loggedOffProgramme: "It will be logged publicly as **off-programme** in #campaign-log."
+  pollTiming: "The poll is taken at the next resolution, {when}, against the mood at its start, and the answer comes to your private channel in words."
+  postedWithResolution: "Campaigns and attacks are posted to #campaign-log with the resolution."
+  pendingCount: "Pending actions: {count} of {max}."
+  noOpenIssue: "There is no open issue \"{issue}\". Pick one from the list."
+  autocomplete:
+    programme: "{issue} · programme: {stance}"
+    chooseStance: "{issue} · choose a stance"
+
+info:
+  kind:
+    party: "Party · {name}"
+    faction: "Faction · {name}"
+    bill: "Bill · {name}"
+    issue: "Issue · {name}"
+    province: "Province · {name}"
+  notFound: "Nothing called `{thing}` was found. Pick something from the list."
+  live:
+    heading: "## {season}"
+    headingPreElection: "## {season} · Pre-election"
+    next: "Next resolution: {when}"
+    openIssues: "**Open issues**"
+    parties: "**Parties**"
+    noneYet: "None yet."
+  seats: "Seats: {seats}"
+  faction:
+    missing: "That faction doesn't exist."
+    retired: "*Retired from politics.*"
+    popularity: "Popularity: {popularity}"
+    party: "Party: {party}"
+    home: "Home province: {province}"
+    stances: "**Stances**"
+    stance: "- {issue}: {stance} ({source}, {season})"
+    stanceOff: "- {issue}: {stance} ({source}, {season}, off-programme)"
+  party:
+    missing: "That party doesn't exist."
+    colourGovernment: "Colour: `{colour}` · in government"
+    colourOpposition: "Colour: `{colour}` · in opposition"
+    founded: "Founded {season}"
+    members: "**Members**"
+    member: "- {faction} · popularity {popularity} · {seats} seats"
+    programme: "**Programme**"
+    noOpenIssues: "No issues are open yet."
+    noStance: "no stance"
+  issue:
+    missing: "That issue doesn't exist."
+    for: "For: {text}"
+    against: "Against: {text}"
+    status: "Status: {status}"
+    bills: "**Bills**"
+  bill:
+    missing: "That bill doesn't exist."
+    available: "available"
+    voting: "before the Assembly"
+    resting: "resting until {season}"
+    passed: "passed into law"
+    withdrawn: "withdrawn"
+  province:
+    missing: "That province doesn't exist."
+    discontent: "Discontent: {discontent}"
+    conditions: "**Conditions**"
+    stationed: "Stationed: {units}"
+    unit: "{name} · d{sides}"
+
+me:
+  status: "{season} · next resolution {when}"
+  statusPreElection: "{season} · Pre-election · next resolution {when}"
+  summary: "Popularity {popularity} · {seats} seats · {party} · {role}"
+  youAccepted: "you accepted"
+  youDeclined: "you declined"
+  notAnswered: "not answered yet"
+  application: "Application from {applicant} to join {party} ({answer})"
+  acceptButton: "Accept #{request}"
+  declineButton: "Decline #{request}"
+  ownApplication: "Your application to {party} is waiting for its members' answers."
+  pendingActions: "**Pending actions** (resolve {when})"
+  campaign: "Campaign *{stance}* on {issue}"
+  campaignOff: "Campaign *{stance}* on {issue} (off-programme)"
+  attack: "Attack {target} on {issue}"
+  unknownTarget: "?"
+  pollNational: "Poll {issue} nationally"
+  pollProvince: "Poll {issue} in {province}"
+  cancelButton: "Cancel {kind}"
+  noActions: "You have {count} actions this turn, each of a different kind: `/campaign`, `/attack`, `/poll`."
+  waiting: "**Waiting on you**"
+  nothingWaiting: "**Nothing is waiting on you.**"
+  independentPreElection: "You are independent, and only parties stand in elections: `/party apply` to join one this season."
+  independent: "You are independent. Parties can be joined in the pre-election, {preElection}."
+  member: "Talk with your party, and see `/help` for what you can do."
+
+help:
+  basics: |-
+    ## How Aurelia works
+    Each turn is one season and lasts one real day; it ends at the daily resolution. The pre-election turn lasts {preElectionDays} days and ends in an election.
+    Money, popularity, seats and forces are public numbers. The people's mood is told in words.
+    `/me` shows what is waiting on you, `/info` shows anything in the game.
+  parties: |-
+    ## Parties
+    The GM founds parties at the request of two or more factions. Only parties stand in elections.
+    - `/party apply` joins a party, only during the pre-election, with the agreement of a majority of its members.
+    - `/party leave` makes you independent; you keep your seats. A party left with one faction dissolves.
+    - A party writes its programme as a message and sends the GM its link. Outside the pre-election, flipping a stance between For and Against costs every member {flipPenalty} popularity.
+  campaigning: |-
+    ## Campaigning
+    Each turn you take up to {actionsPerTurn} actions of different kinds (per day in the pre-election):
+    - **Campaign** on an issue: gain popularity if the nation agrees with you.
+    - **Attack** a rival's stance: they lose popularity if the nation disagrees with them; otherwise it backfires.
+    - **Poll** an issue, nationally or in one province.
+    All actions are revealed together when the turn ends. *(Coming in a later update.)*
+  opposition: |-
+    ## Opposition
+    A faction in a party with no cabinet seat is in opposition, and has one opposition action a season: question a minister, condemn a crisis, or propose a bill (once a year). *(Coming in a later update.)*
+  voting: |-
+    ## Voting
+    Each faction votes all its seats one way. A bill passes when more seats vote for it than against. Cabinet and no-confidence votes stay open until the end of the next turn. *(Coming in a later update.)*
+  ministries: |-
+    ## Ministries
+    The Chancellor names four ministers: Treasury, War, Interior, and Commerce and Labor. Ministers answer crises, manage forces and run projects. *(Coming in a later update.)*
+  elections: |-
+    ## Elections
+    Seats are counted province by province, by population. A party's strength is its factions' combined popularity, weighed by how well its programme fits the local mood. Every faction in a standing party also wins a safe borough seat in its home province. *(Coming in a later update.)*
+  unknown: "Unknown topic."
+
+confirm:
+  button: "Confirm"
+  cancel: "Cancel"
+  onlyConfirmer: "Only the person who ran the command can confirm it."
+  onlyCanceller: "Only the person who ran the command can cancel it."
+  expired: "This confirmation has expired. Run the command again."
+  failed: "⚠️ {error}"
+  cancelled: "Cancelled. Nothing was changed."
+
+whitelist:
+  added: "Whitelisted <#{channel}> for bot commands."
+  alreadyListed: "<#{channel}> is already whitelisted."
+  removed: "Removed <#{channel}> from the whitelist."
+  notListed: "<#{channel}> wasn't whitelisted."
+  empty: "No channels are whitelisted — bot commands work in every channel."
+  list: |-
+    Whitelisted channels:
+    {channels}
+
+gm:
+  notScheduled: "not scheduled"
+  nextResolution: "{at} ({relative})"
+  warning: "⚠️ {warning}"
+  royalAdjustment: "Royal adjustment"
+  royalDecree: "By royal decree"
+  decreeHeading: "## By His Majesty's Command"
+  channel:
+    set:
+      needsRole: "{kind} needs the `role` option."
+      roleSet: "{kind} is now {role}."
+      needsChannel: "{kind} needs the `channel` option."
+      notCategory: "{kind} must be a category."
+      notVoice: "{kind} must be a voice channel."
+      notText: "{kind} must be a text channel."
+      channelSet: "{kind} is now <#{channel}>."
+      channelSetWhitelisted: "{kind} is now <#{channel}>. It was added to the command whitelist."
+  event:
+    queuedChoice: "#{id} {title} · resolution {resolution}"
+    queue:
+      notReady: "`{template}` is not a Ready event template."
+      unparsable: "`{template}` no longer parses; fix it with `/content edit`."
+      whenStarted: "at the start of {turn}"
+      whenAtStart: "at `/gm start`"
+      whenAfterStart: "{turns} turn(s) after `/gm start`"
+      queued: "Queued **{title}** (#{id}), firing {when}."
+    cancel:
+      notQueued: "That is not a queued event."
+      cancelled: "Cancelled **{title}** (#{id})."
+  faction:
+    notFound: "No such faction. Pick one from the list."
+    noProvince: "There is no province `{home}`. Pick one from the list."
+    create:
+      refusedBot: "A bot can't be a faction."
+      refusedNoName: "The character needs a name."
+      alreadyHas: "{player} already has a faction."
+      alreadyRetired: "{player} already has a faction, now retired. A player can't register twice."
+      news: "**{character}** ({player}) enters politics, standing for {province}."
+      greeting: "Welcome to politics, {player}. This is the private office of **{character}**, member for {province}. Poll results and reminders arrive here, and you can run your commands here."
+      registered: "Registered {player} as **{character}**, home province {province}, at popularity {popularity}, independent, with no seats until the next election."
+      privateChannel: "Private channel: <#{channel}>."
+      noPrivateChannel: "⚠️ The private channel could not be made; see #gm, then run `/gm setup`."
+      greetingFailed: "⚠️ The greeting could not be posted."
+    edit:
+      nothing: "Give a new `character` or `home`."
+      changedCharacter: "character **{from}** → **{to}**"
+      changedHome: "home {from} → {to}"
+      done: "<@{user}>: {changes}."
+    retire:
+      alreadyRetired: "{faction} is already retired."
+      confirm: "Retire {faction}?"
+      leavesDissolvingParty: "- They leave {party}, which dissolves: only {remaining} active member would remain."
+      leavesParty: "- They leave {party}."
+      leavesCabinet: "- They leave the cabinet; their post falls vacant."
+      dropsPending: "- Their pending actions and join applications are dropped."
+      seatsVacantPreview: "- Their {seats} seat(s) stay vacant until the next election."
+      noSeats: "- They hold no seats."
+      button: "Retire"
+      chancellorship: "the Chancellorship"
+      ministry: "the Ministry of {portfolio}"
+      and: " and "
+      notActive: "<@{user}> is not an active faction; nothing was changed."
+      retired: "{faction} has retired from politics."
+      dissolved: "{party} dissolved."
+      vacancy: "{faction} retired, leaving {posts} vacant."
+      vacancyAlert: "A cabinet seat is empty: {vacancy}"
+      seatsVacant: "Their {seats} seat(s) stay vacant until the next election."
+      syncPartyDissolution: "party dissolution"
+      syncPartyRole: "party role"
+      syncParty: "party sync"
+      syncCabinetRole: "cabinet role"
+      syncFailed: "⚠️ The {what} sync failed: {error}"
+  party:
+    notFound: "That party does not exist."
+    nameTaken: "A party named **{name}** already exists."
+    nameMissing: "The party needs a name."
+    nameTooLong: "The name is too long: Discord allows {max} characters."
+    badColour: "`{colour}` is not a colour; write it as `#RRGGBB`, for example `#C0392B`."
+    similarColour: "`{colour}` is close to {parties}; the seat chart and map may be hard to read. Change it with `/gm party edit` if needed."
+    similarColourEntry: "**{name}** (`{colour}`)"
+    and: " and "
+    problemsHeading: "Problems:"
+    newsNotSet: "No #news channel is set, so the announcement was not posted."
+    newsFailed: "Could not post to #news: {error}"
+    summary:
+      role: " Role <@&{role}>."
+      noRole: " No role yet."
+      chat: " Chat <#{channel}>."
+      noChat: " No chat yet."
+    create:
+      badEmoji: "`{emoji}` is not a custom emoji; pick one from this server's emoji list."
+      news: "**A new party takes the field.** {founders} have joined their fortunes together as the {party}, and will stand as one at the coming election."
+      founded: "Founded **{name}** (`{colour}`) with {founders}."
+      tooFewFounders: "A party needs at least two different founders."
+      founderNotRegistered: "<@{user}> is not a registered, active faction; register them with `/gm faction create` first."
+      founderNotIndependent: "{faction} already belongs to **{party}**; every founder must be independent. Move them out first with `/gm party move`."
+      aParty: "a party"
+      failed: "The party could not be founded."
+    edit:
+      nothing: "Nothing to change: give a new name, colour or emoji."
+      badEmoji: "`{emoji}` is not a custom emoji; pick one from this server's emoji list, or write `none`."
+      failed: "Could not update **{name}**: the name **{newName}** may already be taken."
+      updatedNoEmoji: "Updated **{name}** (`{colour}`, no emoji)."
+      updatedWithEmoji: "Updated **{name}** (`{colour}`, {party})."
+    move:
+      notActive: "<@{user}> is not a registered, active faction."
+      failed: "The move could not be made; the faction or the party changed meanwhile."
+      alreadyIndependent: "{faction} is already independent."
+      alreadyIn: "{faction} is already in **{party}**."
+      independent: "independent"
+      partyName: "**{name}**"
+      moved: "Moved {faction} from {from} to {to}."
+      dissolved: "**{party}** was left with fewer than two members and dissolved; it was announced in #news."
+    delete:
+      confirm: "Delete **{name}**? Its {members} member(s) become independent and keep their seats, its role is deleted, its chat is archived, and the dissolution is announced in #news."
+      gone: "That party no longer exists; nothing was changed."
+      news: "**The {name} is no more.** The party is struck from the register."
+      newsOneMember: "**The {name} is no more.** The party is struck from the register, and {names} sits on as independent."
+      newsMembers: "**The {name} is no more.** The party is struck from the register, and {names} sit on as independents."
+      deleted: "Deleted **{name}**. {count} member(s) are now independent; its role was deleted and its chat archived (any Discord refusal was posted to #gm)."
+    programme:
+      noParty: "There is no party called \"{party}\"."
+      notLink: "That is not a message link. Use **Copy Message Link** in Discord: `https://discord.com/channels/<server>/<channel>/<message>`."
+      otherServer: "That message is on another server."
+      cantSeeChannel: "I cannot see the channel <#{channel}>."
+      cantRead: "I can't read <#{channel}> ({reason}). Give the bot access to it, or record from another channel."
+      messageNotFound: "I cannot find that message in <#{channel}>."
+      badLine: "Line {line}: `{text}` — {reason}"
+      badLines: "The programme of {party} has {count} bad line(s). Nothing was recorded."
+      previewTitle: "**Programme of {party}** ({url})"
+      noOpenIssues: "There are no open issues."
+      previewLine: "{issue}: {stance}"
+      previewLineFlip: "{issue}: {stance} ⚠️ flips from {from}"
+      noStance: "*no stance*"
+      preElection: "This is the pre-election, so the programme is a manifesto: it changes freely and is posted to #news."
+      noFlips: "No stance flips sign, so the change is free."
+      flips: "{flips} stance(s) flip sign: each of the {members} members loses {penalty} popularity, and each flip is announced in #news."
+      postedToCampaignLog: "The programme is posted to #campaign-log."
+      willReply: "I will reply to the original message with the recorded programme."
+      button: "Record"
+      gone: "That party no longer exists. Nothing was recorded."
+      manifestoPost: |-
+        ## Manifesto of {party}
+        {programme}
+      programmePost: |-
+        ## Programme of {party}
+        {programme}
+      flipNews: "{party} changes its line on {issue}."
+      theParty: "the {name}"
+      postFailed: "posting it publicly failed: {error}"
+      recordedReply: |-
+        Recorded as the programme of {party}:
+        {programme}
+      cantReachChannel: "I could not reach the original message's channel to reply"
+      replyFailed: "replying to the original message failed: {error}"
+      alert: "The programme of {party} was recorded, but {problems}."
+      recordedManifesto: "Recorded the programme of {party}: {count} stance(s). Posted to #news as its manifesto."
+      recordedNoFlip: "Recorded the programme of {party}: {count} stance(s). Posted to #campaign-log; no stance flipped."
+      recordedFlips: "Recorded the programme of {party}: {count} stance(s). Posted to #campaign-log. Flipped: {issues}; {members} member(s) lost {penalty} popularity each."
+      butProblems: "⚠️ But {problems}."
+      stanceLine: "{issue}: *{stance}*"
+      noStanceAtAll: "No stance on any issue."
+      noStanceOn: "No stance on {issues}."
+  resolve:
+    notStarted: "The game hasn't started yet; open it with `/gm start`."
+    failed: "⚠️ The resolution failed and was rolled back. The details are in #gm, and the schedule is paused."
+    resolved: "Resolved {from}. It is now {now}. Next resolution: {next}."
+    needHours: "Give a positive number of `hours` to delay by."
+    nothingToDelay: "No resolution is scheduled yet, so there is nothing to delay."
+    delayed: "The next resolution is delayed by {hours} h, to {when}."
+    alreadyPaused: "The schedule is already paused."
+    paused: "The schedule is paused. Nothing resolves until you resume it."
+    notPaused: "The schedule isn't paused."
+    resumed: "The schedule is running again. Next resolution: {next}."
+    resumedOverdue: "The schedule is running again. Next resolution: {next}. It is already due, so it runs within a minute."
+  reload:
+    configReloaded: "Config reloaded from `{folder}`. Values already in play are unchanged."
+    configFailed: |-
+      ⚠️ The config was not reloaded; the old one stays in force.
+      {error}
+    contentUnchanged: "Content: all {count} file(s) in `{folder}` are already loaded."
+  undo:
+    noSnapshot: "There is no snapshot to restore."
+    restored: "Restored the snapshot from {when}. It is {label} again, and the schedule is **paused**."
+    postsDeleted: "Posts deleted: {count}."
+    postsPartlyDeleted: "Posts deleted: {count}, {failed} could not be deleted."
+    noCommandsLost: "No player commands were lost."
+    commandsLost: "Commands lost ({count}):"
+    lostCommand: "- {at} {faction} `{payload}`"
+    resumeHint: "Use `/gm resolve resume` to re-run the resolution with the same seed."
+    button: "Undo"
+    confirm: "Restore the snapshot from {when} ({season} {year})? Everything since then is lost, that resolution's posts are deleted, and the schedule is paused."
+  set:
+    keyChoice: "{name} (now {value})"
+    calendarNotStarted: "The calendar can't be changed before `/gm start`; the game always opens in the start season from `constants.yaml`."
+    invalidValue: "`{value}` is not a valid value for `{field}`."
+    noLongerValid: "The value is no longer valid."
+    changed: "`{field}` changed from {from} to {to}."
+    changedWithSchedule: "`{field}` changed from {from} to {to}. Next resolution: {next}."
+    button: "Set"
+    confirm: "Set `{field}` from **{from}** to **{to}**? Nothing is posted."
+    unknownKey: "`{key}` is not a value `/gm set` knows. Use a game value from the list, or an effect key such as `purse.War`, `discontent.north_arpal`, `opinion.labour`, `salience.labour` or `popularity.<user id>`."
+    noCurrentValue: "`{key}` has no current value (is the game started and the issue open?)."
+    unknownValue: "?"
+    effectChanged: "`{key}` changed from {from} to {to}."
+    effectConfirm: "Set `{key}` from **{from}** to **{to}** (clamped to its range)? Nothing is posted."
+  setup:
+    notTextChannel: "Run this in a text channel, ideally #gm."
+    couldNotPost: "I couldn't post the checklist here."
+    posted: "The setup checklist is in {url}. It updates itself whenever a channel or role changes, or you register something with `/gm channel set`. Nothing was created."
+  start:
+    alreadyStarted: "The game has already started; it is {label}."
+    noOpeningEvent: "⚠️ **No event is queued to fire at the start.** No issues will be open. Mark the opening event Ready first (`/content ready`)."
+    openingEvents: "Events that fire at once: {events}."
+    couldNotStart: "The game could not start."
+    proclamation: |-
+      ## By His Majesty's Command
+      His Majesty King Arthas II summons the first Aurelian Assembly. The hustings are open across the ten provinces through {label}, and the nation goes to the polls when the season ends, {when}.
+      Let every party declare where it stands.
+    started: "The game has started: {label}, the founding pre-election. {events} event(s) fired. The election runs at {when}, after {days} campaign day(s)."
+    button: "Start the game"
+    confirm: "Start the game in {season}? This loads the provinces, sets every starting value from `constants.yaml`, funds the purses, raises the starting forces and opens the founding pre-election ({days} days). It can only be done once."
+  apply:
+    noEffects: "No effects given."
+    nothingApplied: "Nothing was applied:"
+    applied: "Applied {count} effect(s)."
+    appliedPublic: "Applied {count} effect(s) and posted them to #news."
+  reward:
+    negative: "A reward can't be negative; use `/gm apply` for penalties."
+    notPositive: "The amount must be positive."
+    noActiveFaction: "No such active faction. Pick one from the list."
+    noReason: "Give a reason."
+    noFaction: "No such faction."
+    commendation: |-
+      ## By His Majesty's Command
+      His Majesty is pleased to commend {faction} for {reason}.
+      *Popularity {gained}*
+    capped: " (capped at {max})"
+    rewardedPosted: "Rewarded {faction}: popularity {from} → {to}{capped}. The commendation is in #news."
+    rewardedNotPosted: |-
+      Rewarded {faction}: popularity {from} → {to}{capped}.
+      ⚠️ No #news channel is set, so the commendation was not posted.
+
+setup:
+  ok: "✅ {text}"
+  warning: "⚠️ {text}"
+  missing: "❌ {text}"
+  item:
+    news: "#news"
+    dashboard: "#dashboard"
+    assembly: "#assembly"
+    campaignLog: "#campaign-log"
+    cabinet: "#cabinet"
+    gm: "#gm"
+    turnTracker: "Turn tracker"
+    factionCategory: "Factions category"
+    partyCategory: "Parties category"
+    archiveCategory: "Archive category"
+    gmRole: "GM role"
+    cabinetRole: "Cabinet role"
+  button:
+    register: "Register the suggestions"
+    repair: "Repair parties, factions and Cabinet role"
+    refresh: "Refresh"
+  noGuild: |-
+    ## Setup checklist
+    ❌ The bot can't see the server yet.
+  heading: "## Setup checklist · {ready} of {total} ready"
+  sectionTitle: "**{title}**"
+  footer: "Register anything with `/gm channel set`. This message updates itself. Last checked {when}."
+  section:
+    channels: "Channels"
+    categories: "Categories"
+    roles: "Roles"
+    bot: "The bot"
+    game: "Game"
+  check:
+    notSet: "{item}: not set."
+    notSetFound: "{item}: not set. Found {match}: press *Register the suggestions*."
+    gone: "{item}: the registered {kind} is gone or is the wrong type."
+    ok: "{item}: {mention}"
+    problems: "{item}: {mention}: {problems}."
+  kind:
+    role: "role"
+    category: "category"
+    voice: "voice channel"
+    text: "text channel"
+  problem:
+    botCantSee: "the bot can't see it"
+    botCantPost: "the bot can't post here"
+    dashboardNeedsManageMessages: "the bot needs Manage Messages to pin the dashboard"
+    playersCantRead: "players can't read it"
+    playersCanPost: "players can post here (only the bot should)"
+    shouldBePrivate: "everyone can see it; it should be private"
+    cabinetRoleCantSee: "the Cabinet role can't see it"
+    gmRoleCantSee: "the GM role can't see it"
+    trackerNeedsManageChannels: "the bot needs Manage Channels on it to rename it"
+    trackerConnect: "deny Connect to @everyone to keep it display-only"
+    categoryNeedsManageChannels: "the bot needs Manage Channels in it"
+    archiveVisible: "everyone can see archived chats"
+    roleAboveBot: "it sits above the bot's role, so the bot can't give it out"
+    roleColoured: "it has a colour, which hides party colours"
+  bot:
+    manageChannelsOk: "Manage Channels"
+    manageChannelsMissing: "Manage Channels: the bot needs it for party chats, faction channels and the turn tracker."
+    manageRolesOk: "Manage Roles"
+    manageRolesMissing: "Manage Roles: the bot needs it for party roles and the Cabinet role."
+    rolePositionNoParties: "Role position: no party roles yet; keep the bot's role near the top"
+    rolePositionOk: "Role position: above every party role"
+    rolePositionTooLow: "Role position: drag the bot's role above {roles}."
+    colouredRoles: "Coloured roles above party roles hide party colours: {roles}."
+    membersOk: "Server Members intent: the member list is loaded"
+    membersWarning: "Server Members intent: the member list isn't loaded yet; check the intent in the Developer Portal if this stays."
+    messageContent: "Message Content intent: requested at login (Discord refuses the connection if it's off)"
+  game:
+    partiesOk: "Parties: {count}, each with its role and chat"
+    partiesBroken: "Parties missing a role or chat: {parties}. Press *Repair*."
+    factionsOk: "Factions: {count}, each with its private channel"
+    factionsNoChannel: "{count} faction(s) without a private channel. Press *Repair*."
+    started: "Game started: {label}"
+    notStarted: "Game not started yet: {templates} Ready template(s), {events} event(s) waiting for `/gm start`."
+  register:
+    nothing: "There was nothing to register: no unset item has a channel or role with a matching name."
+    done: "Registered: {items}"
+    item: "{role} → {mention}"
+  repair:
+    allGood: "Party roles and chats, faction channels and the Cabinet role all match the game."
+    stillWrong: "Repaired what I could. Still wrong:"
+    factionChannels: "faction channels"
+    parties: "parties"
+    cabinetRole: "the Cabinet role"
+    failed: "{what}: {error}"
+
+content:
+  autocomplete: "{id} · {kind} · {status}"
+  bullet: "- {item}"
+  subBullet: "  - {item}"
+  noTemplate: "There is no template `{id}`."
+  posted:
+    once: once
+    times: "{count} times"
+  import:
+    notYaml: "`{name}`: skipped; only .yaml, .yml and .zip files import."
+    tooLarge: "`{name}`: skipped; it is too large."
+    downloadFailed: "`{name}`: couldn't be downloaded ({error})."
+    emptyZip: "`{name}`: holds no .yaml files."
+    badZip: "`{name}`: isn't a readable zip."
+    summary: "**{imported} imported, {replaced} replaced, {failed} with errors.**"
+    failed: "- `{file}`: not imported."
+    what: "`{id}` ({kind})"
+    imported: "- {what}: imported as a Draft."
+    replacedToDraft: "- {what}: replaced, and returned to Draft."
+    replacedEventToDraft: "- {what}: replaced, and returned to Draft; its queued copy is cancelled until it is Ready again."
+    replaced: "- {what}: replaced."
+    idTaken: "`{id}` already exists. Pick a new id for the copy, or edit `{id}` itself."
+  edit:
+    tooLong: "`{id}` is {length} characters, more than a form holds ({limit}). Edit it with `/content export`, then `/content import` the changed file."
+    titleLive: Edit live {id}
+    title: Edit {id}
+    yamlLabel: YAML
+    modalTitle: Edit template
+    nothingLive: Nothing live to edit.
+    copy: "The id changed, so this is a copy: `{id}` is unchanged."
+    attached: Your YAML is attached, so the edit isn't lost.
+  list:
+    none: No templates match.
+    headerOne: "**{count} template**"
+    headerMany: "**{count} templates**"
+    line: "`{id}` · {kind} · {status} · posted {times}"
+    more: "…and {count} more. Narrow it with `kind` or `status`."
+  remove:
+    deleteButton: Delete
+    archiveButton: Archive
+    confirmDelete: "Delete `{id}` ({kind})? It is a Draft that was never posted, so it goes for good."
+    confirmArchive: "Archive `{id}` ({kind})? It is {status} or has been posted, so it is kept for the log, out of use."
+    deleted: "Deleted `{id}`: it was a Draft that was never posted."
+    archived: "Archived `{id}`: it is out of use, but kept for the log."
+    archivedCancelled: "Archived `{id}`: it is out of use, but kept for the log. Its queued scheduled event was cancelled."
+  export:
+    none: There are no templates to export.
+    doneOne: "{count} template. Edit the files and `/content import` the zip, or single files, to bring them back."
+    doneMany: "{count} templates. Edit the files and `/content import` the zip, or single files, to bring them back."
+  ready:
+    parseErrors: "`{id}` can't be marked Ready:"
+    problems: "`{id}` can't be marked Ready yet:"
+    alreadyFired: Its scheduled event has already fired, so the schedule does nothing more.
+    done: "`{id}` ({kind}) is Ready."
+    queued: Its event is queued to fire {when}.
+    scheduleCancelled: It no longer has a schedule, so its scheduled event was cancelled.
+    noSchedule: "It has no schedule: queue it with `/gm event queue`."
+  schedule:
+    itsTurn: its turn
+    started: "Its scheduled turn, {turn}, has already started: it is now {now}."
+    beforeStart: Its scheduled turn, {turn}, is before the game starts in {start}.
+    atGameStart: at /gm start
+    atTurn: at the start of {turn}
+  readiness:
+    issueRole: Its issue template
+    templateRole: The template
+    missing: "{role} `{id}` does not exist."
+    notReady: "{role} `{id}` ({kind}) is {status}, not Ready."
+  live:
+    laterStage: Editing live projects and crises comes in a later stage.
+    noIssue: "`{id}` has no live issue: it hasn't been opened."
+    noBill: "`{id}` has no live bill: it hasn't been made available."
+    noEvent: "`{id}` has no queued event to edit."
+    nothing: "There is nothing live called `{id}`."
+    nothingChanged: "Nothing was changed:"
+    kindChanged: A live {kind} must stay a {kind}. Nothing was changed.
+    idChanged: "The `id` of a live item can't change. Nothing was changed."
+    issueGone: "The live issue `{id}` is gone. Nothing was changed."
+    issueNews: |-
+      ## {title}
+      The question now reads:
+      For: {for}
+      Against: {against}
+    issueEdited: "Edited the live issue `{id}`."
+    issueEditedPosted: "Edited the live issue `{id}`. The new For and Against text is posted to #news."
+    billKeeps: "A live bill keeps its `issue` and `lean`. Nothing was changed."
+    billLocked: "The live bill `{id}` can only be edited while it is available or resting after a rejection. Nothing was changed."
+    billNews: |-
+      ## {title}
+      The motion now reads:
+      > {motion}
+    billEdited: "Edited the live bill `{id}`."
+    billEditedPosted: "Edited the live bill `{id}`. The new motion is posted to #news."
+    eventGone: That event is no longer queued. Nothing was changed.
+    eventEdited: "Edited queued event {eventId} from `{id}`."
+    eventEditedScheduled: "Edited queued event {eventId} from `{id}`. A queued copy has no schedule: edit the template and mark it Ready again to move it."
+    unsupported: That kind of live item can't be edited yet.
+  preview:
+    header: "**Preview of `{id}`** · {kind} · {status} · posted {times}"
+    unparsable: "It doesn't parse, so there is nothing to show:"
+    playersSee: "-# What players will see:"
+    forGm: "**For the GM**"
+    hidden: "Hidden: opinion {opinion}, salience {salience}."
+    ministerial: "Ministerial: the minister can start it with `/ministry project`."
+    requires: Needs a province with {condition}.
+    noWarningsReady: No warnings. It is Ready.
+    noWarnings: "No warnings: `/content ready` will accept it."
+    warning: "- ⚠️ {warning}"
+    issue: |-
+      ## {title}
+      For: {for}
+      Against: {against}
+      Status: Open
+    title: "## {title}"
+    billMeta: "{issue} · {lean}"
+    motion: "> {motion}"
+    billPasses: "-# When it passes, in #news:"
+    billLaw: "## {title} becomes law"
+    anyProvince: A province of the minister's choosing
+    projectBegun: "## Project begun: {title}"
+    projectMeta: "{where} · Ministry of {ministry} · {price} over {term} seasons"
+    bonusWithin: Bonus if finished within {within} seasons
+    bonusBy: Bonus if finished by the end of {season} {year}
+    projectFinishes: "-# When it finishes, in #news:"
+    projectFinished: "## {title} is finished"
+    withBonus: "-# With the bonus, on top:"
+    whenItFires: (the turn it fires)
+    crisisTitle: "## Crisis: {title}"
+    crisisMeta: Ministry of {ministry} · {province} · {issue}
+    crisisDue: Due at the next resolution
+    answer: "{number}. {label} · {lean} · {price}"
+    free: free
+    outcome: "-# Outcome of answer {number}:"
+    cantPay: "-# When the purse can't pay, on top of the answer:"
+    moneyRunsOut: The money runs out, and the province pays for it.
+    noAnswer: "-# With no answer in time:"
+    summaryFailed: Effect summaries couldn't be drawn ({error}); the raw effects are shown instead.
+    rawEffect: "`{effect}`"
+
+templates:
+  yamlSyntax: "YAML syntax: {message}"
+  emptyFile: The file is empty.
+  onePerFile: Write one template per file.
+  notAMap: "The file must be a map of fields, such as `id: labour`."
+  unknownKind: "Can't tell what kind of template this is: a crisis has `answers`, a bill `lean`, a project `price`, an event `text` and an issue `for`."
+  noIssueTemplate: "`issue`: no issue template `{issue}`."
+  unknownCondition: "`requires`: unknown condition `{condition}`."
+  hereNeedsProvince: "`here` needs a `province`, or `ministerial: true` so the minister chooses one."
+  bonusDeadline: "`bonus` needs exactly one deadline: `by: { season, year }` or `within: <seasons>`."
+  scheduleShape: "`schedule` takes either `{ season, year }` or `{ delay }`."
+  answerNotMap: answer {number} must be a map with `lean`, `label`, `text` and optionally `price` and `effects`.
+  answerPath: "answer {number}: "
+  twoAnswers: A crisis needs at least two answers.
+  answersList: "`answers` must be a list, each item starting with `- lean:`."
+  fieldName: "{path}`{field}`"
+  quotedField: "`{field}`"
+  plainFieldNames: "{path}field names must be plain words."
+  unknownField: "{path}unknown field `{field}`. Allowed here: {allowed}."
+  required: "{field} is required."
+  singleValue: "{field} must be a single value."
+  emptyField: "{field} is empty."
+  slug: "{field} must be a slug of lowercase letters, digits and underscores, not `{value}`."
+  unknownProvince: "{field}: unknown province `{value}`."
+  number: "{field} must be a number, not `{value}`."
+  range: "{field} must be from {min} to {max}, not {value}."
+  money: "{field} must be a number of crowns, not `{value}`."
+  negative: "{field} can't be negative."
+  wholeNumber: "{field} must be a whole number, not `{value}`."
+  atLeast: "{field} must be at least {min}."
+  boolean: "{field} must be `true` or `false`."
+  leanWithNeutral: "{field} must be `For`, `Against` or `Neutral`, not `{value}`."
+  lean: "{field} must be `For` or `Against`, not `{value}`."
+  navyMinistry: "{field}: the Navy has no minister; use `War`, `Interior`, `CommerceLabor` or `Treasury`."
+  ministry: "{field} must be `War`, `Interior`, `CommerceLabor` or `Treasury`, not `{value}`."
+  season: "{field} must be `Spring`, `Summer`, `Autumn` or `Winter`, not `{value}`."
+  childMap: "{field} must be a map with {allowed}."
+  effectsMap: "{field} must be a map such as `{ economy: -2, open.labour: true }`."
+  effectKeyPlain: "{field}: each effect key must be a plain word, such as `economy`."
+  effectSingleValue: "{field}: `{key}` takes a single value."
+  effectError: "{field}: {error}"
+
+effects:
+  errors:
+    tooManyTokens: "`{raw}`: write one key and at most one value, such as `economy -2`."
+    forKey: "`{key}`: {error}"
+    invalidKey: is not a valid effect key.
+    actionShape: write it as `{prefix}.<id>`.
+    actionValue: an action takes no value (or `true` in YAML).
+    crisisOnlyEvents: only events can post a crisis.
+    needsNumber: needs a number.
+    notANumber: "`{value}` is not a number."
+    scalarNoId: "`{prefix}` takes no id."
+    purseShape: write it as `purse.<ministry>`.
+    navyPurse: the Navy purse is a contribution and cannot be changed by effects.
+    purseMinistry: the ministry must be War, Interior, CommerceLabor or Treasury.
+    discontentShape: write it as `discontent.<province>`.
+    conditionShape: write it as `condition.<province>.<condition>`.
+    conditionValue: a condition takes 1 (gives it) or -1 (removes it).
+    issueShape: write it as `{prefix}.<issue>`.
+    popularityShape: write it as `popularity.<faction user id>`.
+    noBaseline: issue opinion has no baseline; use `opinion.<issue>`, which lasts.
+    unknownKey: is not an effect key.
+    hereOnlyInProjects: "`here` only works in a project's effects."
+    unknownProvince: unknown province `{id}`.
+    unknownCondition: unknown condition `{id}`.
+    unknownIssue: unknown issue `{id}`.
+    noIssueTemplate: no issue template `{id}`.
+    noBillTemplate: no bill template `{id}`.
+    noProjectTemplate: no project template `{id}`.
+    noCrisisTemplate: no crisis template `{id}`.
+    noFaction: no faction for user `{id}`.
+  summary:
+    open: "New issue: {issue}"
+    close: "Issue closed: {issue}"
+    bill: "New bill: {bill}"
+    project: "Project begun: {project}"
+    crisis: "Crisis: {crisis}"
+    conditionGained: "{province} is now *{condition}*"
+    conditionLost: "{province} is no longer *{condition}*"
+    economy: Economy
+    reserve: Reserve
+    seats: Assembly seats
+    taxRate: Tax rate
+    percent: "{amount}%"
+    purse: "{ministry} purse"
+    popularity: "{faction} popularity"
+    discontent: Discontent in {province}
+    opinion: Opinion on {issue}
+    salience: "Salience: {issue}"
+    favour: Anzarian Favour
+    threat: Foreign Threat
+    line: "{arrow} {name}"
+    lineWithAmount: "{arrow} {name} {amount}"
+
+wording:
+  opinion:
+    stronglyFor: strongly for
+    for: for
+    divided: divided
+    against: against
+    stronglyAgainst: strongly against
+  salience:
+    forgotten: forgotten
+    minor: a minor matter
+    discussed: discussed
+    muchDiscussed: much discussed
+    burning: a burning question
+    talkOfTheNation: the talk of the nation
+  favour:
+    content: content
+    calm: calm
+    restless: restless
+    resentful: resentful
+    defiant: defiant
+  discontent:
+    quiet: quiet
+    grumbling: grumbling
+    restless: restless
+    unruly: unruly
+    rioting: rioting
+  poll:
+    kingdom: Across the kingdom
+    province: In {province}
+    divided: the people are *divided* on it
+    mood: the people are *{mood}* it
+    line: "{place}, {issue} is *{salience}*, and {people}."
+
+programme:
+  noColon: "no colon; write it as `Issue: Opinion`"
+  closed: "{issue} is closed"
+  unknownIssue: "unknown issue \"{issue}\""
+  duplicate: "{issue} is already given on line {line}"
+  silent: Silent is not an opinion; leave the issue out for no stance
+  unknownOpinion: "unrecognised opinion \"{opinion}\"; use Strongly For, For, Against or Strongly Against"
+
+names:
+  stance:
+    stronglyFor: Strongly For
+    for: For
+    silent: no stance
+    against: Against
+    stronglyAgainst: Strongly Against
+  ministry:
+    war: War
+    interior: Interior
+    commerceLabor: Commerce and Labor
+    treasury: Treasury
+    navy: Navy
+  templateKind:
+    issue: issue
+    bill: bill
+    project: project
+    event: event
+    crisis: crisis
+
+news:
+  dispatches:
+    header: |-
+      ## Dispatches from the hustings
+      {season}
+    quiet: A quiet day on the hustings.
+  season:
+    header: "## {season}"
+    hustingsOpen: "The hustings open: this season ends in an election."
+    closes: The season closes {when}.
+  campaignLog:
+    header: "## The campaign, {season}"
+  event:
+    post: |-
+      ## {title}
+      {when}
+      {text}
+  action:
+    noStance: no stance
+    offProgramme: " (off-programme)"
+    campaign: "{actor} campaigns *{stance}* on {issue}{offProgramme}: popularity {change}."
+    attackLanded: "{actor} attacks {target} on {issue}, and lands the blow: {target} popularity {change}."
+    attackBackfired: "{actor} attacks {target} on {issue}, but the nation sides with {target}: {actor} popularity {change}."
+  party:
+    dissolvedEmpty: "**The {party} dissolves.** Its benches have emptied, and what remains of it sits on as independent."
+    dissolvedLast: "**The {party} dissolves.** With its ranks dwindled to {faction} alone, the party is no more. {faction} sits on as an independent and keeps {seats}."
+    oneSeat: its one seat
+    seats: its {seats} seats
+  turnTracker:
+    preElection: "{name} · Pre-election"
+    paused: "{name} · Paused"
+
+dashboard:
+  title: The Kingdom of Aurelia · {label}
+  calendarField: Calendar
+  calendar: |-
+    {label}{preElection}{paused}
+    Next resolution: {nextResolution}
+    Next election: end of {nextElection}
+  preElectionTag: " · **Pre-election**"
+  pausedTag: " · Paused"
+  assemblyField: The Assembly · {seats} seats
+  partyLine: "{party}: {seats} seats · {members} members"
+  independentsLine: "Independents: {seats} seats · {factions} factions"
+  noParties: No parties yet.
+  issuesField: Open issues
+  noIssues: None yet.
+  footer: Updated after every resolution
+
+alerts:
+  resolution:
+    missed: The resolution due <t:{time}:F> was missed while the bot was offline. Running it once now.
+    failed: |-
+      ⚠️ The resolution of {label} failed and was rolled back; nothing was posted. The schedule is paused. Seed {seed}.
+      ```
+      {error}
+      ```
+    publishFailed: "⚠️ Resolution {number} committed, but publishing failed half way: {error}"
+  party:
+    dissolved: Party '{party}' (id {id}) dissolved{last}{outcome}
+    lastUnknown: "; its last member could not be identified from the role holders."
+    lastKnown: "; its last member {faction} is now independent."
+    cleanedUp: " Its role was deleted and its chat archived."
+    changesFailed: " {count} Discord change(s) failed; see the alerts above."
+  billCooldownOver: "{bill} is back from its cooldown and can be proposed again."
+  noEventQueued: No event is queued for the start of the next turn, after {label}.
+  upkeepShort: The {ministry} purse could not cover its {due} upkeep; every {type} unit lost a training step.
+
+private:
+  topic: "Private office: poll results, reminders and your commands."
+  topicNamed: "The private office of {name}: poll results, reminders and your commands."
+  channelName: faction-{id}
+
+sync:
+  discordRefused: "Discord refused to {what}: {error}"
+  faction:
+    noCategoryFor: "Could not open a private channel for <@{faction}>: no Factions category is set. Run `/gm setup`."
+    noCategory: No Factions category is set, so no private faction channel could be checked.
+    postFailed: "Could not post in the private channel of <@{faction}>: {error}"
+    noGuild: "Could not open a private channel for <@{faction}>: the bot cannot see the Factions category's server."
+    refused: "Discord refused the private channel of <@{faction}>: {error}"
+  cabinet:
+    noRole: No Cabinet role is set; set it with `/gm channel set` or `/gm setup`.
+    roleGone: The Cabinet role <@&{role}> no longer exists; set it again with `/gm channel set` or `/gm setup`.
+    give: give {user} the Cabinet role
+    take: take the Cabinet role from {user}
+  party:
+    channelNameFallback: party
+    missing: Party {id} does not exist.
+    createRole: create the role for party '{party}'
+    updateRole: update the role {role} for party '{party}'
+    giveRole: give {user} the role of party '{party}'
+    takeRole: take the role of party '{party}' from {user}
+    categoryGone: The party category <#{category}> no longer exists; set it again with `/gm channel set` or `/gm setup`.
+    noCategory: No party category is set, so the chat of party '{party}' could not be created.
+    createChat: create the chat for party '{party}'
+    updateChat: update the chat <#{channel}> of party '{party}'
+    deleteRole: delete the role of party '{party}'
+    noArchive: No archive category is set, so the chat <#{channel}> of party '{party}' was locked where it is.
+    archiveChat: archive the chat <#{channel}> of party '{party}'
+    noNews: "No #news channel is set, so an announcement was not posted."
+    newsFailed: "Could not post to #news: {error}"
+    noGuild: The bot is not connected to a server.
+
+data:
+  attack:
+    self: you cannot attack yourself
+    targetInactive: the target is not an active faction
+    ownParty: the target is a member of your own party
+    targetNoStance: the target holds no stance on the issue
+    noTarget: no target was given
+  action:
+    dropped: "Dropped: the faction is not active."
+    fizzledClosed: "Fizzled: the issue was closed."
+    fizzledNoStance: "Fizzled: no stance."
+    fizzledBecause: "Fizzled: {reason}."
+    targetNoStanceShort: the target holds no stance
+    campaignClosed: "Your campaign fizzled: the issue was closed before the resolution."
+    campaignNoStance: "Your campaign fizzled: it had no stance."
+    attackClosed: "Your attack fizzled: the issue was closed before the resolution."
+    attackFizzled: "Your attack fizzled: {reason}."
+    pollClosed: "Your poll fizzled: the issue was closed before the resolution."
+    campaigned: "Campaigned {stance}: {change} popularity."
+    attackSucceeded: "Attack on {stance} succeeded: target {change} popularity."
+    attackBackfired: "Attack on {stance} backfired: {change} popularity."
+    pollDelivered: Poll delivered.
+  effect:
+    warning: "{source}: `{key}`: {warning}"
+    noFaction: no faction {id}
+    noProvince: no province {id}
+    noCondition: no condition {id}
+    issueNotOpen: issue {id} is not open
+    issueAlreadyOpen: issue {id} is already open
+    noTemplate: no template {id}
+    templateNotReady: template {id} is {status}, not Ready
+    templateInvalid: template {id} is not a valid {type}
+    billIssueNotOpen: its issue {id} is not open
+    billInPlay: bill {id} is already in play
+    billPassed: bill {id} has already passed
+    projectNotBuilt: projects start once stage 7 is built; the project was not started
+    crisisNotBuilt: crises are posted once stage 6 is built; the crisis was not posted
+    unknownKey: unknown effect key {key}
+  start:
+    alreadyStarted: The game has already started.
+  unit:
+    division: "{ordinal} {province} Division"
+    gendarmerie: "{province} Gendarmerie"
+  ordinal:
+    st: "{n}st"
+    nd: "{n}nd"
+    rd: "{n}rd"
+    th: "{n}th"
+  ledger:
+    openingReserve: The opening reserve
+    unspentToReserve: Unspent {year} funds to the reserve
+    unspentFrom: Unspent {year} funds from {ministry}
+    interest: Interest {year}
+    allocation: Allocation {year}
+    navyContribution: Contribution paid to the Anzarian fleet
+    unallocated: Unallocated {year} budget
+    upkeep: "Upkeep {year}: {count} {type} unit(s)"
+
+files:
+  config:
+    reloaded: "Config files changed: `config/` reloaded. Values already in play are unchanged."
+    failed: |-
+      ⚠️ Config files changed, but they don't load; the old config stays in force.
+      {error}
+  content:
+    summary: "**Content files loaded:** {ok} imported or updated, {ready} marked Ready, {unchanged} unchanged."
+    leftAsDraft: "- Left as Draft: {problem}"
+
+bot:
+  notWhitelisted: This channel isn't whitelisted for bot commands. Ask a server manager to run `/whitelist add` here.
+  failed: ⚠️ {reason}
+  userLeft: "{faction} ({user}) left the server while their faction is active. Consider `/gm faction retire`."

@@ -6,7 +6,6 @@ using YamlDotNet.RepresentationModel;
 public sealed class TextCatalog
 {
     public const string MainFile = "texts.yaml";
-    public const string PartPattern = "texts-*.yaml";
 
     public TextCatalog(IReadOnlyDictionary<string, string> entries)
     {
@@ -23,8 +22,6 @@ public sealed class TextCatalog
         var files = new List<string>();
         var main = Path.Combine(directory, MainFile);
         if (File.Exists(main)) files.Add(main);
-        if (Directory.Exists(directory))
-            files.AddRange(Directory.EnumerateFiles(directory, PartPattern).OrderBy(f => f, StringComparer.Ordinal));
 
         foreach (var file in files)
         {
