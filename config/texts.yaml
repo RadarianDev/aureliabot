@@ -1549,6 +1549,7 @@ crisis:
     closed: "**{crisis}** is no longer live."
     notYours: "Only the responsible minister can answer **{crisis}**: {minister}."
     noAnswer: "**{crisis}** has no answer `{answer}`. Pick one from the list."
+    amended: "The GM amended **{crisis}** while you were writing. Look at its answers again and respond anew; your text was not saved."
     empty: "Write your response first."
   warning:
     ministry: "the {ministry} cannot hold a crisis."
@@ -1857,9 +1858,10 @@ roll:
     hint: "Nothing has changed. Decide the consequences, for example with `/gm apply`."
 
 resubmit:
-  header: "**The GM has turned the game back to {label}.** These commands you sent after that point were undone. Press a button to send one again with the same options; it is checked against the game as it stands now."
+  header: "**The GM has turned the game back to {label}.** These commands you sent after that point were undone. Once the GM resumes the game, press a button to send one again with the same options; it is checked against the game as it stands then."
   line: "{n}. `{command}`, sent {at}"
   lineManual: "{n}. `{command}`, sent {at}. Run it again yourself if you still want it."
+  paused: "The game is paused after the undo. Press this again once the GM resumes it."
   button: "Resubmit {n}: {command}"
   gone: "This command can no longer be resubmitted. Run it again yourself if you still want it."
   notYours: "Only {faction} can resubmit this command."

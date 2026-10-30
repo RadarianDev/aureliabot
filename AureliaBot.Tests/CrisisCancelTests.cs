@@ -116,6 +116,19 @@ public class CrisisCancelTests : AssemblyTestBase
     }
 
     [Fact]
+    public void AResponseWrittenBeforeAnEdit_IsRefused()
+    {
+        var crisis = Post();
+        var stamp = DatabaseService.AnswersStamp(crisis);
+        var target = ContentRules.FindLiveCrisis(Db, crisis.Id, out _)!;
+        var yaml = TemplateCodec.Serialize(target.Current).Replace("Declare the strike unlawful", "Break the strike");
+        Assert.True(ContentRules.ApplyLiveEdit(Db, Config, target, yaml).Ok);
+
+        Assert.NotNull(Db.RespondToCrisis(crisis.Id, Backbencher, 1, "Feed them.", stamp).Refusal);
+        Assert.Null(Db.RespondToCrisis(crisis.Id, Backbencher, 1, "Feed them.", DatabaseService.AnswersStamp(Db.GetCrisis(crisis.Id)!)).Refusal);
+    }
+
+    [Fact]
     public void ALiveCrisisEdit_KeepsItsMinistryAndIssue()
     {
         var crisis = Post();

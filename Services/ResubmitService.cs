@@ -201,6 +201,8 @@ public class ResubmitService
 
     public ResubmitClaim Claim(long lostId, long at, ulong userId) => Check(lostId, at, userId, claim: true);
 
+    public void Release(long lostId) => _data.DeleteLogEntries(LogKinds.Resubmitted, lostId.ToString(CultureInfo.InvariantCulture));
+
     private ResubmitClaim Check(long lostId, long at, ulong userId, bool claim)
     {
         lock (ClaimGate)

@@ -105,6 +105,8 @@ public class ContentModule : InteractionModuleBase<SocketInteractionContext>
     {
         id = id.Trim();
         string yaml;
+        var mode = live ? "live" : "template";
+        var modalId = id;
         if (live)
         {
             if (ContentRules.FindLive(_data, id, out var refusal) is not { } target)
@@ -113,6 +115,8 @@ public class ContentModule : InteractionModuleBase<SocketInteractionContext>
                 return;
             }
             yaml = TemplateCodec.Serialize(target.Current);
+            if (target is { Kind: TemplateKind.Crisis, RowId: { } crisisId })
+                (mode, modalId) = (CrisisEditMode, crisisId.ToString());
         }
         else
         {
@@ -132,7 +136,7 @@ public class ContentModule : InteractionModuleBase<SocketInteractionContext>
             return;
         }
 
-        await RespondWithModalAsync(EditModal(live ? "live" : "template", id,
+        await RespondWithModalAsync(EditModal(mode, modalId,
             live ? Texts.Get("content.edit.titleLive", ("id", id)) : Texts.Get("content.edit.title", ("id", id)), yaml));
     }
 

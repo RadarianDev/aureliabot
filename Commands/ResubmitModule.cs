@@ -27,6 +27,12 @@ public class ResubmitModule : InteractionModuleBase<SocketInteractionContext>
             return;
         }
 
+        if (_data.GetGameState().Paused)
+        {
+            await Reply(Texts.Get("resubmit.paused"));
+            return;
+        }
+
         var peek = _resubmit.Peek(id, at, Context.User.Id);
         if (Refusal(peek) is { } refusal)
         {
@@ -61,7 +67,15 @@ public class ResubmitModule : InteractionModuleBase<SocketInteractionContext>
 
         var module = (IInteractionModuleBase)ActivatorUtilities.CreateInstance(_services, target.Module);
         module.SetContext(Context);
-        if (target.Method.Invoke(module, arguments) is Task run) await run;
+        try
+        {
+            if (target.Method.Invoke(module, arguments) is Task run) await run;
+        }
+        catch
+        {
+            _resubmit.Release(id);
+            throw;
+        }
         _data.Log(LogKinds.Command, payload.Command, payload.ToJson(), Context.User.Id);
     }
 

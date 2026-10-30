@@ -57,6 +57,12 @@ public partial class DatabaseService
         return ReadLogEntry(r);
     }
 
+    public void DeleteLogEntries(string kind, string payload)
+    {
+        using var conn = Open();
+        Exec(conn, null, "DELETE FROM log_entries WHERE kind = $kind AND payload = $payload;", ("$kind", kind), ("$payload", payload));
+    }
+
     public LogEntry? GetLogEntry(long id)
     {
         using var conn = Open();

@@ -66,7 +66,7 @@ public static partial class BattleRolls
         var dice = new List<BattleDice>();
         foreach (var part in text.Split([',', ';'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
         {
-            var tokens = part.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            var tokens = SignSpacing().Replace(part, "$1$2").Split(' ', StringSplitOptions.RemoveEmptyEntries);
             var resolved = tokens.Select(t => Resolve(t, units)).ToList();
             if (resolved.All(r => r is not null))
             {
@@ -142,4 +142,7 @@ public static partial class BattleRolls
 
     [GeneratedRegex(@"^(\d+)?[dD](\d+)(?:\s*([+-])\s*(\d+))?$")]
     private static partial Regex DicePattern();
+
+    [GeneratedRegex(@"\s*([+-])\s*(\d)")]
+    private static partial Regex SignSpacing();
 }

@@ -88,6 +88,9 @@ public partial class DatabaseService
         (Lean)r.GetInt32(3),
         r.GetInt64(4));
 
+    public static string AnswersStamp(Crisis crisis) =>
+        Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(FormatAnswers(crisis.Answers))))[..8];
+
     private static string FormatAnswers(IEnumerable<CrisisAnswer> answers) =>
         JsonSerializer.Serialize(answers.Select(a =>
             new StoredCrisisAnswer(a.Lean.ToString(), a.Label, a.Price, a.Text, EffectParser.Format(a.Effects))).ToList());
@@ -203,7 +206,7 @@ public partial class DatabaseService
         if (edited.Ministry != crisis.Ministry || edited.Issue != crisis.IssueId) return Texts.Get("gmCrisis.edit.keeps");
         if (GetProvincesTx(conn, tx).All(p => p.Id != edited.Province)) return Texts.Get("crisis.warning.noProvince", ("id", edited.Province));
 
-        Exec(conn, tx, @"
+        var updated = ExecCount(conn, tx, @"
             UPDATE crises SET title = $title, province_id = $province, answers = $answers,
                 complication_text = $complicationText, complication_effects = $complicationEffects,
                 default_text = $defaultText, default_effects = $defaultEffects
@@ -212,6 +215,7 @@ public partial class DatabaseService
             ("$complicationText", edited.Complication?.Text),
             ("$complicationEffects", edited.Complication is { } complication ? EffectParser.Format(complication.Effects) : null),
             ("$defaultText", edited.Default.Text), ("$defaultEffects", EffectParser.Format(edited.Default.Effects)));
+        if (updated == 0) return Texts.Get("gmCrisis.edit.locked", ("crisis", crisis.Title));
         LogTx(conn, tx, LogKinds.GmOverride, "gm crisis edit", $"Live crisis {crisisId} ({crisis.TemplateId}) edited.");
         tx.Commit();
         return null;
@@ -295,13 +299,15 @@ public partial class DatabaseService
             : Texts.Get("crisis.refusal.notYours", ("crisis", crisis.Title), ("minister", minister is { } m ? $"<@{m}>" : Texts.Get("cabinet.vacant")));
     }
 
-    public CrisisResponseResult RespondToCrisis(long crisisId, ulong factionId, int answerNumber, string text)
+    public CrisisResponseResult RespondToCrisis(long crisisId, ulong factionId, int answerNumber, string text, string? answersStamp = null)
     {
         text = text.Trim();
         using var conn = Open();
         using var tx = conn.BeginTransaction();
         if (CrisisResponseRefusalTx(conn, tx, crisisId, factionId) is { } refusal) return new CrisisResponseResult(refusal);
         var crisis = GetCrisisTx(conn, tx, crisisId)!;
+        if (answersStamp is not null && answersStamp != AnswersStamp(crisis))
+            return new CrisisResponseResult(Texts.Get("crisis.refusal.amended", ("crisis", crisis.Title)));
         if (crisis.AnswerNumbered(answerNumber) is not { } answer)
             return new CrisisResponseResult(Texts.Get("crisis.refusal.noAnswer", ("crisis", crisis.Title), ("answer", answerNumber)));
         if (text.Length == 0) return new CrisisResponseResult(Texts.Get("crisis.refusal.empty"));

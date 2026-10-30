@@ -52,6 +52,10 @@ public class BattleTests : AssemblyTestBase
     }
 
     [Fact]
+    public void DiceWrittenWithSpaces_AreParsed() =>
+        Assert.Equal((6, 12, 2), Side("6d12 + 2, 1").Dice.Select(d => (d.Count, d.Sides, d.Bonus)).Single());
+
+    [Fact]
     public void AUnit_CannotFightOnBothSides() =>
         Assert.Equal("Lancers", BattleRolls.SharedUnit(Side("1, 2"), Side("2, 3d6")));
 

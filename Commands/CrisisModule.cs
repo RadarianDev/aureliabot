@@ -109,7 +109,7 @@ public class CrisisModule : InteractionModuleBase<SocketInteractionContext>
 
         var modal = new ModalBuilder()
             .WithTitle(Display.Truncate(Texts.Get("crisis.modal.title", ("crisis", target.Title)), 45))
-            .WithCustomId($"crisis:respond:{target.Id}:{number}")
+            .WithCustomId($"crisis:respond:{target.Id}:{number}:{DatabaseService.AnswersStamp(target)}")
             .AddTextInput(Display.Truncate(Texts.Get("crisis.modal.label", ("answer", target.Answers[number - 1].Label)), 45),
                 CrisisResponseModal.InputId, TextInputStyle.Paragraph, maxLength: ResponseLimit, required: true,
                 value: target.ResponderId == Context.User.Id ? target.ResponseText : null)
@@ -117,8 +117,8 @@ public class CrisisModule : InteractionModuleBase<SocketInteractionContext>
         await RespondWithModalAsync(modal);
     }
 
-    [ModalInteraction("crisis:respond:*:*", ignoreGroupNames: true)]
-    public async Task SubmitAsync(string rawId, string rawAnswer, CrisisResponseModal modal)
+    [ModalInteraction("crisis:respond:*:*:*", ignoreGroupNames: true)]
+    public async Task SubmitAsync(string rawId, string rawAnswer, string stamp, CrisisResponseModal modal)
     {
         if (!long.TryParse(rawId, out var crisisId) || !int.TryParse(rawAnswer, out var number))
         {
@@ -127,7 +127,7 @@ public class CrisisModule : InteractionModuleBase<SocketInteractionContext>
         }
 
         await DeferAsync(ephemeral: true);
-        var result = _data.RespondToCrisis(crisisId, Context.User.Id, number, modal.Text);
+        var result = _data.RespondToCrisis(crisisId, Context.User.Id, number, modal.Text, stamp);
         if (result is not { Crisis: { } crisis, Answer: { } answer })
         {
             await FollowupAsync(result.Refusal ?? Texts.Get("crisis.refusal.gone"), ephemeral: true, allowedMentions: AllowedMentions.None);
