@@ -1,0 +1,7 @@
+id: factory_district
+title: Factory district
+ministerial: true
+purse: CommerceLabor
+price: 8
+term: 4
+effects: { economy: 3, discontent.here: 1 }

@@ -1,9 +1,13 @@
 id: opening_1850
 title: The King Summons the Assembly
 text: >-
-  By His Majesty's command, the Aurelian Assembly is called to sit for the first time. Across the
-  ten provinces, candidates take to the hustings, and the questions of the age are on every tongue.
-effects: { open.factory_act: true, open.grain_duties: true, open.electoral_reform: true,
-           open.anzarian_question: true, open.public_health: true, open.railway_charter: true,
-           open.conscription: true, open.western_treaty: true, open.education_act: true,
-           open.press_act: true, open.poor_law: true, open.combination_act: true }
+  By His Majesty's command, the first Aurelian Assembly is to be elected before the summer. Across
+  the ten provinces, candidates take to the hustings, and every party must tell the nation where it
+  stands on the questions of the age.
+effects: { open.anzarian_union: true, open.free_trade: true, open.labour: true,
+           open.franchise: true, open.army: true, open.railways: true,
+           open.poor_relief: true, open.public_health: true,
+           bill.act_of_union: true, bill.charter_confirmation: true, bill.corn_law_repeal: true,
+           bill.ten_hours_bill: true, bill.reform_bill: true, bill.army_bill: true,
+           bill.railway_charter: true, bill.new_poor_law: true, bill.public_health_act: true }
+schedule: { season: Spring, year: 1850 }

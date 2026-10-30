@@ -1,0 +1,10 @@
+id: reform_bill
+title: The Reform Bill
+issue: franchise
+lean: For
+motion: Give the vote to every householder, redraw the boroughs, and enlarge the Assembly by thirty seats.
+pass:
+  text: Half a million new voters are entered on the rolls, and the Assembly hall is torn down to be rebuilt. In the Anzarian manors, they speak of the mob.
+  effects: { seats: 30, favour: -8,
+             discontent.aurenten: -2, discontent.iracterie: -2, discontent.provencie_gares: -2,
+             discontent.north_arpal: -1 }

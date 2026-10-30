@@ -1,0 +1,11 @@
+id: royal_railway
+title: The Royal Railway
+purse: CommerceLabor
+province: provencie_gares
+price: 9
+term: 6
+effects: { economy: 5, discontent.here: -2, discontent.soralenten: -1 }
+bonus:
+  by: { season: Spring, year: 1853 }
+  text: The first train reaches the coast ahead of the guarantee, and the shareholders cheer the Crown.
+  effects: { economy: 2, condition.iracterie.boom: 1 }

@@ -1,12 +1,7 @@
 id: public_health
-title: The Public Health Act
-motion: Create boards of health to drain the marshes, lay sewers and fight cholera.
-for: Clean water saves lives.
-against: The cost, and the meddling.
-opinion: 0.2
-baseline: 0.2
-salience: 1
-pass:
-  text: Navvies dig the first sewers, and the boards of health take up their posts.
-  effects: { economy: -1, discontent.tovrerie: -1, discontent.aurenten: -1,
-             condition.tovrerie.marshland: -1 }
+title: Public Health
+for: Clean water saves lives, and the Crown must provide it.
+against: Ruinous cost, and meddling in every home.
+opinion: 0.0
+baseline: 0.0
+salience: 2

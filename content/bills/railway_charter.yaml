@@ -1,0 +1,8 @@
+id: railway_charter
+title: The Railway Charter
+issue: railways
+lean: For
+motion: Charter a Royal Aurelian Railway Company, guarantee its dividends from the reserve, and order a trunk line from the capital to the eastern coast.
+pass:
+  text: The Royal Aurelian Railway Company is chartered and its shares sell out in a morning. Surveyors are on the eastern road within the week.
+  effects: { reserve: -4, discontent.provencie_gares: -1, project.royal_railway: true }

@@ -1,0 +1,9 @@
+id: ten_hours_bill
+title: The Ten Hours Bill
+issue: labour
+lean: For
+motion: Limit factory work to ten hours a day, ban the employment of children under twelve, and send Crown inspectors into every mill and pit.
+pass:
+  text: Crown inspectors walk into the mills and pits, the children walk out, and the owners swear the kingdom is ruined.
+  effects: { economy: -5, purse.CommerceLabor: -2,
+             discontent.iracterie: -3, discontent.aurenten: -2, discontent.north_arpal: -1 }

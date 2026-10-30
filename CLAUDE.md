@@ -28,6 +28,8 @@ Existing mechanic docs:
 - [Implementation.md](Implementation.md): code layout, build stages and how to split work across
   subagents, for building the spec.
 - [Parties.md](Parties.md): factions, parties, membership and seats, as currently implemented.
+- [YAML Reference.md](YAML%20Reference.md): every config and content YAML format with all its fields,
+  collected from the spec. Keep it in step when a format changes.
 
 `SQLitePCLRaw.bundle_e_sqlite3` is pinned to 2.1.12 in the csproj on purpose. It overrides the
 2.1.11 that `Microsoft.Data.Sqlite` pulls in transitively, whose bundled SQLite is vulnerable to

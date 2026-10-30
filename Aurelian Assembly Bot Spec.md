@@ -23,7 +23,7 @@ Implementation spec for the Discord bot that runs Aurelian Assembly. Read with [
 
 - **Events drive the story.** Issues, crises and changes to provinces all enter play through events, so every turn opens with something happening in the world.
 - **The state is public, the people's mood is told in words.** Money, prices, popularity, seats and forces are public numbers. The people's mood (opinion, salience, discontent, Favour) reaches players only as words or as a direction, and Threat only as a direction. Conditions and events are public, so players infer the mood from what they can see.
-- **No GM gate where players can agree among themselves.** Parties form, admit members and record programmes by their members' own agreement; the GM steps in only through `/gm` overrides.
+- **Party politics stay in roleplay.** Each party has its own written constitution, which no bot could enforce. The GM founds parties and records programmes; the only party vote the bot holds is on admitting a new member. Every other party decision is up to its members.
 - **Few decisions for players, heavy lifting for the bot.** A faction makes a couple of decisions a day. Upkeep, drift, budgets and elections are the bot's job.
 - **Everything speaks in character.** Posts are written as the world would report them: royal proclamations, news, dispatches from the hustings.
 
@@ -58,7 +58,7 @@ Implementation spec for the Discord bot that runs Aurelian Assembly. Read with [
 - **Turn:** one turn is one in-game season (Spring, Summer, Autumn, Winter) and lasts one real day, from one 08:00 resolution to the next.
 - **Resolution:** the full daily resolution in section 7 that ends a turn. Every deadline counts in resolutions. The campaign days of a pre-election (below) are not resolutions.
 - **Calendar:** the bot stores the season and the year, and every post is dated, for example "Summer 1851".
-- **Start:** the game opens in **Spring 1850** with a founding pre-election, so the first Assembly sits from Summer 1850. Before it opens, the founding parties form and the GM queues an opening event that opens the first issues, so party programmes have something to cover.
+- **Start:** the GM opens the game with `/gm start` (section 6). The first turn, **Spring 1850**, is a founding pre-election: it runs like any pre-election, ending in the election that seats the first Assembly from Summer 1850. Before the start, the founding parties form and the opening event is queued for Spring 1850. `/gm start` fires it at once, so the first issues are open from the first day, and parties write their programmes as manifestos throughout the founding pre-election.
 - **Term:** a term runs from one election to the next, normally **16 seasons**. Its last season is the **pre-election period**, which lasts **3 real days**; it is the only turn longer than one day. The first two days each end with a **campaign day** at 08:00 (section 7), and the third ends with the full resolution, which runs the election and begins the next term.
   - First term: Summer 1850 to Spring 1854, with the pre-election in Spring 1854.
   - **Snap election:** a passed no-confidence motion cuts the term short. The season that the same resolution opens becomes the pre-election, and the new term runs 16 seasons from the election after it.
@@ -90,31 +90,29 @@ These are the main tables. Ids are short strings (slugs) for anything defined in
 | Party | id, name, colour, emojiId, createdSeason, roleId, channelId, programmeMessageUrl |
 | PartyJoinRequest | id, factionId, partyId, requestedAt, status (Pending, Accepted, Declined, Dropped) |
 | PartyJoinAnswer | requestId, factionId, accept |
-| PartyApplication | id, applicantFactionId, name, colour, emojiId, messageId, submittedResolution, status (Confirming, Founded, Withdrawn) |
-| PartyApplicationFounder | applicationId, factionId, confirmed |
-| ProgrammeSubmission | id, partyId, submitterFactionId, messageUrl, parsedStances, submittedAt, status (Pending, Applied, Superseded) |
-| ProgrammeEndorsement | submissionId, factionId |
 | ProgrammeStance | partyId, issueId, stance. Only non-Silent stances are stored; a missing row means Silent |
 | Province | id, name, population, discontent |
 | ProvinceCondition | provinceId, conditionId, since |
-| Issue | id, templateId, title, motion, forText, againstText, opinion, baseline, salience, salienceRaisedResolution, status (Open, Cooldown, Closed), cooldownUntil, passText, passEffects |
+| Issue | id, templateId, title, forText, againstText, opinion, baseline, salience, salienceRaisedResolution, status (Open, Closed) |
 | Event | id, templateId, title, text, effects, status (Queued, Fired, Cancelled), queuedAt, fireAtResolution, firedResolution |
 | Crisis | id, templateId, eventId, title, ministry, provinceId, issueId, answers, complication, default, postedAt, dueResolution, status, chosenAnswer, responseText |
-| Answer (inside Crisis) | key, label, lean (For, Against, Neutral), price, text, effects |
-| Bill | id, issueId, sponsorFactionId, kind (Government, Private), proposedAt, dueResolution, status (Open, Passed, Rejected, Cancelled) |
+| Answer (inside Crisis) | number (its position in the list, from 1), label, lean (For, Against, Neutral), price, text, effects |
+| Bill | id, templateId, issueId, title, motion, lean (For, Against), passText, passEffects, status (Available, Voting, Cooldown, Passed, Withdrawn), cooldownUntil |
+| Reading | id, billId, sponsorFactionId, kind (Government, Private), proposedAt, opensResolution, dueResolution, status (Scheduled, Open, Passed, Rejected, Cancelled). One reading is one vote on a bill; a bill rejected and proposed again gets a new reading |
 | NoConfidence | id, tablerFactionId, tabledAt, gatherUntilResolution, dueResolution, status (Gathering, Voting, Passed, Failed, Lapsed, Cancelled) |
 | NoConfidenceCosigner | noConfidenceId, factionId |
-| Vote | id, subjectType (Bill, NoConfidence, Cabinet), subjectId, factionId, choice (Yes, No, Abstain), castAt |
+| Vote | id, subjectType (Reading, NoConfidence, Cabinet), subjectId, factionId, choice (Yes, No, Abstain), castAt |
 | Cabinet | id, kind (Sitting, Nominated), chancellorFactionId, status (Approved, Caretaker), ministries mapped to holder faction ids, dueResolution (for a nomination) |
 | Purse | ministry (War, Interior, CommerceLabor, Treasury, Navy), balance, allocatedThisYear |
+| LedgerEntry | id, account (a ministry or Reserve), amount (negative for spending), kind (Allocation, Grant, CarryOver, Interest, Upkeep, Purchase, Crackdown, Crisis, Project, Graft, Effect, Adjustment), label, sourceType, sourceId, madeAt, resolutionNumber, season, year, publicFromResolution |
 | Division | id, name, sides, provinceId |
 | GendarmerieCorps | id, name, sides, provinceId |
 | PendingOrder | id, unitType (Division, Gendarmerie, null for a crackdown), unitId, kind (Raise, Train, Station, Crackdown), provinceId, cost |
-| Project | id, typeId, provinceId, seasonsLeft, instalment, status (Active, Stalled, Finished) |
+| Project | id, templateId, title, purse, provinceId, price, term, progress, spending (the purse's planned spend per season), startedResolution, bonusDueResolution, effects, bonusText, bonusEffects, status (Active, Stalled, Finished) |
 | Action | id, factionId, kind (Campaign, Attack, Poll), issueId, provinceId (polls only, null for a national poll), stance, offProgramme, targetFactionId, submittedAt, resolved |
-| OppositionAction | id, factionId, kind (Question, Shadow, Bill), season, year |
+| OppositionAction | id, factionId, kind (Question, Condemn, Bill), season, year |
 | Question | id, askerFactionId, ministry, text, askedAt, dueResolution, answerText, answeredAt |
-| ShadowResponse | id, factionId, crisisId, answerKey, text |
+| Condemnation | id, factionId, crisisId, side (For, Against), madeAt |
 | StanceLog | factionId, issueId, stance, season, source (Programme, Campaign, Vote), offProgramme |
 | ProvinceResult | termNumber, provinceId, partyId, strength, seats |
 | Snapshot | id, resolutionAt, file path to a copy of the database |
@@ -122,11 +120,11 @@ These are the main tables. Ids are short strings (slugs) for anything defined in
 
 A faction has no name of its own. It is shown as the player's mention, followed by the character name where that helps.
 
-**Templates:** IssueTemplate, EventTemplate and CrisisTemplate hold the same fields as Issue, Event and Crisis, plus a status (Draft, Ready, Archived), createdAt, updatedAt and timesPosted. A live Issue, Event or Crisis records the templateId it was posted from.
+**Templates:** IssueTemplate, BillTemplate, ProjectTemplate, EventTemplate and CrisisTemplate hold the same fields as their live copies, plus a status (Draft, Ready, Archived), createdAt, updatedAt and timesPosted. An EventTemplate also has an optional schedule: a season and year, or a delay. A ProjectTemplate also has `ministerial`, `requires` and a bonus deadline (a turn, or a number of seasons). A live copy records the templateId it was posted from.
 
 **Stance** is an enum with values: StronglyFor = +2, For = +1, Silent = 0, Against = −1, StronglyAgainst = −2. Silent means *no stance*: players never write it, and it is what a party has on an issue its programme doesn't list.
 
-**Lean** of a crisis answer: For = +1, Against = −1, Neutral = 0.
+**Lean** of a crisis answer: For = +1, Against = −1, Neutral = 0. A bill's lean is For or Against its issue, never Neutral.
 
 **Crisis ministries** are War, Interior, CommerceLabor and Treasury. The Navy purse is a contribution with no minister, so it can never hold a crisis.
 
@@ -142,13 +140,17 @@ A faction has no name of its own. It is shown as the player's mention, followed 
 
 `opinion.{issue}` is a temporary shift that drifts back towards the baseline. `baseline.{issue}` moves public opinion for good. `favour` and `favourBaseline` work the same way for Favour.
 
-Three more keys are actions, not number changes, and take no value (in YAML, the value `true`):
+Five more keys are actions, not number changes, and take no value (in YAML, the value `true`):
 
 - open.{issueTemplate} opens a live issue from a Ready template;
-- close.{issue} closes a live issue without a vote;
+- close.{issue} closes a live issue, and withdraws its bills;
+- bill.{billTemplate} makes a bill from a Ready template available to propose. Its issue must be open, or opened earlier in the same effects;
+- project.{projectTemplate} starts a project from a Ready template;
 - crisis.{crisisTemplate} posts a live crisis from a Ready template (events only).
 
-Issues enter play only through `open`, in events and crisis answers, and leave play through a passed law or `close`. Crises enter play only through events.
+These work in events, crisis answers, bills' pass effects and finished projects, except `crisis`, which only events can use. A passed bill can open the next bill, or start a project. Issues leave play only through `close`; a bill that should settle its issue for good carries `close.{issue}` in its own pass effects.
+
+In a project's effects, `here` stands for the project's province, as in `discontent.here`.
 
 ## 4. Configuration files
 
@@ -158,7 +160,7 @@ All files live in a `config/` folder. The GM reloads them with a command. A relo
 
 ```yaml
 seats: 180                       # starting Assembly size; reforms change GameState.seats
-display: { upEmoji: "⬆️", downEmoji: "⬇️" }   # replace with "<:name:id>" custom emoji
+display: { upEmoji: "<:stat_raise:1565442139855392808>", downEmoji: "<:stat_lower:1565442180057927860>" }
 start: { season: Spring, year: 1850 }
 resolutionTime: "08:00"
 timeZone: "Europe/Prague"        # IANA id
@@ -175,11 +177,10 @@ opinion: { drift: 0.10, crisisShift: 0.05 }
 salience: { min: 0, max: 5, campaignRaise: 1, crisisRaise: 1, decay: 1, rejectDrop: 2 }
 rejectedCooldownSeasons: 4
 law: { sponsorFactor: 4 }
-government: { billsPerSeason: 2 }
+government: { billsPerSeason: 1 }
 opposition: { actionsPerSeason: 1, privateBillsPerYear: 1,
-              unansweredQuestion: 2, questionReward: 1, shadowReward: 2, shadowPenalty: 1,
-              noConfidenceShare: 0.1667, noConfidenceGatherResolutions: 2, noConfidenceCooldownSeasons: 4 }
-partyApplication: { confirmResolutions: 2 }
+              unansweredQuestion: 2, questionReward: 1, condemnReward: 2, condemnPenalty: 1 }
+assembly: { noConfidenceShare: 0.1667, noConfidenceGatherResolutions: 2, noConfidenceCooldownSeasons: 4 }
 election: { baseExponent: 0.85, homeMultiplier: 1.5, programmeWeight: 0.5,
             multiplierMin: 0.5, multiplierMax: 1.5, crowding: true }
 economy: { start: 100, growth: 0.01 }
@@ -192,7 +193,7 @@ discontent: { min: 0, max: 10, start: 3, rest: 3, drift: 0.5, alertAt: 7, growth
 division: { raise: 4, upkeep: 0.5, baseSides: 12, sidesStep: 2, maxSides: 18, trainCosts: [2, 3, 4] }
 gendarmerie: { raise: 2, upkeep: 0.25, baseSides: 8, sidesStep: 2, maxSides: 12, trainCosts: [1, 2] }
 crackdown: { cost: 1, reduction: 2, backlash: 1, failurePopularity: 2 }
-projectPopularity: 2
+project: { popularity: 2, graft: 0.5 }   # graft: share of spending above the pace that is lost
 startingForces:
   divisions: { aurenten: 2, iracterie: 1, north_arpal: 1, agrinenten: 1, ocidanten: 1 }   # province: count
   gendarmerie: [aurenten, iracterie, north_arpal]
@@ -208,7 +209,7 @@ Unit upkeep (`division.upkeep`, `gendarmerie.upkeep`) is per unit per year, paid
 lawless:
   name: Lawless
   description: Gangs rule the back streets, and the watch looks away.
-  biases: { conscription: 0.1, press_act: -0.1, poor_law: 0.1 }   # opinion bias per issue id; missing issues are 0
+  biases: { army: 0.1, poor_relief: 0.2 }   # opinion bias per issue id; missing issues are 0
   discontentRest: 1                 # added to the province's resting discontent
   growth: -0.002                    # added to the national yearly growth, per province with it
 ```
@@ -218,22 +219,88 @@ Every field except `name` is optional and defaults to 0. Crime is not a separate
 - **Standing** conditions describe a province's character and are set in `provinces.yaml`: urban, industrial, farmland, frontier, anzarian_border, crossroads, rugged, forested, marshland, remote and coastal.
 - **Event** conditions come and go with events and crises: lawless, epidemic, strike, famine and boom.
 
-**Starting content** lives in `content/`, in the import format below: the twelve opening issues in `content/issues/` and the opening event in `content/events/opening_1850.yaml`. The GM imports them with `/content import` before the game opens, marks them Ready and queues the opening event.
+Provinces and conditions reach players through `/info north_arpal`. Discontent is in words, and condition numbers never appear:
 
-**issues/\*.yaml:** the import and export format for issue templates, one file per issue.
+```
+## North Arpal
+Mountain passes and transit corridors to the southern realm.
+Discontent: restless
+
+Conditions
+Frontier: A border with a foreign power, watched from both sides.
+Crossroads: Roads and rivers carry the kingdom's trade through here.
+Rugged: Hills and uplands, hard to farm and harder to travel.
+Coastal: A harbour province, open to the sea.
+Strike: Picket lines stand at the gates, and nothing moves.
+
+Stationed: 2nd Arpal Division · d12, Carden Gendarmerie · d8
+Last election: Liberal Union 9, Country Party 6, Crown and Union 4
+```
+
+**Content** is not config: it lives in `content/` as templates, and the GM imports it with `/content import` (section 6). Content templates are issues, bills, projects, events and crises.
+
+**Starting content** in `content/`: the eight opening issues in `content/issues/`, their nine bills in `content/bills/`, six projects in `content/projects/`, and the opening event in `content/events/opening_1850.yaml`. The GM imports them before the game opens and marks them Ready. The opening event is scheduled for Spring 1850, so marking it Ready queues it, and `/gm start` fires it when the founding pre-election opens. It opens the issues and makes their bills available.
+
+**issues/\*.yaml:** the import and export format for issue templates, one file per issue. An issue is a broad question that parties take stances on. It has no law of its own: the laws are its bills.
 
 ```yaml
-id: factory_act
-title: The Factory Act
-motion: Limit factory working hours and ban child labour.
-for: Protect workers.
-against: Leave industry free.
-opinion: 0.5
-baseline: 0.4
-salience: 2
+id: labour
+title: The Condition of Labour
+for: Protect the workers and their children.
+against: Leave industry free to compete.
+opinion: 0.2
+baseline: 0.2
+salience: 3
+```
+
+`/info labour`. Opinion and salience never appear:
+
+```
+## The Condition of Labour
+For: Protect the workers and their children.
+Against: Leave industry free to compete.
+Status: Open
+
+Bills
+The Ten Hours Bill · For · before the Assembly, vote due Summer 1851
+
+Liberal Union: Strongly For
+Country Party: Against
+Crown and Union: no stance
+```
+
+**bills/\*.yaml:** the import and export format for bill templates, one file per bill. A bill is one law on an issue, leaning *For* or *Against* it, so one issue can carry rival bills: a reform and its repeal, or two ways of settling the same question.
+
+```yaml
+id: ten_hours_bill
+title: The Ten Hours Bill
+issue: labour
+lean: For
+motion: Limit factory work to ten hours a day, ban the employment of children under twelve, and send Crown inspectors into every mill and pit.
 pass:
-  text: Inspectors enter the mills for the first time.
-  effects: { economy: -1, discontent.iracterie: -1 }
+  text: Crown inspectors walk into the mills and pits, the children walk out, and the owners swear the kingdom is ruined.
+  effects: { economy: -5, purse.CommerceLabor: -2,
+             discontent.iracterie: -3, discontent.aurenten: -2, discontent.north_arpal: -1 }
+```
+
+- A bill enters play through a `bill.{id}` effect, and can then be proposed with `/bill propose`.
+- **Passing** applies its pass text and effects. The issue stays open unless the effects include `close.{issue}`.
+- **Rejection** rests the bill, not the issue: other bills on the same issue can still be proposed.
+- Only one bill per issue can be before the Assembly at a time.
+
+When the bill passes, in #news:
+
+```
+## The Ten Hours Bill becomes law
+Passed by 104 seats to 61, proposed by @player (Lord Halvard).
+Crown inspectors walk into the mills and pits, the children walk out, and the owners swear the
+kingdom is ruined.
+
+<:stat_lower:1565442180057927860> Economy −5
+<:stat_lower:1565442180057927860> Commerce and Labor purse −2
+<:stat_lower:1565442180057927860> Discontent in Iracterie
+<:stat_lower:1565442180057927860> Discontent in Aurenten
+<:stat_lower:1565442180057927860> Discontent in North Arpal
 ```
 
 **events/\*.yaml:** the import and export format for event templates, one file per event.
@@ -242,9 +309,31 @@ pass:
 id: carden_strike
 title: Strike at the Carden Docks
 text: The dockers walk out over wages, and the harbour falls silent.
-effects: { discontent.north_arpal: 1, salience.factory_act: 1,
+effects: { discontent.north_arpal: 1, salience.labour: 1,
            condition.north_arpal.strike: 1, crisis.dock_strike_carden: true }
+schedule: { season: Autumn, year: 1851 }
 ```
+
+When it fires, in #news:
+
+```
+## Strike at the Carden Docks
+Autumn 1851
+The dockers walk out over wages, and the harbour falls silent.
+
+<:stat_raise:1565442139855392808> Discontent in North Arpal
+<:stat_raise:1565442139855392808> Salience: The Condition of Labour
+North Arpal is now *Strike*
+Crisis: The Carden Dock Strike
+```
+
+`schedule` is optional, and lets a storyline be planned in files instead of queued by hand:
+
+- `{ season, year }` fires the event at the start of that turn. Before the game starts, Spring 1850 means it fires at `/gm start`.
+- `{ delay: n }` fires it `n` turns after it is queued, counted exactly as `/gm event queue` counts.
+- **Queuing:** marking the template Ready queues it as `/gm event queue` would. Marking it Ready fails if the scheduled turn has already started.
+- **Changes:** changing the schedule of a Ready template moves its queued event, and clearing it cancels it. Once the event has fired, the schedule does nothing more.
+- An event without a schedule is queued by hand, as before.
 
 **crises/\*.yaml:** the import and export format for crisis templates, one file per template. The province and the issue are required, and so are at least two answers. Each answer leans *For* or *Against* the crisis's issue, or is *Neutral*; several answers may share a lean.
 
@@ -253,24 +342,20 @@ id: dock_strike_carden
 title: The Carden Dock Strike
 ministry: CommerceLabor
 province: north_arpal
-issue: factory_act
+issue: labour
 answers:
-  - key: meet
-    lean: For
+  - lean: For
     label: Meet the strikers' demands
     price: 3
     text: The docks reopen within the week, and the owners are furious.
     effects: { discontent.north_arpal: -2, economy: -1, condition.north_arpal.strike: -1 }
-  - key: inquiry
-    lean: Neutral
+  - lean: Neutral
     label: Commission a royal inquiry
     price: 4
     text: Learned gentlemen take evidence, and the dockers wait.
     effects: { discontent.north_arpal: -1 }
-  - key: outlaw
-    lean: Against
+  - lean: Against
     label: Declare the strike unlawful
-    price: 0
     text: The strike collapses, and so does trust in Carden.
     effects: { discontent.north_arpal: 2, condition.north_arpal.strike: -1 }
 complication:
@@ -281,14 +366,135 @@ default:
   effects: { economy: -2, discontent.north_arpal: 2 }
 ```
 
-**projects.yaml:** the project catalogue. The price is paid in equal instalments, one per season (section 5). Effects apply once, when the project finishes, and are permanent. They may use any effect key, including issue keys such as `opinion.{issue}` and condition keys.
+- Answers are numbered by their order in the list, from 1. The minister picks one by its label, and commands refer to it by number.
+- `price` defaults to 0, and `effects` to none.
+- `complication` is optional. Without one, the **standard complication** applies: "The money runs out, and the province pays for it.", with discontent +1 in the crisis's province.
+- `default` is required: it is what happens when no one answers.
 
-| Project | Price | Seasons | Economy | Other effect |
-| --- | --- | --- | --- | --- |
-| Railway | 6 | 4 | +2 | Discontent −1 in its province |
-| Factory district | 8 | 4 | +3 | Discontent +1 in its province |
-| Coal mine | 4 | 2 | +1 | none |
-| Naval harbour (coastal only) | 5 | 3 | +1 | Favour +2 |
+When the event posts it, in #news (`/info` shows the same):
+
+```
+## Crisis: The Carden Dock Strike
+Ministry of Commerce and Labor · North Arpal · The Condition of Labour
+Due at the next resolution, Winter 1851 <t:…:R>
+
+1. Meet the strikers' demands · For · 3 cr
+2. Commission a royal inquiry · Neutral · 4 cr
+3. Declare the strike unlawful · Against · free
+```
+
+A condemnation, in #news at once:
+
+```
+@rival (Baroness Edel) condemns the handling of The Carden Dock Strike, and stands For
+The Condition of Labour.
+```
+
+After the resolution, a clean outcome:
+
+```
+## The Carden Dock Strike
+@player (Lord Halvard), Minister of Commerce and Labor, chose: Meet the strikers' demands
+> The Crown will not see Carden starve for the sake of a shipowner's ledger.
+
+The docks reopen within the week, and the owners are furious.
+
+<:stat_lower:1565442180057927860> Discontent in North Arpal
+<:stat_lower:1565442180057927860> Economy −1
+North Arpal is no longer *Strike*
+
+Condemnation: @rival (Baroness Edel) stood with the minister, and gains nothing.
+```
+
+A complicated one, when the purse could not pay. The answer's effects come first, then the complication's:
+
+```
+## The Carden Dock Strike
+@player (Lord Halvard), Minister of Commerce and Labor, chose: Commission a royal inquiry.
+The ministry could not pay, and the plan went wrong.
+
+Learned gentlemen take evidence, and the dockers wait.
+The money runs out mid-negotiation, and the strike spreads.
+
+<:stat_lower:1565442180057927860> Discontent in North Arpal
+<:stat_raise:1565442139855392808> Discontent in North Arpal
+<:stat_raise:1565442139855392808> Discontent in Iracterie
+
+Condemnation: @rival (Baroness Edel) was right where the minister was not: popularity +2.
+```
+
+With no answer by the deadline:
+
+```
+## The Carden Dock Strike
+No answer came from the Ministry of Commerce and Labor. @player (Lord Halvard) loses popularity: −4.
+The strike drags on unanswered, and ships divert to Mugi.
+
+<:stat_lower:1565442180057927860> Economy −2
+<:stat_raise:1565442139855392808> Discontent in North Arpal
+```
+
+**projects/\*.yaml:** the import and export format for project templates, one file per project. A project is public works paid season by season from one purse, with effects when it is finished and an optional bonus for finishing on time.
+
+```yaml
+id: royal_railway
+title: The Royal Railway
+purse: CommerceLabor
+province: provencie_gares
+price: 9
+term: 6
+effects: { economy: 5, discontent.here: -2, discontent.soralenten: -1 }
+bonus:
+  by: { season: Spring, year: 1853 }
+  text: The first train reaches the coast ahead of the guarantee, and the shareholders cheer the Crown.
+  effects: { economy: 2, condition.iracterie.boom: 1 }
+```
+
+| Field | Meaning |
+| --- | --- |
+| `purse` | The ministry that pays and runs it: War, Interior, CommerceLabor or Treasury. Defaults to CommerceLabor. |
+| `province` | Where it is built. `here` in its effects stands for it. A ministerial project leaves it out, and the minister chooses. |
+| `price` | The total cost. |
+| `term` | The seasons it should take. The **pace** is `price / term`, the most a season can usefully absorb. |
+| `effects` | Applied once, when it finishes, and permanent. |
+| `bonus` | Optional. Its text and effects apply as well if it finishes in time: `by: { season, year }` means by the end of that turn, and `within: n` means within `n` seasons of starting. |
+| `ministerial` | Optional, default false. If true, the purse's minister can start it with `/ministry project`, choosing the province. |
+| `requires` | Optional. A condition the province must have, for example `coastal`. |
+
+- **Starting:** a `project.{id}` effect starts it, from a bill, an event, a crisis answer or another project; or, if it is ministerial, its minister does.
+- **Spending:** the purse's minister sets its spending per season, which starts at the pace. Spending above the pace is partly lost to **graft**, the contractors and speculators who profit from a rushed job (section 5). Spending less slows it down, and 0 pauses it.
+
+The bonus makes graft a real choice: rushing costs more, but can beat the deadline. The Tovrerie fen drainage (price 4, term 4, so a pace of 1 a season) starts at the earliest in Winter 1850, and its bonus is due by Summer 1851, three seasons later. At the pace it would be one season late. Spending 2 a season gets it done in time, for 5 crowns in all instead of 4.
+
+When it starts, in #news:
+
+```
+## Project begun: The Royal Railway
+Provencie Gares · Ministry of Commerce and Labor · 9 cr over 6 seasons
+Bonus if finished by the end of Spring 1853
+```
+
+`/ministry fund royal_railway 3`, the minister's private reply:
+
+```
+The Royal Railway: 3 cr a season from Commerce and Labor, 1.5 cr above the pace.
+Graft takes half of that: 2.25 cr of work a season, finishing in Summer 1852.
+That beats the bonus deadline, Spring 1853. The purse holds 7.2 cr.
+```
+
+When it finishes in time, in #news:
+
+```
+## The Royal Railway is finished
+Provencie Gares · @player (Lord Halvard), Minister of Commerce and Labor: popularity +2.
+The first train reaches the coast ahead of the guarantee, and the shareholders cheer the Crown.
+
+<:stat_raise:1565442139855392808> Economy +5
+<:stat_lower:1565442180057927860> Discontent in Provencie Gares
+<:stat_lower:1565442180057927860> Discontent in Soralenten
+<:stat_raise:1565442139855392808> Economy +2
+Iracterie is now *Boom*
+```
 
 ## 5. Formulas
 
@@ -340,7 +546,7 @@ A faction cannot attack a member of its own party.
 - **Government:** every cabinet member, plus every member of a party that holds at least one cabinet seat (the Chancellorship counts).
 - **Opposition:** every active member of a party that holds no cabinet seat. An independent outside the cabinet is neither, and cannot use opposition commands.
 
-**Opposition actions:** each opposition faction has `opposition.actionsPerSeason` opposition action a season, spent on a question, a shadow response or a private bill. At most `privateBillsPerYear` of a faction's opposition actions in a year can be bills. Tabling and co-signing no confidence cost no action.
+**Opposition actions:** each opposition faction has `opposition.actionsPerSeason` opposition action a season, spent on a question, a condemnation or a private bill. At most `privateBillsPerYear` of a faction's opposition actions in a year can be bills.
 
 **Cabinet lifecycle**
 
@@ -350,7 +556,7 @@ A faction cannot attack a member of its own party.
 4. A sitting cabinet stays in office as **caretaker** until a new one is approved. This covers the time after an election and after a passed no-confidence motion. Caretaker ministers act with full powers.
 5. Before the first cabinet is approved, every ministry is vacant. The GM can use `/gm cabinet impose` to fill the gap.
 6. **Cabinet role:** the Chancellor and every minister of the sitting cabinet, caretaker or not, hold the Cabinet role; nobody else does. Nominees, and a newly appointed Chancellor still forming a cabinet, get it only once that cabinet is approved or imposed; the exception is an appointment to a vacant Chancellorship, which fills the sitting cabinet's seat and grants the role at once. The bot adds and removes it with every change of office: an approval, an imposed cabinet, an appointment, a resignation, a retirement and a player rejoining the server.
-7. **Resignation:** a minister or the Chancellor may resign at any time with `/minister resign`. A minister's ministry is vacant at once; the Chancellor fills it with a new nomination, or the GM with `/gm cabinet impose`. A Chancellor's resignation leaves the ministers in office and the Chancellorship vacant until the GM appoints a new one. A pending nomination that includes the resigning faction is cancelled. The GM is alerted.
+7. **Resignation:** a minister or the Chancellor may resign at any time with `/ministry resign`. A minister's ministry is vacant at once; the Chancellor fills it with a new nomination, or the GM with `/gm cabinet impose`. A Chancellor's resignation leaves the ministers in office and the Chancellorship vacant until the GM appoints a new one. A pending nomination that includes the resigning faction is cancelled. The GM is alerted.
 
 **Vacant ministries**
 
@@ -360,15 +566,23 @@ A faction cannot attack a member of its own party.
 **Crisis resolution**, where the minister chose one of the crisis's answers, and L is that answer's lean: +1 for *For*, −1 for *Against* and 0 for *Neutral*
 
 1. If the ministry's purse covers the answer's price, deduct it and apply the answer's effects. The outcome is **clean**.
-2. Otherwise, the purse is emptied, and the answer's effects and the complication both apply. The outcome is **complicated**.
+2. Otherwise, the purse is emptied, and the answer's effects and the complication (the crisis's own, or the standard one) both apply. The outcome is **complicated**.
 3. The minister's faction gets `Δpopularity = campaign.factor × L × o(i, p) × k(i)`. A Neutral answer neither gains nor loses.
 4. Opinion on i moves `+crisisShift × L` if clean, or `−crisisShift × L` if complicated. Salience of i rises by 1, whatever the lean.
 5. **No response by the deadline:** the default applies, and the minister's faction loses `campaign.factor × k(i)`.
-6. **Shadow responses:** a shadow response picks one of the answers, and its sign is that answer's lean. Let the right sign be the sign of `o(i, p)`. A shadow faction on the right sign gains `shadowReward` if the minister was not on it (a Neutral answer or no response counts as not on it). A shadow faction on the wrong sign loses `shadowPenalty` if the minister was on the right one. A Neutral shadow response neither gains nor loses. When `o(i, p)` is exactly 0, shadows neither gain nor lose.
+6. **Condemnations:** a condemnation backs *For* or *Against* on the crisis's issue. The right side is the sign of `o(i, p)`. A condemning faction on the right side gains `condemnReward` if the minister was not on it (a Neutral answer or no response counts as not on it). One on the wrong side loses `condemnPenalty` if the minister was on the right side. When `o(i, p)` is exactly 0, nobody gains or loses.
 
 The responsible minister is whoever holds the ministry at the deadline, or the Chancellor if it is vacant.
 
 **Questions:** the responsible minister at the deadline, as for crises, must answer it. If they don't, the minister's faction loses `unansweredQuestion` and the asker gains `questionReward`. If the ministry changed hands since the question was asked, the deadline moves one resolution later.
+
+**The agenda**
+
+- The **Chancellor** alone proposes government bills, at most `government.billsPerSeason` a turn, caretaker or not. Ministers cannot. While the Chancellorship is vacant, no government bill can be proposed.
+- Opposition factions propose **private bills** as their opposition action.
+- A bill proposed during a turn is **scheduled**: it is announced in #assembly at once as the next turn's business. Its vote opens at the resolution that ends the turn, with its post and buttons in #assembly, and is counted at the resolution after that.
+- Until its vote opens, the proposer can withdraw a scheduled bill from `/me`, which gives back the Chancellor's bill for the turn or the opposition action.
+- A scheduled bill counts as before the Assembly, for the rule of one bill per issue.
 
 **Votes**
 
@@ -376,18 +590,19 @@ The responsible minister is whoever holds the ministry at the deadline, or the C
 - Bills and cabinet approval pass with a majority of Yes and No votes. Abstentions don't count, and a tie fails.
 - No confidence passes when Yes votes hold more than half of all filled seats.
 - Votes are public as they are cast.
-- A Yes vote on a bill logs the voter's stance on the issue as For, and a No vote logs it as Against.
+- A Yes vote on a bill logs the bill's lean as the voter's stance on its issue, and a No vote logs the opposite: Yes on a *For* bill is For, Yes on an *Against* bill is Against.
 
-**Laws**
+**Laws**, where L is the bill's lean, +1 for *For* and −1 for *Against*
 
-- **Passed:** the sponsor faction gets `Δpopularity = law.sponsorFactor × O(i) × k(i)`. The issue closes, and its pass text and effects apply.
-- **Rejected:** salience falls by `rejectDrop`, and the issue goes into Cooldown for `rejectedCooldownSeasons`, after which it reopens.
-- An issue can have only one open bill at a time.
-- Reforms are ordinary issues whose pass effects change the rules, for example an Electoral Reform issue with `seats: +20`, or a tax issue with `taxRate: +0.05`.
+- **Passed:** the sponsor faction gets `Δpopularity = law.sponsorFactor × L × O(i) × k(i)`. The bill's pass text and effects apply, and the bill is Passed. The issue stays open unless the effects close it.
+- **Rejected:** salience of the issue falls by `rejectDrop`, and the bill goes into Cooldown for `rejectedCooldownSeasons`, after which it is Available again. Other bills on the issue are unaffected.
+- An issue can have only one bill before the Assembly at a time.
+- **Closing an issue** withdraws all its bills, and cancels a reading in progress.
+- Reforms are ordinary bills whose pass effects change the rules, for example `seats: 30`, or `taxRate: 0.05`.
 
-**No confidence:** a motion goes to a vote once its tabler and co-signers together hold the tabling threshold, `noConfidenceShare` of the Assembly's seats rounded to the nearest seat (30 of 180). If they don't reach it within `noConfidenceGatherResolutions` resolutions, the motion lapses; a lapsed motion starts no cooldown. After a failed motion, no new one can be tabled for `noConfidenceCooldownSeasons`. A passed motion turns the sitting cabinet into a caretaker and calls a **snap election** (section 2): the season the resolution opens becomes the pre-election.
+**No confidence:** any active faction outside the cabinet can table a motion or co-sign one, members of governing parties included, so a party can bring down its own Chancellor. Neither costs an action. A motion goes to a vote once its tabler and co-signers together hold the tabling threshold, `noConfidenceShare` of the Assembly's seats rounded to the nearest seat (30 of 180). If they don't reach it within `noConfidenceGatherResolutions` resolutions, the motion lapses; a lapsed motion starts no cooldown. After a failed motion, no new one can be tabled for `noConfidenceCooldownSeasons`. A passed motion turns the sitting cabinet into a caretaker and calls a **snap election** (section 2): the season the resolution opens becomes the pre-election.
 
-**Election boundary:** no bill or no-confidence motion can be opened during the pre-election. Any bill, motion or cabinet nomination still open when the election runs is cancelled, and its issue returns to Open with no cooldown.
+**Election boundary:** no bill can be voted on and no no-confidence motion tabled during the pre-election, so bills can't be proposed during it or in the turn before a scheduled one. A bill scheduled for a turn that becomes a snap pre-election is cancelled when that turn opens. Any motion or cabinet nomination still open when the election runs is cancelled. A cancelled bill returns to Available with no cooldown, and a cancelled private bill no longer counts towards its proposer's `privateBillsPerYear`.
 
 **Every season**
 
@@ -415,6 +630,8 @@ The responsible minister is whoever holds the ministry at the deadline, or the C
 
 **Reserve:** the Treasury can grant any amount from the reserve to any purse except Navy. There are no loans.
 
+**Ledger:** every change to a purse or the reserve is written as a LedgerEntry, so the money can always be traced: allocations, grants, carry-overs and interest, upkeep, purchases and crackdowns, crisis answers, project spending (with the share lost to graft), and changes from laws, events, crisis effects and `/gm apply`. An entry becomes public at the resolution after it is made, when the orders and responses behind it are revealed anyway; the ministry's own minister and the Chancellor see it at once. An entry from a private `/gm apply` is shown as a *royal adjustment*, without the GM's reason.
+
 **Forces**
 
 Divisions and gendarmerie are the same kind of unit with different constants. A unit is one die.
@@ -435,8 +652,12 @@ Divisions and gendarmerie are the same kind of unit with different constants. A 
 
 **Projects**
 
-- A project's instalment is its price divided by its seasons. At every resolution, an Active or Stalled project pays its instalment from the Commerce and Labor purse and counts down one season. If the purse cannot pay, nothing is taken, the project is Stalled for that season, and the minister is told privately.
-- When a project finishes, its effects apply and the Commerce and Labor minister's faction gains `projectPopularity`.
+- **Pace:** `pace = price / term`.
+- **Each resolution,** an Active or Stalled project pays its `spending` from its purse, or as much of it as the purse holds, and never more than it needs to finish. A payment `x` adds `min(x, pace) + (1 − project.graft) × max(0, x − pace)` to its progress: money above the pace is partly lost to graft.
+- **Stalled:** a season in which it pays nothing, because the purse is empty or spending is 0. Its minister is told privately.
+- **Finishing:** once progress reaches the price, its effects apply and the faction holding its ministry gains `project.popularity`. If it finishes by its bonus deadline, the bonus text and effects apply too. A `by` deadline counts the resolution that ends that turn, and `within: n` counts the n resolutions after it started.
+- A project started by an effect begins at the next resolution, so a bill passing at the end of Autumn first pays at the end of Winter.
+- **Vacant ministry:** the Chancellor sets the spending. With no Chancellor either, it carries on at its last spending.
 
 ## 6. Commands
 
@@ -445,28 +666,58 @@ All commands are slash commands. Long text, such as a roleplay response, is ente
 **Command conventions**
 
 - **Confirmations restate the outcome.** Every player command replies privately with exactly what will happen, when (the next resolution as `<t:…:R>`), and any public consequence: an off-programme stance, a stance logged by a vote, a pending action replaced, a law that would cost its sponsor popularity because the public is against it.
-- **Confirm buttons** guard anything announced publicly or hard to reverse: an off-programme campaign, `/party leave`, `/minister resign`, `/war disband`, `/interior disband`, and the GM's `/gm faction retire`, `/gm party delete`, `/gm set`, `/gm undo` and `/content delete`.
-- **Errors say when.** A command refused for timing names when it becomes possible, for example "Joining opens in the pre-election, Spring 1854 `<t:…:R>`", and a command refused for role names the role it needs.
-- **Autocomplete offers only valid choices.** `/attack` lists rivals outside the player's party, then only the issues where that rival has a stance, with the stance shown. `/bill propose` hides issues with an open bill or in cooldown. `/opposition question` hides vacant ministries only when the Chancellorship is vacant too. `/crisis respond` lists only the crises the player is responsible for. `/war` and `/interior` show each unit's die and the cost of its next training, for example "1st Guards · d14 · train 3 cr".
-- **Buttons on the bot's own posts** replace commands for the common case: votes, no-confidence co-signing, join answers, party applications and programme endorsements. Every button has a command fallback.
+- **Confirm buttons** guard anything announced publicly or hard to reverse: an off-programme campaign, `/party leave`, `/ministry resign`, `/war disband`, `/interior disband`, and the GM's `/gm faction retire`, `/gm party delete`, `/gm set`, `/gm undo` and `/content remove`.
+- **Errors say when.** A command refused for timing names when it becomes possible, for example "Bills can be proposed again after the election, from Summer 1854 `<t:…:R>`", and a command refused for role names the role it needs.
+- **Autocomplete offers only valid choices.** `/attack` lists rivals outside the player's party, then only the issues where that rival has a stance, with the stance shown. `/bill propose` lists only Available bills whose issue has no bill before the Assembly (scheduled or open), with each bill's issue and lean. `/opposition question` hides vacant ministries only when the Chancellorship is vacant too. `/crisis respond` lists only the crises the player is responsible for. `/war` and `/interior` show each unit's die and the cost of its next training, for example "1st Guards · d14 · train 3 cr".
+- **Buttons on the bot's own posts** replace commands for the common case: votes, no-confidence co-signing and join answers. Votes also have `/vote`; every other button is repeated in `/me`, so a lost post never blocks anyone.
 
 **Status and help**
 
 | Command | Who | Effect |
 | --- | --- | --- |
-| `/me` | Any faction | Privately shows the faction's turn at a glance: the next resolution, pending actions (each with a Cancel button), whether the season's opposition action is used and whether a bill is still allowed this year, open votes not yet cast, open crises and questions for a minister, and whether the faction is government, opposition or independent. |
-| `/help [topic]` | Anyone | Explains a topic (campaigning, opposition, voting, each ministry, elections). With no topic, it shows what the player can do right now, given their role and the turn. |
+| `/me` | Any faction | Privately shows the faction's turn at a glance: the next resolution, pending actions (each with a Cancel button), whether the season's opposition action is used and whether a bill is still allowed this year, a bill it has scheduled (with a Withdraw button), open votes not yet cast, open crises and questions for a minister, and whether the faction is government, opposition or independent. Anything waiting on the faction comes with its buttons: votes, co-signing, join answers and questions to answer. With nothing pending, it says what the faction could do next, given its role and the turn. |
+| `/help topic` | Anyone | Explains a topic: campaigning, opposition, voting, each ministry, elections. |
 
 **Information**
 
 | Command | Who | Effect |
 | --- | --- | --- |
-| `/faction info [faction]` | Anyone | Shows popularity, party, seats, home province and logged stances. |
-| `/party info party` | Anyone | Shows the party's colour, members with popularity and seats, its programme, and whether it is in government. |
-| `/issue info [issue]` | Anyone | Shows an issue's motion, *For* and *Against* texts, status (Open, Cooldown with its end, Closed), any open bill, and every party's programme stance on it. With no issue, it lists the open issues. |
-| `/crisis info [crisis]` | Anyone | Shows a live crisis: ministry, province, issue, answer labels with their leans and prices, and deadline. With no crisis, it lists the live ones. |
-| `/province info province` | Anyone | Shows a province's description, discontent in words, conditions (name and description), the units stationed there and the last election result. |
+| `/info thing` | Anyone | Shows any game object. One autocomplete lists factions, parties, issues, bills, projects, crises, provinces, the four ministries and the budget, each marked with its kind. What each shows is listed below. |
 | `/map` | Anyone | Shows the province map from the latest election. |
+
+`/info` shows, by kind:
+
+- **Faction:** popularity, party, seats, home province and logged stances.
+- **Party:** colour, members with popularity and seats, programme, and whether it is in government.
+- **Issue:** *For* and *Against* texts, status (Open, Closed), its bills with their leans and status (Available, before the Assembly with the vote's due date, Cooldown with its end, Passed), and every party's programme stance on it.
+- **Bill:** issue, lean, motion and status, and its readings with their results.
+- **Project:** province, purse, progress against its price, spending per season, expected finish and bonus deadline.
+- **Crisis:** ministry, province, issue, answer labels with their leans and prices, and deadline.
+- **Province:** description, discontent in words, conditions (name and description), the units stationed there and the last election result.
+- **Ministry:** its holder, its purse (this year's allocation, money in and out, and balance), its spending this year line by line from the ledger, its units or projects, and its open crises and questions.
+- **Budget:** the year's available Budget, every purse with its allocation, spending and balance, the Navy contribution, the reserve with grants and interest, and the year's spending by kind across the government (upkeep, purchases, crises, projects, graft, laws and events). A `year` option shows an earlier year.
+
+With nothing chosen, `/info` lists what is live: open issues, available bills, active projects and live crises.
+
+`/info commerce_labor` in Winter 1851:
+
+```
+## Ministry of Commerce and Labor
+Minister: @player (Lord Halvard)
+Purse 1851: allocated 5.0 cr · granted 5.0 · spent 9.5 · balance 0.5 cr
+
+Spring 1851   +5.0   Allocation
+Spring 1851   −1.5   Project: The Royal Railway
+Summer 1851   −1.5   Project: The Royal Railway
+Summer 1851   −2.0   The Ten Hours Bill (law)
+Autumn 1851   +5.0   Grant from the reserve
+Autumn 1851   −3.0   Crisis: The Carden Dock Strike, meet the strikers' demands
+Autumn 1851   −1.5   Project: The Royal Railway
+
+Projects: The Royal Railway, 6.0 of 9 cr, 1.5 cr a season at the pace, finishing Spring 1852
+```
+
+This season's spending appears after the resolution; until then only the minister and the Chancellor see it, in `/ministry status`.
 
 **Factions**
 
@@ -474,14 +725,12 @@ Players don't create factions themselves. The GM registers each one with `/gm fa
 
 **Parties**
 
-A party is founded by **two or more** factions, and has no leader: every member has the same rights. A party decides by a **majority** of its active members, counting the one who proposed.
+A party has **two or more** factions. Only the GM founds parties (`/gm party create`, below), at the players' request. Each party has its own constitution, written by its members as roleplay. The bot doesn't model it: every member has the same commands, and the only party vote it holds is on a join application, decided by a **majority** of the party's active members.
 
 | Command | Who | When | Effect |
 | --- | --- | --- | --- |
-| `/party apply name colour founder2 [founder3] [founder4] [founder5] [emoji]` | An independent faction | Any time | Posts an application to #party-registry, founded by the applicant and the named factions, all independent. Each co-founder confirms or declines with a button. Once all have confirmed, the party is founded as `/gm party create` does, and announced in #news. One decline, or `partyApplication.confirmResolutions` resolutions without every confirmation, withdraws the application. The bot warns the applicant when the colour is close to an existing party's. |
-| `/party join party` | An independent faction | Pre-election only | Requests to join. The request is posted in the party chat with Accept and Decline buttons, and each member answers once (an answer can be changed). The faction joins as soon as a majority of the members accept, and the request is declined as soon as a majority decline. Requests still pending when the election runs are dropped. |
+| `/party apply party` | An independent faction | Pre-election only | Applies to join. The application is posted in the party chat with Accept and Decline buttons, and each member answers once (an answer can be changed). The faction joins as soon as a majority of the members accept, and the application is declined as soon as a majority decline. Applications still pending when the election runs are dropped. |
 | `/party leave` | A member | Any time | The faction becomes independent and keeps its seats. |
-| `/party programme message` | A member | Any time | Submits the linked message as the party's programme (see Party programmes). |
 
 Joining or leaving a party never changes seats. Seats only change at an election.
 
@@ -496,34 +745,32 @@ Every party has a Discord role and a private text channel, both created and kept
 - **Membership:** the bot adds or removes the role whenever a faction joins, leaves, is moved by the GM, is retired, or rejoins the server. The role is the only thing that grants access to the chat, so access follows membership automatically.
 - **Edits:** renaming or recolouring a party renames the role and the channel, and recolours the role.
 - **Deletion:** the role is deleted, and the chat is moved to the archive category, read-only and visible only to the GM role, so its history is kept.
-- **Sync:** on startup and on `/gm party sync`, the bot checks every party's role, role members and channel, and the Cabinet role's members, against the database, and repairs any differences. If Discord refuses a change, for example because the bot's role is too low, the GM is alerted.
+- **Sync:** on startup and on `/gm setup`, the bot checks every party's role, role members and channel, and the Cabinet role's members, against the database, and repairs any differences. If Discord refuses a change, for example because the bot's role is too low, the GM is alerted.
 
 **Party programmes**
 
-A party writes its programme as an ordinary Discord message. Any member submits it with `/party programme message`, where `message` is the message's link (**Copy Message Link** in Discord). The bot can read any message in a channel it can see, as long as it has the Message Content intent.
+A party writes its programme as an ordinary Discord message, usually in its chat, and sends the GM its link (**Copy Message Link** in Discord). The GM records it with `/gm party programme party message`. Who in the party may agree a programme is for its constitution, not the bot. The bot can read any message in a channel it can see, as long as it has the Message Content intent.
 
 The message looks like this:
 
 ```
 ## Liberal Union
-The Factory Act: *Strongly For*
-Grain Duties: *Against*
-Electoral Reform: *For*
+The Condition of Labour: *Strongly For*
+Free Trade: *Against*
+The Franchise: *For*
 ```
 
-- **Header:** lines starting with `#` are ignored, since the party comes from the submitter.
+- **Header:** lines starting with `#` are ignored, since the party comes from the command.
 - **Lines:** every other non-empty line is `Issue: Opinion`.
   - The issue is matched against the title or the id of an open issue, ignoring capitalisation.
   - The opinion is one of *Strongly For*, *For*, *Against* or *Strongly Against*, ignoring capitalisation, surrounding spaces and Markdown emphasis (`*`, `_`).
 - **Missing issues have no stance.** Any open issue the message doesn't mention is recorded as Silent (no stance), so the message is always the party's complete programme and replaces the previous one.
-- **Errors:** a line that names an unknown or closed issue, repeats an issue, or has an unrecognised opinion (including *Silent*) fails the whole message. The bot lists every bad line to the submitter privately, and nothing is submitted, so the message can be fixed and submitted again.
-- **Preview:** the submitter privately sees every open issue with its parsed stance, marking the ones with no stance and the ones that flip sign, with the popularity cost of the flips (section 5) for every member, and Submit and Cancel buttons.
-- **Endorsement:** a submitted programme is posted in the party chat with the same preview, an Endorse button for the other members and a running count, for example "2 of 3". The submitter counts as endorsing. It applies as soon as a majority of the party's active members endorse it, so a two-member party needs both. A newer submission from the same party replaces a pending one.
-- **On apply:** the party's ProgrammeStance rows are replaced, the change is logged, and the bot replies to the original message with the recorded programme, so the party sees exactly what was understood.
+- **Errors:** a line that names an unknown or closed issue, repeats an issue, or has an unrecognised opinion (including *Silent*) fails the whole message. The bot lists every bad line to the GM privately, and nothing is recorded, so the party can fix the message and the GM can record it again.
+- **Preview:** the GM privately sees every open issue with its parsed stance, marking the ones with no stance and the ones that flip sign, with the popularity cost of the flips (section 5) for every member, and Record and Cancel buttons.
+- **On record:** the party's ProgrammeStance rows are replaced, the change is logged, and the bot replies to the original message with the recorded programme, so the party sees exactly what was understood.
   - **During a pre-election,** the programme is the party's **manifesto**: it is posted to #news as such, and changes freely.
-  - **Outside a pre-election,** it is posted to #campaign-log. Every flipped stance is announced in #news ("The Liberal Union changes its line on Grain Duties"), and the flip penalty applies.
-- **Timing:** a programme takes effect as soon as it is applied, including for the election's programme score. Issues opened later have no stance until a new programme is recorded.
-- **GM shortcut:** `/gm party programme party message` parses and previews a message directly, for the GM's own corrections.
+  - **Outside a pre-election,** it is posted to #campaign-log. Every flipped stance is announced in #news ("The Liberal Union changes its line on Free Trade"), and the flip penalty applies.
+- **Timing:** a programme takes effect as soon as it is recorded, including for the election's programme score. Issues opened later have no stance until a new programme is recorded.
 
 **Campaign actions** (two per faction per turn, and two per day during the pre-election, each of a different kind)
 
@@ -539,36 +786,36 @@ A faction may have at most two pending actions, never two of the same kind: a ca
 
 | Command | Limit | Effect |
 | --- | --- | --- |
-| `/opposition question ministry` | The season's opposition action | Opens a modal for the question. The minister must answer by the second resolution after it is asked. |
-| `/opposition shadow crisis answer` | The season's opposition action | Opens a modal for a shadow response to an open crisis, choosing one of its answers. It stays private until the resolution, like the minister's. || `/opposition noconfidence` | Not during the pre-election, nor during the cooldown | Tables a motion. It is posted in #assembly with a Cosign button and a running count, for example "18 of 30 seats". It goes to a vote once its supporters hold the tabling threshold, and lapses if they don't within `noConfidenceGatherResolutions` (section 5). |
-| `/opposition cosign` | Same | Co-signs the open motion; the button's fallback. |
+| `/opposition question ministry` | The season's opposition action | Opens a modal for the question. It is posted publicly with an Answer button, which opens a modal for the responsible minister; the answer is posted under it. The minister must answer by the second resolution after it is asked. |
+| `/opposition condemn crisis side` | The season's opposition action | Publicly backs *For* or *Against* on a live crisis's issue, posted to #news at once, so the minister sees it before answering. Scored at the resolution (section 5). One per faction per crisis. |
 
 **The Assembly**
 
 | Command | Who | Effect |
 | --- | --- | --- |
-| `/bill propose issue` | A minister or the Chancellor (government bill, at most `government.billsPerSeason` a season across the government), or an opposition faction (private bill, spending the season's opposition action, at most `privateBillsPerYear` a year) | Puts an issue's motion to a vote. The kind follows the proposer's role. The bill is posted in #assembly with Yes, No and Abstain buttons and a running tally. |
+| `/bill propose bill` | The Chancellor (government bill, at most `government.billsPerSeason` a turn), or an opposition faction (private bill, spending the season's opposition action, at most `privateBillsPerYear` a year) | Schedules an Available bill for a vote next turn, as a new reading (section 5). The kind follows the proposer's role. It is announced in #assembly at once, and when the next turn opens, the reading is posted there with the bill's motion, its issue and lean, Yes, No and Abstain buttons and a running tally. |
 | `/vote subject yes/no/abstain` | Any active faction with seats | The buttons' fallback. Casts or changes a vote until the deadline. Votes are weighted by seats. The reply notes the stance the vote logs, and warns when it contradicts the voter's programme. |
+| `/noconfidence` | Any active faction outside the cabinet; not during the pre-election, nor during the cooldown | Tables a motion. It is posted in #assembly with a Cosign button, open to the same factions, and a running count, for example "18 of 30 seats". It goes to a vote once its supporters hold the tabling threshold, and lapses if they don't within `noConfidenceGatherResolutions` (section 5). |
 
-**Bills, cabinet and no-confidence votes** resolve at the second resolution after they open, so every vote has at least one full day.
+**Bills** are voted on during the turn after they are proposed: the vote opens when that turn starts and is counted when it ends. **Cabinet and no-confidence votes** resolve at the second resolution after they open. Either way, every vote has at least one full day.
 
 **Ministers**
 
 | Command | Who | Effect |
 | --- | --- | --- |
 | `/crisis respond crisis answer` | The responsible minister: the one whose ministry holds the crisis, or the Chancellor for a vacant ministry | Opens a modal for the response. The reply shows the answer's price against the purse balance, and warns when the purse can't cover it and the answer will be complicated, pointing to `/treasury grant`. The answer can be changed until the deadline, and the response stays private until the resolution. |
-| `/question answer question` | The responsible minister | Opens a modal for the answer, which is posted publicly. |
 | `/treasury allocate` | Treasury | During Winter: opens a modal with the five purses (War, Interior, Commerce and Labor, Treasury, Navy), pre-filled with last year's crowns, with the available Budget in the labels. The bot then previews the remainder that goes to the reserve and Anzaria's reaction to the Navy change in words ("the nobles will be pleased"), with a Confirm button. It can be resubmitted until the Winter resolution. |
 | `/treasury grant ministry amount` | Treasury | Moves money from the reserve to a purse. |
 | `/war raise name province`, `/war train division`, `/war station division province`, `/war disband division` | War | Manages divisions. |
 | `/interior raise name province`, `/interior train corps`, `/interior station corps province`, `/interior disband corps` | Interior | Manages gendarmerie, the same way. |
 | `/interior crackdown province` | Interior | Orders a crackdown (section 5). |
-| `/commerce project type province` | Commerce and Labor | Starts a project. Its first instalment is paid at the next resolution. |
+| `/ministry project project province` | The minister of the project's purse | Starts a ministerial project in a province that meets its `requires`. It first pays at the next resolution. |
+| `/ministry fund project amount` | The minister of the project's purse | Sets a project's spending per season, from 0 up. The reply shows the pace, how much graft would take, the expected finish and whether it beats the bonus deadline. |
 | `/chancellor nominate treasury war interior commerce` | Chancellor | Nominates the cabinet and opens the approval vote. Each nominee is told in their private channel. |
-| `/minister resign` | A minister or the Chancellor | Resigns at once (section 5). Announced in #news. |
-| `/ministry status` | A minister | Privately shows the ministry's purse, pending orders and units or projects, and open crises and questions. |
+| `/ministry resign` | A minister or the Chancellor | Resigns at once (section 5). Announced in #news. |
+| `/ministry status` | A minister | Privately shows the ministry's purse, pending orders, units, its projects with their spending, and open crises and questions, with the ledger entries not yet public. The Chancellor can view any ministry's. |
 
-Purchases (forces and crackdowns) deduct their cost from the purse immediately, and take effect at the next resolution as a PendingOrder. Projects are the exception, paid per season.
+Purchases (forces and crackdowns) deduct their cost from the purse immediately, and take effect at the next resolution as a PendingOrder. Projects are the exception, paid per season from the purse that runs them.
 
 **GM**
 
@@ -576,72 +823,59 @@ The GM's commands are split in two groups: `/gm` runs the game, and `/content` (
 
 | Command | Effect |
 | --- | --- |
-| `/gm setup` | Creates every missing category, game channel, the GM role and the Cabinet role, registers them as `/gm channel set` would, and reports a checklist of what exists, what was created and what still needs a hand (bot role position, intents). Safe to run again. |
-| `/gm agenda` | Privately shows what needs the GM before the next resolution: its time, the event queue in order (or a warning that it is empty), crises and questions with no response, vacant ministries, pending programme submissions and party applications, join requests, and open votes with their tallies. |
-| `/gm party create name colour founder1 founder2 [founder3] [founder4] [founder5] [emoji]` | Creates a party directly, with the founders as members, along with its role and chat. Every founder must be independent. The colour is `#RRGGBB`, and is used for the role, the seat chart and the province map. Applications normally arrive through `/party apply`. |
+| `/gm setup` | Creates every missing category, game channel, the GM role and the Cabinet role, registers them as `/gm channel set` would, repairs every party's role and chat and the Cabinet role to match the database, and reports a checklist of what exists, what was created and what still needs a hand (bot role position, intents). Safe to run again. |
+| `/gm start` | Opens the game, once, after a Confirm that warns if no event is queued. In one transaction it loads the provinces and their conditions, sets the starting values from `constants.yaml`, runs the fiscal game start (section 5), and sets the turn to Spring 1850 as the founding pre-election (term 0, with the pre-election stored as Spring 1850). Then, as step 10 of a resolution would, it fires every event queued with no delay, in queue order. It posts the fired events and a proclamation opening the hustings to #news, updates the dashboard, renames the turn tracker, and schedules the pre-election as usual: two campaign days, then the full resolution that runs the election. Refused once the game has started. |
+| `/gm agenda` | Privately shows what needs the GM before the next resolution: its time, the event queue in order (or a warning that it is empty), crises and questions with no response, vacant ministries, join applications, scheduled bills, and open votes with their tallies. |
+| `/gm party create name colour founder1 founder2 [founder3] [founder4] [founder5] [emoji]` | The only way a party is founded. Creates it with the founders as members, along with its role and chat, and announces it in #news. Every founder must be independent. The colour is `#RRGGBB`, and is used for the role, the seat chart and the province map; the GM is warned when it is close to an existing party's. |
 | `/gm party edit party [name] [colour] [emoji]` | Edits a party, and updates its role and chat. |
-| `/gm party add faction party`, `/gm party remove faction` | Moves a faction into or out of a party directly, at any time. A GM override of the pre-election joining rule. |
+| `/gm party move faction [party]` | Moves a faction into a party, or with no party makes it independent, at any time. A GM override of the pre-election joining rule and of the members' vote. |
+| `/gm party programme party message` | Records the linked message as the party's programme (see Party programmes). |
 | `/gm party delete party` | Deletes a party. Its members become independent, its role is deleted and its chat is archived. |
-| `/gm party sync` | Repairs every party's role and chat to match the database. |
-| `/gm party programme party message` | Parses the linked message as the party's programme and records it after a preview (see Party programmes). |
 | `/gm faction create player character home` | Registers a player as a faction: keyed on their Discord account, at starting popularity, independent, with a private channel. The home province is the character's safe borough (section 8); autocomplete shows each province's description. It holds no seats until the next election. Announced in #news as the character entering politics, and the player is greeted in their private channel. Refused if the player already has a faction. |
 | `/gm faction edit faction [character] [home]` | Edits a faction. Players can't change their character or home province; only the GM can. |
 | `/gm reward faction amount reason` | Rewards excellent roleplay (a propaganda poster, a manifesto, a speech) with popularity, applied at once. Posted to #news as a royal commendation naming the faction and the reason, so players see what earns favour. A negative amount is refused; use `/gm apply` for penalties. |
 | `/gm faction retire faction` | Retires a faction: it leaves its party and any ministry, its pending actions are dropped, and its seats stay vacant until the next election. |
 | `/gm channel set role target` | Sets a game channel, a category (faction, party or archive), the GM role or the Cabinet role. Game channels are added to the command whitelist automatically. |
-| `/gm event queue template [delay]` | Queues an event from a Ready template, to fire at the start of the next turn (section 7), or `delay` turns later. Issues and crises enter play this way. |
-| `/gm event list` | Lists the queued events in firing order, with the turn each fires. |
+| `/gm event queue template [delay]` | Queues an event from a Ready template, to fire at the start of the next turn (section 7), or `delay` turns later. Before the game starts, no delay means it fires at `/gm start`, and a delay counts turns from there. Issues and crises enter play this way. |
 | `/gm event cancel event` | Removes a queued event before it fires. |
 | `/gm crisis cancel crisis [message]` | Withdraws a live crisis, with an optional in-world message. |
-| `/gm chancellor appoint faction` | Appoints the Chancellor, announced as a royal proclamation. |
+| `/gm cabinet chancellor faction` | Appoints the Chancellor, announced as a royal proclamation. |
 | `/gm cabinet impose` | Imposes a caretaker cabinet without a vote, announced as a royal proclamation. |
 | `/gm proclaim` | Opens a modal for a free-text royal proclamation, posted to #news. |
 | `/gm set key value` | Sets a value to an absolute number, using the effect keys plus the game-state fields. The reply shows the old and the new value before the Confirm. Nothing is posted. |
 | `/gm apply effects [public]` | Applies effects written as text (below), as a delta, through the same code as events. With `public`, the effect summary is posted to #news; otherwise only the GM sees it. For follow-ups that shouldn't wait a turn, such as a failed crackdown or a riot. |
 | `/gm roll battle attackers defenders` | Rolls a battle. Each side is a list of unit ids or dice, such as `6d12+2`. |
 | `/gm roll riot province` | Rolls a riot. |
-| `/gm resolve now`, `/gm resolve delay hours`, `/gm resolve pause`, `/gm resolve resume` | Controls the resolution schedule. |
+| `/gm resolve action [hours]` | Controls the resolution schedule: `now` runs one at once, `delay` pushes the next one back by `hours`, and `pause` and `resume` stop and restart the schedule. |
 | `/gm reload` | Reloads `constants.yaml`. |
 | `/gm undo` | Restores the snapshot taken before the last resolution (section 10). |
-| `/gm peek` | Shows the full hidden state privately, with numbers. |
-| `/gm election preview` | Runs the election on the current state and shows the result privately. |
+| `/gm peek [election]` | Shows the full hidden state privately, with numbers. With `election`, it runs the election on the current state instead and shows the result privately. |
 
 **Content management (`/content`)**
 
-Issue, event and crisis **templates** live in the database and are written and edited from Discord. Each template has a status:
+Issue, bill, project, event and crisis **templates** are written as YAML files (section 4, and [YAML Reference.md](YAML%20Reference.md) for every field) and managed entirely from Discord: the GM attaches files to import them, and edits them as YAML in a modal. Each template has a status:
 
 - **Draft:** invisible to players, and freely editable.
 - **Ready:** can be posted.
 - **Archived:** out of use, but kept for the log.
 
-Posting a template creates a **live copy**, so later edits to the template never change an issue, event or crisis already in play. An event can only be Ready when every issue and crisis template it opens or posts is Ready.
+Posting a template creates a **live copy**, so later edits to the template never change an issue, event or crisis already in play. A template can only be Ready when every template its effects open, make available, start or post is Ready, and a bill only when its issue template is Ready.
 
-**Template ids** are slugs. The create commands take an optional `id`; without one, the id is made from the title (lowercase, every run of other characters turned into `_`), with `_2`, `_3` and so on added on a clash. The reply shows the id.
+**Template ids** are slugs, written in the file's `id`. A template's kind is recognised from its fields, checked in this order: `answers` makes a crisis, `lean` a bill, `price` a project, `text` an event, and `for` an issue.
 
 | Command | Effect |
 | --- | --- |
-| `/content issue create [id]` | Opens a modal for a new issue template: title, motion, *For*, *Against* and pass text. It starts as a Draft. |
-| `/content issue set id field value` | Edits one field: opinion, baseline, salience, title, motion, *For*, *Against* or pass text. |
-| `/content issue effects id effects` | Sets the pass effects. |
-| `/content event create [id]` | Opens a modal for a new event template: title, text and effects. It starts as a Draft. |
-| `/content event set id field value` | Edits one field: title, text or effects. |
-| `/content crisis create [id]` | Opens a modal for a new crisis template: title, ministry, province and issue. The reply is the crisis builder: the template so far, with Add answer, Complication, Default, Preview and Mark Ready buttons, each opening the matching modal and refreshing the builder. |
-| `/content crisis answer id key [remove]` | Opens a modal to add or edit one answer: lean, label, price, text and effects. With `remove`, deletes the answer instead. A crisis needs at least two answers to be Ready. |
-| `/content crisis outcome id complication/default` | Opens a modal: text and effects. |
-| `/content crisis set id field value` | Edits one field. |
+| `/content import files` | Imports one or more attached YAML files, or a zip from `/content export`. Each new template arrives as a Draft. A file whose id already exists replaces that template, and a replaced Ready template returns to Draft. Every file is validated, and each error is listed with its file and line; a file with errors imports nothing, the others still import. |
+| `/content edit id [live]` | Opens a modal holding the template's YAML. Saving replaces it, exactly as an import would. Changing the `id` saves a copy under the new id instead, leaving the original as it was. With `live`, it edits the live copy, within the limits in Editing live items. A template longer than a modal holds (4,000 characters) is edited by exporting it and importing it again. |
 | `/content preview id` | Shows privately exactly what players will see, with parsed effects. |
-| `/content ready id` | Validates a template and marks it Ready. It fails if any required field is missing. |
-| `/content list issues/events/crises [status]` | Lists templates. |
-| `/content clone id [newId]` | Copies a template as a new Draft, for variations on a theme. |
-| `/content archive id` | Takes a template out of use. |
-| `/content delete id` | Deletes a template permanently. Allowed only for Drafts that were never posted. |
-| `/content export` | Writes all templates to YAML files and attaches them as a zip. |
-| `/content import [file]` | Imports YAML templates as Drafts, from an attachment, or with no file from a modal where one template's YAML is pasted. |
+| `/content ready id` | Validates a template and marks it Ready. It fails if any required field is missing. An event with a schedule is queued at once (see events/\*.yaml). |
+| `/content list [kind] [status]` | Lists templates, optionally only issues, bills, projects, events or crises, and only one status. |
+| `/content remove id` | Deletes a Draft that was never posted. Anything else is archived instead: out of use, but kept for the log. |
+| `/content export [id]` | Attaches every template, or just one, as YAML files in a zip, ready to edit and import again. |
 
-- Ids, factions, parties, provinces, conditions, issues, events, crises, answers, votes and ministries autocomplete in every command.
-- Crisis creation is split across several modals because a Discord modal holds at most five fields; the builder's buttons chain them.
+- Ids, factions, parties, provinces, conditions, issues, bills, projects, events, crises, answers, votes and ministries autocomplete in every command.
 
-**Effects as text**, so they fit in a modal field: `discontent.north_arpal -2, economy -1, opinion.factory_act +0.05, crisis.dock_strike_carden`. The bot validates every key against the effect keys in section 3 and rejects anything unknown.
+**Effects as text**, so they fit in a modal field: `discontent.north_arpal -2, economy -1, opinion.labour +0.05, crisis.dock_strike_carden`. The bot validates every key against the effect keys in section 3 and rejects anything unknown.
 
 **Effect summaries**
 
@@ -650,24 +884,18 @@ Whenever effects reach players, the post shows a **summary of effects**, one lin
 - A number going up or down starts with the **up** or **down** emoji (`display.upEmoji`, `display.downEmoji` in `constants.yaml`), followed by the value's readable name, for example "Discontent in North Arpal".
 - Public numbers (section 9) also show the amount: economy, purses, the reserve, faction popularity, the Assembly size, and the tax rate as a percentage.
 - The people's mood and Threat show only the direction, never the amount. These are opinion, baseline, salience, discontent, Favour and its baseline, and Threat. A baseline change reads the same as an opinion change, and the same holds for Favour, so the summary never reveals whether a shift will last.
-- Actions use plain lines with no emoji: "New issue: The Factory Act", "Issue closed: Grain Duties", "Crisis: The Carden Dock Strike", "North Arpal is now *Lawless*", "North Arpal is no longer *Epidemic*".
+- Actions use plain lines with no emoji: "New issue: The Condition of Labour", "New bill: The Ten Hours Bill", "Project begun: The Royal Railway", "Issue closed: Free Trade", "Crisis: The Carden Dock Strike", "North Arpal is now *Lawless*", "North Arpal is no longer *Epidemic*".
 - An effect of 0 is left out. Something with no effects has no summary.
 
-```
-## Strike at the Carden Docks
-The dockers walk out over wages, and the harbour falls silent.
-
-<:up:…> Discontent in North Arpal +1
-<:up:…> Salience: The Factory Act
-North Arpal is now *Strike*
-Crisis: The Carden Dock Strike
-```
+Section 4 shows example posts next to each content format: a fired event, a passed law and the crisis outcomes.
 
 `/content preview` shows the post exactly as players will see it.
 
 **Editing live items**
 
-- **A live issue:** text and hidden values can be edited at any time. Every edit is logged, and players are shown changes to the motion, *For* or *Against* text.
+- **A live issue:** text and hidden values can be edited at any time. Every edit is logged, and players are shown changes to the *For* or *Against* text.
+- **A live bill:** it can be edited until it is put to a vote, and again after a rejection. Players are shown changes to the motion.
+- **A live project:** its effects and bonus can be edited until it finishes.
 - **A queued event:** it can be edited until it fires.
 - **A live crisis:** it can be edited until a minister responds. After that it is locked, so a response is never judged against something the minister did not see.
 
@@ -675,20 +903,20 @@ Crisis: The Carden Dock Strike
 
 At 08:00 (or when the GM triggers it), the bot first **snapshots** the database with the SQLite backup API, then runs these steps in order inside one database transaction. If any step throws an error, the transaction rolls back, the GM is alerted, and nothing is posted.
 
-1. **Votes due:** count bills, cabinet approval and no confidence, as in section 5. A passed no-confidence motion turns the cabinet into a caretaker and calls a snap election, moving the stored pre-election to the season this resolution opens. Apply the law outcomes. Lapse no-confidence motions still gathering at their `gatherUntilResolution`, and withdraw party applications past their confirmation window.
-2. **Crises due:** resolve each one in posting order, as in section 5, then score the shadow responses.
+1. **Votes due:** count bills, cabinet approval and no confidence, as in section 5. A passed no-confidence motion turns the cabinet into a caretaker and calls a snap election, moving the stored pre-election to the season this resolution opens. Apply the law outcomes. Lapse no-confidence motions still gathering at their `gatherUntilResolution`.
+2. **Crises due:** resolve each one in posting order, as in section 5, then score the condemnations.
 3. **Questions due:** apply the penalty and the reward for each unanswered question.
 4. **Campaign actions:** resolve campaigns, attacks and polls simultaneously (section 5), and deliver poll results privately.
 5. **Standing work:**
    - apply pending raises, training and stationing, then roll crackdowns;
-   - pay project instalments, count down the paid projects, and apply any that finish.
+   - pay each project's spending, add its progress after graft, and apply any that finish, with their bonus if they are on time.
 6. **Seasonal changes:** opinion drift, salience decay, discontent drift, Favour drift, then popularity drift.
 7. **Fiscal steps,** only at the start of Winter or Spring (section 5).
-8. **Election,** only at the end of a pre-election: cancel open votes and drop pending join requests (section 5), then run section 8.
-9. **Advance** the season, and the year after Winter. Lift cooldowns that have expired. Increment `resolutionNumber` and schedule the next resolution.
-10. **Events:** the new turn starts, so every queued event whose `fireAtResolution` has come fires in the order it was queued, and its effects apply. Issues it opens are open from this turn, and crises it posts are due at the next resolution, so a minister always has the whole turn to answer.
+8. **Election,** only at the end of a pre-election: cancel open votes and drop pending join applications (section 5), then run section 8.
+9. **Advance** the season, and the year after Winter. Lift cooldowns that have expired, returning those bills to Available. Increment `resolutionNumber` and schedule the next resolution.
+10. **Events:** the new turn starts, so every queued event whose `fireAtResolution` has come fires in the order it was queued, and its effects apply. Issues it opens are open from this turn, and crises it posts are due at the next resolution, so a minister always has the whole turn to answer. Then open the bills scheduled for this turn, due at the next resolution, or cancel them if this turn is a pre-election (section 5).
 11. **Alerts** to the GM (section 10).
-12. **Post:** a news summary to #news, the fired events, the new crises, crackdown results, the crisis outcomes and minister and shadow responses, the turn's campaigns and attacks to #campaign-log, an updated dashboard, and private reports to each faction and the cabinet. Rename the turn tracker (section 9).
+12. **Post:** a news summary to #news, the fired events, the new crises, the readings opened in #assembly, crackdown results, the crisis outcomes, minister responses and condemnation scores, the turn's campaigns and attacks to #campaign-log, an updated dashboard, and private reports to each faction and the cabinet. Rename the turn tracker (section 9).
 
 Actions submitted after the resolution has started count towards the next one.
 
@@ -743,12 +971,12 @@ Each province is coloured after the party with the highest strength there, which
   2. Each province pixel is multiplied per channel by `partyColour / 128`. The flat fill becomes exactly the party colour, and any shading painted into a province darkens with it instead of turning grey.
   3. The overlay is drawn on top.
 - **Legend:** the embed carries the legend (party, colour emoji, provinces won), so the image needs no spare space for one.
-- **Where it is posted:** with the election results in #news, in `/gm election preview` (from the preview's strengths), and on demand through `/map`, which redraws the latest term's ProvinceResult rows in each party's current colour. A province whose winning party was deleted since the election keeps the original fill.
+- **Where it is posted:** with the election results in #news, in `/gm peek election` (from the preview's strengths), and on demand through `/map`, which redraws the latest term's ProvinceResult rows in each party's current colour. A province whose winning party was deleted since the election keeps the original fill.
 - **Maintaining the art:** the project copies everything under `assets/` to the build output. If the map is redrawn, keep the province fill at `#808080` (other shades inside a province tint proportionally), put text, cities and any effect that should not take the party colour in the overlay, keep all three images at the same size (or regenerate the index to match), and keep them aligned pixel for pixel. The index was made from a 718×335 cut-out of the provinces, placed at offset (100, 137) on the base map. Do not let anti-aliasing or colour-profile conversion touch the index colours, or province lookups will miss.
 
 After the election the next term begins. The outgoing cabinet stays as caretaker until the GM appoints a Chancellor and a new cabinet is approved (section 5).
 
-`/gm election preview` runs this algorithm on the current state and shows the result only to the GM. It is meant for balancing and testing.
+`/gm peek election` runs this algorithm on the current state and shows the result only to the GM. It is meant for balancing and testing.
 
 ## 9. Visibility and channels
 
@@ -757,7 +985,8 @@ After the election the next term begins. The outgoing cabinet stays as caretaker
 | Information | Players | Ministers | GM |
 | --- | --- | --- | --- |
 | Faction popularity, seats, parties, programmes | Yes | Yes | Yes |
-| Issue motions and status | Yes | Yes | Yes |
+| Issues and their status, bills with their motions and status | Yes | Yes | Yes |
+| Projects: progress, spending, deadlines | Yes | Yes | Yes |
 | Opinion and salience | In words, through polls; as a direction in effect summaries | Same | The numbers |
 | Condition biases and other condition numbers | No | No | Yes |
 | Province conditions (name and description) | Yes | Yes | Yes |
@@ -766,15 +995,15 @@ After the election the next term begins. The outgoing cabinet stays as caretaker
 | Crisis title, ministry, province, answer labels, leans and prices, and deadline | Yes | Yes | Yes |
 | Crisis outcome texts and effect summaries | After the resolution | After the resolution | Yes |
 | Minister's crisis response | After the resolution | After the resolution | Yes |
-| Shadow responses | After the resolution | After the resolution | Yes |
+| Condemnations | Yes, at once | Yes, at once | Yes |
 | Campaigns and attacks | After the resolution | After the resolution | Yes |
-| Pending programme submissions | Own party only | Own party only | Yes |
 | Economy, total Budget, each purse's allocation and balance, the reserve, the Navy contribution | Yes | Yes | Yes |
+| Ledger entries (what each purse and the reserve spent and received) | After the next resolution | At once for their own ministry, and for the Chancellor | Yes |
 | Discontent in each province | In words | In words | The number |
 | Favour | In words | In words | The number |
 | Threat | No (only as a direction in effect summaries) | No | Yes |
 | Divisions and gendarmerie, with their dice and stations | Yes | Yes | Yes |
-| Pending orders and projects | No | Yes | Yes |
+| Pending orders | No | Yes | Yes |
 | Crackdown results | Yes | Yes | Yes |
 | Individual votes, as cast | Yes | Yes | Yes |
 | A party's chat | Its members only | Its members only | Yes |
@@ -787,22 +1016,21 @@ After the election the next term begins. The outgoing cabinet stays as caretaker
 - **Favour:** 70 or more is *content*, 50–69 *calm*, 30–49 *restless*, 10–29 *resentful*, and below 10 *defiant*.
 - **Discontent:** below 2 is *quiet*, 2–4 *grumbling*, 4–6 *restless*, 6–8 *unruly*, and 8 or more *rioting*.
 
-A poll reads, for example: "In North Arpal, the Factory Act is *a burning question*, and the people are *strongly for* it."
+A poll reads, for example: "In North Arpal, the Condition of Labour is *a burning question*, and the people are *strongly for* it."
 
 **Voice.** Everything the bot posts publicly is written in the world's voice. The resolution summary reads as the news of the season. GM acts (appointing a Chancellor, imposing a cabinet, summoning the Assembly after an election, `/gm proclaim`) are posted as royal proclamations, under the heading "By His Majesty's Command". Campaign days are dispatches from the hustings. GM alerts and private errors stay plain.
 
 **Channels.** The GM sets each channel with `/gm channel set`. The ids are stored in the database, and every game channel is allowed by the command whitelist.
 
-- **#news:** the daily resolution summary, events, crises, issues, royal proclamations, manifestos, programme flips, crackdown results and election results.
-- **#party-registry:** party applications from `/party apply`, with the co-founders' Confirm and Decline buttons.
+- **#news:** the daily resolution summary, events, crises, condemnations, issues, royal proclamations, manifestos, programme flips, crackdown results and election results.
 - **#dashboard:** one pinned embed, edited after every resolution: the calendar, parties and seats, economy, budget and purses, Favour in words, discontent in words and conditions by province, open issues and open crises.
-- **#assembly:** bills, votes with a running tally, and no-confidence motions.
+- **#assembly:** bills scheduled for next turn, readings of bills, votes with a running tally, and no-confidence motions.
 - **#campaign-log:** campaign actions and attacks, posted with the resolution that resolves them (never on submission, since they resolve simultaneously), stance logs, and programmes recorded outside a pre-election.
 - **#cabinet:** private to the Cabinet role, the GM role and the bot. Pending orders, projects, crisis deadlines, and the cabinet's own discussion. The Cabinet role has no colour and is not shown separately in the member list, so party colours and grouping stay as they are. When a minister leaves office they lose the role, and with it the chat; its history stays for the next cabinet.
 - **One private channel per faction,** created by the bot under the faction category: poll results and reminders.
-- **One chat per party,** created by the bot under the party category: members' discussion and join requests (section 6).
+- **One chat per party,** created by the bot under the party category: members' discussion, programme drafts and join applications (section 6).
 - **#gm:** private to the GM. Alerts, previews and errors.
-- **Turn tracker:** a voice channel whose name shows the current turn, for example `📅 Summer 1851`, `📅 Spring 1854 · Pre-election`, or `⏸ Summer 1851` while paused. On this server it is `1565059818731995166`. The bot renames it after every resolution, undo, pause or resume, and after `/gm set` changes the season or year. Discord allows only two renames per channel every 10 minutes, so renames are queued, and only the latest name is sent. The bot needs Manage Channels on it. Denying Connect to @everyone keeps it display-only.
+- **Turn tracker:** a voice channel whose name shows the current turn, for example `Summer 1851`, `Spring 1854 · Pre-election`, or `Summer 1851 · Paused` while paused. On this server it is `1565059818731995166`. The bot renames it after every resolution, undo, pause or resume, and after `/gm set` changes the season or year. Discord allows only two renames per channel every 10 minutes, so renames are queued, and only the latest name is sent. The bot needs Manage Channels on it. Denying Connect to @everyone keeps it display-only.
 
 **Reminders** go to a faction's private channel 12 hours before a resolution when it has an unused campaign action (either of its two), an unused opposition action (during a pre-election, only on its last day), an open vote it hasn't cast, or (as a minister) an unanswered crisis or question.
 
@@ -815,8 +1043,9 @@ A poll reads, for example: "In North Arpal, the Factory Act is *a burning questi
 - Threat reaches 60, or 85.
 - The War or Interior purse cannot cover its yearly upkeep, and its units lose training.
 - A crackdown fails.
-- An issue reopens after its cooldown.
-- A party is founded or dissolves (posted when it happens, not after the resolution).
+- A bill comes back from its cooldown.
+- A project's bonus deadline is one resolution away and it will not make it at its current spending.
+- A party dissolves (posted when it happens, not after the resolution).
 - A cabinet seat is empty, a minister or the Chancellor resigns, a cabinet vote fails, or no-confidence co-signers reach the tabling threshold.
 - A no-confidence motion passes and calls a snap election.
 - A crisis or question is due at the next resolution and has no response, or both its ministry and the Chancellorship are vacant.
@@ -842,13 +1071,13 @@ The bot never acts on an alert itself. The GM decides what happens.
 Build and test in this order. Each stage should be playable before the next begins.
 
 1. **Foundation:** the schema in `InitializeDatabase()`, config loading, channel setup, the turn tracker and the resolution poller with scheduling, snapshots and pause. Include a test command that advances the season.
-2. **Factions and parties:** GM faction registration and private channels, `/gm setup`, party applications with founder confirmation, GM party management, party roles and chats with sync, joining (pre-election only, by majority) and leaving, dissolution, programme submission with majority endorsement, `/gm reward`, manifestos and flip penalties, `/faction info`, `/party info`, `/me` and `/help` (first versions, grown each stage), and the dashboard.
-3. **Issues, events and campaigning:** `/content` issue and event commands, the event queue with delays and `/gm event list`, province conditions and `/province info`, `/issue info`, events firing at the start of a turn with effect summaries, `/gm apply`, campaign (with crowding), attack and poll (in words), salience, opinion and popularity drift.
+2. **Factions and parties:** GM faction registration and private channels, `/gm setup`, GM party management (create, move, edit, delete), party roles and chats with sync, joining through `/party apply` (pre-election only, by majority) and leaving, dissolution, programmes recorded by the GM, `/gm reward`, manifestos and flip penalties, `/info` (for factions and parties first), `/me` and `/help` (first versions, grown each stage), and the dashboard.
+3. **Issues, events and campaigning:** `/content import`, `edit`, `preview`, `ready`, `list` and `remove` for every kind of template, the event queue with delays, bills made available by effects, province conditions, `/info` for provinces, issues and bills, events firing at the start of a turn with effect summaries, `/gm start` opening the founding pre-election and firing the opening event, `/gm apply`, campaign (with crowding), attack and poll (in words), salience, opinion and popularity drift.
 4. **Elections:** the full algorithm in section 8, with unit tests built around the worked example below, the seat chart, the province map and the GM preview.
-5. **Government:** the cabinet lifecycle with resignation, royal proclamations, votes with buttons and running tallies, `/bill propose`, laws, `/opposition` actions (question, shadow or private bill), questions, vacant ministries passing to the Chancellor, no confidence with co-signing buttons and lapsing, and snap elections.
-6. **Crises:** `/crisis info`, the crisis builder, posting through events, responses with two or more answers (including Neutral), prices from purses, complications, defaults and shadow responses.
-7. **Budget and standing work:** the fiscal year with the unrest drag, purses and upkeep, the Navy contribution and Favour, the reserve, divisions and gendarmerie (one unit model) with training lost to unpaid upkeep, crackdowns, and projects with instalments.
-8. **GM tools:** the rest of `/content` (clone, import from a pasted modal, export), `/gm agenda`, alerts, reminders, battle and riot rolls, set, undo with resubmit buttons, and peek.
+5. **Government:** the cabinet lifecycle with resignation, royal proclamations, votes with buttons and running tallies, `/bill propose` (the Chancellor's agenda and private bills) with readings scheduled for the next turn, laws with leans and per-bill cooldowns, `/opposition` actions (question, condemnation or private bill), questions, vacant ministries passing to the Chancellor, `/noconfidence` from any non-cabinet faction with co-signing buttons and lapsing, and snap elections.
+6. **Crises:** `/info` for crises, posting through events, responses with two or more answers (including Neutral), prices from purses, complications (with the standard fallback), defaults and condemnations.
+7. **Budget and standing work:** the fiscal year with the unrest drag, purses and upkeep, the Navy contribution and Favour, the reserve, divisions and gendarmerie (one unit model) with training lost to unpaid upkeep, crackdowns, and projects: started by effects or by ministers, spending with graft, bonus deadlines, `/ministry project`, `/ministry fund` and `/info` for projects.
+8. **GM tools:** `/content export`, `/gm agenda`, alerts, reminders, battle and riot rolls, set, undo with resubmit buttons, and peek.
 
 **Cut:** honours, loans, informants (on factions or provinces) and unit equipment were in earlier drafts. None of them is in the Human Rules: informants duplicated polls, equipment duplicated training, and each added a command to learn.
 

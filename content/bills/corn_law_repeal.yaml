@@ -1,0 +1,10 @@
+id: corn_law_repeal
+title: The Repeal of the Corn Duties
+issue: free_trade
+lean: For
+motion: Repeal the duties on foreign grain, and open Aurelia's borders and harbours to free trade with her neighbours.
+pass:
+  text: Foreign grain floods the markets and the loaf falls by a third. In the corn-growing shires, they burn the Chancellor in effigy.
+  effects: { economy: 6, threat: -5, favour: -10,
+             discontent.aurenten: -2, discontent.iracterie: -2, discontent.north_arpal: -1,
+             discontent.agrinenten: 3, discontent.provencie_sacs: 3, discontent.ocidanten: 2 }
