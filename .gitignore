@@ -15,7 +15,7 @@ obj/
 
 # Agent worktrees and local Claude state
 .claude/worktrees/
+.claude/ 
 
 # Resolution snapshots
 snapshots/
-.claude/ 

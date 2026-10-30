@@ -1,50 +1,115 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.Data.Sqlite;
 
-public record Party(long Id, string Name, string Colour, ulong? EmojiId);
+public record Party(
+    long Id,
+    string Name,
+    string Colour,
+    ulong? EmojiId,
+    Season? CreatedSeason,
+    int? CreatedYear,
+    ulong? RoleId,
+    ulong? ChannelId,
+    string? ProgrammeMessageUrl);
+
+public record JoinRequest(long Id, ulong FactionId, long PartyId, DateTimeOffset RequestedAt, JoinRequestStatus Status, ulong? MessageId);
+
+public enum PartyCreateOutcome { Created, NameTaken, TooFewFounders, FounderNotRegistered, FounderNotIndependent }
+
+public sealed record PartyCreateResult(PartyCreateOutcome Outcome, long? PartyId, ulong? OffendingFaction = null);
+
+public sealed record MoveResult(Faction Faction, long? FromPartyId, Party? DissolvedParty);
+
+public enum JoinRequestOutcome { Created, NotIndependent, NotRegistered, AlreadyPending, NoSuchParty }
+
+public sealed record JoinRequestResult(JoinRequestOutcome Outcome, long? RequestId);
+
+public enum JoinAnswerOutcome { Recorded, Accepted, Declined, NotPending, NotAMember, Dropped }
+
+public sealed record JoinAnswerResult(JoinAnswerOutcome Outcome, JoinRequest? Request, int Accepts, int Declines, int Members, Party? DissolvedParty = null);
+
+public sealed record ProgrammeRecordResult(IReadOnlyList<string> FlippedIssueIds, double PenaltyPerMember, IReadOnlyList<ulong> PenalisedFactions);
 
 public partial class DatabaseService
 {
-    private const string SelectPartyColumns = "id, name, colour, emoji_id";
+    private const string SelectPartyColumns =
+        "id, name, colour, emoji_id, created_season, created_year, role_id, channel_id, programme_message_url";
 
     private static Party ReadParty(SqliteDataReader r) => new(
         r.GetInt64(0),
         r.GetString(1),
         r.GetString(2),
-        r.IsDBNull(3) ? null : ulong.Parse(r.GetString(3)));
+        r.IsDBNull(3) ? null : ulong.Parse(r.GetString(3)),
+        r.IsDBNull(4) ? null : Enum.Parse<Season>(r.GetString(4)),
+        r.IsDBNull(5) ? null : r.GetInt32(5),
+        r.IsDBNull(6) ? null : ulong.Parse(r.GetString(6)),
+        r.IsDBNull(7) ? null : ulong.Parse(r.GetString(7)),
+        r.IsDBNull(8) ? null : r.GetString(8));
 
-    public long? CreateParty(string name, string colour, ulong? emojiId = null)
+    private const string SelectJoinRequestColumns = "id, faction_id, party_id, requested_at, status, message_id";
+
+    private static JoinRequest ReadJoinRequest(SqliteDataReader r) => new(
+        r.GetInt64(0),
+        ulong.Parse(r.GetString(1)),
+        r.GetInt64(2),
+        DateTimeOffset.FromUnixTimeSeconds(r.GetInt64(3)),
+        Enum.Parse<JoinRequestStatus>(r.GetString(4)),
+        r.IsDBNull(5) ? null : ulong.Parse(r.GetString(5)));
+
+    public PartyCreateResult CreateParty(string name, string colour, ulong? emojiId, IReadOnlyCollection<ulong> founders)
     {
-        using var conn = new SqliteConnection(_connectionString);
-        conn.Open();
-        var cmd = conn.CreateCommand();
+        var distinct = founders.Distinct().ToList();
+        if (distinct.Count < 2) return new PartyCreateResult(PartyCreateOutcome.TooFewFounders, null);
+
+        using var conn = Open();
+        using var tx = conn.BeginTransaction();
+        foreach (var founder in distinct)
+        {
+            var faction = GetFactionTx(conn, tx, founder);
+            if (faction is not { IsActive: true }) return new PartyCreateResult(PartyCreateOutcome.FounderNotRegistered, null, founder);
+            if (!faction.IsIndependent) return new PartyCreateResult(PartyCreateOutcome.FounderNotIndependent, null, founder);
+        }
+        if (GetPartyByNameTx(conn, tx, name) is not null) return new PartyCreateResult(PartyCreateOutcome.NameTaken, null);
+
+        var state = GetGameStateTx(conn, tx);
+        using var cmd = conn.CreateCommand();
+        cmd.Transaction = tx;
         cmd.CommandText = @"
-            INSERT INTO parties (name, colour, emoji_id)
-            VALUES ($name, $colour, $emoji)
-            ON CONFLICT(name) DO NOTHING
+            INSERT INTO parties (name, colour, emoji_id, created_season, created_year, created_at)
+            VALUES ($name, $colour, $emoji, $season, $year, $now)
             RETURNING id;";
         cmd.Parameters.AddWithValue("$name", name);
         cmd.Parameters.AddWithValue("$colour", colour);
         cmd.Parameters.AddWithValue("$emoji", (object?)emojiId?.ToString() ?? DBNull.Value);
-        return cmd.ExecuteScalar() is long id ? id : null;
-    }
+        cmd.Parameters.AddWithValue("$season", state.Season.ToString());
+        cmd.Parameters.AddWithValue("$year", state.Year);
+        cmd.Parameters.AddWithValue("$now", Now());
+        var partyId = (long)cmd.ExecuteScalar()!;
 
-    public bool DeleteParty(long partyId)
-    {
-        using var conn = new SqliteConnection(_connectionString);
-        conn.Open();
-        var cmd = conn.CreateCommand();
-        cmd.CommandText = "DELETE FROM parties WHERE id = $id;";
-        cmd.Parameters.AddWithValue("$id", partyId);
-        return cmd.ExecuteNonQuery() > 0;
+        foreach (var founder in distinct)
+        {
+            Exec(conn, tx, "UPDATE factions SET party_id = $party WHERE user_id = $user;",
+                ("$party", partyId), ("$user", founder.ToString()));
+            Exec(conn, tx, "UPDATE party_join_requests SET status = 'Dropped' WHERE faction_id = $user AND status = 'Pending';",
+                ("$user", founder.ToString()));
+        }
+        LogTx(conn, tx, LogKinds.StateChange, "gm party create", $"Founded party {partyId} '{name}' with {string.Join(", ", distinct)}.");
+        tx.Commit();
+        return new PartyCreateResult(PartyCreateOutcome.Created, partyId);
     }
 
     public Party? GetParty(long partyId)
     {
-        using var conn = new SqliteConnection(_connectionString);
-        conn.Open();
-        var cmd = conn.CreateCommand();
+        using var conn = Open();
+        return GetPartyTx(conn, null, partyId);
+    }
+
+    private static Party? GetPartyTx(SqliteConnection conn, SqliteTransaction? tx, long partyId)
+    {
+        using var cmd = conn.CreateCommand();
+        cmd.Transaction = tx;
         cmd.CommandText = $"SELECT {SelectPartyColumns} FROM parties WHERE id = $id;";
         cmd.Parameters.AddWithValue("$id", partyId);
         using var r = cmd.ExecuteReader();
@@ -53,9 +118,14 @@ public partial class DatabaseService
 
     public Party? GetPartyByName(string name)
     {
-        using var conn = new SqliteConnection(_connectionString);
-        conn.Open();
-        var cmd = conn.CreateCommand();
+        using var conn = Open();
+        return GetPartyByNameTx(conn, null, name);
+    }
+
+    private static Party? GetPartyByNameTx(SqliteConnection conn, SqliteTransaction? tx, string name)
+    {
+        using var cmd = conn.CreateCommand();
+        cmd.Transaction = tx;
         cmd.CommandText = $"SELECT {SelectPartyColumns} FROM parties WHERE name = $name;";
         cmd.Parameters.AddWithValue("$name", name);
         using var r = cmd.ExecuteReader();
@@ -64,10 +134,9 @@ public partial class DatabaseService
 
     public List<Party> GetAllParties()
     {
-        using var conn = new SqliteConnection(_connectionString);
-        conn.Open();
-        var cmd = conn.CreateCommand();
-        cmd.CommandText = $"SELECT {SelectPartyColumns} FROM parties ORDER BY name;";
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = $"SELECT {SelectPartyColumns} FROM parties ORDER BY id;";
         var list = new List<Party>();
         using var r = cmd.ExecuteReader();
         while (r.Read())
@@ -77,22 +146,13 @@ public partial class DatabaseService
 
     public List<Faction> GetPartyMembers(long partyId)
     {
-        using var conn = new SqliteConnection(_connectionString);
-        conn.Open();
-        var cmd = conn.CreateCommand();
-        cmd.CommandText = $"SELECT {SelectFactionColumns} FROM factions WHERE party_id = $id ORDER BY popularity DESC, seats DESC;";
-        cmd.Parameters.AddWithValue("$id", partyId);
-        var list = new List<Faction>();
-        using var r = cmd.ExecuteReader();
-        while (r.Read())
-            list.Add(ReadFaction(r));
-        return list;
+        using var conn = Open();
+        return QueryFactionsTx(conn, null, "party_id = $party AND status = 'Active'", ("$party", partyId));
     }
 
     public bool UpdateParty(long partyId, string name, string colour, ulong? emojiId)
     {
-        using var conn = new SqliteConnection(_connectionString);
-        conn.Open();
+        using var conn = Open();
         var cmd = conn.CreateCommand();
         cmd.CommandText = "UPDATE OR IGNORE parties SET name = $name, colour = $colour, emoji_id = $emoji WHERE id = $id;";
         cmd.Parameters.AddWithValue("$id", partyId);
@@ -101,4 +161,285 @@ public partial class DatabaseService
         cmd.Parameters.AddWithValue("$emoji", (object?)emojiId?.ToString() ?? DBNull.Value);
         return cmd.ExecuteNonQuery() > 0;
     }
+
+    public void SetPartyDiscordIds(long partyId, ulong? roleId, ulong? channelId)
+    {
+        using var conn = Open();
+        Exec(conn, null, "UPDATE parties SET role_id = $role, channel_id = $channel WHERE id = $id;",
+            ("$id", partyId),
+            ("$role", roleId?.ToString()),
+            ("$channel", channelId?.ToString()));
+    }
+
+    public MoveResult? MoveFaction(ulong userId, long? partyId, string source)
+    {
+        using var conn = Open();
+        using var tx = conn.BeginTransaction();
+        if (GetFactionTx(conn, tx, userId) is not { IsActive: true } faction) return null;
+        if (partyId is { } target && GetPartyTx(conn, tx, target) is null) return null;
+        if (faction.PartyId == partyId) return new MoveResult(faction, faction.PartyId, null);
+
+        Exec(conn, tx, "UPDATE factions SET party_id = $party WHERE user_id = $user;",
+            ("$party", partyId), ("$user", userId.ToString()));
+        if (partyId is not null)
+            Exec(conn, tx, "UPDATE party_join_requests SET status = 'Dropped' WHERE faction_id = $user AND status = 'Pending';",
+                ("$user", userId.ToString()));
+        var dissolved = faction.PartyId is { } from ? DissolveIfUnderTwoTx(conn, tx, from) : null;
+        LogTx(conn, tx, LogKinds.StateChange, source, $"Moved {userId} from {faction.PartyId?.ToString() ?? "independent"} to {partyId?.ToString() ?? "independent"}.", userId);
+        tx.Commit();
+        return new MoveResult(faction with { PartyId = partyId }, faction.PartyId, dissolved);
+    }
+
+    public Party? DeleteParty(long partyId, string source)
+    {
+        using var conn = Open();
+        using var tx = conn.BeginTransaction();
+        var party = DeletePartyTx(conn, tx, partyId);
+        if (party is not null)
+            LogTx(conn, tx, LogKinds.StateChange, source, $"Deleted party {partyId} '{party.Name}'.");
+        tx.Commit();
+        return party;
+    }
+
+    private static Party? DeletePartyTx(SqliteConnection conn, SqliteTransaction tx, long partyId)
+    {
+        if (GetPartyTx(conn, tx, partyId) is not { } party) return null;
+        Exec(conn, tx, "UPDATE factions SET party_id = NULL WHERE party_id = $party;", ("$party", partyId));
+        Exec(conn, tx, "DELETE FROM parties WHERE id = $party;", ("$party", partyId));
+        return party;
+    }
+
+    private static Party? DissolveIfUnderTwoTx(SqliteConnection conn, SqliteTransaction tx, long partyId)
+    {
+        var members = QueryFactionsTx(conn, tx, "party_id = $party AND status = 'Active'", ("$party", partyId));
+        if (members.Count >= 2) return null;
+        var party = DeletePartyTx(conn, tx, partyId);
+        if (party is not null)
+            LogTx(conn, tx, LogKinds.StateChange, "dissolution", $"Party {partyId} '{party.Name}' dissolved with {members.Count} active member(s).");
+        return party;
+    }
+
+    public JoinRequestResult CreateJoinRequest(ulong userId, long partyId)
+    {
+        using var conn = Open();
+        using var tx = conn.BeginTransaction();
+        if (GetFactionTx(conn, tx, userId) is not { IsActive: true } faction) return new JoinRequestResult(JoinRequestOutcome.NotRegistered, null);
+        if (!faction.IsIndependent) return new JoinRequestResult(JoinRequestOutcome.NotIndependent, null);
+        if (GetPartyTx(conn, tx, partyId) is null) return new JoinRequestResult(JoinRequestOutcome.NoSuchParty, null);
+
+        using (var check = conn.CreateCommand())
+        {
+            check.Transaction = tx;
+            check.CommandText = "SELECT COUNT(*) FROM party_join_requests WHERE faction_id = $user AND party_id = $party AND status = 'Pending';";
+            check.Parameters.AddWithValue("$user", userId.ToString());
+            check.Parameters.AddWithValue("$party", partyId);
+            if (Convert.ToInt64(check.ExecuteScalar()) > 0) return new JoinRequestResult(JoinRequestOutcome.AlreadyPending, null);
+        }
+
+        using var cmd = conn.CreateCommand();
+        cmd.Transaction = tx;
+        cmd.CommandText = @"
+            INSERT INTO party_join_requests (faction_id, party_id, requested_at, status)
+            VALUES ($user, $party, $now, 'Pending') RETURNING id;";
+        cmd.Parameters.AddWithValue("$user", userId.ToString());
+        cmd.Parameters.AddWithValue("$party", partyId);
+        cmd.Parameters.AddWithValue("$now", Now());
+        var id = (long)cmd.ExecuteScalar()!;
+        LogTx(conn, tx, LogKinds.StateChange, "party apply", $"{userId} applied to party {partyId} (request {id}).", userId);
+        tx.Commit();
+        return new JoinRequestResult(JoinRequestOutcome.Created, id);
+    }
+
+    public void SetJoinRequestMessage(long requestId, ulong messageId)
+    {
+        using var conn = Open();
+        Exec(conn, null, "UPDATE party_join_requests SET message_id = $message WHERE id = $id;",
+            ("$id", requestId), ("$message", messageId.ToString()));
+    }
+
+    public JoinRequest? GetJoinRequest(long requestId)
+    {
+        using var conn = Open();
+        return GetJoinRequestTx(conn, null, requestId);
+    }
+
+    private static JoinRequest? GetJoinRequestTx(SqliteConnection conn, SqliteTransaction? tx, long requestId)
+    {
+        using var cmd = conn.CreateCommand();
+        cmd.Transaction = tx;
+        cmd.CommandText = $"SELECT {SelectJoinRequestColumns} FROM party_join_requests WHERE id = $id;";
+        cmd.Parameters.AddWithValue("$id", requestId);
+        using var r = cmd.ExecuteReader();
+        return r.Read() ? ReadJoinRequest(r) : null;
+    }
+
+    public List<JoinRequest> GetPendingJoinRequests()
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = $"SELECT {SelectJoinRequestColumns} FROM party_join_requests WHERE status = 'Pending' ORDER BY id;";
+        var list = new List<JoinRequest>();
+        using var r = cmd.ExecuteReader();
+        while (r.Read())
+            list.Add(ReadJoinRequest(r));
+        return list;
+    }
+
+    public Dictionary<ulong, bool> GetJoinAnswers(long requestId)
+    {
+        using var conn = Open();
+        return GetJoinAnswersTx(conn, null, requestId);
+    }
+
+    private static Dictionary<ulong, bool> GetJoinAnswersTx(SqliteConnection conn, SqliteTransaction? tx, long requestId)
+    {
+        using var cmd = conn.CreateCommand();
+        cmd.Transaction = tx;
+        cmd.CommandText = "SELECT faction_id, accept FROM party_join_answers WHERE request_id = $id;";
+        cmd.Parameters.AddWithValue("$id", requestId);
+        var map = new Dictionary<ulong, bool>();
+        using var r = cmd.ExecuteReader();
+        while (r.Read())
+            map[ulong.Parse(r.GetString(0))] = r.GetInt64(1) != 0;
+        return map;
+    }
+
+    public JoinAnswerResult AnswerJoinRequest(long requestId, ulong voterId, bool accept)
+    {
+        using var conn = Open();
+        using var tx = conn.BeginTransaction();
+        var request = GetJoinRequestTx(conn, tx, requestId);
+        if (request is not { Status: JoinRequestStatus.Pending })
+            return new JoinAnswerResult(JoinAnswerOutcome.NotPending, request, 0, 0, 0);
+
+        var members = QueryFactionsTx(conn, tx, "party_id = $party AND status = 'Active'", ("$party", request.PartyId));
+        if (members.All(m => m.UserId != voterId))
+            return new JoinAnswerResult(JoinAnswerOutcome.NotAMember, request, 0, 0, members.Count);
+
+        Exec(conn, tx, @"
+            INSERT INTO party_join_answers (request_id, faction_id, accept, answered_at) VALUES ($id, $voter, $accept, $now)
+            ON CONFLICT(request_id, faction_id) DO UPDATE SET accept = excluded.accept, answered_at = excluded.answered_at;",
+            ("$id", requestId), ("$voter", voterId.ToString()), ("$accept", accept ? 1 : 0), ("$now", Now()));
+
+        var memberIds = members.Select(m => m.UserId).ToHashSet();
+        var answers = GetJoinAnswersTx(conn, tx, requestId).Where(a => memberIds.Contains(a.Key)).ToList();
+        var accepts = answers.Count(a => a.Value);
+        var declines = answers.Count(a => !a.Value);
+        var outcome = JoinAnswerOutcome.Recorded;
+
+        if (accepts * 2 > members.Count)
+        {
+            var applicant = GetFactionTx(conn, tx, request.FactionId);
+            if (applicant is { IsActive: true, IsIndependent: true })
+            {
+                Exec(conn, tx, "UPDATE factions SET party_id = $party WHERE user_id = $user;",
+                    ("$party", request.PartyId), ("$user", request.FactionId.ToString()));
+                Exec(conn, tx, "UPDATE party_join_requests SET status = 'Dropped' WHERE faction_id = $user AND status = 'Pending' AND id <> $id;",
+                    ("$user", request.FactionId.ToString()), ("$id", requestId));
+                SetJoinRequestStatusTx(conn, tx, requestId, JoinRequestStatus.Accepted);
+                outcome = JoinAnswerOutcome.Accepted;
+            }
+            else
+            {
+                SetJoinRequestStatusTx(conn, tx, requestId, JoinRequestStatus.Dropped);
+                outcome = JoinAnswerOutcome.Dropped;
+            }
+        }
+        else if (declines * 2 > members.Count)
+        {
+            SetJoinRequestStatusTx(conn, tx, requestId, JoinRequestStatus.Declined);
+            outcome = JoinAnswerOutcome.Declined;
+        }
+
+        LogTx(conn, tx, LogKinds.StateChange, "party join answer", $"{voterId} answered request {requestId}: {(accept ? "accept" : "decline")} -> {outcome}.", voterId);
+        tx.Commit();
+        return new JoinAnswerResult(outcome, GetJoinRequest(requestId), accepts, declines, members.Count);
+    }
+
+    private static void SetJoinRequestStatusTx(SqliteConnection conn, SqliteTransaction tx, long requestId, JoinRequestStatus status) =>
+        Exec(conn, tx, "UPDATE party_join_requests SET status = $status WHERE id = $id;",
+            ("$id", requestId), ("$status", status.ToString()));
+
+    public int DropPendingJoinRequests()
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "UPDATE party_join_requests SET status = 'Dropped' WHERE status = 'Pending';";
+        return cmd.ExecuteNonQuery();
+    }
+
+    public Dictionary<string, Stance> GetProgramme(long partyId)
+    {
+        using var conn = Open();
+        return GetProgrammeTx(conn, null, partyId);
+    }
+
+    private static Dictionary<string, Stance> GetProgrammeTx(SqliteConnection conn, SqliteTransaction? tx, long partyId)
+    {
+        using var cmd = conn.CreateCommand();
+        cmd.Transaction = tx;
+        cmd.CommandText = "SELECT issue_id, stance FROM programme_stances WHERE party_id = $party;";
+        cmd.Parameters.AddWithValue("$party", partyId);
+        var map = new Dictionary<string, Stance>();
+        using var r = cmd.ExecuteReader();
+        while (r.Read())
+            map[r.GetString(0)] = (Stance)r.GetInt32(1);
+        return map;
+    }
+
+    public static IReadOnlyList<string> ProgrammeFlips(IReadOnlyDictionary<string, Stance> before, IReadOnlyDictionary<string, Stance> after) =>
+        after.Where(kv => before.TryGetValue(kv.Key, out var old) && old.Sign() * kv.Value.Sign() < 0)
+            .Select(kv => kv.Key)
+            .OrderBy(id => id, StringComparer.Ordinal)
+            .ToList();
+
+    public ProgrammeRecordResult RecordProgramme(
+        long partyId, IReadOnlyDictionary<string, Stance> stances, string? messageUrl, GameConstants constants)
+    {
+        using var conn = Open();
+        using var tx = conn.BeginTransaction();
+        var state = GetGameStateTx(conn, tx);
+        var before = GetProgrammeTx(conn, tx, partyId);
+        var flips = ProgrammeFlips(before, stances);
+        var penalty = state.IsPreElection ? 0 : flips.Count * constants.Programme.FlipPenalty;
+        var members = QueryFactionsTx(conn, tx, "party_id = $party AND status = 'Active'", ("$party", partyId));
+
+        Exec(conn, tx, "DELETE FROM programme_stances WHERE party_id = $party;", ("$party", partyId));
+        foreach (var (issueId, stance) in stances.Where(kv => kv.Value != Stance.Silent))
+        {
+            Exec(conn, tx, "INSERT INTO programme_stances (party_id, issue_id, stance) VALUES ($party, $issue, $stance);",
+                ("$party", partyId), ("$issue", issueId), ("$stance", (int)stance));
+            foreach (var member in members)
+                InsertStanceLogTx(conn, tx, state, member.UserId, issueId, stance, StanceSource.Programme, offProgramme: false);
+        }
+        Exec(conn, tx, "UPDATE parties SET programme_message_url = $url WHERE id = $party;", ("$party", partyId), ("$url", messageUrl));
+
+        var penalised = new List<ulong>();
+        if (penalty > 0)
+            foreach (var member in members)
+            {
+                AddPopularityTx(conn, tx, member.UserId, -penalty, constants.Popularity);
+                penalised.Add(member.UserId);
+            }
+
+        LogTx(conn, tx, LogKinds.StateChange, "gm party programme",
+            $"Programme of party {partyId}: {string.Join(", ", stances.Where(kv => kv.Value != Stance.Silent).Select(kv => $"{kv.Key}={kv.Value}"))}; flips: {string.Join(", ", flips)}; penalty {penalty}.");
+        tx.Commit();
+        return new ProgrammeRecordResult(flips, penalty, penalised);
+    }
+
+    private static void InsertStanceLogTx(
+        SqliteConnection conn, SqliteTransaction tx, GameState state, ulong factionId, string issueId, Stance stance, StanceSource source, bool offProgramme) =>
+        Exec(conn, tx, @"
+            INSERT INTO stance_log (faction_id, issue_id, stance, season, year, resolution_number, source, off_programme, logged_at)
+            VALUES ($faction, $issue, $stance, $season, $year, $resolution, $source, $off, $now);",
+            ("$faction", factionId.ToString()),
+            ("$issue", issueId),
+            ("$stance", (int)stance),
+            ("$season", state.Season.ToString()),
+            ("$year", state.Year),
+            ("$resolution", state.ResolutionNumber),
+            ("$source", source.ToString()),
+            ("$off", offProgramme ? 1 : 0),
+            ("$now", Now()));
 }

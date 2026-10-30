@@ -13,6 +13,9 @@ public partial class GmModule : InteractionModuleBase<SocketInteractionContext>
     private readonly Confirmations _confirmations;
     private readonly AlertService _alerts;
     private readonly Publisher _publisher;
+    private readonly PartySyncService _partySync;
+    private readonly CabinetSyncService _cabinetSync;
+    private readonly FactionChannelService _factionChannels;
 
     public GmModule(
         DatabaseService data,
@@ -22,7 +25,10 @@ public partial class GmModule : InteractionModuleBase<SocketInteractionContext>
         TurnTrackerService turnTracker,
         Confirmations confirmations,
         AlertService alerts,
-        Publisher publisher)
+        Publisher publisher,
+        PartySyncService partySync,
+        CabinetSyncService cabinetSync,
+        FactionChannelService factionChannels)
     {
         _data = data;
         _constants = constants;
@@ -32,6 +38,9 @@ public partial class GmModule : InteractionModuleBase<SocketInteractionContext>
         _confirmations = confirmations;
         _alerts = alerts;
         _publisher = publisher;
+        _partySync = partySync;
+        _cabinetSync = cabinetSync;
+        _factionChannels = factionChannels;
     }
 
     private static string Timestamp(DateTimeOffset at, char style = 'F') => $"<t:{at.ToUnixTimeSeconds()}:{style}>";
