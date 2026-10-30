@@ -8,9 +8,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="DiscordBotOne\**;DiscordBotTwo\**;AureliaBot.Tests\**" />
-    <EmbeddedResource Remove="DiscordBotOne\**;DiscordBotTwo\**;AureliaBot.Tests\**" />
-    <None Remove="DiscordBotOne\**;DiscordBotTwo\**;AureliaBot.Tests\**" />
+    <Compile Remove="DiscordBotOne\**;DiscordBotTwo\**;AureliaBot.Tests\**;.claude\**" />
+    <EmbeddedResource Remove="DiscordBotOne\**;DiscordBotTwo\**;AureliaBot.Tests\**;.claude\**" />
+    <None Remove="DiscordBotOne\**;DiscordBotTwo\**;AureliaBot.Tests\**;.claude\**" />
   </ItemGroup>
 
   <ItemGroup>
