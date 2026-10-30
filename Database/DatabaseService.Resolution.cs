@@ -150,6 +150,7 @@ public partial class DatabaseService
         foreach (var gameEvent in QueryEventsTx(conn, tx, "status = 'Queued' AND fire_at_resolution <= $resolution", "fire_at_resolution, id",
                      ("$resolution", state.ResolutionNumber)))
         {
+            if (QueryEventsTx(conn, tx, "id = $id AND status = 'Queued'", "id", ("$id", gameEvent.Id)).Count == 0) continue;
             var source = new EffectSource(gameEvent.Title, "event", gameEvent.Id.ToString(), PublicLedger: true);
             var result = ApplyEffectsTx(conn, tx, gameEvent.ParsedEffects, config, source, report);
             Exec(conn, tx, "UPDATE events SET status = 'Fired', fired_resolution = $resolution WHERE id = $id;",

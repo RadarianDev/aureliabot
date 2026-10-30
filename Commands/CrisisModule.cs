@@ -42,6 +42,7 @@ public class CrisisAnswerAutocomplete : AutocompleteHandler
         var results = crisis.Answers
             .Select((answer, index) => (Number: index + 1, Line: CrisisPublisher.AnswerLine(index + 1, answer)))
             .Where(x => x.Line.Contains(typed, StringComparison.OrdinalIgnoreCase))
+            .Take(25)
             .Select(x => new AutocompleteResult(Display.Truncate(x.Line, 100), x.Number.ToString()));
         return Task.FromResult(AutocompletionResult.FromSuccess(results));
     }
@@ -110,7 +111,8 @@ public class CrisisModule : InteractionModuleBase<SocketInteractionContext>
             .WithTitle(Display.Truncate(Texts.Get("crisis.modal.title", ("crisis", target.Title)), 45))
             .WithCustomId($"crisis:respond:{target.Id}:{number}")
             .AddTextInput(Display.Truncate(Texts.Get("crisis.modal.label", ("answer", target.Answers[number - 1].Label)), 45),
-                CrisisResponseModal.InputId, TextInputStyle.Paragraph, maxLength: ResponseLimit, required: true, value: target.ResponseText)
+                CrisisResponseModal.InputId, TextInputStyle.Paragraph, maxLength: ResponseLimit, required: true,
+                value: target.ResponderId == Context.User.Id ? target.ResponseText : null)
             .Build();
         await RespondWithModalAsync(modal);
     }

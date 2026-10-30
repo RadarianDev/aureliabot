@@ -147,7 +147,7 @@ public partial class DatabaseService
         using var conn = Open();
         return QueryCrisesTx(conn, null, "status = 'Live'")
             .Where(c => ResponsibleMinisterTx(conn, null, c.Ministry) == factionId)
-            .Select(c => new AwaitingCrisis(c, c.ChosenAnswer is not null))
+            .Select(c => new AwaitingCrisis(c, c.ChosenAnswer is not null && c.ResponderId == factionId))
             .ToList();
     }
 
@@ -263,8 +263,11 @@ public partial class DatabaseService
         LogTx(conn, tx, LogKinds.StateChange, "crisis respond", $"{factionId} chose answer {answerNumber} on crisis {crisisId}.", factionId);
         var balance = GetBalanceTx(conn, tx, (LedgerAccount)(int)crisis.Ministry);
         var updated = GetCrisisTx(conn, tx, crisisId)!;
+        var committed = QueryCrisesTx(conn, tx, "status = 'Live' AND id < $id AND ministry = $ministry", ("$id", crisisId), ("$ministry", crisis.Ministry.ToString()))
+            .Where(c => c.ResponderId == factionId && c.Chosen is not null)
+            .Sum(c => c.Chosen!.Price);
         tx.Commit();
-        return new CrisisResponseResult(null, updated, answer, balance, crisis.ChosenAnswer is not null);
+        return new CrisisResponseResult(null, updated, answer, balance - committed, crisis.ChosenAnswer is not null && crisis.ResponderId == factionId);
     }
 
     public string? CondemnRefusal(ulong factionId, long? crisisId, GameConstants constants)
@@ -335,7 +338,7 @@ public partial class DatabaseService
             var opinion = snapshot.Provincial(crisis.IssueId, crisis.ProvinceId);
             var salience = snapshot.Salience(crisis.IssueId);
             var minister = ResponsibleMinisterTx(conn, tx, crisis.Ministry);
-            var answer = minister is null ? null : crisis.Chosen;
+            var answer = minister is { } current && crisis.ResponderId == current ? crisis.Chosen : null;
             var texts = new List<string>();
             var effects = new List<Effect>();
             var source = new EffectSource(crisis.Title, "crisis", crisis.Id.ToString(), PublicLedger: true, ActorId: minister);
@@ -382,7 +385,8 @@ public partial class DatabaseService
             foreach (var condemnation in GetCondemnationsTx(conn, tx, crisis.Id))
             {
                 var delta = rules.Condemnation(c, condemnation.Side, answer?.Lean, opinion);
-                scores.Add(new CondemnationScore(condemnation.FactionId, condemnation.Side, PopularityChangeTx(conn, tx, condemnation.FactionId, delta, c.Popularity)));
+                PopularityChangeTx(conn, tx, condemnation.FactionId, delta, c.Popularity);
+                scores.Add(new CondemnationScore(condemnation.FactionId, condemnation.Side, delta));
             }
 
             Exec(conn, tx, "UPDATE crises SET status = 'Resolved', outcome = $outcome WHERE id = $id;",

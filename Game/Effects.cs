@@ -111,8 +111,8 @@ public static class EffectParser
         string.IsNullOrWhiteSpace(stored) ? [] : ParseText(stored, allowHere: true).Effects;
 
     public static IReadOnlyList<Effect> ResolveHere(IReadOnlyList<Effect> effects, string provinceId) =>
-        effects.Select(e => e.Target == Here
-            ? e with { Key = string.Join('.', e.Parts.Select((p, i) => i == 1 ? provinceId : p)) }
+        effects.Select(e => e.Parts.Skip(1).Contains(Here)
+            ? e with { Key = string.Join('.', e.Parts.Select((p, i) => i >= 1 && p == Here ? provinceId : p)) }
             : e).ToList();
 
     public static IEnumerable<string> ReferencedTemplates(IEnumerable<Effect> effects) =>

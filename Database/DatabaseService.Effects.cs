@@ -178,6 +178,7 @@ public partial class DatabaseService
     {
         if (GetIssueTx(conn, tx, issueId) is not { Status: IssueStatus.Open }) return Texts.Get("data.effect.issueNotOpen", ("id", issueId));
         Exec(conn, tx, "DELETE FROM programme_stances WHERE issue_id = $id;", ("$id", issueId));
+        Exec(conn, tx, "UPDATE crises SET status = 'Cancelled' WHERE issue_id = $id AND status = 'Live';", ("$id", issueId));
         Exec(conn, tx, "UPDATE issues SET status = 'Closed', closed_resolution = $resolution WHERE id = $id;",
             ("$id", issueId), ("$resolution", state.ResolutionNumber));
         Exec(conn, tx, @"
