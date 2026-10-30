@@ -1167,7 +1167,6 @@ data:
   effect:
     warning: "{source}: `{key}`: {warning}"
     noPopularityTarget: "nobody holds that role or matches `{target}` right now"
-    forcesNotBuilt: forces are changed once stage 7 is built; nothing changed
     noProvince: no province {id}
     noCondition: no condition {id}
     issueNotOpen: issue {id} is not open
@@ -1650,3 +1649,73 @@ projects:
   alert:
     bonusAtRisk: "**{project}** has its bonus deadline at the next resolution, and at {spending} a season it won't make it: {remaining} of work is left."
     postFailed: "A project post failed: {error}"
+
+forces:
+  paid: "{cost} is paid from the {ministry} purse now; {balance} is left."
+  autocomplete:
+    unit: "{name} · d{sides} · train {cost}"
+    unitMax: "{name} · d{sides} · max"
+  name:
+    gendarmerieNumbered: "{ordinal} {province} Gendarmerie"
+  ledger:
+    raise: "Raising {name}"
+    train: "Training {name} to d{sides}"
+  order:
+    raise: "Raise **{name}** in {province} ({cost})"
+    train: "Train **{name}** to d{sides} ({cost})"
+    station: "Station **{name}** in {province}"
+    crackdown: "Crackdown in {province} ({cost})"
+  pending:
+    none: "The {ministry} has no pending orders."
+    header: "**Pending orders of the {ministry}**"
+    line: "- {line}"
+  raise:
+    done: "**{name}** will be raised in {province} at d{sides} at the next resolution, {when}."
+  train:
+    done: "**{name}** will be trained from d{from} to d{sides} at the next resolution, {when}."
+  station:
+    done: "**{name}** will move to {province} at the next resolution, {when}."
+    replaced: "**{name}** will move to {province} instead, at the next resolution, {when}."
+    cancelled: "**{name}** stays in {province}: its pending move is cancelled."
+  disband:
+    confirm: "Disband **{name}** (d{sides}, {province}) now? This can't be undone, and nothing is refunded."
+    confirmOrders: "Its {count} pending order(s) are cancelled too, and their cost is not refunded."
+    button: "Disband"
+    done: "**{name}** of {province} is disbanded."
+  private:
+    header: "**Your orders took effect:**"
+    raised: "- **{name}** was raised in {province} at d{sides}."
+    trained: "- **{name}** was trained to d{sides}."
+    stationed: "- **{name}** is now stationed in {province}."
+    crackdownSucceeded: "- The crackdown in {province} succeeded: the gendarmerie rolled {total} against {roll} on a d{sides}."
+    crackdownFailed: "- The crackdown in {province} failed: the gendarmerie rolled {total} against {roll} on a d{sides}."
+  effect:
+    noneToRemove: "no units of that kind in {province}"
+  refusal:
+    notStarted: "The game hasn't started yet."
+    notMinister: "Only the Minister of {ministry}, or the Chancellor while that post is vacant, can do this. It falls to {holder}."
+    cannotPay: "This costs {cost}, but the {ministry} purse holds only {balance}."
+    noName: "Give the new unit a name."
+    longName: "A unit's name can be at most {limit} characters."
+    noProvince: "There is no province `{province}`. Pick one from the list."
+    nameTaken: "There is already a unit called **{name}**, or one being raised under that name."
+    noUnit: "That unit doesn't exist. Pick one from the list."
+    maxSides: "**{name}** is fully trained at d{sides}."
+    trainPending: "**{name}** is already being trained this season."
+    alreadyThere: "**{name}** is already stationed in {province}."
+
+crackdown:
+  autocomplete: "{province} · {count} corps · {sides} sides"
+  ledger: "Crackdown in {province}"
+  done: "A crackdown in {province} will be rolled at the next resolution, {when}. If the gendarmerie prevail, discontent falls by {reduction} and *Lawless* is lifted; if they fail, discontent rises by {backlash} and the Interior minister loses {popularity} popularity. The result is public."
+  refusal:
+    noGendarmerie: "A crackdown needs at least one gendarmerie corps stationed in {province}."
+    already: "A crackdown is already ordered in {province} this season. The next can be ordered after the resolution {when}."
+  post:
+    heading: "Crackdown in {province}"
+    roll: "The gendarmerie rolled {total} against the crowd's {roll} (d{sides})."
+    success: "The gendarmerie have restored order in {province}."
+    failure: "The crackdown in {province} has failed, and the streets are angrier for it."
+  alert:
+    failed: "The crackdown in {province} failed (gendarmerie {total} against {roll} on a d{sides}); the Interior minister {minister} lost popularity. Write the follow-up, for example with `/gm apply`."
+    postFailed: "A crackdown post failed: {error}"
