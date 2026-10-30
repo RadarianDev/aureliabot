@@ -16,9 +16,9 @@ public sealed record EditOutcome(ImportOutcome Outcome, string OriginalId)
 
 public sealed record ContentResult(bool Ok, string Message);
 
-public sealed record LiveTarget(TemplateKind Kind, string LiveId, Template Current, long? EventId);
+public sealed record LiveTarget(TemplateKind Kind, string LiveId, Template Current, long? RowId);
 
-public sealed record LiveEditResult(bool Ok, string Message, string? News);
+public sealed record LiveEditResult(bool Ok, string Message, string? News, long? AmendedCrisisId = null);
 
 public static class ContentRules
 {
@@ -192,9 +192,23 @@ public static class ContentRules
     {
         refusal = null;
         var kind = data.GetTemplate(id)?.Kind;
-        if (kind is TemplateKind.Project or TemplateKind.Crisis)
+
+        if (kind is TemplateKind.Crisis)
         {
-            refusal = Texts.Get("content.live.laterStage");
+            var live = data.GetCrises(CrisisStatus.Live).Where(c => c.TemplateId == id).ToList();
+            if (live.FirstOrDefault(c => c.ChosenAnswer is null) is { } open)
+                return CrisisTarget(open);
+            refusal = live.Count == 0
+                ? Texts.Get("liveEdit.noCrisis", ("id", id))
+                : Texts.Get("gmCrisis.edit.locked", ("crisis", live[0].Title));
+            return null;
+        }
+
+        if (kind is TemplateKind.Project)
+        {
+            if (data.GetLiveProjects().FirstOrDefault(p => p.TemplateId == id) is { } project)
+                return ProjectTarget(project, data.GetParsedTemplate(id) as ProjectTemplate);
+            refusal = Texts.Get("liveEdit.noProject", ("id", id));
             return null;
         }
 
@@ -222,6 +236,37 @@ public static class ContentRules
         };
         return null;
     }
+
+    public static LiveTarget? FindLiveCrisis(DatabaseService data, long crisisId, out string? refusal)
+    {
+        refusal = data.GetCrisis(crisisId) switch
+        {
+            null => Texts.Get("crisis.refusal.gone"),
+            { Status: not CrisisStatus.Live } closed => Texts.Get("crisis.refusal.closed", ("crisis", closed.Title)),
+            { ChosenAnswer: not null } answered => Texts.Get("gmCrisis.edit.locked", ("crisis", answered.Title)),
+            _ => null,
+        };
+        return refusal is null ? CrisisTarget(data.GetCrisis(crisisId)!) : null;
+    }
+
+    private static LiveTarget CrisisTarget(Crisis crisis) =>
+        new(TemplateKind.Crisis, crisis.TemplateId, DatabaseService.LiveCopyOf(crisis), crisis.Id);
+
+    private static LiveTarget ProjectTarget(LiveProject project, ProjectTemplate? template)
+    {
+        var bonus = project.BonusDueResolution is { } due
+            ? new ProjectBonus(null, null, (int)Math.Max(1, due - project.StartedResolution), project.BonusText ?? "", project.ParsedBonusEffects)
+            : null;
+        return new LiveTarget(TemplateKind.Project, project.TemplateId,
+            new ProjectTemplate(project.TemplateId, project.Title, project.Purse, project.ProvinceId, project.Price, project.Term,
+                project.ParsedEffects, bonus, template?.Ministerial ?? false, template?.Requires),
+            project.Id);
+    }
+
+    private static bool KeepsProjectShape(ProjectTemplate edited, ProjectTemplate old) =>
+        edited.Title == old.Title && edited.Purse == old.Purse && edited.Province == old.Province && edited.Price == old.Price
+        && edited.Term == old.Term && edited.Ministerial == old.Ministerial && edited.Requires == old.Requires
+        && (edited.Bonus is null) == (old.Bonus is null) && edited.Bonus?.Within == old.Bonus?.Within && edited.Bonus?.BySeason is null;
 
     public static LiveEditResult ApplyLiveEdit(DatabaseService data, GameConfig config, LiveTarget target, string yaml)
     {
@@ -265,11 +310,29 @@ public static class ContentRules
             }
             case (EventTemplate ev, EventTemplate):
             {
-                if (target.EventId is not { } eventId || !data.UpdateQueuedEvent(eventId, ev.Title, ev.Text, ev.Effects))
+                if (target.RowId is not { } eventId || !data.UpdateQueuedEvent(eventId, ev.Title, ev.Text, ev.Effects))
                     return new LiveEditResult(false, Texts.Get("content.live.eventGone"), null);
                 return new LiveEditResult(true, ev.Schedule is null
                     ? Texts.Get("content.live.eventEdited", ("eventId", eventId), ("id", ev.Id))
                     : Texts.Get("content.live.eventEditedScheduled", ("eventId", eventId), ("id", ev.Id)), null);
+            }
+            case (ProjectTemplate project, ProjectTemplate old):
+            {
+                if (!KeepsProjectShape(project, old))
+                    return new LiveEditResult(false, Texts.Get("liveEdit.projectKeeps"), null);
+                if (target.RowId is not { } projectId)
+                    return new LiveEditResult(false, Texts.Get("projects.refusal.noProject"), null);
+                if (data.EditLiveProject(projectId, project.Effects, project.Bonus?.Text, project.Bonus?.Effects) is { } refusal)
+                    return new LiveEditResult(false, refusal, null);
+                return new LiveEditResult(true, Texts.Get("liveEdit.projectEdited", ("project", project.Title), ("id", project.Id)), null);
+            }
+            case (CrisisTemplate crisis, CrisisTemplate):
+            {
+                if (target.RowId is not { } crisisId)
+                    return new LiveEditResult(false, Texts.Get("crisis.refusal.gone"), null);
+                if (data.EditLiveCrisis(crisisId, crisis) is { } refusal)
+                    return new LiveEditResult(false, refusal, null);
+                return new LiveEditResult(true, Texts.Get("liveEdit.crisisEdited", ("crisis", crisis.Title), ("id", crisis.Id)), null, crisisId);
             }
             default:
                 return new LiveEditResult(false, Texts.Get("content.live.unsupported"), null);

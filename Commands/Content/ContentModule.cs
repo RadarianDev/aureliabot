@@ -15,14 +15,25 @@ public class ContentModule : InteractionModuleBase<SocketInteractionContext>
     private readonly ConstantsStore _constants;
     private readonly Confirmations _confirmations;
     private readonly Publisher _publisher;
+    private readonly CrisisPublisher _crises;
 
-    public ContentModule(DatabaseService data, ConstantsStore constants, Confirmations confirmations, Publisher publisher)
+    public ContentModule(DatabaseService data, ConstantsStore constants, Confirmations confirmations, Publisher publisher, CrisisPublisher crises)
     {
         _data = data;
         _constants = constants;
         _confirmations = confirmations;
         _publisher = publisher;
+        _crises = crises;
     }
+
+    public const string CrisisEditMode = "crisis";
+
+    public static Modal EditModal(string mode, string id, string title, string yaml) =>
+        new ModalBuilder()
+            .WithTitle(Display.Truncate(title, 45))
+            .WithCustomId($"{EditModalPrefix}:{mode}:{id}")
+            .AddTextInput(Texts.Get("content.edit.yamlLabel"), ContentEditModal.YamlInputId, TextInputStyle.Paragraph, value: yaml, maxLength: ContentRules.ModalLimit, required: true)
+            .Build();
 
     [SlashCommand("import", "Import YAML templates, or a zip from /content export")]
     public async Task ImportAsync(
@@ -121,12 +132,8 @@ public class ContentModule : InteractionModuleBase<SocketInteractionContext>
             return;
         }
 
-        var modal = new ModalBuilder()
-            .WithTitle(Display.Truncate(live ? Texts.Get("content.edit.titleLive", ("id", id)) : Texts.Get("content.edit.title", ("id", id)), 45))
-            .WithCustomId($"{EditModalPrefix}:{(live ? "live" : "template")}:{id}")
-            .AddTextInput(Texts.Get("content.edit.yamlLabel"), ContentEditModal.YamlInputId, TextInputStyle.Paragraph, value: yaml, maxLength: ContentRules.ModalLimit, required: true)
-            .Build();
-        await RespondWithModalAsync(modal);
+        await RespondWithModalAsync(EditModal(live ? "live" : "template", id,
+            live ? Texts.Get("content.edit.titleLive", ("id", id)) : Texts.Get("content.edit.title", ("id", id)), yaml));
     }
 
     [ModalInteraction(EditModalPrefix + ":*:*", ignoreGroupNames: true)]
@@ -134,9 +141,13 @@ public class ContentModule : InteractionModuleBase<SocketInteractionContext>
     {
         await DeferAsync(ephemeral: true);
         var config = _constants.Config;
-        if (mode == "live")
+        if (mode is "live" or CrisisEditMode)
         {
-            if (ContentRules.FindLive(_data, id, out var refusal) is not { } target)
+            string? refusal = null;
+            var target = mode == CrisisEditMode
+                ? long.TryParse(id, out var crisisId) ? ContentRules.FindLiveCrisis(_data, crisisId, out refusal) : null
+                : ContentRules.FindLive(_data, id, out refusal);
+            if (target is null)
             {
                 await FailedEditAsync(refusal ?? Texts.Get("content.edit.nothingLive"), id, modal.Yaml);
                 return;
@@ -149,6 +160,11 @@ public class ContentModule : InteractionModuleBase<SocketInteractionContext>
             }
             if (result.News is { } news)
                 await _publisher.PostAsync(ChannelRole.News, news, $"content edit live {id}");
+            if (result.AmendedCrisisId is { } amended)
+            {
+                await _crises.RefreshPostAsync(amended);
+                await _crises.NotifyAmendedAsync(amended);
+            }
             await SendAsync(result.Message);
             return;
         }

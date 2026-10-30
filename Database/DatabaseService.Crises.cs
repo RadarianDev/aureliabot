@@ -41,6 +41,8 @@ public sealed record CrisisResponseResult(string? Refusal, Crisis? Crisis = null
 
 public sealed record CondemnResult(string? Refusal, Crisis? Crisis = null, Condemnation? Condemnation = null);
 
+public sealed record CrisisCancelResult(string? Refusal, Crisis? Crisis = null, IReadOnlyList<ulong>? Refunded = null);
+
 public sealed record CrisisRules(
     Func<GameConstants, Lean, double, double, double> Gain,
     Func<GameConstants, double, double> DefaultLoss,
@@ -169,6 +171,54 @@ public partial class DatabaseService
         using var conn = Open();
         Exec(conn, null, "UPDATE crises SET message_id = $message WHERE id = $id;", ("$id", crisisId), ("$message", messageId.ToString()));
     }
+
+    public CrisisCancelResult CancelCrisis(long crisisId)
+    {
+        using var conn = Open();
+        using var tx = conn.BeginTransaction();
+        if (GetCrisisTx(conn, tx, crisisId) is not { } crisis) return new CrisisCancelResult(Texts.Get("crisis.refusal.gone"));
+        if (crisis.Status != CrisisStatus.Live) return new CrisisCancelResult(Texts.Get("crisis.refusal.closed", ("crisis", crisis.Title)));
+        var refunded = GetCondemnationsTx(conn, tx, crisisId).Select(c => c.FactionId).ToList();
+        CancelCrisisTx(conn, tx, crisisId);
+        LogTx(conn, tx, LogKinds.GmOverride, "gm crisis cancel",
+            $"Crisis {crisisId} ({crisis.TemplateId}) withdrawn; {refunded.Count} condemnation(s) refunded.", isPublic: true);
+        var cancelled = GetCrisisTx(conn, tx, crisisId)!;
+        tx.Commit();
+        return new CrisisCancelResult(null, cancelled, refunded);
+    }
+
+    private static void CancelCrisisTx(SqliteConnection conn, SqliteTransaction tx, long crisisId)
+    {
+        Exec(conn, tx, "UPDATE crises SET status = 'Cancelled' WHERE id = $id AND status = 'Live';", ("$id", crisisId));
+        RefundOppositionActionTx(conn, tx, OppositionActionKind.Condemn, crisisId);
+    }
+
+    public string? EditLiveCrisis(long crisisId, CrisisTemplate edited)
+    {
+        using var conn = Open();
+        using var tx = conn.BeginTransaction();
+        if (GetCrisisTx(conn, tx, crisisId) is not { } crisis) return Texts.Get("crisis.refusal.gone");
+        if (crisis.Status != CrisisStatus.Live) return Texts.Get("crisis.refusal.closed", ("crisis", crisis.Title));
+        if (crisis.ChosenAnswer is not null) return Texts.Get("gmCrisis.edit.locked", ("crisis", crisis.Title));
+        if (edited.Ministry != crisis.Ministry || edited.Issue != crisis.IssueId) return Texts.Get("gmCrisis.edit.keeps");
+        if (GetProvincesTx(conn, tx).All(p => p.Id != edited.Province)) return Texts.Get("crisis.warning.noProvince", ("id", edited.Province));
+
+        Exec(conn, tx, @"
+            UPDATE crises SET title = $title, province_id = $province, answers = $answers,
+                complication_text = $complicationText, complication_effects = $complicationEffects,
+                default_text = $defaultText, default_effects = $defaultEffects
+            WHERE id = $id AND status = 'Live' AND chosen_answer IS NULL;",
+            ("$id", crisisId), ("$title", edited.Title), ("$province", edited.Province), ("$answers", FormatAnswers(edited.Answers)),
+            ("$complicationText", edited.Complication?.Text),
+            ("$complicationEffects", edited.Complication is { } complication ? EffectParser.Format(complication.Effects) : null),
+            ("$defaultText", edited.Default.Text), ("$defaultEffects", EffectParser.Format(edited.Default.Effects)));
+        LogTx(conn, tx, LogKinds.GmOverride, "gm crisis edit", $"Live crisis {crisisId} ({crisis.TemplateId}) edited.");
+        tx.Commit();
+        return null;
+    }
+
+    public static CrisisTemplate LiveCopyOf(Crisis crisis) =>
+        new(crisis.TemplateId, crisis.Title, crisis.Ministry, crisis.ProvinceId, crisis.IssueId, crisis.Answers, crisis.Complication, crisis.Default);
 
     private static string? PostCrisisTx(
         SqliteConnection conn, SqliteTransaction tx, GameState state, GameConfig config, string templateId, EffectSource source, ResolutionReport? report)
