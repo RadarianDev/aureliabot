@@ -308,6 +308,7 @@ public class ProjectTests : AssemblyTestBase
         var project = Start("works");
         Fund(project, 4);
         Resolve();
+        Db.SaveGameState(Db.GetGameState() with { Season = Season.Spring });
         var economy = Db.GetGameState().Economy;
         var before = Db.GetFaction(Minister)!.Popularity;
         var p = C.Popularity;
