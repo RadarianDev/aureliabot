@@ -55,10 +55,17 @@ public static class Formulas
         discontent.Rest + conditions.Sum(c => c.DiscontentRest);
 
     public static double CrisisGain(GameConstants constants, Lean answerLean, double provincialOpinion, double salience) =>
-        throw new NotImplementedException();
+        constants.Campaign.Factor * (int)answerLean * provincialOpinion * SalienceFactor(salience);
 
-    public static double CrisisDefaultLoss(GameConstants constants, double salience) => throw new NotImplementedException();
+    public static double CrisisDefaultLoss(GameConstants constants, double salience) =>
+        constants.Campaign.Factor * SalienceFactor(salience);
 
-    public static double CondemnationChange(GameConstants constants, Lean side, Lean? ministerLean, double provincialOpinion) =>
-        throw new NotImplementedException();
+    public static double CondemnationChange(GameConstants constants, Lean side, Lean? ministerLean, double provincialOpinion)
+    {
+        var rightSign = Math.Sign(provincialOpinion);
+        if (rightSign == 0 || side == Lean.Neutral) return 0;
+        var ministerRight = ministerLean is { } lean && (int)lean == rightSign;
+        if ((int)side == rightSign) return ministerRight ? 0 : constants.Opposition.CondemnReward;
+        return ministerRight ? -constants.Opposition.CondemnPenalty : 0;
+    }
 }
