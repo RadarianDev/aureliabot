@@ -1178,7 +1178,6 @@ data:
     billIssueNotOpen: its issue {id} is not open
     billInPlay: bill {id} is already in play
     billPassed: bill {id} has already passed
-    projectNotBuilt: projects start once stage 7 is built; the project was not started
     unknownKey: unknown effect key {key}
   start:
     alreadyStarted: The game has already started.
@@ -1606,3 +1605,48 @@ fiscal:
     repeated: "The Treasury put forward no new budget, so last year's division stands."
     pleased: "The Anzarian nobles are pleased by the larger contribution to their fleet."
     insulted: "The Anzarian nobles take the smaller contribution to their fleet as an insult."
+
+projects:
+  started: "**{project}** is begun in {province}, run from the {ministry} purse at {pace} a season, the pace. It first pays at the resolution {due}; change its spending with `/ministry fund`."
+  ledger:
+    work: "Project: {project}"
+    graft: "Graft: {project}"
+  post:
+    begun: "Project begun: {project}"
+    meta: "{province} · Ministry of {ministry} · {price} over {term} seasons"
+    bonus: "Bonus if finished by the end of {deadline}"
+    finished: "{project} is finished"
+    minister: "{province} · {minister}, for the Ministry of {ministry}: popularity {change}."
+    noMinister: "{province} · Ministry of {ministry}, with no minister to take the credit."
+  fund:
+    paused: "{project}: paused at 0 cr a season from {ministry}. It stalls each season until it is funded again."
+    atPace: "{project}: {spending} a season from {ministry}, at the pace."
+    below: "{project}: {spending} a season from {ministry}, below the pace of {pace}."
+    above: "{project}: {spending} a season from {ministry}, {excess} above the pace."
+    graft: "Graft takes {share}% of that: {work} of work a season, finishing in {finish}."
+    noGraft: "{work} of work a season, finishing in {finish}."
+    beats: "That beats the bonus deadline, {deadline}."
+    misses: "That misses the bonus deadline, {deadline}."
+    balance: "The purse holds {balance}."
+  autocomplete:
+    live: "{project} · {province} · {progress} of {price}"
+    template: "{project} · {ministry} · {price} over {term} seasons"
+  refusal:
+    unavailable: "Project `{id}` can't be started: {problem}."
+    notMinisterial: "**{project}** is not a ministerial project: only a law, an event or a crisis can start it."
+    notYours: "Only the minister for {ministry}, or the Chancellor while the post is vacant, can do that."
+    noProject: "That project doesn't exist or is no longer under way."
+    negative: "Spending can't be below 0."
+    unknownProvince: "No province `{province}`. Pick one from the list."
+  warning:
+    noProvince: "project `{id}` has no province of its own; only its minister can start it, choosing one"
+    unknownProvince: "no province `{id}`"
+    requires: "{province} is not {condition}, which {project} requires"
+    alreadyLive: "{project} is already under way"
+    noLive: "no project from `{id}` is under way"
+  private:
+    stalledUnfunded: "**{project}** stalled this season: its spending is 0. Fund it with `/ministry fund`."
+    stalledEmpty: "**{project}** stalled this season: the {ministry} purse is empty."
+  alert:
+    bonusAtRisk: "**{project}** has its bonus deadline at the next resolution, and at {spending} a season it won't make it: {remaining} of work is left."
+    postFailed: "A project post failed: {error}"
