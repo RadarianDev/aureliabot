@@ -278,7 +278,9 @@ public sealed class ConstantsStore
         _current = Load(directory);
     }
 
-    public ConstantsStore() : this(Path.Combine(AppContext.BaseDirectory, "config")) { }
+    public ConstantsStore(BotConfig config) : this(config.ConfigFolder) { }
+
+    public string Folder => _directory;
 
     public GameConfig Config => Volatile.Read(ref _current);
 

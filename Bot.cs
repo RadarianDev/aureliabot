@@ -40,6 +40,7 @@ public class Bot
             .AddSingleton<ResolutionService>()
             .AddSingleton<Confirmations>()
             .AddSingleton<SetupChecklistService>()
+            .AddSingleton<GameFilesService>()
             .BuildServiceProvider();
 
         _data = _services.GetRequiredService<DatabaseService>();
@@ -118,6 +119,17 @@ public class Bot
         });
         turnTracker.RequestCurrent();
         _services.GetRequiredService<SetupChecklistService>().RequestRefresh();
+
+        var gameFiles = _services.GetRequiredService<GameFilesService>();
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await gameFiles.ReportContentAsync();
+                gameFiles.StartWatching();
+            }
+            catch (Exception ex) { Console.WriteLine($"[GameFiles] Startup load failed: {ex}"); }
+        });
 
         _ = Task.Run(async () =>
         {

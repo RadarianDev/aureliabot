@@ -90,17 +90,21 @@ public partial class GmModule
         }
     }
 
-    [SlashCommand("reload", "Reload constants.yaml, provinces.yaml and conditions.yaml")]
+    [SlashCommand("reload", "Reload config/ and load any new or changed files from content/")]
     public async Task ReloadAsync()
     {
+        await DeferAsync(ephemeral: true);
         var error = _constants.Reload();
         if (error is null)
             _data.Log(LogKinds.GmOverride, "gm reload", "Reloaded the config.", Context.User.Id);
-        await RespondAsync(
-            error is null
-                ? "Config reloaded. Values already in play are unchanged."
-                : $"⚠️ The config was not reloaded; the old one stays in force.\n{error}",
-            ephemeral: true);
+        var content = await _gameFiles.LoadContentAsync();
+        var configText = error is null
+            ? $"Config reloaded from `{_gameFiles.ConfigFolder}`. Values already in play are unchanged."
+            : $"⚠️ The config was not reloaded; the old one stays in force.\n{error}";
+        var contentText = content.Changed
+            ? GameFilesService.Describe(content)
+            : $"Content: all {content.Unchanged} file(s) in `{_gameFiles.ContentFolder}` are already loaded.";
+        await FollowupAsync(Display.Truncate($"{configText}\n{contentText}"), ephemeral: true);
     }
 
     [SlashCommand("undo", "Restore the snapshot taken before the last resolution, and pause")]

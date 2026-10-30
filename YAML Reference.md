@@ -5,11 +5,16 @@ source of truth; this file collects its formats in one place.
 
 There are two kinds of file:
 
-- **Config** (`config/`): the rules and the map. Reloaded with `/gm reload`, which changes constants
-  only, never values already in play.
-- **Content** (`content/`): issues, bills, projects, events and crises, written by the GM. Imported with
-  `/content import` (attach the files in Discord) as Drafts, edited with `/content edit`, and marked
-  Ready with `/content ready`. `/content export` writes them back out in the same format.
+- **Config** (`config/`): the rules and the map. Loaded on startup, and reloaded automatically a moment
+  after a file is saved (or with `/gm reload`). A reload changes constants only, never values already in
+  play; a file that doesn't load leaves the old config in force, and #gm is told why.
+- **Content** (`content/`): issues, bills, projects, events and crises, written by the GM. On startup, and a
+  moment after a file is saved, every new or changed file is imported and marked Ready if it passes the
+  readiness rules (anything that doesn't stays a Draft, and #gm gets the list). A file is only
+  re-imported when the file itself changes, so an edit made in Discord with `/content edit` survives until
+  the file is edited. Deleting a file never deletes its template; use `/content remove`. Templates can
+  also be imported by attaching files to `/content import`, and `/content export` writes them back out in
+  the same format.
 
 Field names are camelCase. Ids are lowercase slugs (`north_arpal`, `ten_hours_bill`).
 

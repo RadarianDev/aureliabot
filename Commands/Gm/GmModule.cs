@@ -18,6 +18,7 @@ public partial class GmModule : InteractionModuleBase<SocketInteractionContext>
     private readonly CabinetSyncService _cabinetSync;
     private readonly FactionChannelService _factionChannels;
     private readonly SetupChecklistService _setupChecklist;
+    private readonly GameFilesService _gameFiles;
 
     public GmModule(
         DatabaseService data,
@@ -31,7 +32,8 @@ public partial class GmModule : InteractionModuleBase<SocketInteractionContext>
         PartySyncService partySync,
         CabinetSyncService cabinetSync,
         FactionChannelService factionChannels,
-        SetupChecklistService setupChecklist)
+        SetupChecklistService setupChecklist,
+        GameFilesService gameFiles)
     {
         _data = data;
         _constants = constants;
@@ -45,6 +47,7 @@ public partial class GmModule : InteractionModuleBase<SocketInteractionContext>
         _cabinetSync = cabinetSync;
         _factionChannels = factionChannels;
         _setupChecklist = setupChecklist;
+        _gameFiles = gameFiles;
     }
 
     private static string Timestamp(DateTimeOffset at, char style = 'F') => $"<t:{at.ToUnixTimeSeconds()}:{style}>";

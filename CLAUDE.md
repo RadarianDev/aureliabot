@@ -56,6 +56,10 @@ constructor against a temp SQLite file.
 - `Discord:GuildId`: if set, commands register to that guild (instant); if empty, they register
   globally (slow propagation).
 - `Database:Path`: SQLite file, default `aurelia.db` (gitignored).
+- `Game:Root`: the folder holding `config/` and `content/`. If empty, the bot walks up from its
+  output folder to the repo (the folder with `AureliaBot.csproj`), so it reads the files you edit, not
+  the build copy. Both folders are loaded on startup and watched while the bot runs (see
+  [YAML Reference.md](YAML%20Reference.md)).
 
 ## Architecture
 
