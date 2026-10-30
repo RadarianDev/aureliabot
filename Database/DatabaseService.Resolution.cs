@@ -17,6 +17,9 @@ public partial class DatabaseService
             Seed = seed,
         };
 
+        if (state.IsPreElection)
+            DropPendingJoinRequestsTx(conn, tx);
+
         state = AdvanceSeasonTx(conn, tx, state, constants, report, now);
 
         SaveGameStateTx(conn, tx, state with { RngSeed = null });

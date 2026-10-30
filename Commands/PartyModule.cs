@@ -109,6 +109,7 @@ public class PartyModule : InteractionModuleBase<SocketInteractionContext>
                 components: JoinButtons(requestId, disabled: false),
                 allowedMentions: AllowedMentions.None);
             _data.SetJoinRequestMessage(requestId, post.Id);
+            _data.LogPost(chat.Id, post.Id, "party apply");
         }
         catch (Exception ex)
         {
@@ -162,6 +163,8 @@ public class PartyModule : InteractionModuleBase<SocketInteractionContext>
         try
         {
             await _partySync.SyncMemberAsync(userId);
+            if (result.DissolvedParty is null)
+                await _partySync.SyncAsync(fromId);
         }
         catch (Exception ex)
         {
@@ -182,17 +185,7 @@ public class PartyModule : InteractionModuleBase<SocketInteractionContext>
                    $"With fewer than two active members left, {partyName} has dissolved.";
         }
 
-        if (party?.ChannelId is { } chatId && Context.Client.GetChannel(chatId) is IMessageChannel chat)
-        {
-            try
-            {
-                await chat.SendMessageAsync($"{Display.Faction(result.Faction)} has left the party.", allowedMentions: AllowedMentions.None);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[PartyModule] Could not announce a leave in {party.Name}'s chat: {ex.Message}");
-            }
-        }
+        await PostInPartyChatAsync(party, $"{Display.Faction(result.Faction)} has left the party.", "party leave");
 
         return $"You have left {partyName} and are now independent, keeping your {result.Faction.Seats} seats.";
     }
@@ -220,20 +213,20 @@ public class PartyModule : InteractionModuleBase<SocketInteractionContext>
             return;
         }
 
+        await DeferAsync(ephemeral: true);
         var answer = _data.AnswerJoinRequest(requestId, Context.User.Id, accept);
         var applicant = Display.Faction(_data, request.FactionId);
-        var component = (SocketMessageComponent)Context.Interaction;
 
         if (answer.Outcome == JoinAnswerOutcome.NotAMember)
         {
-            await RespondAsync($"Only active members of {partyName} can answer its applications.", ephemeral: true);
+            await FollowupAsync($"Only active members of {partyName} can answer its applications.", ephemeral: true);
             return;
         }
 
         if (answer.Outcome == JoinAnswerOutcome.NotPending)
         {
             var status = answer.Request?.Status ?? request.Status;
-            await component.UpdateAsync(p => p.Components = JoinButtons(requestId, disabled: true));
+            await UpdateApplicationPostAsync(request, party, null, disabled: true);
             await FollowupAsync($"This application is already closed ({StatusWord(status)}). Nothing was changed.", ephemeral: true);
             return;
         }
@@ -247,15 +240,8 @@ public class PartyModule : InteractionModuleBase<SocketInteractionContext>
             _ => null,
         };
         var open = answer.Outcome == JoinAnswerOutcome.Recorded;
-        if (party is not null)
-            await component.UpdateAsync(p =>
-            {
-                p.Content = JoinPostText(applicant, party, tally, closing);
-                p.Components = JoinButtons(requestId, disabled: !open);
-                p.AllowedMentions = AllowedMentions.None;
-            });
-        else
-            await component.UpdateAsync(p => p.Components = JoinButtons(requestId, disabled: !open));
+        await UpdateApplicationPostAsync(request, party,
+            party is null ? null : JoinPostText(applicant, party, tally, closing), disabled: !open);
 
         var verb = accept ? "accepted" : "declined";
         switch (answer.Outcome)
@@ -291,17 +277,44 @@ public class PartyModule : InteractionModuleBase<SocketInteractionContext>
             await _alerts.PostAsync($"Party sync failed after <@{request.FactionId}> joined party {request.PartyId}: {ex.Message}");
         }
 
-        try
-        {
-            await Context.Channel.SendMessageAsync($"{applicant} joins {partyName}. Welcome to the party.", allowedMentions: AllowedMentions.None);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"[PartyModule] Could not announce a join: {ex.Message}");
-        }
+        await PostInPartyChatAsync(_data.GetParty(request.PartyId), $"{applicant} joins {partyName}. Welcome to the party.", "party join");
 
         await TellApplicantAsync(request.FactionId,
             $"{partyName} has accepted your application: you are now a member. Your seats are unchanged.");
+    }
+
+    private async Task UpdateApplicationPostAsync(JoinRequest request, Party? party, string? content, bool disabled)
+    {
+        if (party?.ChannelId is not { } chatId || request.MessageId is not { } messageId) return;
+        try
+        {
+            if (Context.Client.GetChannel(chatId) is not IMessageChannel chat
+                || await chat.GetMessageAsync(messageId) is not IUserMessage post) return;
+            await post.ModifyAsync(p =>
+            {
+                if (content is not null) p.Content = content;
+                p.Components = JoinButtons(request.Id, disabled);
+                p.AllowedMentions = AllowedMentions.None;
+            });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[PartyModule] Could not update application {request.Id}'s post: {ex.Message}");
+        }
+    }
+
+    private async Task PostInPartyChatAsync(Party? party, string text, string source)
+    {
+        if (party?.ChannelId is not { } chatId || Context.Client.GetChannel(chatId) is not IMessageChannel chat) return;
+        try
+        {
+            var message = await chat.SendMessageAsync(text, allowedMentions: AllowedMentions.None);
+            _data.LogPost(chatId, message.Id, source);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[PartyModule] Could not post in {party.Name}'s chat: {ex.Message}");
+        }
     }
 
     private async Task TellApplicantAsync(ulong factionId, string text)

@@ -24,6 +24,7 @@ public class FactionChannelService
     private readonly DiscordSocketClient _client;
     private readonly DatabaseService _data;
     private readonly AlertService _alerts;
+    private readonly SemaphoreSlim _lock = new(1, 1);
 
     public FactionChannelService(DiscordSocketClient client, DatabaseService data, AlertService alerts)
     {
@@ -92,6 +93,19 @@ public class FactionChannelService
 
     private async Task<(ulong? ChannelId, string? Problem)> EnsureAsync(Faction faction, ICategoryChannel category)
     {
+        await _lock.WaitAsync();
+        try
+        {
+            return await EnsureLockedAsync(_data.GetFaction(faction.UserId) ?? faction, category);
+        }
+        finally
+        {
+            _lock.Release();
+        }
+    }
+
+    private async Task<(ulong? ChannelId, string? Problem)> EnsureLockedAsync(Faction faction, ICategoryChannel category)
+    {
         if (_client.GetGuild(category.GuildId) is not { } guild)
             return (null, $"Could not open a private channel for <@{faction.UserId}>: the bot cannot see the Factions category's server.");
 
@@ -151,13 +165,27 @@ public class FactionChannelService
     {
         if (_data.GetChannel(ChannelRole.FactionCategory) is not { } categoryId) return null;
         if (_client.GetChannel(categoryId) is ICategoryChannel cached) return cached;
-        return await _client.Rest.GetChannelAsync(categoryId) as ICategoryChannel;
+        try
+        {
+            return await _client.Rest.GetChannelAsync(categoryId) as ICategoryChannel;
+        }
+        catch (Discord.Net.HttpException)
+        {
+            return null;
+        }
     }
 
     private async Task<ITextChannel?> TextChannelAsync(ulong channelId)
     {
         if (_client.GetChannel(channelId) is ITextChannel cached) return cached;
-        return await _client.Rest.GetChannelAsync(channelId) as ITextChannel;
+        try
+        {
+            return await _client.Rest.GetChannelAsync(channelId) as ITextChannel;
+        }
+        catch (Discord.Net.HttpException)
+        {
+            return null;
+        }
     }
 
     private static string ChannelName(Faction faction, SocketGuild guild)

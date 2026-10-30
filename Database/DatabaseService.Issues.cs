@@ -91,15 +91,15 @@ public partial class DatabaseService
         return cmd.ExecuteScalar() is long stance ? (Stance)stance : null;
     }
 
-    public List<(string IssueId, Stance Stance, StanceSource Source, bool OffProgramme, Season Season, int Year)> GetStanceLog(ulong factionId, int limit = 20)
+    public List<(string IssueId, Stance Stance, StanceSource Source, bool OffProgramme, Season Season, int Year)> GetLatestStances(ulong factionId)
     {
         using var conn = Open();
         using var cmd = conn.CreateCommand();
         cmd.CommandText = @"
             SELECT issue_id, stance, source, off_programme, season, year FROM stance_log
-            WHERE faction_id = $faction ORDER BY id DESC LIMIT $limit;";
+            WHERE id IN (SELECT MAX(id) FROM stance_log WHERE faction_id = $faction GROUP BY issue_id)
+            ORDER BY id DESC;";
         cmd.Parameters.AddWithValue("$faction", factionId.ToString());
-        cmd.Parameters.AddWithValue("$limit", limit);
         var list = new List<(string, Stance, StanceSource, bool, Season, int)>();
         using var r = cmd.ExecuteReader();
         while (r.Read())

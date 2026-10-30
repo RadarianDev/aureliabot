@@ -161,6 +161,8 @@ public partial class DatabaseService
         Exec(conn, tx, "UPDATE party_join_requests SET status = 'Dropped' WHERE faction_id = $user AND status = 'Pending';", ("$user", id));
 
         var (dissolved, lastMember) = faction.PartyId is { } partyId ? DissolveIfUnderTwoTx(conn, tx, partyId) : (null, null);
+        if (dissolved is null && faction.PartyId is { } stillStanding)
+            RetallyJoinRequestsTx(conn, tx, stillStanding);
         LogTx(conn, tx, LogKinds.StateChange, "gm faction retire", $"Retired {id}.", userId);
         tx.Commit();
         return new RetireResult(faction, dissolved, lastMember);

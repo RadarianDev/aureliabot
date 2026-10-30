@@ -14,6 +14,7 @@ public partial class GmModule
         private readonly CabinetSyncService _cabinetSync;
         private readonly Confirmations _confirmations;
         private readonly Publisher _publisher;
+        private readonly AlertService _alerts;
 
         public FactionGroup(
             DatabaseService data,
@@ -22,7 +23,8 @@ public partial class GmModule
             PartySyncService partySync,
             CabinetSyncService cabinetSync,
             Confirmations confirmations,
-            Publisher publisher)
+            Publisher publisher,
+            AlertService alerts)
         {
             _data = data;
             _constants = constants;
@@ -31,6 +33,7 @@ public partial class GmModule
             _cabinetSync = cabinetSync;
             _confirmations = confirmations;
             _publisher = publisher;
+            _alerts = alerts;
         }
 
         [SlashCommand("create", "Register a player as a faction, with a private channel")]
@@ -159,6 +162,12 @@ public partial class GmModule
 
         private async Task<string> RetireConfirmedAsync(ulong userId)
         {
+            var cabinet = _data.GetSittingCabinet();
+            var vacated = new List<string>();
+            if (cabinet?.ChancellorId == userId) vacated.Add("the Chancellorship");
+            if (cabinet is not null)
+                vacated.AddRange(cabinet.Posts.Where(p => p.Value == userId).Select(p => $"the Ministry of {p.Key.DisplayName()}"));
+
             if (_data.RetireFaction(userId) is not { } result)
                 return $"<@{userId}> is not an active faction; nothing was changed.";
 
@@ -171,6 +180,14 @@ public partial class GmModule
             else
             {
                 lines.Add(await TryAsync("party role", () => _partySync.SyncMemberAsync(userId)));
+                if (result.Faction.PartyId is { } formerParty)
+                    lines.Add(await TryAsync("party sync", () => _partySync.SyncAsync(formerParty)));
+            }
+            if (vacated.Count > 0)
+            {
+                var vacancy = $"{Display.Faction(result.Faction)} retired, leaving {string.Join(" and ", vacated)} vacant.";
+                lines.Add(vacancy);
+                await _alerts.PostAsync($"A cabinet seat is empty: {vacancy}");
             }
             lines.Add(await TryAsync("cabinet role", () => _cabinetSync.SyncAsync()));
             if (result.Faction.Seats > 0)

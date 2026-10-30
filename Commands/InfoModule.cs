@@ -104,13 +104,13 @@ public class InfoModule : InteractionModuleBase<SocketInteractionContext>
         sb.AppendLine($"Seats: {faction.Seats}");
         sb.AppendLine($"Home province: {Display.Province(_constants.Config, faction.HomeProvinceId)}");
 
-        var log = _data.GetStanceLog(userId);
+        var log = _data.GetLatestStances(userId);
         if (log.Count > 0)
         {
             var titles = _data.GetAllIssues().ToDictionary(i => i.Id, i => i.Title);
             sb.AppendLine();
             sb.AppendLine("**Stances**");
-            foreach (var entry in log.DistinctBy(e => e.IssueId))
+            foreach (var entry in log)
                 sb.AppendLine($"- {titles.GetValueOrDefault(entry.IssueId, entry.IssueId)}: {entry.Stance.DisplayName()} " +
                               $"({entry.Source.ToString().ToLowerInvariant()}, {GameCalendar.Label(entry.Season, entry.Year)}" +
                               $"{(entry.OffProgramme ? ", off-programme" : "")})");

@@ -38,7 +38,16 @@ public partial class GmModule
                 return;
             }
 
-            var source = await channel.GetMessageAsync(link.MessageId);
+            IMessage? source;
+            try
+            {
+                source = await channel.GetMessageAsync(link.MessageId);
+            }
+            catch (Discord.Net.HttpException ex)
+            {
+                await FollowupAsync($"I can't read <#{link.ChannelId}> ({ex.Reason ?? ex.Message}). Give the bot access to it, or record from another channel.", ephemeral: true);
+                return;
+            }
             if (source is null)
             {
                 await FollowupAsync($"I cannot find that message in <#{link.ChannelId}>.", ephemeral: true);
@@ -129,10 +138,13 @@ public partial class GmModule
             try
             {
                 if (Context.Client.GetChannel(link.ChannelId) is IMessageChannel channel)
-                    await channel.SendMessageAsync(
+                {
+                    var recordedReply = await channel.SendMessageAsync(
                         Display.Truncate($"Recorded as the programme of {Display.Party(party)}:\n{programme}"),
                         allowedMentions: AllowedMentions.None,
                         messageReference: new MessageReference(link.MessageId, link.ChannelId, link.GuildId, false));
+                    _data.LogPost(link.ChannelId, recordedReply.Id, "gm party programme");
+                }
                 else
                     problems.Add("I could not reach the original message's channel to reply");
             }
