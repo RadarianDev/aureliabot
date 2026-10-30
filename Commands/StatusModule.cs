@@ -8,13 +8,7 @@ public enum FactionRole { Government, Opposition, Independent }
 
 public static class FactionRoles
 {
-    public static FactionRole Of(DatabaseService data, Faction faction)
-    {
-        var cabinet = data.GetSittingCabinet();
-        if (cabinet is not null && cabinet.Holders.Contains(faction.UserId)) return FactionRole.Government;
-        if (faction.PartyId is not { } partyId) return FactionRole.Independent;
-        return data.GetGoverningPartyIds().Contains(partyId) ? FactionRole.Government : FactionRole.Opposition;
-    }
+    public static FactionRole Of(DatabaseService data, Faction faction) => data.RoleOf(faction.UserId);
 }
 
 public class StatusModule : InteractionModuleBase<SocketInteractionContext>

@@ -34,7 +34,7 @@ public enum VoteChoice { Yes, No, Abstain }
 
 public enum CabinetKind { Sitting, Nominated }
 
-public enum CabinetStatus { Approved, Caretaker, Voting, Rejected, Cancelled, Replaced }
+public enum CabinetStatus { Approved, Caretaker, Forming, Voting, Rejected, Cancelled, Replaced }
 
 public enum LedgerKind
 {

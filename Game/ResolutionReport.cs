@@ -51,6 +51,14 @@ public sealed record ActionReport(
 
 public sealed record CrackdownReport(string ProvinceId, bool Success, int GendarmerieTotal, int DieSides, int DieRoll);
 
+public enum QuestionOutcomeKind { Unanswered, Dropped, Extended }
+
+public sealed record QuestionReport(long QuestionId, Ministry Ministry, ulong AskerId, ulong? MinisterId, QuestionOutcomeKind Outcome, double MinisterChange, double AskerChange);
+
+public sealed record CabinetVoteReport(long CabinetId, ulong? ChancellorId, bool Approved, int YesSeats, int NoSeats, int AbstainSeats);
+
+public sealed record NoConfidenceReport(long MotionId, ulong TablerId, NoConfidenceStatus Outcome, int YesSeats, int NoSeats, int FilledSeats);
+
 public sealed record ElectionPartySnapshot(long Id, string Name, string Colour, ulong? EmojiId);
 
 public sealed record ElectionReport(int TermNumber, ElectionResult Result, IReadOnlyList<ElectionPartySnapshot> Parties);
@@ -80,6 +88,9 @@ public sealed record ResolutionReport
     public List<ProjectFinishedReport> ProjectsFinished { get; } = [];
     public List<ActionReport> Actions { get; } = [];
     public List<CrackdownReport> Crackdowns { get; } = [];
+    public List<QuestionReport> Questions { get; } = [];
+    public List<CabinetVoteReport> CabinetVotes { get; } = [];
+    public List<NoConfidenceReport> NoConfidenceMotions { get; } = [];
     public Dictionary<ulong, List<string>> PrivateMessages { get; } = [];
     public List<string> CabinetReport { get; } = [];
     public List<string> Alerts { get; } = [];
