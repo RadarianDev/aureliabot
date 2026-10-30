@@ -28,7 +28,7 @@ public partial class GmModule
             }
             if (NormalisePartyColour(colour) is not { } hex)
             {
-                await FollowupAsync($"`{colour}` is not a colour; write it as `#RRGGBB`, for example `#C0392B`.", ephemeral: true);
+                await FollowupAsync(Texts.Get("gm.party.badColour", ("colour", colour)), ephemeral: true);
                 return;
             }
             ulong? emojiId = null;
@@ -36,7 +36,7 @@ public partial class GmModule
             {
                 if (!TryParsePartyEmoji(emoji, out emojiId))
                 {
-                    await FollowupAsync($"`{emoji}` is not a custom emoji; pick one from this server's emoji list.", ephemeral: true);
+                    await FollowupAsync(Texts.Get("gm.party.create.badEmoji", ("emoji", emoji)), ephemeral: true);
                     return;
                 }
             }
@@ -55,15 +55,14 @@ public partial class GmModule
 
             var distinct = founders.Distinct().Select(id => Display.Faction(_data, id)).ToList();
             await PostPartyNewsAsync(
-                $"**A new party takes the field.** {JoinNames(distinct)} have joined their fortunes together as the {Display.Party(party)}, "
-                + "and will stand as one at the coming election.",
+                Texts.Get("gm.party.create.news", ("founders", JoinNames(distinct)), ("party", Display.Party(party))),
                 "gm party create", problems);
 
             await FollowupAsync(
                 Display.Truncate(
-                    $"Founded **{party.Name}** (`{party.Colour}`) with {JoinNames(distinct)}."
+                    Texts.Get("gm.party.create.founded", ("name", party.Name), ("colour", party.Colour), ("founders", JoinNames(distinct)))
                     + DiscordSummary(party)
-                    + (warning is null ? "" : $"\n⚠️ {warning}")
+                    + WarningText(warning)
                     + ProblemsText(problems)),
                 ephemeral: true, allowedMentions: AllowedMentions.None);
         }
@@ -79,12 +78,12 @@ public partial class GmModule
 
             if (_data.GetParty(party) is not { } current)
             {
-                await FollowupAsync("That party does not exist.", ephemeral: true);
+                await FollowupAsync(Texts.Get("gm.party.notFound"), ephemeral: true);
                 return;
             }
             if (name is null && colour is null && emoji is null)
             {
-                await FollowupAsync("Nothing to change: give a new name, colour or emoji.", ephemeral: true);
+                await FollowupAsync(Texts.Get("gm.party.edit.nothing"), ephemeral: true);
                 return;
             }
 
@@ -96,7 +95,7 @@ public partial class GmModule
             }
             if (_data.GetPartyByName(newName) is { } other && other.Id != current.Id)
             {
-                await FollowupAsync($"A party named **{other.Name}** already exists.", ephemeral: true);
+                await FollowupAsync(Texts.Get("gm.party.nameTaken", ("name", other.Name)), ephemeral: true);
                 return;
             }
 
@@ -105,7 +104,7 @@ public partial class GmModule
             {
                 if (NormalisePartyColour(colour) is not { } hex)
                 {
-                    await FollowupAsync($"`{colour}` is not a colour; write it as `#RRGGBB`, for example `#C0392B`.", ephemeral: true);
+                    await FollowupAsync(Texts.Get("gm.party.badColour", ("colour", colour)), ephemeral: true);
                     return;
                 }
                 newColour = hex;
@@ -120,14 +119,14 @@ public partial class GmModule
                     newEmoji = parsed;
                 else
                 {
-                    await FollowupAsync($"`{emoji}` is not a custom emoji; pick one from this server's emoji list, or write `none`.", ephemeral: true);
+                    await FollowupAsync(Texts.Get("gm.party.edit.badEmoji", ("emoji", emoji)), ephemeral: true);
                     return;
                 }
             }
 
             if (!_data.UpdateParty(current.Id, newName, newColour, newEmoji))
             {
-                await FollowupAsync($"Could not update **{current.Name}**: the name **{newName}** may already be taken.", ephemeral: true);
+                await FollowupAsync(Texts.Get("gm.party.edit.failed", ("name", current.Name), ("newName", newName)), ephemeral: true);
                 return;
             }
             _data.Log(LogKinds.StateChange, "gm party edit",
@@ -139,10 +138,11 @@ public partial class GmModule
 
             await FollowupAsync(
                 Display.Truncate(
-                    $"Updated **{updated.Name}** (`{updated.Colour}`"
-                    + (updated.EmojiId is null ? ", no emoji" : $", {Display.Party(updated)}") + ")."
+                    (updated.EmojiId is null
+                        ? Texts.Get("gm.party.edit.updatedNoEmoji", ("name", updated.Name), ("colour", updated.Colour))
+                        : Texts.Get("gm.party.edit.updatedWithEmoji", ("name", updated.Name), ("colour", updated.Colour), ("party", Display.Party(updated))))
                     + DiscordSummary(updated)
-                    + (warning is null ? "" : $"\n⚠️ {warning}")
+                    + WarningText(warning)
                     + ProblemsText(problems)),
                 ephemeral: true, allowedMentions: AllowedMentions.None);
         }
@@ -156,25 +156,27 @@ public partial class GmModule
 
             if (_data.GetFaction(faction.Id) is not { IsActive: true })
             {
-                await FollowupAsync($"<@{faction.Id}> is not a registered, active faction.", ephemeral: true, allowedMentions: AllowedMentions.None);
+                await FollowupAsync(Texts.Get("gm.party.move.notActive", ("user", faction.Id)), ephemeral: true, allowedMentions: AllowedMentions.None);
                 return;
             }
             Party? target = null;
             if (party is { } partyId && (target = _data.GetParty(partyId)) is null)
             {
-                await FollowupAsync("That party does not exist.", ephemeral: true);
+                await FollowupAsync(Texts.Get("gm.party.notFound"), ephemeral: true);
                 return;
             }
 
             if (_data.MoveFaction(faction.Id, party, "gm party move") is not { } result)
             {
-                await FollowupAsync("The move could not be made; the faction or the party changed meanwhile.", ephemeral: true);
+                await FollowupAsync(Texts.Get("gm.party.move.failed"), ephemeral: true);
                 return;
             }
             if (result.FromPartyId == party)
             {
                 await FollowupAsync(
-                    $"{Display.Faction(result.Faction)} is already {(target is null ? "independent" : $"in **{target.Name}**")}.",
+                    target is null
+                        ? Texts.Get("gm.party.move.alreadyIndependent", ("faction", Display.Faction(result.Faction)))
+                        : Texts.Get("gm.party.move.alreadyIn", ("faction", Display.Faction(result.Faction)), ("party", target.Name)),
                     ephemeral: true, allowedMentions: AllowedMentions.None);
                 return;
             }
@@ -191,9 +193,9 @@ public partial class GmModule
             var fromName = result.DissolvedParty?.Name ?? (result.FromPartyId is { } fromId ? _data.GetParty(fromId)?.Name : null);
             await FollowupAsync(
                 Display.Truncate(
-                    $"Moved {Display.Faction(result.Faction)} from {(fromName is null ? "independent" : $"**{fromName}**")} "
-                    + $"to {(target is null ? "independent" : $"**{target.Name}**")}."
-                    + (result.DissolvedParty is null ? "" : $"\n**{result.DissolvedParty.Name}** was left with fewer than two members and dissolved; it was announced in #news.")
+                    Texts.Get("gm.party.move.moved",
+                        ("faction", Display.Faction(result.Faction)), ("from", PartyOrIndependent(fromName)), ("to", PartyOrIndependent(target?.Name)))
+                    + (result.DissolvedParty is null ? "" : "\n" + Texts.Get("gm.party.move.dissolved", ("party", result.DissolvedParty.Name)))
                     + ProblemsText(problems)),
                 ephemeral: true, allowedMentions: AllowedMentions.None);
         }
@@ -204,15 +206,14 @@ public partial class GmModule
         {
             if (_data.GetParty(party) is not { } target)
             {
-                await RespondAsync("That party does not exist.", ephemeral: true);
+                await RespondAsync(Texts.Get("gm.party.notFound"), ephemeral: true);
                 return;
             }
 
             var memberCount = _data.GetPartyMembers(target.Id).Count;
             var components = _confirmations.Create(Context.User.Id, () => DeletePartyConfirmedAsync(target.Id));
             await RespondAsync(
-                $"Delete **{target.Name}**? Its {memberCount} member(s) become independent and keep their seats, its role is deleted, "
-                + "its chat is archived, and the dissolution is announced in #news.",
+                Texts.Get("gm.party.delete.confirm", ("name", target.Name), ("members", memberCount)),
                 components: components, ephemeral: true);
         }
 
@@ -220,7 +221,7 @@ public partial class GmModule
         {
             var members = _data.GetPartyMembers(partyId).Select(f => f.UserId).ToList();
             if (_data.DeleteParty(partyId, "gm party delete") is not { } deleted)
-                return "That party no longer exists; nothing was changed.";
+                return Texts.Get("gm.party.delete.gone");
 
             await _partySync.ArchiveAsync(deleted);
             foreach (var member in members)
@@ -229,17 +230,20 @@ public partial class GmModule
             var problems = new List<string>();
             var names = members.Select(id => Display.Faction(_data, id)).ToList();
             await PostPartyNewsAsync(
-                $"**The {deleted.Name} is no more.** The party is struck from the register"
-                + (names.Count == 0 ? "." : $", and {JoinNames(names)} {(names.Count == 1 ? "sits" : "sit")} on as independent{(names.Count == 1 ? "" : "s")}."),
+                names.Count switch
+                {
+                    0 => Texts.Get("gm.party.delete.news", ("name", deleted.Name)),
+                    1 => Texts.Get("gm.party.delete.newsOneMember", ("name", deleted.Name), ("names", JoinNames(names))),
+                    _ => Texts.Get("gm.party.delete.newsMembers", ("name", deleted.Name), ("names", JoinNames(names))),
+                },
                 "gm party delete", problems);
 
-            return $"Deleted **{deleted.Name}**. {names.Count} member(s) are now independent; its role was deleted and its chat archived "
-                + "(any Discord refusal was posted to #gm)." + ProblemsText(problems);
+            return Texts.Get("gm.party.delete.deleted", ("name", deleted.Name), ("count", names.Count)) + ProblemsText(problems);
         }
 
         private static string? ValidatePartyName(string name) =>
-            name.Length == 0 ? "The party needs a name."
-            : name.Length > MaxPartyNameLength ? $"The name is too long: Discord allows {MaxPartyNameLength} characters."
+            name.Length == 0 ? Texts.Get("gm.party.nameMissing")
+            : name.Length > MaxPartyNameLength ? Texts.Get("gm.party.nameTooLong", ("max", MaxPartyNameLength))
             : null;
 
         private static string? NormalisePartyColour(string colour)
@@ -270,24 +274,23 @@ public partial class GmModule
         {
             var close = _data.GetAllParties()
                 .Where(p => p.Id != partyId && PartySyncService.AreSimilarColours(colour, p.Colour))
-                .Select(p => $"**{p.Name}** (`{p.Colour}`)")
+                .Select(p => Texts.Get("gm.party.similarColourEntry", ("name", p.Name), ("colour", p.Colour)))
                 .ToList();
             return close.Count == 0
                 ? null
-                : $"`{colour}` is close to {JoinNames(close)}; the seat chart and map may be hard to read. Change it with `/gm party edit` if needed.";
+                : Texts.Get("gm.party.similarColour", ("colour", colour), ("parties", JoinNames(close)));
         }
 
         private string CreateRefusal(PartyCreateResult result, string name) => result.Outcome switch
         {
-            PartyCreateOutcome.NameTaken => $"A party named **{name}** already exists.",
-            PartyCreateOutcome.TooFewFounders => "A party needs at least two different founders.",
-            PartyCreateOutcome.FounderNotRegistered =>
-                $"<@{result.OffendingFaction}> is not a registered, active faction; register them with `/gm faction create` first.",
-            PartyCreateOutcome.FounderNotIndependent =>
-                $"{Display.Faction(_data, result.OffendingFaction ?? 0)} already belongs to "
-                + $"**{(_data.GetFaction(result.OffendingFaction ?? 0)?.PartyId is { } p ? _data.GetParty(p)?.Name : null) ?? "a party"}**; "
-                + "every founder must be independent. Move them out first with `/gm party move`.",
-            _ => "The party could not be founded.",
+            PartyCreateOutcome.NameTaken => Texts.Get("gm.party.nameTaken", ("name", name)),
+            PartyCreateOutcome.TooFewFounders => Texts.Get("gm.party.create.tooFewFounders"),
+            PartyCreateOutcome.FounderNotRegistered => Texts.Get("gm.party.create.founderNotRegistered", ("user", result.OffendingFaction)),
+            PartyCreateOutcome.FounderNotIndependent => Texts.Get("gm.party.create.founderNotIndependent",
+                ("faction", Display.Faction(_data, result.OffendingFaction ?? 0)),
+                ("party", (_data.GetFaction(result.OffendingFaction ?? 0)?.PartyId is { } p ? _data.GetParty(p)?.Name : null)
+                          ?? Texts.Get("gm.party.create.aParty"))),
+            _ => Texts.Get("gm.party.create.failed"),
         };
 
         private async Task PostPartyNewsAsync(string text, string source, List<string> problems)
@@ -295,26 +298,32 @@ public partial class GmModule
             try
             {
                 if (await _publisher.PostAsync(ChannelRole.News, text, source) is null)
-                    problems.Add("No #news channel is set, so the announcement was not posted.");
+                    problems.Add(Texts.Get("gm.party.newsNotSet"));
             }
             catch (Exception ex)
             {
-                problems.Add($"Could not post to #news: {ex.Message}");
+                problems.Add(Texts.Get("gm.party.newsFailed", ("error", ex.Message)));
             }
         }
 
+        private static string PartyOrIndependent(string? name) =>
+            name is null ? Texts.Get("gm.party.move.independent") : Texts.Get("gm.party.move.partyName", ("name", name));
+
         private static string DiscordSummary(Party party) =>
-            (party.RoleId is { } role ? $" Role <@&{role}>." : " No role yet.")
-            + (party.ChannelId is { } channel ? $" Chat <#{channel}>." : " No chat yet.");
+            (party.RoleId is { } role ? Texts.Get("gm.party.summary.role", ("role", role)) : Texts.Get("gm.party.summary.noRole"))
+            + (party.ChannelId is { } channel ? Texts.Get("gm.party.summary.chat", ("channel", channel)) : Texts.Get("gm.party.summary.noChat"));
+
+        private static string WarningText(string? warning) =>
+            warning is null ? "" : "\n" + Texts.Get("gm.warning", ("warning", warning));
 
         private static string ProblemsText(IReadOnlyCollection<string> problems) =>
-            problems.Count == 0 ? "" : "\nProblems:\n" + string.Join("\n", problems.Select(p => $"- {p}"));
+            problems.Count == 0 ? "" : "\n" + Texts.Get("gm.party.problemsHeading") + "\n" + string.Join("\n", problems.Select(p => $"- {p}"));
 
         private static string JoinNames(IReadOnlyList<string> names) => names.Count switch
         {
             0 => "",
             1 => names[0],
-            _ => string.Join(", ", names.Take(names.Count - 1)) + " and " + names[^1],
+            _ => string.Join(", ", names.Take(names.Count - 1)) + Texts.Get("gm.party.and") + names[^1],
         };
     }
 }

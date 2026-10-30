@@ -26,7 +26,7 @@ public class QueuedEventAutocomplete : AutocompleteHandler
         var results = data.GetQueuedEvents()
             .Where(e => e.Title.Contains(typed, StringComparison.OrdinalIgnoreCase) || e.TemplateId.Contains(typed, StringComparison.OrdinalIgnoreCase))
             .Take(25)
-            .Select(e => new AutocompleteResult(Display.Truncate($"#{e.Id} {e.Title} · resolution {e.FireAtResolution}", 100), e.Id.ToString()));
+            .Select(e => new AutocompleteResult(Display.Truncate(Texts.Get("gm.event.queuedChoice", ("id", e.Id), ("title", e.Title), ("resolution", e.FireAtResolution)), 100), e.Id.ToString()));
         return Task.FromResult(AutocompletionResult.FromSuccess(results));
     }
 }
@@ -52,12 +52,12 @@ public partial class GmModule
             var row = _data.GetTemplate(template);
             if (row is not { Kind: TemplateKind.Event, Status: TemplateStatus.Ready })
             {
-                await RespondAsync($"`{template}` is not a Ready event template.", ephemeral: true);
+                await RespondAsync(Texts.Get("gm.event.queue.notReady", ("template", template)), ephemeral: true);
                 return;
             }
             if (_data.GetParsedTemplate(template) is not EventTemplate parsed)
             {
-                await RespondAsync($"`{template}` no longer parses; fix it with `/content edit`.", ephemeral: true);
+                await RespondAsync(Texts.Get("gm.event.queue.unparsable", ("template", template)), ephemeral: true);
                 return;
             }
 
@@ -65,9 +65,9 @@ public partial class GmModule
             var fireAt = EventScheduling.FireAtForDelay(state, delay);
             var id = _data.QueueEvent(parsed, fireAt, fromSchedule: false);
             var when = state.Started
-                ? $"at the start of {TurnLabel(state, fireAt)}"
-                : fireAt == 0 ? "at `/gm start`" : $"{fireAt} turn(s) after `/gm start`";
-            await RespondAsync($"Queued **{parsed.Title}** (#{id}), firing {when}.", ephemeral: true);
+                ? Texts.Get("gm.event.queue.whenStarted", ("turn", TurnLabel(state, fireAt)))
+                : fireAt == 0 ? Texts.Get("gm.event.queue.whenAtStart") : Texts.Get("gm.event.queue.whenAfterStart", ("turns", fireAt));
+            await RespondAsync(Texts.Get("gm.event.queue.queued", ("title", parsed.Title), ("id", id), ("when", when)), ephemeral: true);
         }
 
         [SlashCommand("cancel", "Remove a queued event before it fires")]
@@ -76,11 +76,11 @@ public partial class GmModule
         {
             if (!long.TryParse(eventId, out var id) || _data.GetEvent(id) is not { Status: EventStatus.Queued } queued)
             {
-                await RespondAsync("That is not a queued event.", ephemeral: true);
+                await RespondAsync(Texts.Get("gm.event.cancel.notQueued"), ephemeral: true);
                 return;
             }
             _data.CancelEvent(id);
-            await RespondAsync($"Cancelled **{queued.Title}** (#{id}).", ephemeral: true);
+            await RespondAsync(Texts.Get("gm.event.cancel.cancelled", ("title", queued.Title), ("id", id)), ephemeral: true);
         }
 
         private static string TurnLabel(GameState state, long fireAt)

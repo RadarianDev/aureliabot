@@ -15,7 +15,7 @@ public partial class GmModule
             case ResolveAction.Now:
                 if (!_data.GetGameState().Started)
                 {
-                    await RespondAsync("The game hasn't started yet; open it with `/gm start`.", ephemeral: true);
+                    await RespondAsync(Texts.Get("gm.resolve.notStarted"), ephemeral: true);
                     return;
                 }
                 await DeferAsync(ephemeral: true);
@@ -23,16 +23,16 @@ public partial class GmModule
                 var after = _data.GetGameState();
                 await FollowupAsync(
                     report is null
-                        ? "⚠️ The resolution failed and was rolled back. The details are in #gm, and the schedule is paused."
-                        : $"Resolved {GameCalendar.Label(report.FromSeason, report.FromYear)}. It is now {after.Label}. " +
-                          $"Next resolution: {NextResolutionText(after)}.",
+                        ? Texts.Get("gm.resolve.failed")
+                        : Texts.Get("gm.resolve.resolved",
+                            ("from", GameCalendar.Label(report.FromSeason, report.FromYear)), ("now", after.Label), ("next", NextResolutionText(after))),
                     ephemeral: true);
                 return;
 
             case ResolveAction.Delay:
                 if (hours is not > 0)
                 {
-                    await RespondAsync("Give a positive number of `hours` to delay by.", ephemeral: true);
+                    await RespondAsync(Texts.Get("gm.resolve.needHours"), ephemeral: true);
                     return;
                 }
                 await DeferAsync(ephemeral: true);
@@ -46,31 +46,31 @@ public partial class GmModule
                 });
                 if (delayed is null)
                 {
-                    await FollowupAsync("No resolution is scheduled yet, so there is nothing to delay.", ephemeral: true);
+                    await FollowupAsync(Texts.Get("gm.resolve.nothingToDelay"), ephemeral: true);
                     return;
                 }
                 _data.Log(LogKinds.GmOverride, "gm resolve delay", $"Delayed the next resolution by {hours} h.", Context.User.Id);
-                await FollowupAsync($"The next resolution is delayed by {hours} h, to {NextResolutionText(delayed)}.", ephemeral: true);
+                await FollowupAsync(Texts.Get("gm.resolve.delayed", ("hours", hours.Value), ("when", NextResolutionText(delayed))), ephemeral: true);
                 return;
 
             case ResolveAction.Pause:
                 var toPause = _data.GetGameState();
                 if (toPause.Paused)
                 {
-                    await RespondAsync("The schedule is already paused.", ephemeral: true);
+                    await RespondAsync(Texts.Get("gm.resolve.alreadyPaused"), ephemeral: true);
                     return;
                 }
                 _data.SaveGameState(toPause with { Paused = true });
                 _data.Log(LogKinds.GmOverride, "gm resolve pause", "Paused the schedule.", Context.User.Id);
                 _turnTracker.RequestCurrent();
-                await RespondAsync("The schedule is paused. Nothing resolves until you resume it.", ephemeral: true);
+                await RespondAsync(Texts.Get("gm.resolve.paused"), ephemeral: true);
                 return;
 
             case ResolveAction.Resume:
                 var toResume = _data.GetGameState();
                 if (!toResume.Paused)
                 {
-                    await RespondAsync("The schedule isn't paused.", ephemeral: true);
+                    await RespondAsync(Texts.Get("gm.resolve.notPaused"), ephemeral: true);
                     return;
                 }
                 var resumed = toResume with
@@ -82,10 +82,11 @@ public partial class GmModule
                 _data.SaveGameState(resumed);
                 _data.Log(LogKinds.GmOverride, "gm resolve resume", "Resumed the schedule.", Context.User.Id);
                 _turnTracker.RequestCurrent();
-                var overdue = resumed.NextResolutionAt <= DateTimeOffset.UtcNow
-                    ? " It is already due, so it runs within a minute."
-                    : "";
-                await RespondAsync($"The schedule is running again. Next resolution: {NextResolutionText(resumed)}.{overdue}", ephemeral: true);
+                await RespondAsync(
+                    resumed.NextResolutionAt <= DateTimeOffset.UtcNow
+                        ? Texts.Get("gm.resolve.resumedOverdue", ("next", NextResolutionText(resumed)))
+                        : Texts.Get("gm.resolve.resumed", ("next", NextResolutionText(resumed))),
+                    ephemeral: true);
                 return;
         }
     }
@@ -99,11 +100,11 @@ public partial class GmModule
             _data.Log(LogKinds.GmOverride, "gm reload", "Reloaded the config.", Context.User.Id);
         var content = await _gameFiles.LoadContentAsync();
         var configText = error is null
-            ? $"Config reloaded from `{_gameFiles.ConfigFolder}`. Values already in play are unchanged."
-            : $"⚠️ The config was not reloaded; the old one stays in force.\n{error}";
+            ? Texts.Get("gm.reload.configReloaded", ("folder", _gameFiles.ConfigFolder))
+            : Texts.Get("gm.reload.configFailed", ("error", error));
         var contentText = content.Changed
             ? GameFilesService.Describe(content)
-            : $"Content: all {content.Unchanged} file(s) in `{_gameFiles.ContentFolder}` are already loaded.";
+            : Texts.Get("gm.reload.contentUnchanged", ("count", content.Unchanged), ("folder", _gameFiles.ContentFolder));
         await FollowupAsync(Display.Truncate($"{configText}\n{contentText}"), ephemeral: true);
     }
 
@@ -113,39 +114,40 @@ public partial class GmModule
         var latest = _snapshots.List().FirstOrDefault();
         if (latest is null)
         {
-            await RespondAsync("There is no snapshot to restore.", ephemeral: true);
+            await RespondAsync(Texts.Get("gm.undo.noSnapshot"), ephemeral: true);
             return;
         }
 
         var confirm = _confirmations.Create(Context.User.Id, async () =>
         {
             var result = await _resolution.ExclusiveAsync(() => _snapshots.UndoAsync());
-            if (result is null) return "There is no snapshot to restore.";
+            if (result is null) return Texts.Get("gm.undo.noSnapshot");
 
             _turnTracker.RequestCurrent();
             await _publisher.UpdateDashboardAsync();
             var state = _data.GetGameState();
             var lines = new List<string>
             {
-                $"Restored the snapshot from {Timestamp(result.Restored.TakenAt)}. It is {state.Label} again, and the schedule is **paused**.",
-                $"Posts deleted: {result.PostsDeleted}" + (result.PostsNotDeleted > 0 ? $", {result.PostsNotDeleted} could not be deleted." : "."),
+                Texts.Get("gm.undo.restored", ("when", Timestamp(result.Restored.TakenAt)), ("label", state.Label)),
+                result.PostsNotDeleted > 0
+                    ? Texts.Get("gm.undo.postsPartlyDeleted", ("count", result.PostsDeleted), ("failed", result.PostsNotDeleted))
+                    : Texts.Get("gm.undo.postsDeleted", ("count", result.PostsDeleted)),
             };
             if (result.LostCommands.Count == 0)
-                lines.Add("No player commands were lost.");
+                lines.Add(Texts.Get("gm.undo.noCommandsLost"));
             else
             {
-                lines.Add($"Commands lost ({result.LostCommands.Count}):");
-                lines.AddRange(result.LostCommands.Take(30).Select(c =>
-                    $"- {Timestamp(c.At, 'f')} {(c.FactionId is { } f ? $"<@{f}>" : "")} `{c.Payload}`"));
+                lines.Add(Texts.Get("gm.undo.commandsLost", ("count", result.LostCommands.Count)));
+                lines.AddRange(result.LostCommands.Take(30).Select(c => Texts.Get("gm.undo.lostCommand",
+                    ("at", Timestamp(c.At, 'f')), ("faction", c.FactionId is { } f ? $"<@{f}>" : ""), ("payload", c.Payload))));
             }
-            lines.Add("Use `/gm resolve resume` to re-run the resolution with the same seed.");
+            lines.Add(Texts.Get("gm.undo.resumeHint"));
             await _alerts.PostAsync(string.Join("\n", lines));
             return string.Join("\n", lines);
-        }, "Undo");
+        }, Texts.Get("gm.undo.button"));
 
         await RespondAsync(
-            $"Restore the snapshot from {Timestamp(latest.TakenAt)} ({latest.Season} {latest.Year})? " +
-            "Everything since then is lost, that resolution's posts are deleted, and the schedule is paused.",
+            Texts.Get("gm.undo.confirm", ("when", Timestamp(latest.TakenAt)), ("season", latest.Season), ("year", latest.Year)),
             components: confirm,
             ephemeral: true);
     }

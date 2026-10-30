@@ -54,6 +54,6 @@ public partial class GmModule : InteractionModuleBase<SocketInteractionContext>
 
     private string NextResolutionText(GameState state) =>
         state.NextResolutionAt is { } next
-            ? $"{Timestamp(next)} ({Timestamp(next, 'R')})"
-            : "not scheduled";
+            ? Texts.Get("gm.nextResolution", ("at", Timestamp(next)), ("relative", Timestamp(next, 'R')))
+            : Texts.Get("gm.notScheduled");
 }

@@ -37,32 +37,32 @@ public partial class GmModule
             {
                 if (role is null)
                 {
-                    await RespondAsync($"{kind} needs the `role` option.", ephemeral: true);
+                    await RespondAsync(Texts.Get("gm.channel.set.needsRole", ("kind", kind)), ephemeral: true);
                     return;
                 }
                 _data.SetChannel(kind, role.Id);
                 _checklist.RequestRefresh();
                 _data.Log(LogKinds.GmOverride, "gm channel set", $"{kind} = role {role.Id}", Context.User.Id);
-                await RespondAsync($"{kind} is now {role.Mention}.", ephemeral: true, allowedMentions: AllowedMentions.None);
+                await RespondAsync(Texts.Get("gm.channel.set.roleSet", ("kind", kind), ("role", role.Mention)), ephemeral: true, allowedMentions: AllowedMentions.None);
                 return;
             }
 
             if (channel is null)
             {
-                await RespondAsync($"{kind} needs the `channel` option.", ephemeral: true);
+                await RespondAsync(Texts.Get("gm.channel.set.needsChannel", ("kind", kind)), ephemeral: true);
                 return;
             }
 
             var problem = kind switch
             {
-                _ when Categories.Contains(kind) && channel is not ICategoryChannel => "must be a category",
-                ChannelRole.TurnTracker when channel is not IVoiceChannel => "must be a voice channel",
-                _ when TextChannels.Contains(kind) && channel is not ITextChannel => "must be a text channel",
+                _ when Categories.Contains(kind) && channel is not ICategoryChannel => Texts.Get("gm.channel.set.notCategory", ("kind", kind)),
+                ChannelRole.TurnTracker when channel is not IVoiceChannel => Texts.Get("gm.channel.set.notVoice", ("kind", kind)),
+                _ when TextChannels.Contains(kind) && channel is not ITextChannel => Texts.Get("gm.channel.set.notText", ("kind", kind)),
                 _ => null,
             };
             if (problem is not null)
             {
-                await RespondAsync($"{kind} {problem}.", ephemeral: true);
+                await RespondAsync(problem, ephemeral: true);
                 return;
             }
 
@@ -71,7 +71,9 @@ public partial class GmModule
             _data.Log(LogKinds.GmOverride, "gm channel set", $"{kind} = channel {channel.Id}", Context.User.Id);
             var whitelisted = TextChannels.Contains(kind) && _data.AddWhitelistedChannel(Context.Guild.Id, channel.Id, Context.User.Id);
             await RespondAsync(
-                $"{kind} is now <#{channel.Id}>." + (whitelisted ? " It was added to the command whitelist." : ""),
+                whitelisted
+                    ? Texts.Get("gm.channel.set.channelSetWhitelisted", ("kind", kind), ("channel", channel.Id))
+                    : Texts.Get("gm.channel.set.channelSet", ("kind", kind), ("channel", channel.Id)),
                 ephemeral: true);
         }
     }
