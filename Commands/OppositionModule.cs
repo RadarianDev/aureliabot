@@ -9,12 +9,41 @@ public class OppositionModule : InteractionModuleBase<SocketInteractionContext>
     private readonly DatabaseService _data;
     private readonly ConstantsStore _constants;
     private readonly GovernmentPublisher _government;
+    private readonly CrisisPublisher _crises;
 
-    public OppositionModule(DatabaseService data, ConstantsStore constants, GovernmentPublisher government)
+    public OppositionModule(DatabaseService data, ConstantsStore constants, GovernmentPublisher government, CrisisPublisher crises)
     {
         _data = data;
         _constants = constants;
         _government = government;
+        _crises = crises;
+    }
+
+    [SlashCommand("condemn", "Publicly back For or Against on a live crisis; spends the season's opposition action")]
+    [RequireFaction]
+    public async Task CondemnAsync(
+        [Summary("crisis", "A live crisis"), Autocomplete(typeof(LiveCrisisAutocomplete))] string crisis,
+        [Summary("side", "The side of the crisis's issue you stand on")] CondemnSide side)
+    {
+        var target = ResponsibleCrisisAutocomplete.Find(_data, _data.GetCrises(CrisisStatus.Live), crisis);
+        if (target is null)
+        {
+            await RespondAsync(_data.CondemnRefusal(Context.User.Id, null, _constants.Current) ?? Texts.Get("crisis.refusal.gone"),
+                ephemeral: true, allowedMentions: AllowedMentions.None);
+            return;
+        }
+
+        await DeferAsync(ephemeral: true);
+        var result = _data.Condemn(Context.User.Id, target.Id, side == CondemnSide.For ? Lean.For : Lean.Against, _constants.Current);
+        if (result is not { Crisis: { } condemned, Condemnation: { } condemnation })
+        {
+            await FollowupAsync(result.Refusal ?? Texts.Get("crisis.refusal.gone"), ephemeral: true, allowedMentions: AllowedMentions.None);
+            return;
+        }
+
+        await _crises.PostCondemnationAsync(condemned, condemnation, "opposition condemn");
+        await FollowupAsync(Texts.Get("condemn.done", ("crisis", condemned.Title), ("when", Display.NextResolution(_data.GetGameState()))),
+            ephemeral: true, allowedMentions: AllowedMentions.None);
     }
 
     [SlashCommand("question", "Question a minister publicly; spends the season's opposition action")]
@@ -114,3 +143,5 @@ public class GovernmentTextModal : IModal
     [ModalTextInput(InputId, TextInputStyle.Paragraph)]
     public string Text { get; set; } = "";
 }
+
+public enum CondemnSide { For, Against }
