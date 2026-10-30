@@ -122,7 +122,7 @@ A faction has no name of its own. It is shown as the player's mention, followed 
 
 **Templates:** IssueTemplate, BillTemplate, ProjectTemplate, EventTemplate and CrisisTemplate hold the same fields as their live copies, plus a status (Draft, Ready, Archived), createdAt, updatedAt and timesPosted. An EventTemplate also has an optional schedule: a season and year, or a delay. A ProjectTemplate also has `ministerial`, `requires` and a bonus deadline (a turn, or a number of seasons). A live copy records the templateId it was posted from.
 
-**Stance** is an enum with values: StronglyFor = +2, For = +1, Silent = 0, Against = −1, StronglyAgainst = −2. Silent means *no stance*: players never write it, and it is what a party has on an issue its programme doesn't list.
+**Stance** is an enum with values: StronglyFor = +2, For = +1, Silent = 0, Against = −1, StronglyAgainst = −2. Silent means *no stance*: it is what a party has on an issue its programme doesn't list or lists as Silent.
 
 **Lean** of a crisis answer: For = +1, Against = −1, Neutral = 0. A bill's lean is For or Against its issue, never Neutral.
 
@@ -758,13 +758,18 @@ Free Trade: *Against*
 The Franchise: *For*
 ```
 
-- **Header:** lines starting with `#` are ignored, since the party comes from the command.
-- **Lines:** every other non-empty line is `Issue: Opinion`.
-  - The issue is matched against the title or the id of an open issue, ignoring capitalisation.
-  - The opinion is one of *Strongly For*, *For*, *Against* or *Strongly Against*, ignoring capitalisation, surrounding spaces and Markdown emphasis (`*`, `_`).
+- **Header:** lines starting with `#` are ignored, since the party comes from the command. So are blank lines and lines with no letters or digits (rules, emoji only).
+- **Lines:** a stance line names an issue and an opinion, in either order: `Issue: Opinion` or `Opinion: Issue`. The parser is forgiving:
+  - **Formatting** is ignored: list bullets (`-`, `*`, `•`, `1.`, `1)`), blockquotes (`>`), subtext (`-#`), Markdown markers (`**`, `__`, `*`, `_`, `~~`, `` ` ``, `||`), backslash escapes, quotes, trailing punctuation, Discord custom emoji, mentions and timestamps, unicode emoji and extra spaces.
+  - **Separators** between issue and opinion: `:`, ` - `, ` -- `, `–`, `—`, `=`, `->`, `-->`, `=>`, `→`, `|` or a tab. Further text after another separator is commentary (`Free Trade: For - it brings prosperity`).
+  - **No separator** is needed when the opinion starts or ends the line and the rest names an issue (`Strongly support free trade`, `No stance on Poor Relief`, `Free Trade strongly for`); a leading *on*, *of*, *to*, *towards*, *regarding* or *about* before the issue is dropped.
+  - **The issue** is matched against the title or id of an open issue, ignoring capitalisation, punctuation, a leading *The*, and underscores against spaces. Failing that, whole words contained in exactly one open issue's title or id match it (`Labour` is *The Condition of Labour*), from 4 letters up.
+  - **The opinion** is one of *Strongly For*, *For*, *Against*, *Strongly Against* or *Silent*, or an alias from `config/programme.yaml` (YAML Reference), ignoring capitalisation and punctuation. The defaults include *support*, *in favour of*, *pro*, *yes*, *aye*, *+*, *+1* for For; *oppose*, *opposed to*, *anti*, *no*, *nay*, *reject*, *-*, *-1* for Against; *++*, *+2* and *--*, *-2* for the strong stances; and a strength word (*strongly*, *very*, *firmly*, *fiercely*, *staunchly*, *wholly*, *fully*, ...) before or after For or Against makes it strong. Filler such as *we are*, *the party stands* and *it* around the opinion is allowed (`Free Trade: we are firmly against it`).
+  - **Silent** (also *non-aligned*, *neutral*, *no stance*, *abstain*, *undecided*, *none*, *n/a*, *0*, ...) records no stance, exactly as leaving the issue out, but still counts as giving the issue for the duplicate check.
 - **Missing issues have no stance.** Any open issue the message doesn't mention is recorded as Silent (no stance), so the message is always the party's complete programme and replaces the previous one.
-- **Errors:** a line that names an unknown or closed issue, repeats an issue, or has an unrecognised opinion (including *Silent*) fails the whole message. The bot lists every bad line to the GM privately, and nothing is recorded, so the party can fix the message and the GM can record it again.
-- **Preview:** the GM privately sees every open issue with its parsed stance, marking the ones with no stance and the ones that flip sign, with the popularity cost of the flips (section 5) for every member, and Record and Cancel buttons.
+- **Prose is ignored:** a line with no opinion that doesn't name an issue on its own (`Our principles are as follows:`) is skipped, and listed to the GM in the preview as an ignored line, so nothing disappears unseen.
+- **Errors:** an opinion with an unknown, closed or ambiguous issue (an error names the candidates) or no issue at all, a line that names an issue with no or an unrecognised opinion, or an issue given twice fails the whole message. The bot lists every bad line to the GM privately, and nothing is recorded, so the party can fix the message and the GM can record it again.
+- **Preview:** the GM privately sees every open issue with its parsed stance, marking the ones with no stance and the ones that flip sign, with the popularity cost of the flips (section 5) for every member, the ignored lines, and Record and Cancel buttons.
 - **On record:** the party's ProgrammeStance rows are replaced, the change is logged, and the bot replies to the original message with the recorded programme, so the party sees exactly what was understood.
   - **During a pre-election,** the programme is the party's **manifesto**: it is posted to #news as such, and changes freely.
   - **Outside a pre-election,** it is posted to #campaign-log. Every flipped stance is announced in #news ("The Liberal Union changes its line on Free Trade"), and the flip penalty applies.

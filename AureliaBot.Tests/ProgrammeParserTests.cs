@@ -11,12 +11,21 @@ public class ProgrammeParserTests
     private static readonly Issue FreeTrade = MakeIssue("free_trade", "Free Trade");
     private static readonly Issue Franchise = MakeIssue("franchise", "The Franchise");
     private static readonly Issue PoorRelief = MakeIssue("poor_relief", "Poor Relief");
+    private static readonly Issue Tariffs = MakeIssue("tariffs", "Trade Tariffs");
     private static readonly Issue Corn = MakeIssue("corn_laws", "The Corn Laws", IssueStatus.Closed);
 
-    private static readonly List<Issue> Open = [Labour, FreeTrade, Franchise, PoorRelief];
-    private static readonly List<Issue> All = [Labour, FreeTrade, Franchise, PoorRelief, Corn];
+    private static readonly List<Issue> Open = [Labour, FreeTrade, Franchise, PoorRelief, Tariffs];
+    private static readonly List<Issue> All = [Labour, FreeTrade, Franchise, PoorRelief, Tariffs, Corn];
 
-    private static ProgrammeParseResult Parse(string text) => ProgrammeParser.Parse(text, Open, All);
+    private static ProgrammeParseResult Parse(string text) => ProgrammeParser.Parse(text, Open, All, ProgrammeVocabulary.Default);
+
+    private static Stance StanceOf(string line, string issueId)
+    {
+        var result = Parse(line);
+        Assert.True(result.IsValid, string.Join("; ", result.Errors.Select(e => e.Reason)));
+        Assert.Empty(result.Ignored);
+        return result.Stances.GetValueOrDefault(issueId, Stance.Silent);
+    }
 
     [Fact]
     public void SpecExample_Parses()
@@ -28,27 +37,61 @@ public class ProgrammeParserTests
         Assert.Equal(Stance.StronglyFor, result.Stances["condition_of_labour"]);
         Assert.Equal(Stance.Against, result.Stances["free_trade"]);
         Assert.Equal(Stance.For, result.Stances["franchise"]);
+        Assert.Empty(result.Ignored);
     }
 
     [Fact]
-    public void HeaderAndBlankLines_AreIgnored()
+    public void HeaderAndBlankLines_AreIgnoredSilently()
     {
-        var result = Parse("# Party\n\n### Our programme: the future\n   \r\nFree Trade: For\r\n");
+        var result = Parse("# Party\n\n### Our programme: the future\n   \r\n> ## Quoted header\n---\n<:flag:123456>\nFree Trade: For\r\n");
 
         Assert.True(result.IsValid);
         Assert.Single(result.Stances);
         Assert.Equal(Stance.For, result.Stances["free_trade"]);
+        Assert.Empty(result.Ignored);
+    }
+
+    [Theory]
+    [InlineData("free trade: For")]
+    [InlineData("FREE TRADE: For")]
+    [InlineData("free_trade: For")]
+    [InlineData("Free-Trade: For")]
+    [InlineData("The Free Trade: For")]
+    [InlineData("Free Trade!: For")]
+    public void Issue_MatchesTitleOrIdIgnoringCaseAndPunctuation(string line)
+    {
+        Assert.Equal(Stance.For, StanceOf(line, "free_trade"));
+    }
+
+    [Theory]
+    [InlineData("Condition of Labour: For")]
+    [InlineData("condition_of_labour: For")]
+    [InlineData("Labour: For")]
+    [InlineData("Condition: For")]
+    [InlineData("Franchise: For", "franchise")]
+    [InlineData("Relief: For", "poor_relief")]
+    public void Issue_MatchesWithoutTheOrByAUniquePart(string line, string issueId = "condition_of_labour")
+    {
+        Assert.Equal(Stance.For, StanceOf(line, issueId));
     }
 
     [Fact]
-    public void Issue_MatchesTitleOrIdIgnoringCase()
+    public void Issue_AmbiguousPart_IsAnErrorNamingTheCandidates()
     {
-        var result = Parse("free trade: For\nFRANCHISE: Against\nCondition_Of_Labour: Strongly Against");
+        var result = Parse("Trade: For");
 
-        Assert.True(result.IsValid);
-        Assert.Equal(Stance.For, result.Stances["free_trade"]);
-        Assert.Equal(Stance.Against, result.Stances["franchise"]);
-        Assert.Equal(Stance.StronglyAgainst, result.Stances["condition_of_labour"]);
+        var error = Assert.Single(result.Errors);
+        Assert.Contains("Free Trade", error.Reason);
+        Assert.Contains("Trade Tariffs", error.Reason);
+    }
+
+    [Fact]
+    public void Issue_PartialMatchesWholeWordsOnly()
+    {
+        var result = Parse("Lab: For");
+
+        var error = Assert.Single(result.Errors);
+        Assert.Contains("unknown", error.Reason);
     }
 
     [Theory]
@@ -58,23 +101,199 @@ public class ProgrammeParserTests
     [InlineData("  STRONGLY   against  ", Stance.StronglyAgainst)]
     [InlineData("_for_", Stance.For)]
     [InlineData("***Strongly For***", Stance.StronglyFor)]
-    public void Opinion_IgnoresEmphasisAndCapitalisation(string opinion, Stance expected)
+    [InlineData("~~For~~", Stance.For)]
+    [InlineData("`Against`", Stance.Against)]
+    [InlineData("||Strongly Against||", Stance.StronglyAgainst)]
+    [InlineData("\"For\"", Stance.For)]
+    [InlineData("“Against”", Stance.Against)]
+    [InlineData("For.", Stance.For)]
+    [InlineData("Against!", Stance.Against)]
+    [InlineData("(Strongly) For", Stance.StronglyFor)]
+    [InlineData("For ✅", Stance.For)]
+    [InlineData("❌ Against", Stance.Against)]
+    [InlineData("👍🏽 For", Stance.For)]
+    [InlineData("For <:yes:123456789>", Stance.For)]
+    [InlineData("<a:dance:123> Strongly For", Stance.StronglyFor)]
+    public void Opinion_IgnoresFormatting(string opinion, Stance expected)
     {
-        var result = Parse($"Free Trade: {opinion}");
+        Assert.Equal(expected, StanceOf($"Free Trade: {opinion}", "free_trade"));
+    }
 
-        Assert.True(result.IsValid);
-        Assert.Equal(expected, result.Stances["free_trade"]);
+    [Theory]
+    [InlineData("for", Stance.For)]
+    [InlineData("support", Stance.For)]
+    [InlineData("Supports", Stance.For)]
+    [InlineData("supportive", Stance.For)]
+    [InlineData("in favour", Stance.For)]
+    [InlineData("In Favor Of", Stance.For)]
+    [InlineData("in favour of it", Stance.For)]
+    [InlineData("pro", Stance.For)]
+    [InlineData("Yes", Stance.For)]
+    [InlineData("aye", Stance.For)]
+    [InlineData("approve", Stance.For)]
+    [InlineData("+", Stance.For)]
+    [InlineData("+1", Stance.For)]
+    [InlineData("against", Stance.Against)]
+    [InlineData("oppose", Stance.Against)]
+    [InlineData("opposes", Stance.Against)]
+    [InlineData("opposed", Stance.Against)]
+    [InlineData("opposed to", Stance.Against)]
+    [InlineData("anti", Stance.Against)]
+    [InlineData("No", Stance.Against)]
+    [InlineData("nay", Stance.Against)]
+    [InlineData("reject", Stance.Against)]
+    [InlineData("-", Stance.Against)]
+    [InlineData("-1", Stance.Against)]
+    [InlineData("strongly for", Stance.StronglyFor)]
+    [InlineData("strongly support", Stance.StronglyFor)]
+    [InlineData("very much in favour of", Stance.StronglyFor)]
+    [InlineData("firmly against", Stance.StronglyAgainst)]
+    [InlineData("fiercely opposed", Stance.StronglyAgainst)]
+    [InlineData("staunchly anti", Stance.StronglyAgainst)]
+    [InlineData("wholly for", Stance.StronglyFor)]
+    [InlineData("fully support", Stance.StronglyFor)]
+    [InlineData("strong support", Stance.StronglyFor)]
+    [InlineData("For, strongly", Stance.StronglyFor)]
+    [InlineData("++", Stance.StronglyFor)]
+    [InlineData("+2", Stance.StronglyFor)]
+    [InlineData("--", Stance.StronglyAgainst)]
+    [InlineData("-2", Stance.StronglyAgainst)]
+    [InlineData("we are firmly against", Stance.StronglyAgainst)]
+    [InlineData("We're for it", Stance.For)]
+    [InlineData("the party stands against this", Stance.Against)]
+    public void Opinion_AcceptsAliases(string opinion, Stance expected)
+    {
+        Assert.Equal(expected, StanceOf($"Free Trade: {opinion}", "free_trade"));
+    }
+
+    [Theory]
+    [InlineData("Silent")]
+    [InlineData("non-aligned")]
+    [InlineData("Nonaligned")]
+    [InlineData("non aligned")]
+    [InlineData("Neutral")]
+    [InlineData("no stance")]
+    [InlineData("abstain")]
+    [InlineData("undecided")]
+    [InlineData("none")]
+    [InlineData("N/A")]
+    [InlineData("0")]
+    [InlineData("*Silent*")]
+    public void Silent_IsAcceptedAndRecordsNoStance(string opinion)
+    {
+        var result = Parse($"Free Trade: {opinion}\nThe Franchise: For");
+
+        Assert.True(result.IsValid, string.Join("; ", result.Errors.Select(e => e.Reason)));
+        Assert.False(result.Stances.ContainsKey("free_trade"));
+        Assert.Equal(Stance.For, result.Stances["franchise"]);
     }
 
     [Fact]
-    public void IssueName_IgnoresEmphasis()
+    public void Silent_StillCountsForDuplicates()
     {
-        var result = Parse("**Free Trade**: For\n*The Franchise:* Against\n__poor_relief__: For");
+        var result = Parse("Free Trade: Silent\nFree Trade: For");
+
+        var error = Assert.Single(result.Errors);
+        Assert.Equal(2, error.LineNumber);
+        Assert.Contains("line 1", error.Reason);
+    }
+
+    [Fact]
+    public void StrongSilent_IsNotAnOpinion()
+    {
+        var result = Parse("Free Trade: strongly neutral");
+
+        var error = Assert.Single(result.Errors);
+        Assert.Contains("unrecognised", error.Reason);
+    }
+
+    [Theory]
+    [InlineData("- Free Trade: For")]
+    [InlineData("* Free Trade: For")]
+    [InlineData("• Free Trade: For")]
+    [InlineData("•Free Trade: For")]
+    [InlineData("1. Free Trade: For")]
+    [InlineData("12) Free Trade: For")]
+    [InlineData("> Free Trade: For")]
+    [InlineData("> - **Free Trade**: For")]
+    [InlineData("-# Free Trade: For")]
+    [InlineData("**1.** Free Trade: For")]
+    [InlineData("\t  Free   Trade  :   For  ")]
+    [InlineData("🇦🇺 Free Trade: For")]
+    [InlineData("\\*Free Trade\\*: For")]
+    public void Line_IgnoresBulletsQuotesAndMarkers(string line)
+    {
+        Assert.Equal(Stance.For, StanceOf(line, "free_trade"));
+    }
+
+    [Theory]
+    [InlineData("Free Trade: Against")]
+    [InlineData("Free Trade - Against")]
+    [InlineData("Free Trade – Against")]
+    [InlineData("Free Trade — Against")]
+    [InlineData("Free Trade—Against")]
+    [InlineData("Free Trade -- Against")]
+    [InlineData("Free Trade = Against")]
+    [InlineData("Free Trade -> Against")]
+    [InlineData("Free Trade --> Against")]
+    [InlineData("Free Trade => Against")]
+    [InlineData("Free Trade → Against")]
+    [InlineData("Free Trade | Against")]
+    [InlineData("Free Trade\tAgainst")]
+    [InlineData("Free Trade:Against")]
+    [InlineData("Free Trade :: Against")]
+    public void Separators_AreAllAccepted(string line)
+    {
+        Assert.Equal(Stance.Against, StanceOf(line, "free_trade"));
+    }
+
+    [Theory]
+    [InlineData("Against: Free Trade", Stance.Against)]
+    [InlineData("Strongly for: Free Trade", Stance.StronglyFor)]
+    [InlineData("Against — The Franchise", Stance.Against, "franchise")]
+    [InlineData("**Strongly Against** - Poor Relief", Stance.StronglyAgainst, "poor_relief")]
+    public void ReversedOrder_IsAccepted(string line, Stance expected, string issueId = "free_trade")
+    {
+        Assert.Equal(expected, StanceOf(line, issueId));
+    }
+
+    [Theory]
+    [InlineData("Strongly support free trade", Stance.StronglyFor)]
+    [InlineData("We oppose Free Trade", Stance.Against)]
+    [InlineData("In favour of Free Trade", Stance.For)]
+    [InlineData("Opposed to free trade.", Stance.Against)]
+    [InlineData("Free Trade strongly for", Stance.StronglyFor)]
+    [InlineData("Free Trade: we strongly support", Stance.StronglyFor)]
+    [InlineData("For Free Trade!", Stance.For)]
+    [InlineData("No stance on Free Trade", Stance.Silent)]
+    [InlineData("Neutral on free trade", Stance.Silent)]
+    public void NoSeparator_OpinionStartingOrEndingTheLine(string line, Stance expected)
+    {
+        Assert.Equal(expected, StanceOf(line, "free_trade"));
+    }
+
+    [Fact]
+    public void TrailingCommentary_AfterAnotherSeparator_IsAccepted()
+    {
+        Assert.Equal(Stance.For, StanceOf("Free Trade: For - it brings prosperity to all", "free_trade"));
+        Assert.Equal(Stance.StronglyFor, StanceOf("Strongly support free trade - markets bring wealth", "free_trade"));
+    }
+
+    [Fact]
+    public void ProseLines_AreIgnoredAndReported()
+    {
+        var result = Parse(string.Join("\n",
+            "## Liberal Union",
+            "Our principles are as follows:",
+            "Free Trade: For",
+            "We believe in liberty and progress.",
+            "For the glory of Aurelia!",
+            "Railways: maybe"));
 
         Assert.True(result.IsValid);
-        Assert.Equal(Stance.For, result.Stances["free_trade"]);
-        Assert.Equal(Stance.Against, result.Stances["franchise"]);
-        Assert.Equal(Stance.For, result.Stances["poor_relief"]);
+        Assert.Single(result.Stances);
+        Assert.Equal([2, 4, 5, 6], result.Ignored.Select(i => i.LineNumber));
+        Assert.Equal("Our principles are as follows:", result.Ignored[0].Text);
     }
 
     [Fact]
@@ -106,30 +325,101 @@ public class ProgrammeParserTests
             "Railways: For",
             "The Corn Laws: Against",
             "free_trade: Against",
-            "The Franchise: Silent",
             "Poor Relief: maybe",
-            "The Condition of Labour Strongly For"));
+            "The Franchise",
+            "Trade: Against",
+            "Strongly For",
+            "Some prose here."));
 
         Assert.False(result.IsValid);
         Assert.Empty(result.Stances);
-        Assert.Equal([3, 4, 5, 6, 7, 8], result.Errors.Select(e => e.LineNumber));
+        Assert.Equal([3, 4, 5, 6, 7, 8, 9], result.Errors.Select(e => e.LineNumber));
         Assert.Contains("unknown", result.Errors[0].Reason);
+        Assert.Contains("Railways", result.Errors[0].Reason);
         Assert.Contains("closed", result.Errors[1].Reason);
         Assert.Contains("line 2", result.Errors[2].Reason);
-        Assert.Contains("Silent", result.Errors[3].Reason);
-        Assert.Contains("unrecognised", result.Errors[4].Reason);
-        Assert.Contains("colon", result.Errors[5].Reason);
+        Assert.Contains("unrecognised", result.Errors[3].Reason);
+        Assert.Contains("maybe", result.Errors[3].Reason);
+        Assert.Contains("no opinion", result.Errors[4].Reason);
+        Assert.Contains("could be any of", result.Errors[5].Reason);
+        Assert.Contains("names no issue", result.Errors[6].Reason);
         Assert.Equal("Railways: For", result.Errors[0].Text);
+        Assert.Equal([10], result.Ignored.Select(i => i.LineNumber));
     }
 
     [Fact]
-    public void BadIssueAndBadOpinion_OnOneLine_AreBothReported()
+    public void ClosedIssue_ByPartOfItsTitle_IsReportedAsClosed()
     {
-        var result = Parse("Railways: Silent");
+        var error = Assert.Single(Parse("Corn Laws: For").Errors);
+        Assert.Contains("closed", error.Reason);
+    }
 
-        var error = Assert.Single(result.Errors);
-        Assert.Contains("unknown", error.Reason);
-        Assert.Contains("Silent", error.Reason);
+    [Fact]
+    public void MixedProgramme_ParsesEveryForm()
+    {
+        var result = Parse(string.Join("\n",
+            "# **The Liberal Union** 🕊️",
+            "> Our programme for the coming Assembly:",
+            "1. **The Condition of Labour** — *strongly support*",
+            "2. Free Trade -> opposed",
+            "3. ~~Franchise~~ | non-aligned",
+            "• Against: Poor Relief"));
+
+        Assert.True(result.IsValid, string.Join("; ", result.Errors.Select(e => e.Reason)));
+        Assert.Equal(Stance.StronglyFor, result.Stances["condition_of_labour"]);
+        Assert.Equal(Stance.Against, result.Stances["free_trade"]);
+        Assert.False(result.Stances.ContainsKey("franchise"));
+        Assert.Equal(Stance.Against, result.Stances["poor_relief"]);
+        Assert.Equal([2], result.Ignored.Select(i => i.LineNumber));
+    }
+
+    [Fact]
+    public void CustomVocabulary_ReplacesAList()
+    {
+        var vocabulary = ProgrammeVocabulary.Default with { For = ["for", "hurrah"] };
+
+        Assert.Equal(Stance.For, ProgrammeParser.Parse("Free Trade: hurrah", Open, All, vocabulary).Stances["free_trade"]);
+        Assert.Single(ProgrammeParser.Parse("The Franchise: support", Open, All, vocabulary).Errors);
+    }
+
+    [Fact]
+    public void Vocabulary_RejectsAPhraseInTwoLists()
+    {
+        var vocabulary = ProgrammeVocabulary.Default with { Silent = ["silent", "No"] };
+
+        Assert.Contains(vocabulary.Validate(), e => e.Contains("'No'"));
+    }
+
+    [Fact]
+    public void ShippedVocabularyFile_LoadsAndIsValid()
+    {
+        var vocabulary = ProgrammeVocabulary.Load(Path.Combine(AppContext.BaseDirectory, "config"));
+
+        Assert.Empty(vocabulary.Validate());
+        Assert.Equal(Stance.Silent, ProgrammeParser.ParseOpinion("non-aligned", vocabulary));
+        Assert.Equal(Stance.StronglyFor, ProgrammeParser.ParseOpinion("strongly support", vocabulary));
+        Assert.Equal(Stance.Against, ProgrammeParser.ParseOpinion("no", vocabulary));
+        Assert.Equal(Stance.Silent, ProgrammeParser.ParseOpinion("0", vocabulary));
+    }
+
+    [Fact]
+    public void VocabularyFile_ListsLeftOutKeepTheirDefaults()
+    {
+        var folder = Path.Combine(Path.GetTempPath(), "programme-vocabulary-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(folder);
+        try
+        {
+            File.WriteAllText(Path.Combine(folder, ProgrammeVocabulary.File), "for: [hurrah]\n");
+            var vocabulary = ProgrammeVocabulary.Load(folder);
+
+            Assert.Equal(["hurrah"], vocabulary.For);
+            Assert.Equal(ProgrammeVocabulary.Default.Against, vocabulary.Against);
+            Assert.Same(ProgrammeVocabulary.Default, ProgrammeVocabulary.Load(Path.Combine(folder, "missing")));
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
     }
 
     [Theory]
@@ -152,6 +442,7 @@ public class ProgrammeParserTests
         Assert.False(ProgrammeParser.TryParseMessageLink(text, out _));
     }
 }
+
 
 public class ProgrammeFlipTests : IDisposable
 {

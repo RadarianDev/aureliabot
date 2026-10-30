@@ -1,0 +1,24 @@
+# Words the bot accepts as opinions in a party programme (/gm party programme).
+# Matching ignores capitalisation and punctuation. A phrase may be in only one list.
+# A list left out keeps its built-in default; delete this file to use every default.
+
+for: [for, support, supports, supported, supporting, supportive, in support, in support of,
+  in favour, in favour of, in favor, in favor of, favour, favours, favor, favors,
+  pro, "yes", yea, aye, approve, approves, endorse, endorses, back, backs, "+", "+1"]
+
+against: [against, oppose, opposes, opposed, opposing, opposed to, in opposition, in opposition to,
+  anti, "no", nay, reject, rejects, contra, "-", "-1"]
+
+stronglyFor: ["++", "+2"]
+
+stronglyAgainst: ["--", "-2"]
+
+silent: [silent, silence, non-aligned, nonaligned, non aligned, unaligned, neutral, no stance,
+  no position, no opinion, no comment, abstain, abstains, abstaining, abstention, undecided,
+  none, n/a, na, "0"]
+
+strength: [strongly, strong, very, very much, much, firmly, firm, fiercely, staunchly, wholly,
+  fully, totally, completely, absolutely, resolutely, vehemently, deeply, utterly]
+
+filler: [we, we are, were, are, is, am, i, our party, the party, party, our stance, stance,
+  our position, position, it, this, remain, remains, stand, stands]
