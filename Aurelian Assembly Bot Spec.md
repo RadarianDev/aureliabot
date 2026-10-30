@@ -836,14 +836,15 @@ The GM's commands are split in two groups: `/gm` runs the game, and `/content` (
 | `/gm channel set role target` | Sets a game channel, a category (faction, party or archive), the GM role or the Cabinet role. Game channels are added to the command whitelist automatically. |
 | `/gm event queue template [delay]` | Queues an event from a Ready template, to fire at the start of the next turn (section 7), or `delay` turns later. Before the game starts, no delay means it fires at `/gm start`, and a delay counts turns from there. Issues and crises enter play this way. |
 | `/gm event cancel event` | Removes a queued event before it fires. |
-| `/gm crisis cancel crisis [message]` | Withdraws a live crisis, with an optional in-world message. |
+| `/gm crisis cancel crisis [message]` | Withdraws a live crisis, with an optional in-world message. Condemnations of it give back their opposition actions. |
+| `/gm crisis edit crisis` | Edits a live crisis as YAML until its minister responds (the same as `/content edit id live`). Its ministry and issue stay fixed. |
 | `/gm cabinet chancellor faction` | Appoints the Chancellor, announced as a royal proclamation. |
 | `/gm cabinet impose` | Imposes a caretaker cabinet without a vote, announced as a royal proclamation. |
 | `/gm proclaim` | Opens a modal for a free-text royal proclamation, posted to #news. |
 | `/gm set key value` | Sets a value to an absolute number, using the effect keys plus the game-state fields. The reply shows the old and the new value before the Confirm. Nothing is posted. |
 | `/gm apply effects [public]` | Applies effects written as text (below), as a delta, through the same code as events. With `public`, the effect summary is posted to #news; otherwise only the GM sees it. For follow-ups that shouldn't wait a turn, such as a failed crackdown or a riot. |
 | `/gm roll battle attackers defenders` | Rolls a battle. Each side is a list of unit ids or dice, such as `6d12+2`. |
-| `/gm roll riot province` | Rolls a riot. |
+| `/gm roll riot province` | Rolls a riot. Both rolls show every die to the GM privately; the GM announces them with `/gm proclaim` or `/gm apply`. |
 | `/gm resolve action [hours]` | Controls the resolution schedule: `now` runs one at once, `delay` pushes the next one back by `hours`, and `pause` and `resume` stop and restart the schedule. |
 | `/gm reload` | Reloads `constants.yaml`. |
 | `/gm undo` | Restores the snapshot taken before the last resolution (section 10). |
@@ -1059,7 +1060,7 @@ A poll reads, for example: "In North Arpal, the Condition of Labour is *a burnin
 - A party dissolves (posted when it happens, not after the resolution).
 - A cabinet seat is empty, a minister or the Chancellor resigns, a cabinet vote fails, or no-confidence co-signers reach the tabling threshold.
 - A no-confidence motion passes and calls a snap election.
-- A crisis or question is due at the next resolution and has no response, or both its ministry and the Chancellorship are vacant.
+- A crisis or question is due at the next resolution and has no response, or both its ministry and the Chancellorship are vacant. For a crisis, which is always due at the resolution after it is posted, this alert comes 12 hours before that resolution, with the reminders.
 - No event is queued for the next resolution.
 - A player with an active faction leaves the server.
 - An unregistered player tries a game command (once per player, posted when it happens).

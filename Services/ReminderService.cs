@@ -4,22 +4,25 @@ public class ReminderService
 {
     public static readonly TimeSpan Lead = TimeSpan.FromHours(12);
     private static readonly TimeSpan PollInterval = TimeSpan.FromMinutes(1);
+    private const ulong GmReminderId = 0;
 
     private readonly DatabaseService _data;
     private readonly ConstantsStore _constants;
     private readonly Func<ulong, string, Task<bool>> _send;
+    private readonly Func<string, Task> _alert;
     private readonly TimeProvider _time;
 
-    public ReminderService(DatabaseService data, FactionChannelService factionChannels, ConstantsStore constants)
-        : this(data, constants, (factionId, text) => factionChannels.SendAsync(factionId, text), TimeProvider.System)
+    public ReminderService(DatabaseService data, FactionChannelService factionChannels, ConstantsStore constants, AlertService alerts)
+        : this(data, constants, (factionId, text) => factionChannels.SendAsync(factionId, text), alerts.PostAsync, TimeProvider.System)
     {
     }
 
-    internal ReminderService(DatabaseService data, ConstantsStore constants, Func<ulong, string, Task<bool>> send, TimeProvider time)
+    internal ReminderService(DatabaseService data, ConstantsStore constants, Func<ulong, string, Task<bool>> send, Func<string, Task> alert, TimeProvider time)
     {
         _data = data;
         _constants = constants;
         _send = send;
+        _alert = alert;
         _time = time;
     }
 
@@ -52,7 +55,20 @@ public class ReminderService
             if (MessageFor(faction, state) is not { } message) continue;
             if (await _send(faction.UserId, message)) sent++;
         }
+        if (_data.TryMarkReminderSent(GmReminderId, resolution) && UnansweredCrisesAlert(resolution) is { } alert)
+            await _alert(alert);
         return sent;
+    }
+
+    internal string? UnansweredCrisesAlert(long resolution)
+    {
+        var lines = _data.GetCrises(CrisisStatus.Live)
+            .Where(c => c.DueResolution == resolution && c.ChosenAnswer is null)
+            .Select(c => _data.ResponsibleMinister(c.Ministry) is { } minister
+                ? Texts.Get("thresholds.crisisUnanswered", ("crisis", c.Title), ("minister", $"<@{minister}>"))
+                : Texts.Get("thresholds.crisisNobody", ("crisis", c.Title), ("ministry", c.Ministry.DisplayName())))
+            .ToList();
+        return lines.Count == 0 ? null : string.Join("\n", lines);
     }
 
     public static bool IsDue(GameState state, DateTimeOffset now) =>
