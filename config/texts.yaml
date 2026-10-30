@@ -1745,3 +1745,18 @@ crackdown:
   alert:
     failed: "The crackdown in {province} failed (gendarmerie {total} against {roll} on a d{sides}); the Interior minister {minister} lost popularity. Write the follow-up, for example with `/gm apply`."
     postFailed: "A crackdown post failed: {error}"
+
+thresholds:
+  discontent: "Discontent in {province} has reached {discontent} (alert at {threshold})."
+  favourLow: "The King's Favour has fallen to {favour}, below {threshold}."
+  favourZero: "The King's Favour has reached 0."
+  threat: "Threat has reached {threat} (alert at {threshold})."
+  crisisUnanswered: "**{crisis}** is due at the next resolution and {minister} has not responded yet."
+  crisisNobody: "**{crisis}** is due at the next resolution, but the {ministry} and the Chancellorship are both vacant: its default will apply, with no penalty, unless someone is appointed."
+  questionUnanswered: "A question from {asker} to the {ministry} is due at the next resolution and {minister} has not answered it yet."
+
+reminders:
+  heading: "{faction}, the next resolution comes {when}. Still waiting on you:"
+  actionUnused: "One of your actions this turn is unused: `/campaign`, `/attack` or `/poll`."
+  actionsUnused: "{count} of your actions this turn are unused: `/campaign`, `/attack` or `/poll`."
+  opposition: "This season's opposition action is unused: `/opposition question`, `/opposition condemn` or `/bill propose`."

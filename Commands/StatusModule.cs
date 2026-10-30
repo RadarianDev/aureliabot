@@ -30,6 +30,7 @@ public class StatusModule : InteractionModuleBase<SocketInteractionContext>
         var state = _data.GetGameState();
         var party = faction.PartyId is { } partyId ? _data.GetParty(partyId) : null;
         var role = FactionRoles.Of(_data, faction);
+        var outstanding = _data.Outstanding(faction.UserId, _constants.Current);
 
         var sb = new StringBuilder();
         sb.AppendLine($"## {Display.Faction(faction)}");
@@ -80,18 +81,17 @@ public class StatusModule : InteractionModuleBase<SocketInteractionContext>
             row++;
         }
 
-        foreach (var cabinet in _data.CabinetVotesAwaiting(faction.UserId))
+        foreach (var cabinet in outstanding.CabinetVotes)
         {
             waiting.Add(Texts.Get("me.cabinetVote", ("chancellor", cabinet.ChancellorId is { } c ? Display.Faction(_data, c) : Texts.Get("me.unknownTarget"))));
             VoteRow(choice => GovernmentPublisher.CabinetVoteButtonId(choice, cabinet.Id));
         }
-        var canVote = faction.Seats > 0;
-        foreach (var reading in canVote ? _data.GetOpenReadingsNotVotedBy(faction.UserId) : [])
+        foreach (var reading in outstanding.Readings)
         {
             waiting.Add(Texts.Get("me.readingVote", ("bill", _data.GetBill(reading.BillId)?.Title ?? reading.BillId)));
             VoteRow(choice => AssemblyPublisher.ReadingVoteButtonId(choice, reading.Id));
         }
-        foreach (var motion in canVote ? _data.GetVotingMotionsNotVotedBy(faction.UserId) : [])
+        foreach (var motion in outstanding.Motions)
         {
             waiting.Add(Texts.Get("me.motionVote", ("tabler", Display.Faction(_data, motion.TablerId))));
             VoteRow(choice => AssemblyPublisher.MotionVoteButtonId(choice, motion.Id));
@@ -106,25 +106,24 @@ public class StatusModule : InteractionModuleBase<SocketInteractionContext>
             waiting.Add(Texts.Get("me.scheduledBill", ("bill", _data.GetBill(reading.BillId)?.Title ?? reading.BillId)));
             SingleButton(Texts.Get("me.withdrawButton"), AssemblyPublisher.WithdrawButtonId(reading.Id), ButtonStyle.Secondary);
         }
-        foreach (var question in _data.QuestionsToAnswer(faction.UserId))
+        foreach (var question in outstanding.Questions)
         {
             waiting.Add(Texts.Get("me.questionToAnswer", ("ministry", question.Ministry.DisplayName()), ("asker", Display.Faction(_data, question.AskerId))));
             SingleButton(Texts.Get("me.answerButton"), GovernmentPublisher.AnswerButtonId(question.Id), ButtonStyle.Primary);
         }
-        foreach (var awaiting in _data.CrisesAwaiting(faction.UserId))
+        foreach (var awaiting in outstanding.Crises)
             waiting.Add(awaiting.Responded
                 ? Texts.Get("me.crisisAnswered", ("crisis", awaiting.Crisis.Title), ("when", Display.NextResolution(state)))
                 : Texts.Get("me.crisisAwaiting", ("crisis", awaiting.Crisis.Title), ("ministry", awaiting.Crisis.Ministry.DisplayName()), ("when", Display.NextResolution(state))));
 
-        if (role == FactionRole.Opposition)
+        if (outstanding.Opposition is { } standing)
         {
-            var standing = _data.GetOppositionStanding(faction.UserId, _constants.Current);
             sb.AppendLine(standing.CanAct
                 ? standing.CanProposeBill ? Texts.Get("me.oppositionFreeWithBill") : Texts.Get("me.oppositionFree")
                 : Texts.Get("me.oppositionUsed"));
         }
 
-        var pending = _data.GetPendingActions(faction.UserId);
+        var pending = outstanding.PendingActions;
         if (pending.Count > 0)
         {
             var titles = _data.GetAllIssues().ToDictionary(i => i.Id, i => i.Title);
