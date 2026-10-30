@@ -31,7 +31,8 @@ internal sealed record ActionOutcome(
     double TargetChange,
     Stance? TargetStance,
     string Result,
-    string? PrivateMessage);
+    string? PrivateMessage,
+    bool Succeeded = true);
 
 internal sealed record ActionPlan(
     IReadOnlyList<ActionOutcome> Outcomes,
@@ -121,7 +122,7 @@ internal static class ActionPlanner
         var text = result.Succeeded
             ? $"Attack on {stance.DisplayName()} succeeded: target {Display.Signed(result.TargetChange)} popularity."
             : $"Attack on {stance.DisplayName()} backfired: {Display.Signed(result.AttackerChange)} popularity.";
-        return new ActionOutcome(action, false, result.AttackerChange, result.TargetChange, stance, text, null);
+        return new ActionOutcome(action, false, result.AttackerChange, result.TargetChange, stance, text, null, result.Succeeded);
     }
 
     private static ActionOutcome PlanPoll(PendingAction action, ActionStartState start, ActionScoring scoring)

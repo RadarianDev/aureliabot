@@ -77,7 +77,7 @@ public partial class DatabaseService
         Exec(conn, null, @"
             INSERT INTO issues (id, template_id, title, for_text, against_text, opinion, salience, status, opened_resolution)
             VALUES ($id, $template, $title, $for, $against, $opinion, $salience, 'Open', $resolution)
-            ON CONFLICT(id) DO UPDATE SET status = 'Open', closed_resolution = NULL;",
+            ON CONFLICT(id) DO UPDATE SET status = 'Open', closed_resolution = NULL, opened_resolution = excluded.opened_resolution;",
             ("$id", id), ("$template", templateId), ("$title", title), ("$for", forText), ("$against", againstText),
             ("$opinion", opinion), ("$salience", salience), ("$resolution", state.ResolutionNumber));
     }
@@ -86,7 +86,11 @@ public partial class DatabaseService
     {
         using var conn = Open();
         using var cmd = conn.CreateCommand();
-        cmd.CommandText = "SELECT stance FROM stance_log WHERE faction_id = $faction AND issue_id = $issue ORDER BY id DESC LIMIT 1;";
+        cmd.CommandText = @"
+            SELECT stance FROM stance_log
+            WHERE faction_id = $faction AND issue_id = $issue
+              AND resolution_number >= COALESCE((SELECT opened_resolution FROM issues WHERE id = $issue), 0)
+            ORDER BY id DESC LIMIT 1;";
         cmd.Parameters.AddWithValue("$faction", factionId.ToString());
         cmd.Parameters.AddWithValue("$issue", issueId);
         return cmd.ExecuteScalar() is long stance ? (Stance)stance : null;

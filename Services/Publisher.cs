@@ -89,7 +89,7 @@ public class Publisher
                     break;
                 case ActionKind.Attack when action.TargetFactionId is { } targetId:
                     var target = Display.Faction(_data, targetId);
-                    yield return action.TargetPopularityChange < 0
+                    yield return action.AttackSucceeded
                         ? $"{actor} attacks {target} on {issue}, and lands the blow: {target} popularity {Display.Signed(action.TargetPopularityChange)}."
                         : $"{actor} attacks {target} on {issue}, but the nation sides with {target}: {actor} popularity {Display.Signed(action.ActorPopularityChange)}.";
                     break;

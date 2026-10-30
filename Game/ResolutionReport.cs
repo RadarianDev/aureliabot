@@ -46,7 +46,8 @@ public sealed record ActionReport(
     bool OffProgramme,
     ulong? TargetFactionId,
     double ActorPopularityChange,
-    double TargetPopularityChange);
+    double TargetPopularityChange,
+    bool AttackSucceeded = false);
 
 public sealed record CrackdownReport(string ProvinceId, bool Success, int GendarmerieTotal, int DieSides, int DieRoll);
 

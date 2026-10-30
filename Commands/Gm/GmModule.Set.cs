@@ -34,8 +34,6 @@ public static class GameStateFields
         new("favourBaseline", s => Show(s.FavourBaseline), (s, v) => Number(v) is { } x ? s with { FavourBaseline = Math.Clamp(x, 0, 100) } : null),
         new("threat", s => Show(s.Threat), (s, v) => Number(v) is { } x ? s with { Threat = Math.Clamp(x, 0, 100) } : null),
         new("lastNavyShare", s => Show(s.LastNavyShare), (s, v) => Number(v) is { } x ? s with { LastNavyShare = Math.Clamp(x, 0, 1) } : null),
-        new("reserve", s => s.Reserve.ToString("0.00", CultureInfo.InvariantCulture),
-            (s, v) => decimal.TryParse(v, NumberStyles.Number, CultureInfo.InvariantCulture, out var x) ? s with { Reserve = Math.Max(0, Math.Round(x, 2)) } : null),
     ];
 
     public static Field? Find(string name) =>
@@ -72,13 +70,18 @@ public partial class GmModule
         }
 
         var before = _data.GetGameState();
+        if (field.MovesCalendar && !before.Started)
+        {
+            await RespondAsync("The calendar can't be changed before `/gm start`; the game always opens in the start season from `constants.yaml`.", ephemeral: true);
+            return;
+        }
         if (field.Set(before, value.Trim()) is not { } preview)
         {
             await RespondAsync($"`{value}` is not a valid value for `{field.Name}`.", ephemeral: true);
             return;
         }
 
-        var confirm = _confirmations.Create(Context.User.Id, () =>
+        var confirm = _confirmations.Create(Context.User.Id, () => _resolution.ExclusiveAsync(() =>
         {
             var current = _data.GetGameState();
             if (field.Set(current, value.Trim()) is not { } updated) return Task.FromResult("The value is no longer valid.");
@@ -97,7 +100,7 @@ public partial class GmModule
             if (field.MovesCalendar) _turnTracker.RequestCurrent();
             var schedule = field.MovesCalendar ? $" Next resolution: {NextResolutionText(updated)}." : "";
             return Task.FromResult($"`{field.Name}` changed from {oldValue} to {field.Get(updated)}.{schedule}");
-        }, "Set");
+        }), "Set");
 
         await RespondAsync(
             $"Set `{field.Name}` from **{field.Get(before)}** to **{field.Get(preview)}**? Nothing is posted.",
@@ -125,7 +128,7 @@ public partial class GmModule
         }
 
         var target = effect.Amount;
-        var confirm = _confirmations.Create(Context.User.Id, () =>
+        var confirm = _confirmations.Create(Context.User.Id, () => _resolution.ExclusiveAsync(() =>
         {
             var now = _data.GetEffectValue(effect.Key) ?? current;
             var result = _data.ApplyEffects([new Effect(effect.Key, target - now)], config,
@@ -133,7 +136,7 @@ public partial class GmModule
             var after = _data.GetEffectValue(effect.Key);
             var warning = result.Warnings.Count > 0 ? "\n⚠️ " + string.Join("\n⚠️ ", result.Warnings) : "";
             return Task.FromResult($"`{effect.Key}` changed from {EffectParser.FormatNumber(now)} to {(after is { } a ? EffectParser.FormatNumber(a) : "?")}.{warning}");
-        }, "Set");
+        }), "Set");
 
         await RespondAsync(
             $"Set `{effect.Key}` from **{EffectParser.FormatNumber(current)}** to **{EffectParser.FormatNumber(target)}** (clamped to its range)? Nothing is posted.",

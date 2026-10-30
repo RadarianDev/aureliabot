@@ -13,6 +13,11 @@ public partial class GmModule
         switch (action)
         {
             case ResolveAction.Now:
+                if (!_data.GetGameState().Started)
+                {
+                    await RespondAsync("The game hasn't started yet; open it with `/gm start`.", ephemeral: true);
+                    return;
+                }
                 await DeferAsync(ephemeral: true);
                 var report = await _resolution.ResolveNowAsync();
                 var after = _data.GetGameState();
@@ -30,16 +35,22 @@ public partial class GmModule
                     await RespondAsync("Give a positive number of `hours` to delay by.", ephemeral: true);
                     return;
                 }
-                var state = _data.GetGameState();
-                if (state.NextResolutionAt is not { } next)
+                await DeferAsync(ephemeral: true);
+                var delayed = await _resolution.ExclusiveAsync(() =>
                 {
-                    await RespondAsync("No resolution is scheduled yet, so there is nothing to delay.", ephemeral: true);
+                    var state = _data.GetGameState();
+                    if (state.NextResolutionAt is not { } next) return Task.FromResult<GameState?>(null);
+                    var updated = state with { NextResolutionAt = next.AddHours(hours.Value) };
+                    _data.SaveGameState(updated);
+                    return Task.FromResult<GameState?>(updated);
+                });
+                if (delayed is null)
+                {
+                    await FollowupAsync("No resolution is scheduled yet, so there is nothing to delay.", ephemeral: true);
                     return;
                 }
-                var delayed = state with { NextResolutionAt = next.AddHours(hours.Value) };
-                _data.SaveGameState(delayed);
                 _data.Log(LogKinds.GmOverride, "gm resolve delay", $"Delayed the next resolution by {hours} h.", Context.User.Id);
-                await RespondAsync($"The next resolution is delayed by {hours} h, to {NextResolutionText(delayed)}.", ephemeral: true);
+                await FollowupAsync($"The next resolution is delayed by {hours} h, to {NextResolutionText(delayed)}.", ephemeral: true);
                 return;
 
             case ResolveAction.Pause:

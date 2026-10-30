@@ -64,7 +64,8 @@ public class ResolutionService
         }
     }
 
-    public Task<ResolutionReport?> ResolveNowAsync() => ResolveAsync(campaignDay: false);
+    public Task<ResolutionReport?> ResolveNowAsync() =>
+        _data.GetGameState().Started ? ResolveAsync(campaignDay: false) : Task.FromResult<ResolutionReport?>(null);
 
     public async Task<T> ExclusiveAsync<T>(Func<Task<T>> work)
     {

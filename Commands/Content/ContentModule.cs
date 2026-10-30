@@ -3,6 +3,7 @@ using Discord;
 using Discord.Interactions;
 
 [Group("content", "Write the game's issues, bills, projects, events and crises (GM only)")]
+[DefaultMemberPermissions(GuildPermission.ManageGuild)]
 [RequireUserPermission(GuildPermission.ManageGuild)]
 public class ContentModule : InteractionModuleBase<SocketInteractionContext>
 {

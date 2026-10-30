@@ -227,6 +227,23 @@ effects is one `ApplyEffectsTx` method used by laws, events, crisis answers, pro
 which clamps every value. Every purse or reserve change, there and everywhere else, goes through one
 `PostLedgerTx(account, amount, kind, label, source)` helper, so nothing moves money without a ledger line.
 
+Effects are stored in the database in the text form (`EffectParser.Format`, read back with
+`EffectParser.Parse`). `ApplyEffectsTx` applies them in the order written and re-reads the game state
+before each one, so a resolution step that has applied effects must re-read `GameState` before saving it.
+An effect that can't apply (a template not Ready, a bill whose issue isn't open) is skipped with a GM
+alert rather than failing the resolution.
+
+### 4.6.1 Templates as built
+
+All five template kinds live in one `templates` table (id, kind, status, the source YAML, times
+posted); `TemplateCodec.Parse` turns the YAML into the records in `Game/Templates.cs`, and export
+returns the stored YAML, so an export always imports back unchanged. Import checks only what config
+and live state can answer (provinces, conditions, ministries, factions); references to other templates
+are checked by `/content ready`, so a batch can import a bill before its issue. A live copy takes its
+template's id (`labour` the template, `labour` the issue), except events, crises and projects, which
+can be posted more than once and get integer ids. An event template with a `schedule` is queued when it
+is marked Ready; replacing it returns it to Draft and cancels its queued copy until it is Ready again.
+
 ### 4.7 Commands
 
 - Every command that creates channels or roles, renders an image, or touches many rows starts with

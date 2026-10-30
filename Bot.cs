@@ -179,6 +179,15 @@ public class Bot
             return;
         }
 
+        if (interaction is SocketAutocompleteInteraction autocomplete
+            && WhitelistExemptCommands.Contains(autocomplete.Data.CommandName)
+            && autocomplete.Data.CommandName != "whitelist"
+            && interaction.User is SocketGuildUser { GuildPermissions.ManageGuild: false })
+        {
+            await autocomplete.RespondAsync(Array.Empty<AutocompleteResult>());
+            return;
+        }
+
         var ctx = new SocketInteractionContext(_client, interaction);
         var result = await _interactions.ExecuteCommandAsync(ctx, _services);
 

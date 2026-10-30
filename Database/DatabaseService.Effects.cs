@@ -29,6 +29,7 @@ public partial class DatabaseService
         foreach (var effect in effects)
         {
             var state = GetGameStateTx(conn, tx);
+            var before = effect.IsAction ? null : CurrentEffectValueTx(conn, tx, effect.Key);
             var target = effect.Target;
             var warning = effect.Prefix switch
             {
@@ -55,7 +56,10 @@ public partial class DatabaseService
                 _ => $"unknown effect key {effect.Key}",
             };
 
-            if (warning is null) applied.Add(effect);
+            if (warning is null)
+                applied.Add(before is { } old && CurrentEffectValueTx(conn, tx, effect.Key) is { } now
+                    ? effect with { Value = Math.Round(now - old, 6) }
+                    : effect);
             else warnings.Add($"{source.Label}: `{effect.Key}`: {warning}");
         }
 
@@ -95,7 +99,7 @@ public partial class DatabaseService
     private static string? ApplyIssueValueTx(
         SqliteConnection conn, SqliteTransaction tx, string issueId, string column, double amount, double min, double max, long? raisedMarker)
     {
-        if (GetIssueTx(conn, tx, issueId) is not { } issue) return $"no live issue {issueId}";
+        if (GetIssueTx(conn, tx, issueId) is not { Status: IssueStatus.Open } issue) return $"issue {issueId} is not open";
         var current = column == "opinion" ? issue.Opinion : issue.Salience;
         Exec(conn, tx, $"UPDATE issues SET {column} = $value WHERE id = $id;",
             ("$id", issueId), ("$value", Math.Clamp(current + amount, min, max)));
@@ -134,6 +138,7 @@ public partial class DatabaseService
     private static string? CloseIssueTx(SqliteConnection conn, SqliteTransaction tx, GameState state, string issueId)
     {
         if (GetIssueTx(conn, tx, issueId) is not { Status: IssueStatus.Open }) return $"issue {issueId} is not open";
+        Exec(conn, tx, "DELETE FROM programme_stances WHERE issue_id = $id;", ("$id", issueId));
         Exec(conn, tx, "UPDATE issues SET status = 'Closed', closed_resolution = $resolution WHERE id = $id;",
             ("$id", issueId), ("$resolution", state.ResolutionNumber));
         Exec(conn, tx, @"
@@ -170,15 +175,21 @@ public partial class DatabaseService
 
     public double? GetEffectValue(string key)
     {
+        using var conn = Open();
+        return CurrentEffectValueTx(conn, null, key);
+    }
+
+    private static double? CurrentEffectValueTx(SqliteConnection conn, SqliteTransaction? tx, string key)
+    {
         var effect = new Effect(key, 0);
-        var state = GetGameState();
+        var state = GetGameStateTx(conn, tx);
         return effect.Prefix switch
         {
-            "purse" when Enum.TryParse<Ministry>(effect.Target, out var ministry) => (double)GetPurseBalance(ministry),
-            "discontent" => GetProvince(effect.Target!)?.Discontent,
-            "opinion" => GetIssue(effect.Target!)?.Opinion,
-            "salience" => GetIssue(effect.Target!)?.Salience,
-            "popularity" when ulong.TryParse(effect.Target, out var factionId) => GetFaction(factionId)?.Popularity,
+            "purse" when Enum.TryParse<LedgerAccount>(effect.Target, out var account) => (double)GetBalanceTx(conn, tx, account),
+            "discontent" => GetProvincesTx(conn, tx).FirstOrDefault(p => p.Id == effect.Target)?.Discontent,
+            "opinion" => GetIssueTx(conn, tx, effect.Target!)?.Opinion,
+            "salience" => GetIssueTx(conn, tx, effect.Target!)?.Salience,
+            "popularity" when ulong.TryParse(effect.Target, out var factionId) => GetFactionTx(conn, tx, factionId)?.Popularity,
             "economy" => state.Economy,
             "taxRate" => state.TaxRate,
             "favour" => state.Favour,

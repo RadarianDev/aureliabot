@@ -103,7 +103,11 @@ public partial class DatabaseService
     {
         using var cmd = conn.CreateCommand();
         cmd.Transaction = tx;
-        cmd.CommandText = "SELECT stance FROM stance_log WHERE faction_id = $faction AND issue_id = $issue ORDER BY id DESC LIMIT 1;";
+        cmd.CommandText = @"
+            SELECT stance FROM stance_log
+            WHERE faction_id = $faction AND issue_id = $issue
+              AND resolution_number >= COALESCE((SELECT opened_resolution FROM issues WHERE id = $issue), 0)
+            ORDER BY id DESC LIMIT 1;";
         cmd.Parameters.AddWithValue("$faction", factionId.ToString());
         cmd.Parameters.AddWithValue("$issue", issueId);
         if (cmd.ExecuteScalar() is long logged) return (Stance)logged;
@@ -270,7 +274,8 @@ public partial class DatabaseService
                 action.OffProgramme,
                 action.TargetFactionId,
                 outcome.ActorChange,
-                outcome.TargetChange));
+                outcome.TargetChange,
+                action.Kind == ActionKind.Attack && outcome.Succeeded));
         }
 
         LogTx(conn, tx, LogKinds.Resolution, "actions",

@@ -42,8 +42,14 @@ public static class ContentRules
         return new ImportOutcome(file.Name, template.Id, template.Kind, saved.Replaced, saved.PreviousStatus, []);
     }
 
-    public static EditOutcome SaveEdit(DatabaseService data, EffectContext context, string originalId, string yaml) =>
-        new(ImportOne(data, context, new ImportFile($"{originalId}.yaml", yaml)), originalId);
+    public static EditOutcome SaveEdit(DatabaseService data, EffectContext context, string originalId, string yaml)
+    {
+        var file = $"{originalId}.yaml";
+        if (TemplateCodec.Parse(yaml, file, context).Template is { } parsed && parsed.Id != originalId && data.GetTemplate(parsed.Id) is not null)
+            return new(new ImportOutcome(file, parsed.Id, parsed.Kind, false, null,
+                [new TemplateParseError(file, null, $"`{parsed.Id}` already exists. Pick a new id for the copy, or edit `{parsed.Id}` itself.")]), originalId);
+        return new(ImportOne(data, context, new ImportFile(file, yaml)), originalId);
+    }
 
     public static string FormatImport(IReadOnlyList<ImportOutcome> outcomes, IReadOnlyList<string>? skipped = null)
     {
@@ -66,7 +72,7 @@ public static class ContentRules
         var what = $"`{outcome.Id}` ({TemplateCodec.KindName(outcome.Kind!.Value)})";
         if (!outcome.Replaced) return $"- {what}: imported as a Draft.";
         return outcome.PreviousStatus == TemplateStatus.Ready
-            ? $"- {what}: replaced, and returned to Draft."
+            ? $"- {what}: replaced, and returned to Draft{(outcome.Kind == TemplateKind.Event ? "; its queued copy is cancelled until it is Ready again" : "")}."
             : $"- {what}: replaced.";
     }
 
