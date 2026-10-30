@@ -74,9 +74,17 @@ A party doesn't store a member list: a party's members are the **active** factio
 - A programme is the party's stance on each open issue, stored as `programme_stances` rows; a missing
   row means no stance (Silent).
 - The GM records one from a Discord message link with `/gm party programme`. `ProgrammeParser` reads
-  `Issue: Opinion` lines (headers starting with `#` ignored; issue by title or id; opinion Strongly For,
-  For, Against or Strongly Against, ignoring case and Markdown emphasis). Any bad line fails the whole
-  message, and every bad line is listed.
+  one stance per line, issue and opinion in either order, split by `:`, a spaced dash, `=`, `->`, `→`,
+  `|` or a tab, or with no separator when the opinion starts or ends the line. It ignores headers (`#`),
+  bullets, quotes, Markdown markers, emoji and punctuation. The issue is an open issue's title or id
+  (case, punctuation, a leading *The* and underscores ignored), or whole words found in exactly one
+  open issue's title. The opinion is Strongly For, For, Against, Strongly Against or Silent, or an
+  alias: the alias, strength and filler lists live in `config/programme.yaml` (`ProgrammeVocabulary`,
+  reloaded with the config; built-in defaults when the file is absent). Silent records no row, like
+  leaving the issue out. The full rules are in the spec's *Party programmes*.
+- Prose lines (no opinion, and not an issue on their own) are skipped and listed to the GM as ignored
+  lines in the preview. Any bad line (an opinion with an unknown, closed or ambiguous issue, an issue
+  without a valid opinion, or a repeated issue) fails the whole message, and every bad line is listed.
 - Recording replaces the whole programme and writes a `Programme` entry to the stance log for each
   member and stance, so a programme is a faction's latest public stance until it campaigns or votes.
 - Outside a pre-election, every stance that changes sign costs every active member

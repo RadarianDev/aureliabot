@@ -447,6 +447,8 @@ gm:
       messageNotFound: "I cannot find that message in <#{channel}>."
       badLine: "Line {line}: `{text}` — {reason}"
       badLines: "The programme of {party} has {count} bad line(s). Nothing was recorded."
+      ignoredLines: "Ignored {count} line(s) that state no stance:"
+      ignoredLine: "Line {line}: `{text}`"
       previewTitle: "**Programme of {party}** ({url})"
       noOpenIssues: "There are no open issues."
       previewLine: "{issue}: {stance}"
@@ -974,12 +976,13 @@ wording:
     line: "{place}, {issue} is *{salience}*, and {people}."
 
 programme:
-  noColon: "no colon; write it as `Issue: Opinion`"
   closed: "{issue} is closed"
   unknownIssue: "unknown issue \"{issue}\""
+  noIssue: "\"{opinion}\" names no issue; write it as `Issue: Opinion`"
+  ambiguous: "\"{issue}\" could be any of {candidates}; give more of the title"
   duplicate: "{issue} is already given on line {line}"
-  silent: Silent is not an opinion; leave the issue out for no stance
-  unknownOpinion: "unrecognised opinion \"{opinion}\"; use Strongly For, For, Against or Strongly Against"
+  noOpinion: "no opinion given for {issue}; write it as `Issue: Opinion`"
+  unknownOpinion: "unrecognised opinion \"{opinion}\"; use Strongly For, For, Against, Strongly Against or Silent"
 
 names:
   stance:

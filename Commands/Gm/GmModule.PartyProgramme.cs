@@ -60,10 +60,10 @@ public partial class GmModule
             {
                 var errors = parsed.Errors.Select(e => Texts.Get("gm.party.programme.badLine",
                     ("line", e.LineNumber), ("text", e.Text.Replace("`", "'")), ("reason", e.Reason)));
-                await FollowupAsync(
-                    Display.Truncate(Texts.Get("gm.party.programme.badLines", ("party", Display.Party(target)), ("count", parsed.Errors.Count)) + "\n" +
-                                     string.Join("\n", errors)),
-                    ephemeral: true);
+                var report = new List<string> { Texts.Get("gm.party.programme.badLines", ("party", Display.Party(target)), ("count", parsed.Errors.Count)) };
+                report.AddRange(errors);
+                report.AddRange(IgnoredLines(parsed.Ignored));
+                await FollowupAsync(Display.Truncate(string.Join("\n", report)), ephemeral: true);
                 return;
             }
 
@@ -83,6 +83,7 @@ public partial class GmModule
                     ? Texts.Get("gm.party.programme.previewLineFlip", ("issue", issue.Title), ("stance", stanceText), ("from", before[issue.Id].DisplayName()))
                     : Texts.Get("gm.party.programme.previewLine", ("issue", issue.Title), ("stance", stanceText)));
             }
+            preview.AddRange(IgnoredLines(parsed.Ignored));
 
             preview.Add("");
             if (state.IsPreElection)
@@ -186,6 +187,13 @@ public partial class GmModule
                 lines.Add(Texts.Get("gm.party.programme.noStanceOn", ("issues", string.Join(", ", silent))));
             return string.Join("\n", lines);
         }
+
+        private static IEnumerable<string> IgnoredLines(IReadOnlyList<ProgrammeIgnoredLine> ignored) =>
+            ignored.Count == 0
+                ? []
+                : ignored.Select(i => Texts.Get("gm.party.programme.ignoredLine", ("line", i.LineNumber), ("text", i.Text.Replace("`", "'"))))
+                    .Prepend(Texts.Get("gm.party.programme.ignoredLines", ("count", ignored.Count)))
+                    .Prepend("");
 
         private static string TheParty(string name) =>
             name.StartsWith("the ", StringComparison.OrdinalIgnoreCase) ? name : Texts.Get("gm.party.programme.theParty", ("name", name));

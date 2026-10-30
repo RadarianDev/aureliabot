@@ -442,3 +442,29 @@ lawless:
 frontier, anzarian_border, crossroads, rugged, forested, marshland, remote, coastal. **Event**
 conditions come and go through effects: lawless, epidemic, striking, famine, booming.
 
+### `config/programme.yaml`: programme wording
+
+Optional. The words `/gm party programme` accepts as opinions (see the spec's *Party programmes*). Each
+key is a list of phrases, matched ignoring capitalisation and punctuation; a list left out, or the whole
+file missing, keeps the built-in defaults. A phrase may appear in only one list.
+
+```yaml
+for: [for, support, in favour of, pro, "yes", aye, "+", "+1"]
+against: [against, oppose, opposed to, anti, "no", nay, "-", "-1"]
+stronglyFor: ["++", "+2"]
+stronglyAgainst: ["--", "-2"]
+silent: [silent, non-aligned, neutral, no stance, abstain, none, n/a, "0"]
+strength: [strongly, very, firmly, fiercely, staunchly, wholly, fully]
+filler: [we, we are, the party, stands, it]
+```
+
+| Field | Meaning |
+| --- | --- |
+| `for` / `against` | Phrases for *For* / *Against*. A strength word turns them into the strong stance. |
+| `stronglyFor` / `stronglyAgainst` | Phrases that are the strong stance on their own. |
+| `silent` | Phrases for no stance: recorded as if the issue were left out. |
+| `strength` | Words before or after a For or Against phrase that make it strong. |
+| `filler` | Words allowed around an opinion and otherwise ignored (`we are firmly against it`). |
+
+Quote phrases YAML would read as something else: `"yes"`, `"no"`, `"0"`, `"+"`, `"-"`.
+
