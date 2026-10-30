@@ -6,7 +6,10 @@ using Microsoft.Data.Sqlite;
 public sealed record EffectSource(
     string Label, string SourceType, string SourceId, LedgerKind LedgerKind = LedgerKind.Effect, bool PublicLedger = false, ulong? ActorId = null);
 
-public sealed record EffectApplication(IReadOnlyList<Effect> Applied, IReadOnlyList<string> Warnings);
+public sealed record EffectApplication(IReadOnlyList<Effect> Applied, IReadOnlyList<string> Warnings)
+{
+    public ResolutionReport Report { get; init; } = new();
+}
 
 public partial class DatabaseService
 {
@@ -14,10 +17,11 @@ public partial class DatabaseService
     {
         using var conn = Open();
         using var tx = conn.BeginTransaction();
-        var result = ApplyEffectsTx(conn, tx, effects, config, source, null);
+        var report = new ResolutionReport();
+        var result = ApplyEffectsTx(conn, tx, effects, config, source, report);
         LogTx(conn, tx, LogKinds.GmOverride, source.SourceType, $"{source.Label}: {EffectParser.Format(result.Applied)}");
         tx.Commit();
-        return result;
+        return result with { Report = report };
     }
 
     private static EffectApplication ApplyEffectsTx(

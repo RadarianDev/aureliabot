@@ -423,24 +423,34 @@ public partial class DatabaseService
             var success = total >= dieRoll;
             var name = ProvinceName(province.Id);
 
+            var effects = new List<Effect>();
             if (success)
             {
-                SetDiscontentTx(conn, tx, province.Id, Math.Clamp(province.Discontent - c.Crackdown.Reduction, c.Discontent.Min, c.Discontent.Max));
-                SetConditionTx(conn, tx, state, province.Id, LawlessCondition, false);
+                var discontent = Math.Clamp(province.Discontent - c.Crackdown.Reduction, c.Discontent.Min, c.Discontent.Max);
+                SetDiscontentTx(conn, tx, province.Id, discontent);
+                effects.Add(new Effect($"discontent.{province.Id}", discontent - province.Discontent));
+                if (GetProvinceConditionsTx(conn, tx).GetValueOrDefault(province.Id, []).Contains(LawlessCondition))
+                {
+                    SetConditionTx(conn, tx, state, province.Id, LawlessCondition, false);
+                    effects.Add(new Effect($"condition.{province.Id}.{LawlessCondition}", -1));
+                }
                 Tell(order, Texts.Get("forces.private.crackdownSucceeded", ("province", name), ("total", total), ("roll", dieRoll), ("sides", dieSides)));
             }
             else
             {
-                SetDiscontentTx(conn, tx, province.Id, Math.Clamp(province.Discontent + c.Crackdown.Backlash, c.Discontent.Min, c.Discontent.Max));
+                var discontent = Math.Clamp(province.Discontent + c.Crackdown.Backlash, c.Discontent.Min, c.Discontent.Max);
+                SetDiscontentTx(conn, tx, province.Id, discontent);
+                effects.Add(new Effect($"discontent.{province.Id}", discontent - province.Discontent));
                 var minister = ResponsibleMinisterTx(conn, tx, Ministry.Interior);
-                if (minister is { } faction)
-                    AddPopularityTx(conn, tx, faction, -c.Crackdown.FailurePopularity, c.Popularity);
+                if (minister is { } faction && GetFactionTx(conn, tx, faction) is { } before
+                    && AddPopularityTx(conn, tx, faction, -c.Crackdown.FailurePopularity, c.Popularity) is { } after)
+                    effects.Add(new Effect($"popularity.{faction}", after - before.Popularity));
                 report.Alerts.Add(Texts.Get("crackdown.alert.failed", ("province", name), ("total", total), ("roll", dieRoll), ("sides", dieSides),
                     ("minister", minister is { } m ? $"<@{m}>" : Texts.Get("cabinet.vacant"))));
                 Tell(order, Texts.Get("forces.private.crackdownFailed", ("province", name), ("total", total), ("roll", dieRoll), ("sides", dieSides)));
             }
 
-            report.Crackdowns.Add(new CrackdownReport(province.Id, success, total, dieSides, dieRoll));
+            report.Crackdowns.Add(new CrackdownReport(province.Id, success, total, dieSides, dieRoll, effects));
         }
 
         foreach (var order in orders)

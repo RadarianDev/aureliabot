@@ -58,6 +58,30 @@ public class ProjectPublisher
             EffectSummary.Lines(finished.Effects, Publisher.Names(_data, config), config.Constants.Display));
     }
 
+    public static string SummaryLine(LiveProject project, GameState state, GameConfig config)
+    {
+        var forecast = ProjectForecast.For(project, project.Spending, config.Constants.Project.Graft, state);
+        (string, object?) progress = ("progress", Display.Crowns(project.Progress));
+        (string, object?) price = ("price", Display.Crowns(project.Price));
+        (string, object?) spending = ("spending", Display.Crowns(project.Spending));
+        (string, object?) pace = ("pace", Display.Crowns(forecast.Pace));
+        (string, object?) name = ("project", project.Title);
+        var parts = new List<string>
+        {
+            project.Spending <= 0 ? Texts.Get("projects.summary.paused", name, progress, price)
+            : project.Spending > forecast.Pace ? Texts.Get("projects.summary.above", name, progress, price, spending, pace)
+            : project.Spending < forecast.Pace ? Texts.Get("projects.summary.below", name, progress, price, spending, pace)
+            : Texts.Get("projects.summary.atPace", name, progress, price, spending),
+        };
+        if (project.Status == ProjectStatus.Stalled) parts.Add(Texts.Get("projects.summary.stalled"));
+        parts.Add(forecast.FinishTurn is { } finish
+            ? Texts.Get("projects.summary.finishing", ("finish", GameCalendar.Label(finish.Season, finish.Year)))
+            : Texts.Get("projects.summary.noFinish"));
+        if (project.BonusDueResolution is { } due && due >= state.ResolutionNumber + 1)
+            parts.Add(Texts.Get("projects.summary.bonus", ("deadline", TurnLabel(state, due))));
+        return string.Join(", ", parts);
+    }
+
     public static string TurnLabel(GameState state, long resolution)
     {
         var (season, year) = ProjectForecast.TurnEndedBy(state, resolution);

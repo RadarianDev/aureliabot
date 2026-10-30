@@ -120,6 +120,7 @@ info:
     issue: "Issue · {name}"
     province: "Province · {name}"
     ministry: "Ministry · {name}"
+    project: "Project · {name}"
     budget: "The budget"
   notFound: "Nothing called `{thing}` was found. Pick something from the list."
   budget:
@@ -153,12 +154,22 @@ info:
     unit: "{name} · d{sides} · {province}"
     crises: "Open crises: {crises}"
     questions: "Open questions: {count}"
+    projects: "**Projects**"
+    projectLine: "- {line}"
+  project:
+    missing: "That project doesn't exist."
+    heading: "## {project}"
+    meta: "{province} · Ministry of {ministry} · {price} over {term} seasons"
+    finished: "Finished: {price} of work, done."
+    halted: "Halted at {progress} of {price}."
   live:
     heading: "## {season}"
     headingPreElection: "## {season} · Pre-election"
     next: "Next resolution: {when}"
     openIssues: "**Open issues**"
     parties: "**Parties**"
+    projects: "**Projects under way**"
+    projectLine: "- {project} · {province}"
     noneYet: "None yet."
   seats: "Seats: {seats}"
   faction:
@@ -1322,6 +1333,12 @@ ministry:
     questions: "**Open questions**"
     noQuestions: "No open questions."
     questionLine: "- {asker}: {text} (due {due})"
+    units: "**Units**"
+    unitLine: "- {name} · d{sides} · {province}"
+    projects: "**Projects**"
+    projectLine: "- {line}"
+    crises: "**Open crises**"
+    crisisLine: "- {crisis} (answer {due})"
 
 questions:
   asked: "Your question to the {ministry} is posted in #assembly. {minister} must answer it {due}. This spends your opposition action for the season."
@@ -1627,6 +1644,15 @@ projects:
     beats: "That beats the bonus deadline, {deadline}."
     misses: "That misses the bonus deadline, {deadline}."
     balance: "The purse holds {balance}."
+  summary:
+    atPace: "{project}: {progress} of {price}, {spending} a season at the pace"
+    below: "{project}: {progress} of {price}, {spending} a season, below the pace of {pace}"
+    above: "{project}: {progress} of {price}, {spending} a season, above the pace of {pace}"
+    paused: "{project}: {progress} of {price}, unfunded"
+    stalled: "stalled last season"
+    finishing: "finishing {finish}"
+    noFinish: "with no finish in sight"
+    bonus: "bonus if done by the end of {deadline}"
   autocomplete:
     live: "{project} · {province} · {progress} of {price}"
     template: "{project} · {ministry} · {price} over {term} seasons"

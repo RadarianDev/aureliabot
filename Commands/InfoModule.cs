@@ -22,6 +22,8 @@ public class InfoAutocomplete : AutocompleteHandler
             entries.Add((Texts.Get("info.kind.issue", ("name", issue.Title)), $"issue:{issue.Id}"));
         foreach (var province in constants.Config.Provinces)
             entries.Add((Texts.Get("info.kind.province", ("name", province.Name)), $"province:{province.Id}"));
+        foreach (var project in data.GetProjects().OrderByDescending(p => p.IsLive).ThenByDescending(p => p.Id))
+            entries.Add((Texts.Get("info.kind.project", ("name", project.Title)), $"project:{project.Id}"));
         foreach (var crisis in data.GetCrises().Where(c => c.Status != CrisisStatus.Cancelled)
                      .OrderByDescending(c => c.Status == CrisisStatus.Live).ThenByDescending(c => c.Id))
             entries.Add((Texts.Get("info.crisis.kind", ("name", crisis.Title)), $"crisis:{crisis.Id}"));
@@ -55,7 +57,7 @@ public partial class InfoModule : InteractionModuleBase<SocketInteractionContext
         _constants = constants;
     }
 
-    [SlashCommand("info", "Show anything in the game: factions, parties, issues, bills, crises, provinces, ministries, the budget")]
+    [SlashCommand("info", "Show anything in the game: factions, parties, issues, bills, projects, crises, provinces, ministries, the budget")]
     public async Task InfoAsync(
         [Summary("thing", "What to show; leave empty for what is live"), Autocomplete(typeof(InfoAutocomplete))] string? thing = null,
         [Summary("year", "For the budget: an earlier year")] int? year = null)
@@ -78,6 +80,7 @@ public partial class InfoModule : InteractionModuleBase<SocketInteractionContext
             "province" => ProvinceInfo(id),
             "bill" => BillInfo(id),
             "crisis" when long.TryParse(id, out var crisisId) => CrisisInfo(crisisId),
+            "project" when long.TryParse(id, out var projectId) => ProjectInfo(projectId),
             "ministry" when Enum.TryParse<Ministry>(id, out var ministry) && ministry.HoldsCrises() => MinistryInfo(ministry),
             "budget" => BudgetInfo(year),
             _ => _data.GetAllParties().FirstOrDefault(p => p.Name.Equals(thing, StringComparison.OrdinalIgnoreCase)) is { } party
@@ -104,6 +107,11 @@ public partial class InfoModule : InteractionModuleBase<SocketInteractionContext
         sb.AppendLine();
         sb.AppendLine(Texts.Get("info.live.parties"));
         sb.AppendLine(parties.Count == 0 ? Texts.Get("info.live.noneYet") : string.Join("\n", parties.Select(p => $"- {Display.Party(p)}")));
+        var projects = _data.GetLiveProjects();
+        sb.AppendLine();
+        sb.AppendLine(Texts.Get("info.live.projects"));
+        sb.AppendLine(projects.Count == 0 ? Texts.Get("info.live.noneYet") : string.Join("\n", projects.Select(p =>
+            Texts.Get("info.live.projectLine", ("project", p.Title), ("province", Display.Province(_constants.Config, p.ProvinceId))))));
         var crises = _data.GetCrises(CrisisStatus.Live);
         sb.AppendLine();
         sb.AppendLine(Texts.Get("info.crisis.live"));

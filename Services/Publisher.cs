@@ -82,6 +82,12 @@ public class Publisher
         await UpdateDashboardAsync();
     }
 
+    public async Task PublishStartedAsync(ResolutionReport report, string source)
+    {
+        await _crises.PublishAsync(report, source);
+        await _projects.PublishAsync(report, source);
+    }
+
     public async Task PostEventsAsync(ResolutionReport report, string source)
     {
         if (report.FiredEvents.Count == 0) return;

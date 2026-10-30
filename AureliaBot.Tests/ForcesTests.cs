@@ -172,6 +172,8 @@ public class ForcesTests : AssemblyTestBase
         Assert.DoesNotContain("lawless", Db.GetProvinceConditions().GetValueOrDefault("aurenten", []));
         Assert.Equal(popularity, Db.GetFaction(InteriorMinister)!.Popularity);
         Assert.Empty(report.Alerts);
+        Assert.Equal(["discontent.aurenten", "condition.aurenten.lawless"], crackdown.Effects.Select(e => e.Key));
+        Assert.Equal(-1, crackdown.Effects[1].Amount);
         Assert.Empty(Db.GetPendingOrders());
     }
 
@@ -191,6 +193,8 @@ public class ForcesTests : AssemblyTestBase
         Assert.Equal(popularity - C.Crackdown.FailurePopularity, Db.GetFaction(InteriorMinister)!.Popularity, 6);
         Assert.Single(report.Alerts);
         Assert.Contains(report.PrivateMessages[InteriorMinister], m => m.Contains("failed"));
+        Assert.Contains(crackdown.Effects, e => e.Key == $"popularity.{InteriorMinister}" && Math.Abs(e.Amount + C.Crackdown.FailurePopularity) < 1e-9);
+        Assert.DoesNotContain(crackdown.Effects, e => e.Key.StartsWith("condition."));
     }
 
     [Fact]

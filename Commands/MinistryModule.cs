@@ -78,7 +78,7 @@ public class MinistryModule : InteractionModuleBase<SocketInteractionContext>
         return Texts.Get("ministry.resign.done", ("office", office));
     }
 
-    [SlashCommand("status", "Privately show a ministry's purse, recent ledger and open questions")]
+    [SlashCommand("status", "Privately show a ministry's purse, orders, units, projects, crises and questions")]
     [RequireFaction]
     public async Task StatusAsync([Summary("ministry", "The ministry; defaults to your own")] CabinetMinistryChoice? ministry = null)
     {
@@ -129,6 +129,26 @@ public class MinistryModule : InteractionModuleBase<SocketInteractionContext>
             ? Texts.Get("ministry.status.noPrivateLedger")
             : Texts.Get("ministry.status.privateLedger") + "\n" + string.Join("\n", ledger.Select(e =>
                 Texts.Get("ministry.status.ledgerLine", ("amount", Display.Crowns(e.Amount)), ("label", e.Label)))));
+
+        var config = _constants.Config;
+        if (ministry is Ministry.War or Ministry.Interior)
+        {
+            var units = _data.GetUnits(GameEnumExtensions.UnitTypeOf(ministry));
+            if (units.Count > 0)
+                lines.Add(Texts.Get("ministry.status.units") + "\n" + string.Join("\n", units.Select(u =>
+                    Texts.Get("ministry.status.unitLine", ("name", u.Name), ("sides", u.Sides), ("province", Display.Province(config, u.ProvinceId))))));
+            lines.Add(ForcesCommands.PendingList(_data, config, ministry));
+        }
+
+        var projects = _data.GetLiveProjects().Where(p => p.Purse == ministry).ToList();
+        if (projects.Count > 0)
+            lines.Add(Texts.Get("ministry.status.projects") + "\n" + string.Join("\n", projects.Select(p =>
+                Texts.Get("ministry.status.projectLine", ("line", ProjectPublisher.SummaryLine(p, state, config))))));
+
+        var crises = _data.GetCrises(CrisisStatus.Live).Where(c => c.Ministry == ministry).ToList();
+        if (crises.Count > 0)
+            lines.Add(Texts.Get("ministry.status.crises") + "\n" + string.Join("\n", crises.Select(c =>
+                Texts.Get("ministry.status.crisisLine", ("crisis", c.Title), ("due", GovernmentPublisher.Deadline(state, c.DueResolution))))));
 
         var questions = _data.GetOpenQuestions(ministry);
         lines.Add(questions.Count == 0

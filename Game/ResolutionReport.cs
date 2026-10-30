@@ -49,7 +49,7 @@ public sealed record ActionReport(
     double TargetPopularityChange,
     bool AttackSucceeded = false);
 
-public sealed record CrackdownReport(string ProvinceId, bool Success, int GendarmerieTotal, int DieSides, int DieRoll);
+public sealed record CrackdownReport(string ProvinceId, bool Success, int GendarmerieTotal, int DieSides, int DieRoll, IReadOnlyList<Effect> Effects);
 
 public enum QuestionOutcomeKind { Unanswered, Dropped, Extended }
 

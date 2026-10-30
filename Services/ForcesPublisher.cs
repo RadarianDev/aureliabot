@@ -34,21 +34,13 @@ public class ForcesPublisher
     public string CrackdownPost(CrackdownReport crackdown)
     {
         var config = _constants.Config;
-        var c = config.Constants.Crackdown;
         var province = Display.Province(config, crackdown.ProvinceId);
-        var effects = new List<Effect>
-        {
-            new($"discontent.{crackdown.ProvinceId}", crackdown.Success ? -c.Reduction : c.Backlash),
-        };
-        if (!crackdown.Success && _data.ResponsibleMinister(Ministry.Interior) is { } minister)
-            effects.Add(new Effect($"popularity.{minister}", -c.FailurePopularity));
-
         var roll = Texts.Get("crackdown.post.roll", ("total", crackdown.GendarmerieTotal), ("roll", crackdown.DieRoll), ("sides", crackdown.DieSides));
         var story = crackdown.Success
             ? Texts.Get("crackdown.post.success", ("province", province))
             : Texts.Get("crackdown.post.failure", ("province", province));
         return Publisher.FormatEffectPost(Texts.Get("crackdown.post.heading", ("province", province)), [roll], story,
-            EffectSummary.Lines(effects, Publisher.Names(_data, config), config.Constants.Display));
+            EffectSummary.Lines(crackdown.Effects, Publisher.Names(_data, config), config.Constants.Display));
     }
 
     private async Task PostAsync(string text, string source)

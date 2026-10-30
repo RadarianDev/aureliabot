@@ -71,6 +71,24 @@ public partial class InfoModule
         _ => Texts.Get("info.budget.kind.other"),
     };
 
+    private string ProjectInfo(long projectId)
+    {
+        if (_data.GetProject(projectId) is not { } project) return Texts.Get("info.project.missing");
+        var state = _data.GetGameState();
+        var config = _constants.Config;
+        var sb = new StringBuilder();
+        sb.AppendLine(Texts.Get("info.project.heading", ("project", project.Title)));
+        sb.AppendLine(Texts.Get("info.project.meta", ("province", Display.Province(config, project.ProvinceId)),
+            ("ministry", project.Purse.DisplayName()), ("price", Display.Crowns(project.Price)), ("term", project.Term)));
+        sb.AppendLine(project.Status switch
+        {
+            ProjectStatus.Finished => Texts.Get("info.project.finished", ("price", Display.Crowns(project.Price))),
+            ProjectStatus.Active or ProjectStatus.Stalled => ProjectPublisher.SummaryLine(project, state, config),
+            _ => Texts.Get("info.project.halted", ("progress", Display.Crowns(project.Progress)), ("price", Display.Crowns(project.Price))),
+        });
+        return sb.ToString();
+    }
+
     private string MinistryInfo(Ministry ministry)
     {
         var state = _data.GetGameState();
@@ -108,6 +126,15 @@ public partial class InfoModule
                 sb.AppendLine(Texts.Get("info.ministry.units", ("units", string.Join(", ", units.Select(u =>
                     Texts.Get("info.ministry.unit", ("name", u.Name), ("sides", u.Sides), ("province", Display.Province(_constants.Config, u.ProvinceId))))))));
             }
+        }
+
+        var projects = _data.GetLiveProjects().Where(p => p.Purse == ministry).ToList();
+        if (projects.Count > 0)
+        {
+            sb.AppendLine();
+            sb.AppendLine(Texts.Get("info.ministry.projects"));
+            foreach (var project in projects)
+                sb.AppendLine(Texts.Get("info.ministry.projectLine", ("line", ProjectPublisher.SummaryLine(project, state, _constants.Config))));
         }
 
         var crises = _data.GetCrises(CrisisStatus.Live).Where(c => c.Ministry == ministry).ToList();
