@@ -153,6 +153,12 @@ public class PartySyncService
 
     public static string ChannelName(string partyName)
     {
+        var name = ChannelSlug(partyName);
+        return name.Length == 0 ? Texts.Get("sync.party.channelNameFallback") : name;
+    }
+
+    public static string ChannelSlug(string partyName)
+    {
         var slug = new StringBuilder();
         foreach (var c in partyName.Trim().ToLowerInvariant())
         {
@@ -162,8 +168,7 @@ public class PartySyncService
                 slug.Append('-');
         }
         var name = slug.ToString().Trim('-');
-        if (name.Length > 100) name = name[..100].Trim('-');
-        return name.Length == 0 ? Texts.Get("sync.party.channelNameFallback") : name;
+        return name.Length > 100 ? name[..100].Trim('-') : name;
     }
 
     public static Color ParseColour(string hex) =>

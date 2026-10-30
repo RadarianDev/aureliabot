@@ -48,6 +48,7 @@ public class Bot
             .AddSingleton<ForcesPublisher>()
             .AddSingleton<ProjectPublisher>()
             .AddSingleton<ReminderService>()
+            .AddSingleton<ServerCleanupService>()
             .BuildServiceProvider();
 
         _data = _services.GetRequiredService<DatabaseService>();

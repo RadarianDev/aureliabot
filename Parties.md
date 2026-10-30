@@ -97,3 +97,7 @@ every membership change, on startup and from the Repair button on the `/gm setup
   ministers.
 - Rejoining the server re-syncs the player's party role and the Cabinet role; leaving it with an active
   faction alerts the GM. Any Discord refusal (usually the bot's role sitting too low) alerts the GM.
+- **Cleanup:** `/gm cleanup` (`ServerCleanupService`) deletes every party role, party chat and faction
+  chat after testing, including orphans from earlier databases: every channel in the Parties, Archive
+  and Factions categories, and roles named like a party or a party chat. It clears the stored ids but
+  keeps the parties and factions, so the sync recreates their roles and chats on Repair or restart.
