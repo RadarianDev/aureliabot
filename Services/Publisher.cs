@@ -218,7 +218,10 @@ public class Publisher
             IssueTemplate: Template,
             BillTemplate: Template,
             ProjectTemplate: Template,
-            CrisisTemplate: Template);
+            CrisisTemplate: Template)
+        {
+            Party = id => long.TryParse(id, out var partyId) ? data.GetParty(partyId)?.Name ?? id : id,
+        };
     }
 
     public const string DashboardMessageKey = "dashboard_message_id";

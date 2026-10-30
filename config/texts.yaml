@@ -841,6 +841,8 @@ effects:
     noProjectTemplate: no project template `{id}`.
     noCrisisTemplate: no crisis template `{id}`.
     noFaction: no faction for user `{id}`.
+    noEventTemplate: no event template `{id}`.
+    eventDelay: "`{value}` is not a delay: give a whole number of turns, or nothing for the start of the next turn."
   summary:
     open: "New issue: {issue}"
     close: "Issue closed: {issue}"
@@ -849,6 +851,8 @@ effects:
     crisis: "Crisis: {crisis}"
     conditionGained: "{province} is now *{condition}*"
     conditionLost: "{province} is no longer *{condition}*"
+    conditionGainedAll: "Every province is now *{condition}*"
+    conditionLostAll: "No province is *{condition}* any more"
     economy: Economy
     reserve: Reserve
     seats: Assembly seats
@@ -856,7 +860,15 @@ effects:
     percent: "{amount}%"
     purse: "{ministry} purse"
     popularity: "{faction} popularity"
+    popularityChancellor: "The Chancellor's popularity"
+    popularitySponsor: "The sponsor's popularity"
+    popularityGovernment: "Popularity of every government faction"
+    popularityOpposition: "Popularity of every opposition faction"
+    popularityMinister: "Popularity of the {ministry} minister"
+    popularityParty: "Popularity of every {party} member"
+    popularityHome: "Popularity of every faction from {province}"
     discontent: Discontent in {province}
+    discontentAll: Discontent across the kingdom
     opinion: Opinion on {issue}
     salience: "Salience: {issue}"
     favour: Anzarian Favour
@@ -1091,7 +1103,7 @@ data:
     pollDelivered: Poll delivered.
   effect:
     warning: "{source}: `{key}`: {warning}"
-    noFaction: no faction {id}
+    noPopularityTarget: "nobody holds that role or matches `{target}` right now"
     noProvince: no province {id}
     noCondition: no condition {id}
     issueNotOpen: issue {id} is not open

@@ -2,17 +2,13 @@ using System.Globalization;
 
 public sealed record Effect(string Key, double? Value)
 {
-    public static readonly IReadOnlySet<string> ActionPrefixes =
-        new HashSet<string>(StringComparer.Ordinal) { "open", "close", "bill", "project", "crisis" };
-
-    public static readonly IReadOnlySet<string> ScalarKeys =
-        new HashSet<string>(StringComparer.Ordinal) { "economy", "taxRate", "favour", "favourBaseline", "threat", "reserve", "seats" };
-
     public string[] Parts => Key.Split('.');
 
     public string Prefix => Parts[0];
 
-    public bool IsAction => ActionPrefixes.Contains(Prefix);
+    public EffectKind? Kind => EffectKinds.Find(Prefix);
+
+    public bool IsAction => Kind?.IsAction ?? false;
 
     public string? Target => Parts.Length > 1 ? Parts[1] : null;
 
@@ -33,6 +29,7 @@ public sealed record EffectContext(
 {
     public bool AllowHere { get; init; }
     public bool AllowCrisis { get; init; }
+    public IReadOnlySet<string>? EventTemplates { get; init; }
 }
 
 public sealed record EffectParseResult(IReadOnlyList<Effect> Effects, IReadOnlyList<string> Errors)
@@ -93,62 +90,14 @@ public static class EffectParser
         effect = null;
         var parts = key.Split('.');
         if (parts.Any(string.IsNullOrWhiteSpace)) return Texts.Get("effects.errors.invalidKey");
-        var prefix = parts[0];
-
-        if (Effect.ActionPrefixes.Contains(prefix))
-        {
-            if (parts.Length != 2) return Texts.Get("effects.errors.actionShape", ("prefix", prefix));
-            if (rawValue is not null && !rawValue.Equals("true", StringComparison.OrdinalIgnoreCase))
-                return Texts.Get("effects.errors.actionValue");
-            if (prefix == "crisis" && !allowCrisis) return Texts.Get("effects.errors.crisisOnlyEvents");
-            effect = new Effect(key, null);
-            return null;
-        }
-
-        if (rawValue is null) return Texts.Get("effects.errors.needsNumber");
-        if (!TryParseNumber(rawValue, out var value)) return Texts.Get("effects.errors.notANumber", ("value", rawValue));
-
-        var shapeError = prefix switch
-        {
-            _ when Effect.ScalarKeys.Contains(prefix) => parts.Length == 1 ? null : Texts.Get("effects.errors.scalarNoId", ("prefix", prefix)),
-            "purse" => parts.Length != 2 ? Texts.Get("effects.errors.purseShape")
-                : parts[1] == nameof(Ministry.Navy) ? Texts.Get("effects.errors.navyPurse")
-                : PurseMinistries.Contains(parts[1]) ? null
-                : Texts.Get("effects.errors.purseMinistry"),
-            "discontent" => parts.Length == 2 ? HereCheck(parts[1], allowHere) : Texts.Get("effects.errors.discontentShape"),
-            "condition" => parts.Length != 3 ? Texts.Get("effects.errors.conditionShape")
-                : value is not (1 or -1) ? Texts.Get("effects.errors.conditionValue")
-                : HereCheck(parts[1], allowHere),
-            "opinion" or "salience" => parts.Length == 2 ? null : Texts.Get("effects.errors.issueShape", ("prefix", prefix)),
-            "popularity" => parts.Length == 2 && ulong.TryParse(parts[1], out _) ? null : Texts.Get("effects.errors.popularityShape"),
-            "baseline" => Texts.Get("effects.errors.noBaseline"),
-            _ => Texts.Get("effects.errors.unknownKey"),
-        };
-        if (shapeError is not null) return shapeError;
+        if (EffectKinds.Find(parts[0]) is not { } kind)
+            return parts[0] == "baseline" ? Texts.Get("effects.errors.noBaseline") : Texts.Get("effects.errors.unknownKey");
+        if (kind.Parse(parts, rawValue, new EffectParseOptions(allowHere, allowCrisis), out var value) is { } error) return error;
         effect = new Effect(key, value);
         return null;
     }
 
-    private static string? HereCheck(string province, bool allowHere) =>
-        province == Here && !allowHere ? Texts.Get("effects.errors.hereOnlyInProjects") : null;
-
-    private static string? CheckIds(Effect effect, EffectContext context)
-    {
-        var target = effect.Target;
-        return effect.Prefix switch
-        {
-            "discontent" when target != Here && !context.Provinces.Contains(target!) => Texts.Get("effects.errors.unknownProvince", ("id", target)),
-            "condition" when target != Here && !context.Provinces.Contains(target!) => Texts.Get("effects.errors.unknownProvince", ("id", target)),
-            "condition" when !context.Conditions.Contains(effect.SubTarget!) => Texts.Get("effects.errors.unknownCondition", ("id", effect.SubTarget)),
-            "opinion" or "salience" or "close" when !context.Issues.Contains(target!) => Texts.Get("effects.errors.unknownIssue", ("id", target)),
-            "open" when !context.IssueTemplates.Contains(target!) => Texts.Get("effects.errors.noIssueTemplate", ("id", target)),
-            "bill" when !context.BillTemplates.Contains(target!) => Texts.Get("effects.errors.noBillTemplate", ("id", target)),
-            "project" when !context.ProjectTemplates.Contains(target!) => Texts.Get("effects.errors.noProjectTemplate", ("id", target)),
-            "crisis" when !context.CrisisTemplates.Contains(target!) => Texts.Get("effects.errors.noCrisisTemplate", ("id", target)),
-            "popularity" when !context.Factions.Contains(target!) => Texts.Get("effects.errors.noFaction", ("id", target)),
-            _ => null,
-        };
-    }
+    private static string? CheckIds(Effect effect, EffectContext context) => effect.Kind?.CheckIds(effect, context);
 
     public static bool TryParseNumber(string text, out double value) =>
         double.TryParse(text.Replace('−', '-').Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out value);
@@ -167,5 +116,5 @@ public static class EffectParser
             : e).ToList();
 
     public static IEnumerable<string> ReferencedTemplates(IEnumerable<Effect> effects) =>
-        effects.Where(e => e.Prefix is "open" or "bill" or "project" or "crisis").Select(e => e.Target!);
+        effects.Where(e => e.Prefix is "open" or "bill" or "project" or "crisis" or "event").Select(e => e.Target!);
 }

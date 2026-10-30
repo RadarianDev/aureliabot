@@ -122,7 +122,7 @@ public partial class GmModule
                 ephemeral: true);
             return;
         }
-        if (_data.GetEffectValue(effect.Key) is not { } current)
+        if (_data.GetEffectValue(effect.Key, config) is not { } current)
         {
             await RespondAsync(Texts.Get("gm.set.noCurrentValue", ("key", effect.Key)), ephemeral: true);
             return;
@@ -131,10 +131,10 @@ public partial class GmModule
         var target = effect.Amount;
         var confirm = _confirmations.Create(Context.User.Id, () => _resolution.ExclusiveAsync(() =>
         {
-            var now = _data.GetEffectValue(effect.Key) ?? current;
+            var now = _data.GetEffectValue(effect.Key, config) ?? current;
             var result = _data.ApplyEffects([new Effect(effect.Key, target - now)], config,
                 new EffectSource(Texts.Get("gm.royalAdjustment"), "gm set", Context.User.Id.ToString(), LedgerKind.Adjustment));
-            var after = _data.GetEffectValue(effect.Key);
+            var after = _data.GetEffectValue(effect.Key, config);
             var warnings = string.Concat(result.Warnings.Select(w => "\n" + Texts.Get("gm.warning", ("warning", w))));
             return Task.FromResult(Texts.Get("gm.set.effectChanged",
                 ("key", effect.Key), ("from", EffectParser.FormatNumber(now)),

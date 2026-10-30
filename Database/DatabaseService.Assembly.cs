@@ -503,7 +503,7 @@ public partial class DatabaseService
                 AddPopularityTx(conn, tx, reading.SponsorId, reward, c.Popularity);
                 Exec(conn, tx, "UPDATE bills SET status = 'Passed', cooldown_until = NULL WHERE id = $id;", ("$id", bill.Id));
                 Exec(conn, tx, "UPDATE readings SET status = 'Passed' WHERE id = $id;", ("$id", reading.Id));
-                var applied = ApplyEffectsTx(conn, tx, bill.ParsedPassEffects, config, new EffectSource(bill.Title, "law", bill.Id, PublicLedger: true), report);
+                var applied = ApplyEffectsTx(conn, tx, bill.ParsedPassEffects, config, new EffectSource(bill.Title, "law", bill.Id, PublicLedger: true, ActorId: reading.SponsorId), report);
                 report.Laws.Add(new LawReport(bill.Id, bill.Title, reading.SponsorId, tally.YesSeats, tally.NoSeats, reward, bill.PassText, applied.Applied));
                 report.AddPrivate(reading.SponsorId, Texts.Get("law.sponsorPrivate", ("bill", bill.Title), ("change", Display.Signed(reward))));
             }

@@ -35,6 +35,10 @@ those attributes at registration).
 `/gm apply`, and their `/content preview`) is built with `Publisher.FormatEffectPost(heading,
 preamble, story, effectLines)`: a heading, plain preamble lines, the story in italics, then
 **-- EFFECTS --** and one bullet per `EffectSummary` line. Never assemble such a post by hand.
+
+**Effect kinds live in `Game/EffectKinds/`**, one `EffectKind` class per kind, registered in
+`EffectKinds.All`. A new effect key is a new class there plus its texts and a YAML Reference row (see
+Implementation.md 4.6); never add effect logic to `EffectParser`, `ApplyEffectsTx` or `EffectSummary`.
 Document large mechanics and features in dedicated `.md` files rather than in code comments.
 Existing mechanic docs:
 - [Human Rules.md](Human%20Rules.md): the player-facing rules, written by the GM. They win over

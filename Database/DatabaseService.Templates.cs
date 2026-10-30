@@ -132,6 +132,7 @@ public partial class DatabaseService
         {
             AllowHere = allowHere,
             AllowCrisis = allowCrisis,
+            EventTemplates = Ids(TemplateKind.Event),
         };
     }
 }

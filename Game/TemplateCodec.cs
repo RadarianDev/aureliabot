@@ -32,6 +32,7 @@ public static partial class TemplateCodec
         BillTemplates = AnyId.Instance,
         ProjectTemplates = AnyId.Instance,
         CrisisTemplates = AnyId.Instance,
+        EventTemplates = AnyId.Instance,
     };
 
     public static bool IsSlug(string text) => SlugPattern().IsMatch(text);

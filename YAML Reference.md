@@ -40,7 +40,17 @@ effects: { economy: -2, discontent.north_arpal: 1, open.labour: true, bill.ten_h
 | `condition.{province}.{condition}` | `1` or `-1` | Gives or removes a condition. |
 | `opinion.{issue}` | number | Opinion shift, −1 to 1. Lasting: opinion never drifts. |
 | `salience.{issue}` | number | How much the issue matters, 0–5. |
-| `popularity.{faction}` | number | A faction's popularity, 0–100. |
+| `popularity.{faction}` | number | A faction's popularity, 0–100 (the faction is its player's Discord user id). |
+| `popularity.chancellor` | number | The sitting Chancellor's popularity. |
+| `popularity.minister.{ministry}` | number | The popularity of whoever holds that ministry (`War`, `Interior`, `CommerceLabor`, `Treasury`). |
+| `popularity.government` / `popularity.opposition` | number | Every government, or every opposition, faction's popularity. |
+| `popularity.party.{party}` | number | Every member of a party (its number, as `/info` shows it). |
+| `popularity.home.{province}` | number | Every faction whose home is that province. |
+| `popularity.sponsor` | number | Whoever the effect belongs to: a law's sponsor, the minister who answered a crisis or runs a finished project. |
+| `discontent.all` | number | Discontent in every province at once. |
+| `condition.all.{condition}` | `1` or `-1` | Gives or removes a condition in every province. |
+| `event.{eventTemplate}` | `true` or a number | Queues a follow-up event from a Ready template: at the start of the next turn, or that many turns later. Players don't see it in the summary. |
+| `cancel.{eventTemplate}` | `true` | Cancels every queued copy of that event, so an answer or a law can avert it. Players don't see it in the summary. |
 | `open.{issueTemplate}` | `true` | Opens a live issue from a Ready template. |
 | `close.{issue}` | `true` | Closes a live issue, and withdraws its bills. |
 | `bill.{billTemplate}` | `true` | Makes a bill available to propose. Its issue must be open. |

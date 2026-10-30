@@ -227,6 +227,16 @@ effects is one `ApplyEffectsTx` method used by laws, events, crisis answers, pro
 which clamps every value. Every purse or reserve change, there and everywhere else, goes through one
 `PostLedgerTx(account, amount, kind, label, source)` helper, so nothing moves money without a ledger line.
 
+**Effect kinds are a registry** (`Game/EffectKinds/`): each kind is one `EffectKind` class holding its key
+shape and value rules (`Parse`), id checks (`CheckIds`), what it does (`Apply`), its current value for
+`/gm set` and applied amounts (`CurrentValue`), and its summary line (`SummaryLine`, or none for hidden
+kinds such as `event`). Kinds touch the game only through `IEffectStore`, which the database implements
+over the open transaction. `EffectParser`, `ApplyEffectsTx` and `EffectSummary` just look kinds up in
+`EffectKinds.All`. Adding an effect means one class, its registration, its texts and a YAML Reference
+row; `EffectRegistryTests` fails if a kind is missing from the YAML Reference. `EffectSource.ActorId`
+is the faction an effect belongs to (a law's sponsor, a crisis's minister, a project's minister), which
+`popularity.sponsor` targets.
+
 Effects are stored in the database in the text form (`EffectParser.Format`, read back with
 `EffectParser.Parse`). `ApplyEffectsTx` applies them in the order written and re-reads the game state
 before each one, so a resolution step that has applied effects must re-read `GameState` before saving it.

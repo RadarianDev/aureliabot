@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Data.Sqlite;
 
-public sealed record EffectSource(string Label, string SourceType, string SourceId, LedgerKind LedgerKind = LedgerKind.Effect, bool PublicLedger = false);
+public sealed record EffectSource(
+    string Label, string SourceType, string SourceId, LedgerKind LedgerKind = LedgerKind.Effect, bool PublicLedger = false, ulong? ActorId = null);
 
 public sealed record EffectApplication(IReadOnlyList<Effect> Applied, IReadOnlyList<string> Warnings);
 
@@ -22,45 +23,17 @@ public partial class DatabaseService
     private static EffectApplication ApplyEffectsTx(
         SqliteConnection conn, SqliteTransaction tx, IReadOnlyList<Effect> effects, GameConfig config, EffectSource source, ResolutionReport? report)
     {
-        var c = config.Constants;
+        var store = new TxEffectStore(conn, tx, config, source, report);
         var applied = new List<Effect>();
         var warnings = new List<string>();
 
         foreach (var effect in effects)
         {
-            var state = GetGameStateTx(conn, tx);
-            var before = effect.IsAction ? null : CurrentEffectValueTx(conn, tx, effect.Key);
-            var target = effect.Target;
-            var warning = effect.Prefix switch
-            {
-                "economy" => SetStateTx(conn, tx, "economy", Math.Max(0, state.Economy + effect.Amount)),
-                "taxRate" => SetStateTx(conn, tx, "tax_rate", Math.Clamp(state.TaxRate + effect.Amount, 0, 1)),
-                "favour" => SetStateTx(conn, tx, "favour", Math.Clamp(state.Favour + effect.Amount, 0, 100)),
-                "favourBaseline" => SetStateTx(conn, tx, "favour_baseline", Math.Clamp(state.FavourBaseline + effect.Amount, 0, 100)),
-                "threat" => SetStateTx(conn, tx, "threat", Math.Clamp(state.Threat + effect.Amount, 0, 100)),
-                "seats" => SetStateTx(conn, tx, "seats", Math.Max(1, state.Seats + (int)Math.Round(effect.Amount))),
-                "reserve" => Ledger(conn, tx, LedgerAccount.Reserve, effect.Amount, source),
-                "purse" => Ledger(conn, tx, Enum.Parse<LedgerAccount>(target!), effect.Amount, source),
-                "discontent" => ApplyDiscontentTx(conn, tx, c, target!, effect.Amount),
-                "condition" => ApplyConditionTx(conn, tx, config, state, target!, effect.SubTarget!, effect.Amount > 0),
-                "opinion" => ApplyIssueValueTx(conn, tx, target!, "opinion", effect.Amount, -1, 1, null),
-                "salience" => ApplyIssueValueTx(conn, tx, target!, "salience", effect.Amount, c.Salience.Min, c.Salience.Max,
-                    effect.Amount > 0 ? state.ResolutionNumber : null),
-                "popularity" => ulong.TryParse(target, out var factionId) && AddPopularityTx(conn, tx, factionId, effect.Amount, c.Popularity) is not null
-                    ? null : Texts.Get("data.effect.noFaction", ("id", target)),
-                "open" => OpenIssueFromTemplateTx(conn, tx, state, target!),
-                "close" => CloseIssueTx(conn, tx, state, target!),
-                "bill" => MakeBillAvailableTx(conn, tx, state, target!),
-                "project" => Texts.Get("data.effect.projectNotBuilt"),
-                "crisis" => PostCrisisTx(conn, tx, state, config, target!, source, report),
-                _ => Texts.Get("data.effect.unknownKey", ("key", effect.Key)),
-            };
-
-            if (warning is null)
-                applied.Add(before is { } old && CurrentEffectValueTx(conn, tx, effect.Key) is { } now
-                    ? effect with { Value = Math.Round(now - old, 6) }
-                    : effect);
-            else warnings.Add(Texts.Get("data.effect.warning", ("source", source.Label), ("key", effect.Key), ("warning", warning)));
+            var warning = effect.Kind is not { } kind
+                ? Texts.Get("data.effect.unknownKey", ("key", effect.Key))
+                : ApplyOne(kind, effect, store, applied);
+            if (warning is not null)
+                warnings.Add(Texts.Get("data.effect.warning", ("source", source.Label), ("key", effect.Key), ("warning", warning)));
         }
 
         if (report is not null)
@@ -68,43 +41,87 @@ public partial class DatabaseService
         return new EffectApplication(applied, warnings);
     }
 
+    private static string? ApplyOne(EffectKind kind, Effect effect, TxEffectStore store, List<Effect> applied)
+    {
+        var before = kind.IsAction ? null : kind.CurrentValue(effect, store);
+        if (kind.Apply(effect, store) is { } warning) return warning;
+        applied.Add(before is { } old && kind.CurrentValue(effect, store) is { } now
+            ? effect with { Value = Math.Round(now - old, 6) }
+            : effect);
+        return null;
+    }
+
+    private sealed class TxEffectStore(
+        SqliteConnection conn, SqliteTransaction tx, GameConfig config, EffectSource source, ResolutionReport? report) : IEffectStore
+    {
+        public GameState State => GetGameStateTx(conn, tx);
+
+        public GameConfig Config => config;
+
+        public EffectSource Source => source;
+
+        public void SetState(string column, double value) => SetStateTx(conn, tx, column, value);
+
+        public decimal Balance(LedgerAccount account) => GetBalanceTx(conn, tx, account);
+
+        public void PostLedger(LedgerAccount account, decimal amount) =>
+            PostLedgerTx(conn, tx, account, amount, source.LedgerKind, source.Label, source.SourceType, source.SourceId, source.PublicLedger);
+
+        public IReadOnlyList<Province> Provinces => GetProvincesTx(conn, tx);
+
+        public void SetDiscontent(string provinceId, double value) => SetDiscontentTx(conn, tx, provinceId, value);
+
+        public bool SetCondition(string provinceId, string conditionId, bool present) =>
+            SetConditionTx(conn, tx, State, provinceId, conditionId, present);
+
+        public Issue? Issue(string issueId) => GetIssueTx(conn, tx, issueId);
+
+        public void SetIssueOpinion(string issueId, double value) =>
+            Exec(conn, tx, "UPDATE issues SET opinion = $value WHERE id = $id;", ("$id", issueId), ("$value", value));
+
+        public void SetIssueSalience(string issueId, double value, bool raised)
+        {
+            Exec(conn, tx, "UPDATE issues SET salience = $value WHERE id = $id;", ("$id", issueId), ("$value", value));
+            if (raised)
+                Exec(conn, tx, "UPDATE issues SET salience_raised_resolution = $marker WHERE id = $id;",
+                    ("$id", issueId), ("$marker", State.ResolutionNumber));
+        }
+
+        public IReadOnlyList<Faction> ActiveFactions => QueryFactionsTx(conn, tx, "status = 'Active'");
+
+        public Cabinet? SittingCabinet => GetSittingCabinetTx(conn, tx);
+
+        public FactionRole RoleOf(ulong factionId) => RoleOfTx(conn, tx, factionId);
+
+        public void AddPopularity(ulong factionId, double delta) => AddPopularityTx(conn, tx, factionId, delta, config.Constants.Popularity);
+
+        public string? OpenIssue(string templateId) => OpenIssueFromTemplateTx(conn, tx, State, templateId);
+
+        public string? CloseIssue(string issueId) => CloseIssueTx(conn, tx, State, issueId);
+
+        public string? MakeBillAvailable(string templateId) => MakeBillAvailableTx(conn, tx, State, templateId);
+
+        public string? StartProject(string templateId) => Texts.Get("data.effect.projectNotBuilt");
+
+        public string? PostCrisis(string templateId) => PostCrisisTx(conn, tx, State, config, templateId, source, report);
+
+        public string? QueueEvent(string templateId, int delay)
+        {
+            if (ReadyTemplateTx<EventTemplate>(conn, tx, templateId, out var problem) is not { } template) return problem;
+            QueueEventTx(conn, tx, template, EventScheduling.FireAtForDelay(State, delay), fromSchedule: false);
+            return null;
+        }
+
+        public string? CancelEvents(string templateId)
+        {
+            Exec(conn, tx, "UPDATE events SET status = 'Cancelled' WHERE template_id = $template AND status = 'Queued';", ("$template", templateId));
+            return null;
+        }
+    }
+
     private static string? SetStateTx(SqliteConnection conn, SqliteTransaction tx, string column, double value)
     {
         Exec(conn, tx, $"UPDATE game_state SET {column} = $value WHERE id = 1;", ("$value", value));
-        return null;
-    }
-
-    private static string? Ledger(SqliteConnection conn, SqliteTransaction tx, LedgerAccount account, double amount, EffectSource source)
-    {
-        PostLedgerTx(conn, tx, account, (decimal)amount, source.LedgerKind, source.Label, source.SourceType, source.SourceId, source.PublicLedger);
-        return null;
-    }
-
-    private static string? ApplyDiscontentTx(SqliteConnection conn, SqliteTransaction tx, GameConstants c, string provinceId, double amount)
-    {
-        if (GetProvincesTx(conn, tx).FirstOrDefault(p => p.Id == provinceId) is not { } province) return Texts.Get("data.effect.noProvince", ("id", provinceId));
-        SetDiscontentTx(conn, tx, provinceId, Math.Clamp(province.Discontent + amount, c.Discontent.Min, c.Discontent.Max));
-        return null;
-    }
-
-    private static string? ApplyConditionTx(
-        SqliteConnection conn, SqliteTransaction tx, GameConfig config, GameState state, string provinceId, string conditionId, bool present)
-    {
-        if (GetProvincesTx(conn, tx).All(p => p.Id != provinceId)) return Texts.Get("data.effect.noProvince", ("id", provinceId));
-        if (config.Condition(conditionId) is null) return Texts.Get("data.effect.noCondition", ("id", conditionId));
-        SetConditionTx(conn, tx, state, provinceId, conditionId, present);
-        return null;
-    }
-
-    private static string? ApplyIssueValueTx(
-        SqliteConnection conn, SqliteTransaction tx, string issueId, string column, double amount, double min, double max, long? raisedMarker)
-    {
-        if (GetIssueTx(conn, tx, issueId) is not { Status: IssueStatus.Open } issue) return Texts.Get("data.effect.issueNotOpen", ("id", issueId));
-        var current = column == "opinion" ? issue.Opinion : issue.Salience;
-        Exec(conn, tx, $"UPDATE issues SET {column} = $value WHERE id = $id;",
-            ("$id", issueId), ("$value", Math.Clamp(current + amount, min, max)));
-        if (raisedMarker is { } marker)
-            Exec(conn, tx, "UPDATE issues SET salience_raised_resolution = $marker WHERE id = $id;", ("$id", issueId), ("$marker", marker));
         return null;
     }
 
@@ -178,31 +195,11 @@ public partial class DatabaseService
         return null;
     }
 
-    public double? GetEffectValue(string key)
+    public double? GetEffectValue(string key, GameConfig config)
     {
         using var conn = Open();
-        return CurrentEffectValueTx(conn, null, key);
-    }
-
-    private static double? CurrentEffectValueTx(SqliteConnection conn, SqliteTransaction? tx, string key)
-    {
+        using var tx = conn.BeginTransaction();
         var effect = new Effect(key, 0);
-        var state = GetGameStateTx(conn, tx);
-        return effect.Prefix switch
-        {
-            "purse" when Enum.TryParse<LedgerAccount>(effect.Target, out var account) => (double)GetBalanceTx(conn, tx, account),
-            "discontent" => GetProvincesTx(conn, tx).FirstOrDefault(p => p.Id == effect.Target)?.Discontent,
-            "opinion" => GetIssueTx(conn, tx, effect.Target!)?.Opinion,
-            "salience" => GetIssueTx(conn, tx, effect.Target!)?.Salience,
-            "popularity" when ulong.TryParse(effect.Target, out var factionId) => GetFactionTx(conn, tx, factionId)?.Popularity,
-            "economy" => state.Economy,
-            "taxRate" => state.TaxRate,
-            "favour" => state.Favour,
-            "favourBaseline" => state.FavourBaseline,
-            "threat" => state.Threat,
-            "seats" => state.Seats,
-            "reserve" => (double)state.Reserve,
-            _ => null,
-        };
+        return effect.Kind?.CurrentValue(effect, new TxEffectStore(conn, tx, config, new EffectSource("", "", ""), null));
     }
 }
