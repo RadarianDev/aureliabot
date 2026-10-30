@@ -139,7 +139,11 @@ public partial class GmModule
             {
                 lines.Add(Texts.Get("gm.undo.commandsLost", ("count", result.LostCommands.Count)));
                 lines.AddRange(result.LostCommands.Take(30).Select(c => Texts.Get("gm.undo.lostCommand",
-                    ("at", Timestamp(c.At, 'f')), ("faction", c.FactionId is { } f ? $"<@{f}>" : ""), ("payload", c.Payload))));
+                    ("at", Timestamp(c.At, 'f')), ("faction", c.FactionId is { } f ? $"<@{f}>" : ""),
+                    ("payload", Display.Truncate(CommandPayload.Describe(c.Payload), 300)))));
+                var told = await new ResubmitService(_data, _factionChannels).SendLostCommandsAsync(result.LostCommands, state.Label);
+                if (told == 1) lines.Add(Texts.Get("resubmit.gmSentOne"));
+                else if (told > 1) lines.Add(Texts.Get("resubmit.gmSent", ("count", told)));
             }
             lines.Add(Texts.Get("gm.undo.resumeHint"));
             await _alerts.PostAsync(string.Join("\n", lines));

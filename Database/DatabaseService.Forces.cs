@@ -311,8 +311,7 @@ public partial class DatabaseService
         if (GetUnitTx(conn, tx, unitId) is not { } unit || unit.Type != type) return new DisbandResult(Texts.Get("forces.refusal.noUnit"));
 
         var cancelled = GetPendingOrdersTx(conn, tx).Count(o => o.UnitId == unitId);
-        Exec(conn, tx, "DELETE FROM pending_orders WHERE unit_id = $id;", ("$id", unitId));
-        Exec(conn, tx, "DELETE FROM units WHERE id = $id;", ("$id", unitId));
+        DeleteUnitTx(conn, tx, unit, refundOrders: false);
         LogTx(conn, tx, LogKinds.StateChange, "forces disband", $"{factionId} disbanded {type} '{unit.Name}'.", factionId);
         tx.Commit();
         return new DisbandResult(null, unit, cancelled);
@@ -355,14 +354,34 @@ public partial class DatabaseService
             .ToList();
         if (count > 0 && weakest.Count == 0) return Texts.Get("forces.effect.noneToRemove", ("province", provinceId));
         foreach (var unit in weakest)
-        {
-            foreach (var order in GetPendingOrdersTx(conn, tx).Where(o => o.UnitId == unit.Id && o.Cost > 0))
-                PostLedgerTx(conn, tx, (LedgerAccount)(int)MinistryOf(type), order.Cost, LedgerKind.Purchase,
-                    Texts.Get("forces.ledger.refund", ("name", unit.Name)), "order", order.Id.ToString());
-            Exec(conn, tx, "DELETE FROM pending_orders WHERE unit_id = $id;", ("$id", unit.Id));
-            Exec(conn, tx, "DELETE FROM units WHERE id = $id;", ("$id", unit.Id));
-        }
+            DeleteUnitTx(conn, tx, unit, refundOrders: true);
         return null;
+    }
+
+    private static void DeleteUnitTx(SqliteConnection conn, SqliteTransaction tx, Unit unit, bool refundOrders)
+    {
+        if (refundOrders)
+            foreach (var order in GetPendingOrdersTx(conn, tx).Where(o => o.UnitId == unit.Id && o.Cost > 0))
+                PostLedgerTx(conn, tx, (LedgerAccount)(int)MinistryOf(unit.Type), order.Cost, LedgerKind.Purchase,
+                    Texts.Get("forces.ledger.refund", ("name", unit.Name)), "order", order.Id.ToString());
+        Exec(conn, tx, "DELETE FROM pending_orders WHERE unit_id = $id;", ("$id", unit.Id));
+        Exec(conn, tx, "DELETE FROM units WHERE id = $id;", ("$id", unit.Id));
+    }
+
+    public List<Unit> RemoveUnitsAsGm(IEnumerable<long> unitIds, ulong gmId, string source)
+    {
+        using var conn = Open();
+        using var tx = conn.BeginTransaction();
+        var removed = new List<Unit>();
+        foreach (var id in unitIds.Distinct())
+        {
+            if (GetUnitTx(conn, tx, id) is not { } unit) continue;
+            DeleteUnitTx(conn, tx, unit, refundOrders: true);
+            LogTx(conn, tx, LogKinds.GmOverride, source, $"{gmId} removed {unit.Type} '{unit.Name}' ({unit.Id}).", gmId);
+            removed.Add(unit);
+        }
+        tx.Commit();
+        return removed;
     }
 
     internal ResolutionReport ApplyOrders(GameConfig config, IRandomSource random)

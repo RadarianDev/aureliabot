@@ -251,9 +251,9 @@ public class Bot
                 path.Add(sub.Name);
                 options = sub.Options;
             }
-            var arguments = options.Select(o => $"{o.Name}:{FormatOption(o.Value)}");
-            var payload = "/" + string.Join(" ", path.Concat(arguments));
-            _data.Log(LogKinds.Command, string.Join(" ", path), payload, command.User.Id);
+            var name = string.Join(" ", path);
+            var arguments = options.ToDictionary(o => o.Name, o => FormatOption(o.Value));
+            _data.Log(LogKinds.Command, name, new CommandPayload(name, arguments).ToJson(), command.User.Id);
         }
         catch (Exception ex)
         {

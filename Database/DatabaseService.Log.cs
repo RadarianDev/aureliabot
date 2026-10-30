@@ -11,6 +11,8 @@ public static class LogKinds
     public const string StateChange = "StateChange";
     public const string Resolution = "Resolution";
     public const string GmOverride = "GmOverride";
+    public const string LostCommand = "LostCommand";
+    public const string Resubmitted = "Resubmitted";
 }
 
 public partial class DatabaseService
@@ -43,6 +45,27 @@ public partial class DatabaseService
             ("$faction", factionId?.ToString()),
             ("$payload", payload),
             ("$public", isPublic ? 1 : 0));
+
+    public LogEntry LogAndRead(string kind, string source, string payload, ulong? factionId = null)
+    {
+        using var conn = Open();
+        LogTx(conn, null, kind, source, payload, factionId);
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = $"SELECT {SelectLogEntryColumns} FROM log_entries WHERE id = last_insert_rowid();";
+        using var r = cmd.ExecuteReader();
+        r.Read();
+        return ReadLogEntry(r);
+    }
+
+    public LogEntry? GetLogEntry(long id)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = $"SELECT {SelectLogEntryColumns} FROM log_entries WHERE id = $id;";
+        cmd.Parameters.AddWithValue("$id", id);
+        using var r = cmd.ExecuteReader();
+        return r.Read() ? ReadLogEntry(r) : null;
+    }
 
     public void LogPost(ulong channelId, ulong messageId, string source) =>
         Log(LogKinds.Post, source, $"{channelId}:{messageId}");

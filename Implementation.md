@@ -214,8 +214,15 @@ and waits when two renames already happened in the last 10 minutes.
   the live database, delete the consumed snapshot (so a second undo goes one snapshot further back,
   which may be a campaign day), pause, then delete the posts. `/gm undo` lists the lost commands to
   the GM and renames the turn tracker; re-pinning the dashboard joins in stage 2.
-- Every successful slash command is logged as a `Command` LogEntry (`/gm resolve action:Now`), and every
+- Every successful slash command is logged as a `Command` LogEntry whose payload is a `CommandPayload` in
+  JSON (`{"Command":"gm resolve","Options":{"action":"Now"}}`, shown as `/gm resolve action:Now`), and every
   bot post as a `Post` entry (`channelId:messageId`) through `Publisher.PostAsync`.
+- Resubmit (`ResubmitService`): after the restore, each active faction's lost player commands are sent to its
+  private channel. A command in `ResubmitService.Covered` is re-logged as a `LostCommand` entry in the restored
+  database and gets a button `resubmit:<entry id>:<entry time>`. Pressing it (only the submitter can) checks
+  the command's preconditions, writes a `Resubmitted` entry so it runs once, then creates the command's own
+  module and calls its slash command method with the logged options, answering the button exactly as the
+  command would have; the run is logged as a `Command` again. Read-only and GM commands are not sent.
 
 ### 4.6 Effects
 
