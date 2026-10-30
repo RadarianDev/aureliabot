@@ -1281,3 +1281,128 @@ questions:
     notYours: "Only the responsible minister can answer this question: {minister}."
   alert:
     nobodyToAnswer: "A question from {asker} to the {ministry} is due at the next resolution, but the ministry and the Chancellorship are both vacant; it will be dropped unless someone is appointed."
+
+bill:
+  autocomplete: "{bill} · {issue} · {lean}"
+  proposedGovernment: "**{bill}** is scheduled as the government's bill for next turn. Its vote opens at the next resolution, {when}, and is counted at the one after. It is announced in #assembly now."
+  proposedPrivate: "**{bill}** is scheduled as your private bill for next turn, spending this season's opposition action and this year's private bill. Its vote opens at the next resolution, {when}, and is counted at the one after. It is announced in #assembly now."
+  withdrawHint: "You can withdraw it until its vote opens, here or from `/me`, which gives the bill back."
+  withdrawButton: "Withdraw the bill"
+  alertNoAssembly: "{bill} was proposed, but there is no #assembly channel to announce it in. Set one with `/gm channel set`."
+  withdraw:
+    notFound: "That bill is no longer scheduled."
+    notYours: "Only the faction that proposed {bill} can withdraw it."
+    tooLate: "{bill} can no longer be withdrawn: its vote has opened or it was already withdrawn."
+    doneGovernment: "{bill} is withdrawn and available again. The government may propose another bill this turn."
+    donePrivate: "{bill} is withdrawn and available again. Your opposition action and this year's private bill are given back."
+  refuse:
+    noSuchBill: "There is no bill called \"{bill}\"."
+    notAvailable: "{bill} is not available to propose."
+    cooldown: "{bill} was rejected and rests until {season}. Other bills on its issue can still be proposed."
+    issueNotOpen: "The issue of {bill} is not open."
+    issueBusy: "Another bill on the issue of {bill} is already before the Assembly. Only one bill per issue can be, scheduled ones included."
+    independent: "Bills are proposed by the Chancellor (government bills) or by an opposition faction (private bills). As an independent you are neither."
+    minister: "Ministers cannot propose bills: the Chancellor alone sets the government's agenda."
+    backbencher: "Your party is in government, so you cannot propose a private bill, and only the Chancellor proposes government bills."
+    vacant: "The Chancellorship is vacant, so no government bill can be proposed."
+    governmentLimit: "The government has already proposed {count} bill(s) this turn. The Chancellor can propose again after the next resolution, {when}."
+    actionUsed: "You have already spent this season's opposition action. You can propose a private bill after the next resolution, {when}."
+    yearCap: "You have already proposed {count} private bill(s) this year. You can propose again from Spring {year}."
+    preElection: "No bill can be proposed during the pre-election."
+    beforePreElection: "No bill can be proposed in the turn before the pre-election, since its vote would fall in the pre-election."
+    afterElectionAt: "{reason} Bills can be proposed again after the election, from {season} {when}."
+    afterElection: "{reason} Bills can be proposed again after the election, from {season}."
+
+vote:
+  noSuchVote: "There is no such vote."
+  noSeats: "Only active factions with seats in the Assembly can vote."
+  closed: "That vote is not open."
+  theMotion: "the motion of no confidence"
+  recorded: "You vote **{choice}** on {what}."
+  changed: "You change your vote on {what} from {previous} to **{choice}**."
+  stanceLogged: "This logs your stance on {issue} as *{stance}*, publicly."
+  offProgramme: "⚠️ This contradicts your party's programme (*{programme}*), and is shown as off-programme."
+  counted: "You can change it until it is counted, {when}."
+  autocomplete:
+    reading: "Bill: {bill} · {lean} · {mine}"
+    motion: "No confidence, tabled by {tabler} · {mine}"
+    voted: "you voted {choice}"
+    notVoted: "not voted"
+
+noConfidence:
+  cosignButton: "Co-sign"
+  tabled: "You table a motion of no confidence. It is posted in #assembly with a Co-sign button. Its supporters hold {supporters} of the {threshold} seats it needs to go to a vote; it lapses if they don't within {resolutions} resolutions."
+  tabledToVote: "You table a motion of no confidence. Your {supporters} seats already reach the {threshold} needed, so it goes to a vote at once, in #assembly."
+  cosigned: "You co-sign the motion of no confidence. Its supporters now hold {supporters} of the {threshold} seats it needs."
+  cosignedToVote: "You co-sign the motion of no confidence. Its supporters now hold {supporters} seats, reaching the {threshold} needed, so it goes to a vote in #assembly."
+  dissolved: |-
+    ## Parliament is dissolved
+    *The Assembly has withdrawn its confidence from His Majesty's government. By His Majesty's Command, Parliament is dissolved, and the nation goes to the hustings this {season}. The ministers remain in office as caretakers until a new Assembly is summoned.*
+  refuse:
+    notFound: "That motion no longer exists."
+    inCabinet: "Members of the cabinet cannot table or co-sign a motion of no confidence. Any other active faction can."
+    noCabinet: "There is no sitting cabinet to lose the Assembly's confidence."
+    preElection: "No motion of no confidence can be tabled during the pre-election. Motions can be tabled again after the election, from {season} ({when})."
+    cooldown: "A motion of no confidence failed recently. No new one can be tabled until {season}."
+    pending: "A motion of no confidence is already before the Assembly. Co-sign it or vote on it instead."
+    notGathering: "That motion is no longer gathering support."
+    isTabler: "You tabled this motion; your seats already count towards it."
+    alreadySigned: "You have already co-signed this motion."
+  post:
+    heading: "## Motion of no confidence"
+    tabled: "Tabled by {tabler}: *That this Assembly has no confidence in His Majesty's government under {chancellor}.*"
+    noChancellor: "a vacant Chancellorship"
+    support: "Support: **{supporters} of {threshold} seats** needed to go to a vote."
+    signers: "Signed by: {signers}"
+    lapses: "Lapses {when} unless it reaches the threshold."
+    voting: "To a vote: it passes when Yes holds more than half of the {filled} filled seats. Counted {when}."
+    passed: "**Passed** by {yes} seats to {no}."
+    failed: "**Failed**, {yes} seats to {no}."
+    lapsed: "**Lapsed** with {supporters} of {threshold} seats."
+    cancelled: "**Cancelled.**"
+  result:
+    lapsed: "The motion of no confidence tabled by {tabler} lapses without reaching the Assembly."
+    passed: "**The motion of no confidence tabled by {tabler} passes**, {yes} seats to {no} of {filled} filled seats. The government falls to caretaker, and Parliament is dissolved."
+    failed: "The motion of no confidence tabled by {tabler} fails, {yes} seats to {no} of {filled} filled seats."
+  alert:
+    toVote: "No-confidence motion {id}, tabled by {tabler}, has reached its threshold and goes to a vote."
+    snapElection: "A no-confidence motion passed: the cabinet is caretaker and {season} is now a snap pre-election."
+
+law:
+  heading: "{bill} becomes law"
+  preamble: "Passed by {yes} seats to {no}, proposed by {sponsor}."
+  sponsorPrivate: "Your bill, {bill}, became law. Your popularity changes by {change}."
+
+assembly:
+  lean:
+    for: "For"
+    against: "Against"
+    neutral: "Neutral"
+  kind:
+    government: "government"
+    private: "private"
+  choice:
+    yes: "Yes"
+    no: "No"
+    abstain: "Abstain"
+  cancelledPreElection: "The turn became a pre-election, so no bill can be voted on."
+  cancelled: "The reading of **{bill}** is cancelled: {reason} The bill is available again."
+  announce: "**Next turn's business:** {bill} ({issue}, *{lean}*), a {kind} bill proposed by {sponsor}. Its vote opens {when}."
+  announceOpened: "**Before the Assembly:** {bill} ({issue}, *{lean}*), a {kind} bill proposed by {sponsor}."
+  announceCancelled: "~~{bill} ({issue}, *{lean}*), a {kind} bill proposed by {sponsor}~~: withdrawn."
+  afterNext: "at the resolution after next (the next one is {when})"
+  tally: "**Yes {yes} · No {no} · Abstain {abstain}**"
+  voters: "{choice}: {voters}"
+  reading:
+    heading: "## {bill}"
+    motion: "*{motion}*"
+    meta: "{issue} · *{lean}* · {kind} bill proposed by {sponsor}"
+    closes: "The vote is counted {when}."
+    passed: "**Passed** by {yes} seats to {no} ({abstain} abstaining)."
+    rejected: "**Rejected**, {yes} seats to {no} ({abstain} abstaining)."
+    cancelled: "**Cancelled.**"
+  result:
+    passed: "**{bill}** passes, {yes} seats to {no} ({abstain} abstaining)."
+    rejected: "**{bill}** is rejected, {yes} seats to {no} ({abstain} abstaining). It rests until {season}; other bills on its issue can still be proposed."
+  alert:
+    postFailed: "An Assembly post failed: {error}"
