@@ -2,7 +2,7 @@
 ## What You Know
 - The state is public in numbers: money (the **economy**, **budget**, every ministry's funds, what each ministry spent its money on, and every price), **popularity**, **seats** and the armed forces.
 - The mood of the people is told only in words, through **events**, **polls** and province **conditions**: public opinion, salience, **discontent** and **Anzarian Favour**. **Foreign Threat** is only ever hinted at.
-- Every **event** lists its effects with UP and DOWN arrows. Numbers are shown with an amount; the people's mood shows only the arrow.
+- Every **event** lists its effects with UP and DOWN arrows. Numbers are shown with an amount; the people's mood shows only the arrow. Some effects stay secret.
 ## Turns
 - A **turn** lasts one real day and is one season (Spring, Summer, Autumn, Winter). Four turns make a **year**.
 - Every turn opens with the news: new **events**, the outcomes of last turn's **crises** and actions, and what the Assembly decided.
@@ -53,7 +53,7 @@
 - A party is in **government** if any of its factions holds a cabinet post, and so is every cabinet member. Every other party is in **opposition**. Independents outside the cabinet are neither.
 - Each turn, an opposition faction also gets one **opposition action**:
 	- **Question** a minister, who must answer publicly within two turns. An unanswered question costs the minister and rewards the asker.
-	- **Condemn** a crisis by publicly backing *For* or *Against* before the minister answers. Being right where the minister was wrong earns popularity; being wrong where the minister was right costs it.
+	- **Condemn** a crisis by publicly backing *For* or *Against* before the turn ends. Being right where the minister was wrong earns popularity; being wrong where the minister was right costs it.
 	- **Propose a bill**, once a year.
 ## The Assembly
 - The *Aurelian Assembly* has 180 seats.
@@ -62,7 +62,7 @@
 - Cabinet and no-confidence votes stay open until the end of the next turn. Each faction votes all its seats one way, and a bill passes when more seats vote for it than against.
 - A passed bill becomes **law**: its effects apply, and its proposer gains popularity if the people back the bill's side of the issue, or loses some if they don't. The issue stays open unless the law settles it.
 - Laws can change the rules themselves, from taxes to the number of seats.
-- Any faction outside the cabinet, including members of governing parties, can table a **vote of no confidence**. It goes to a vote once its backers hold a sixth of the seats, and lapses if they don't within two turns. It passes with more than half of all seats, and the next turn becomes a pre-election turn.
+- Any faction outside the cabinet, including members of governing parties, can table a **vote of no confidence**. It goes to a vote once its backers hold a sixth of the seats, and lapses if they don't within two turns. It passes with more than half of all seats, and the next turn becomes a pre-election turn. If it is voted down, no new motion can be tabled for a year.
 - A rejected bill rests for a year before it can be proposed again. Other bills on the same issue can still be proposed.
 ## Elections
 - Seats are counted province by province, by population. Apart from the safe boroughs, each province's seats are split between parties by how strong each party is there.
@@ -80,7 +80,7 @@
 ### Treasury
 - Divides the yearly budget between the ministries and the **navy contributions** each Winter, for the year that starts in Spring. If it doesn't, last year's split repeats.
 - Raising navy contributions raises Anzarian Favour, cutting them lowers it. Left unchanged, Favour drifts back towards the nobles' mood.
-- Unallocated money, and money unspent at the end of the year, goes to the *reserve*, which the Treasury can grant to any ministry.
+- Unallocated money, and money unspent at the end of the year, goes to the *reserve*, which earns interest each year and which the Treasury can grant to any ministry.
 ### Forces
 - The army's **divisions** and the Interior's **gendarmerie** work alike. A unit is a die: raising it is bought once, training it gives the die more sides, and stationing it in another province is free.
 - Every unit costs upkeep each year. If its ministry can't pay, its units lose training.
