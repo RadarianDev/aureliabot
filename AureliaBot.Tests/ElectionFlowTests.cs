@@ -46,6 +46,50 @@ public class ElectionFlowTests : IDisposable
     }
 
     [Fact]
+    public void TheResults_RenderASeatChartAndAProvinceMap()
+    {
+        StartWithTwoParties();
+        var election = Db.Resolve(Config, new ScriptedRandomSource(), 1, DateTimeOffset.UtcNow).Election!;
+
+        using var images = ElectionPublisher.Render(election.Result, election.Parties,
+            ElectionPublisher.WinnersFromResult(election.Result), Config, out var failure);
+
+        Assert.Null(failure);
+        Assert.True(new FileInfo(images.SeatChartPath!).Length > 1000);
+        Assert.True(new FileInfo(images.MapPath!).Length > 1000);
+        Assert.Contains("Liberal Union", ElectionPublisher.ResultsText(election, Config, id => id.ToString()));
+    }
+
+    [Fact]
+    public void StoredWinners_MatchTheElection()
+    {
+        StartWithTwoParties();
+        var election = Db.Resolve(Config, new ScriptedRandomSource(), 1, DateTimeOffset.UtcNow).Election!;
+
+        var stored = ElectionPublisher.WinnersFromRows(Db.GetProvinceResults());
+
+        Assert.Equal(ElectionPublisher.WinnersFromResult(election.Result).OrderBy(kv => kv.Key), stored.OrderBy(kv => kv.Key));
+    }
+
+    [Fact]
+    public void AProvinceWhereEveryPartyHasNoStrength_StillFillsItsSeats()
+    {
+        var input = new ElectionInput(
+            10,
+            [new ElectionProvince("p", 1)],
+            [new ElectionParty(1, new Dictionary<string, Stance>()), new ElectionParty(2, new Dictionary<string, Stance>())],
+            [new ElectionFaction(11, 1, 0, "p"), new ElectionFaction(12, 2, 0, "p")],
+            [],
+            Config.Constants.Election,
+            Config.Constants.StrongStancePenalty);
+
+        var result = ElectionCalculator.Run(input);
+
+        Assert.Equal(10, result.PartySeats.Values.Sum());
+        Assert.Null(result.Provinces[0].WinnerPartyId);
+    }
+
+    [Fact]
     public void NoElection_RunsOutsideAPreElection()
     {
         StartWithTwoParties();

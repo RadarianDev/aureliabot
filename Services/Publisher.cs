@@ -7,13 +7,15 @@ public class Publisher
     private readonly DatabaseService _data;
     private readonly ConstantsStore _constants;
     private readonly FactionChannelService _factionChannels;
+    private readonly ElectionPublisher _elections;
 
-    public Publisher(DiscordSocketClient client, DatabaseService data, ConstantsStore constants, FactionChannelService factionChannels)
+    public Publisher(DiscordSocketClient client, DatabaseService data, ConstantsStore constants, FactionChannelService factionChannels, ElectionPublisher elections)
     {
         _client = client;
         _data = data;
         _constants = constants;
         _factionChannels = factionChannels;
+        _elections = elections;
     }
 
     public async Task PublishAsync(ResolutionReport report)
@@ -36,6 +38,9 @@ public class Publisher
                 news.Add(Texts.Get("news.season.closes", ("when", Display.When(next))));
             news.AddRange(report.News);
             await PostAsync(ChannelRole.News, string.Join("\n", news), source);
+
+            if (report.Election is { } election)
+                await _elections.PublishAsync(election, source);
 
             await PostEventsAsync(report, source);
 

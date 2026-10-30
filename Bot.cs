@@ -41,6 +41,7 @@ public class Bot
             .AddSingleton<Confirmations>()
             .AddSingleton<SetupChecklistService>()
             .AddSingleton<GameFilesService>()
+            .AddSingleton<ElectionPublisher>()
             .BuildServiceProvider();
 
         _data = _services.GetRequiredService<DatabaseService>();

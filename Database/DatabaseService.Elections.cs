@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Data.Sqlite;
 
-public record ProvinceResultRow(int TermNumber, string ProvinceId, long PartyId, string PartyName, double Strength, int Seats);
+public record ProvinceResultRow(int TermNumber, string ProvinceId, long PartyId, string PartyName, double Strength, int Seats, bool Winner = false);
 
 public partial class DatabaseService
 {
@@ -40,6 +40,8 @@ public partial class DatabaseService
     {
         var input = BuildElectionInputTx(conn, tx, config);
         var result = ElectionCalculator.Run(input);
+        if (input.Seats < input.Factions.Count)
+            report.Alerts.Add(Texts.Get("alerts.election.tooFewSeats", ("seats", input.Seats), ("boroughs", input.Factions.Count)));
         var term = state.TermNumber + 1;
 
         Exec(conn, tx, "UPDATE factions SET seats = 0;");
@@ -63,10 +65,11 @@ public partial class DatabaseService
             {
                 var seats = province.ContestedSeatsByParty.GetValueOrDefault(partyId) + province.BoroughSeatsByParty.GetValueOrDefault(partyId);
                 Exec(conn, tx, @"
-                    INSERT INTO province_results (term_number, province_id, party_id, party_name, strength, seats)
-                    VALUES ($term, $province, $party, $name, $strength, $seats);",
+                    INSERT INTO province_results (term_number, province_id, party_id, party_name, strength, seats, winner)
+                    VALUES ($term, $province, $party, $name, $strength, $seats, $winner);",
                     ("$term", term), ("$province", province.ProvinceId), ("$party", partyId),
-                    ("$name", names.GetValueOrDefault(partyId, partyId.ToString())), ("$strength", strength), ("$seats", seats));
+                    ("$name", names.GetValueOrDefault(partyId, partyId.ToString())), ("$strength", strength), ("$seats", seats),
+                    ("$winner", province.WinnerPartyId == partyId ? 1 : 0));
             }
 
         Exec(conn, tx, "UPDATE cabinets SET status = 'Caretaker' WHERE kind = 'Sitting' AND status = 'Approved';");
@@ -91,7 +94,7 @@ public partial class DatabaseService
         {
             Exec(conn, tx, "UPDATE readings SET status = 'Cancelled' WHERE id = $id;", ("$id", reading.Id));
             Exec(conn, tx, "UPDATE bills SET status = 'Available', cooldown_until = NULL WHERE id = $bill AND status = 'Voting';", ("$bill", reading.BillId));
-            Exec(conn, tx, "DELETE FROM opposition_actions WHERE kind = 'Bill' AND subject_id = $id;", ("$id", reading.Id));
+            Exec(conn, tx, "UPDATE opposition_actions SET cancelled = 1 WHERE kind = 'Bill' AND subject_id = $id;", ("$id", reading.Id));
             report.ReadingsCancelled.Add(new ReadingCancelledReport(reading.Id, reading.BillId, reading.Title, Texts.Get("data.election.readingCancelled")));
         }
         Exec(conn, tx, "UPDATE no_confidence SET status = 'Cancelled' WHERE status IN ('Gathering', 'Voting');");
@@ -104,14 +107,14 @@ public partial class DatabaseService
         using var conn = Open();
         using var cmd = conn.CreateCommand();
         cmd.CommandText = @"
-            SELECT term_number, province_id, party_id, party_name, strength, seats FROM province_results
+            SELECT term_number, province_id, party_id, party_name, strength, seats, winner FROM province_results
             WHERE term_number = COALESCE($term, (SELECT MAX(term_number) FROM province_results))
             ORDER BY province_id, strength DESC;";
         cmd.Parameters.AddWithValue("$term", (object?)term ?? DBNull.Value);
         var list = new List<ProvinceResultRow>();
         using var r = cmd.ExecuteReader();
         while (r.Read())
-            list.Add(new ProvinceResultRow(r.GetInt32(0), r.GetString(1), r.GetInt64(2), r.GetString(3), r.GetDouble(4), r.GetInt32(5)));
+            list.Add(new ProvinceResultRow(r.GetInt32(0), r.GetString(1), r.GetInt64(2), r.GetString(3), r.GetDouble(4), r.GetInt32(5), r.GetInt64(6) != 0));
         return list;
     }
 }

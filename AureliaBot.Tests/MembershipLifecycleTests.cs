@@ -23,6 +23,7 @@ public class MembershipLifecycleTests : IDisposable
     [Fact]
     public void PendingApplications_AreDroppedWhenThePreElectionResolves()
     {
+        Db.StartGame(DatabaseFixture.Config, DateTimeOffset.UtcNow);
         var party = SetUpParty(3);
         var request = Db.CreateJoinRequest(Applicant, party).RequestId!.Value;
 

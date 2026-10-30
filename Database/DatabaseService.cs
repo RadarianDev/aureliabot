@@ -445,6 +445,7 @@ public partial class DatabaseService
                 subject_id INTEGER,
                 made_at INTEGER NOT NULL
             );");
+        AddColumnIfMissing(connection, "opposition_actions", "cancelled", "INTEGER NOT NULL DEFAULT 0");
 
         Exec(connection, @"
             CREATE TABLE IF NOT EXISTS questions (
@@ -488,6 +489,7 @@ public partial class DatabaseService
                 seats INTEGER NOT NULL,
                 PRIMARY KEY (term_number, province_id, party_id)
             );");
+        AddColumnIfMissing(connection, "province_results", "winner", "INTEGER NOT NULL DEFAULT 0");
 
         Exec(connection, @"
             CREATE TABLE IF NOT EXISTS log_entries (

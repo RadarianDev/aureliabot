@@ -135,7 +135,7 @@ public static class ElectionCalculator
         var won = strength.Keys.ToDictionary(id => id, _ => 0);
         for (var seat = 0; seat < seats; seat++)
         {
-            var next = Best(strength.Where(kv => kv.Value > 0).Select(kv => (kv.Key, kv.Value / (won[kv.Key] + 1))), popularity);
+            var next = Best(strength.Select(kv => (kv.Key, kv.Value / (won[kv.Key] + 1))), popularity);
             if (next is not { } id) break;
             won[id]++;
         }

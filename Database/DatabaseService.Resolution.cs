@@ -25,11 +25,10 @@ public partial class DatabaseService
         }
 
         state = GetGameStateTx(conn, tx);
-        if (state.IsPreElection)
+        if (state.Started && state.IsPreElection)
         {
             CancelAtElectionTx(conn, tx, report);
-            if (state.Started)
-                RunElectionTx(conn, tx, state, config, report);
+            RunElectionTx(conn, tx, state, config, report);
         }
 
         AdvanceSeasonTx(conn, tx, state, config, report, now);

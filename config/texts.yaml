@@ -970,6 +970,8 @@ dashboard:
   footer: Updated after every resolution
 
 alerts:
+  election:
+    tooFewSeats: "The Assembly has {seats} seats but {boroughs} factions stand, each with a safe borough: every borough was seated, so the Assembly is larger than its size this term."
   resolution:
     missed: The resolution due <t:{time}:F> was missed while the bot was offline. Running it once now.
     failed: |-

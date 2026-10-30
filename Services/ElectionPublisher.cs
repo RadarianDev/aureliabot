@@ -19,7 +19,7 @@ public sealed record ElectionImages(string? SeatChartPath, string? MapPath) : ID
     {
         foreach (var path in new[] { SeatChartPath, MapPath })
             if (path is not null)
-                try { File.Delete(path); } catch (IOException) { }
+                try { File.Delete(path); } catch (Exception) { }
     }
 }
 
@@ -155,7 +155,15 @@ public class ElectionPublisher
     {
         if (parties.Count == 0) return null;
         var path = TempPng("seats");
-        new ArchGenerator().Generate(parties, path);
+        try
+        {
+            new ArchGenerator().Generate(parties, path);
+        }
+        catch
+        {
+            try { File.Delete(path); } catch (Exception) { }
+            throw;
+        }
         return File.Exists(path) ? path : null;
     }
 
@@ -197,7 +205,10 @@ public class ElectionPublisher
         rows.GroupBy(r => r.ProvinceId)
             .ToDictionary(
                 g => g.Key,
-                g => (long?)g.OrderByDescending(r => r.Strength).ThenByDescending(r => r.Seats).ThenBy(r => r.PartyId).First().PartyId);
+                g => g.FirstOrDefault(r => r.Winner) is { } winner
+                    ? winner.PartyId
+                    : g.Where(r => r.Strength > 0).OrderByDescending(r => r.Strength).ThenByDescending(r => r.Seats).ThenBy(r => r.PartyId)
+                        .Select(r => (long?)r.PartyId).FirstOrDefault());
 
     public static Dictionary<string, string> MapColours(
         IReadOnlyDictionary<string, long?> provinceWinners,

@@ -30,6 +30,7 @@ public class MapModule : InteractionModuleBase<SocketInteractionContext>
         if (images.MapPath is null)
         {
             Console.WriteLine($"[MapModule] Rendering failed: {failure}");
+            await DeleteOriginalResponseAsync();
             await FollowupAsync(Texts.Get("map.renderFailed"), ephemeral: true);
             return;
         }
