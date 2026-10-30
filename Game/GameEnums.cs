@@ -78,15 +78,21 @@ public static class GameEnumExtensions
 
     public static string DisplayName(this Ministry ministry) => ministry switch
     {
-        Ministry.CommerceLabor => "Commerce and Labor",
+        Ministry.War => Texts.Get("names.ministry.war"),
+        Ministry.Interior => Texts.Get("names.ministry.interior"),
+        Ministry.CommerceLabor => Texts.Get("names.ministry.commerceLabor"),
+        Ministry.Treasury => Texts.Get("names.ministry.treasury"),
+        Ministry.Navy => Texts.Get("names.ministry.navy"),
         _ => ministry.ToString(),
     };
 
     public static string DisplayName(this Stance stance) => stance switch
     {
-        Stance.StronglyFor => "Strongly For",
-        Stance.StronglyAgainst => "Strongly Against",
-        Stance.Silent => "no stance",
+        Stance.StronglyFor => Texts.Get("names.stance.stronglyFor"),
+        Stance.For => Texts.Get("names.stance.for"),
+        Stance.Silent => Texts.Get("names.stance.silent"),
+        Stance.Against => Texts.Get("names.stance.against"),
+        Stance.StronglyAgainst => Texts.Get("names.stance.stronglyAgainst"),
         _ => stance.ToString(),
     };
 

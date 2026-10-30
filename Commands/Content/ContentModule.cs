@@ -46,12 +46,12 @@ public class ContentModule : InteractionModuleBase<SocketInteractionContext>
             var isZip = name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase);
             if (!isZip && !ContentRules.IsYamlName(name))
             {
-                skipped.Add($"`{name}`: skipped; only .yaml, .yml and .zip files import.");
+                skipped.Add(Texts.Get("content.import.notYaml", ("name", name)));
                 continue;
             }
             if (attachment.Size > MaxDownloadBytes)
             {
-                skipped.Add($"`{name}`: skipped; it is too large.");
+                skipped.Add(Texts.Get("content.import.tooLarge", ("name", name)));
                 continue;
             }
 
@@ -62,7 +62,7 @@ public class ContentModule : InteractionModuleBase<SocketInteractionContext>
             }
             catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
             {
-                skipped.Add($"`{name}`: couldn't be downloaded ({ex.Message}).");
+                skipped.Add(Texts.Get("content.import.downloadFailed", ("name", name), ("error", ex.Message)));
                 continue;
             }
 
@@ -74,12 +74,12 @@ public class ContentModule : InteractionModuleBase<SocketInteractionContext>
             try
             {
                 var entries = ContentRules.ReadArchive(bytes);
-                if (entries.Count == 0) skipped.Add($"`{name}`: holds no .yaml files.");
+                if (entries.Count == 0) skipped.Add(Texts.Get("content.import.emptyZip", ("name", name)));
                 files.AddRange(entries.Select(e => e with { Name = $"{name}/{e.Name}" }));
             }
             catch (InvalidDataException)
             {
-                skipped.Add($"`{name}`: isn't a readable zip.");
+                skipped.Add(Texts.Get("content.import.badZip", ("name", name)));
             }
         }
 
@@ -107,7 +107,7 @@ public class ContentModule : InteractionModuleBase<SocketInteractionContext>
         {
             if (_data.GetTemplate(id) is not { } row)
             {
-                await RespondAsync($"There is no template `{id}`.", ephemeral: true);
+                await RespondAsync(Texts.Get("content.noTemplate", ("id", id)), ephemeral: true);
                 return;
             }
             yaml = row.Yaml;
@@ -116,16 +116,15 @@ public class ContentModule : InteractionModuleBase<SocketInteractionContext>
         if (yaml.Length > ContentRules.ModalLimit)
         {
             await RespondAsync(
-                $"`{id}` is {yaml.Length} characters, more than a form holds ({ContentRules.ModalLimit}). " +
-                "Edit it with `/content export`, then `/content import` the changed file.",
+                Texts.Get("content.edit.tooLong", ("id", id), ("length", yaml.Length), ("limit", ContentRules.ModalLimit)),
                 ephemeral: true);
             return;
         }
 
         var modal = new ModalBuilder()
-            .WithTitle(Display.Truncate(live ? $"Edit live {id}" : $"Edit {id}", 45))
+            .WithTitle(Display.Truncate(live ? Texts.Get("content.edit.titleLive", ("id", id)) : Texts.Get("content.edit.title", ("id", id)), 45))
             .WithCustomId($"{EditModalPrefix}:{(live ? "live" : "template")}:{id}")
-            .AddTextInput("YAML", ContentEditModal.YamlInputId, TextInputStyle.Paragraph, value: yaml, maxLength: ContentRules.ModalLimit, required: true)
+            .AddTextInput(Texts.Get("content.edit.yamlLabel"), ContentEditModal.YamlInputId, TextInputStyle.Paragraph, value: yaml, maxLength: ContentRules.ModalLimit, required: true)
             .Build();
         await RespondWithModalAsync(modal);
     }
@@ -139,7 +138,7 @@ public class ContentModule : InteractionModuleBase<SocketInteractionContext>
         {
             if (ContentRules.FindLive(_data, id, out var refusal) is not { } target)
             {
-                await FailedEditAsync(refusal ?? "Nothing live to edit.", id, modal.Yaml);
+                await FailedEditAsync(refusal ?? Texts.Get("content.edit.nothingLive"), id, modal.Yaml);
                 return;
             }
             var result = ContentRules.ApplyLiveEdit(_data, config, target, modal.Yaml);
@@ -161,7 +160,7 @@ public class ContentModule : InteractionModuleBase<SocketInteractionContext>
             return;
         }
         var message = ContentRules.Describe(edit.Outcome).TrimStart('-', ' ');
-        if (edit.Copy) message += $"\nThe id changed, so this is a copy: `{id}` is unchanged.";
+        if (edit.Copy) message += "\n" + Texts.Get("content.edit.copy", ("id", id));
         await SendAsync(message);
     }
 
@@ -169,7 +168,7 @@ public class ContentModule : InteractionModuleBase<SocketInteractionContext>
     {
         using var stream = new MemoryStream(new UTF8Encoding(false).GetBytes(yaml));
         await FollowupWithFileAsync(stream, $"{id}.yaml",
-            Display.Truncate(message + "\nYour YAML is attached, so the edit isn't lost.", 2000),
+            Display.Truncate(message + "\n" + Texts.Get("content.edit.attached"), 2000),
             ephemeral: true, allowedMentions: AllowedMentions.None);
     }
 
@@ -195,20 +194,23 @@ public class ContentModule : InteractionModuleBase<SocketInteractionContext>
         var rows = _data.GetTemplates(kind, status);
         if (rows.Count == 0)
         {
-            await RespondAsync("No templates match.", ephemeral: true);
+            await RespondAsync(Texts.Get("content.list.none"), ephemeral: true);
             return;
         }
-        var sb = new StringBuilder($"**{rows.Count} template{(rows.Count == 1 ? "" : "s")}**\n");
+        var header = rows.Count == 1
+            ? Texts.Get("content.list.headerOne", ("count", rows.Count))
+            : Texts.Get("content.list.headerMany", ("count", rows.Count));
+        var sb = new StringBuilder(header + "\n");
         var shown = 0;
         foreach (var row in rows)
         {
-            var line = $"`{row.Id}` · {TemplateCodec.KindName(row.Kind)} · {row.Status} · posted " +
-                       $"{(row.TimesPosted == 1 ? "once" : $"{row.TimesPosted} times")}\n";
+            var line = Texts.Get("content.list.line", ("id", row.Id), ("kind", TemplateCodec.KindName(row.Kind)), ("status", row.Status),
+                ("times", ContentRules.TimesPosted(row.TimesPosted))) + "\n";
             if (sb.Length + line.Length > 1900) break;
             sb.Append(line);
             shown++;
         }
-        if (shown < rows.Count) sb.Append($"…and {rows.Count - shown} more. Narrow it with `kind` or `status`.");
+        if (shown < rows.Count) sb.Append(Texts.Get("content.list.more", ("count", rows.Count - shown)));
         await RespondAsync(sb.ToString().TrimEnd(), ephemeral: true);
     }
 
@@ -218,16 +220,17 @@ public class ContentModule : InteractionModuleBase<SocketInteractionContext>
         id = id.Trim();
         if (_data.GetTemplate(id) is not { } row)
         {
-            await RespondAsync($"There is no template `{id}`.", ephemeral: true);
+            await RespondAsync(Texts.Get("content.noTemplate", ("id", id)), ephemeral: true);
             return;
         }
         var deletes = row.Status == TemplateStatus.Draft && row.TimesPosted == 0;
         var components = _confirmations.Create(Context.User.Id, () => Task.FromResult(ContentRules.Remove(_data, id).Message),
-            deletes ? "Delete" : "Archive");
+            deletes ? Texts.Get("content.remove.deleteButton") : Texts.Get("content.remove.archiveButton"));
+        var kind = TemplateCodec.KindName(row.Kind);
         await RespondAsync(
             deletes
-                ? $"Delete `{id}` ({TemplateCodec.KindName(row.Kind)})? It is a Draft that was never posted, so it goes for good."
-                : $"Archive `{id}` ({TemplateCodec.KindName(row.Kind)})? It is {row.Status} or has been posted, so it is kept for the log, out of use.",
+                ? Texts.Get("content.remove.confirmDelete", ("id", id), ("kind", kind))
+                : Texts.Get("content.remove.confirmArchive", ("id", id), ("kind", kind), ("status", row.Status)),
             components: components, ephemeral: true);
     }
 
@@ -246,19 +249,21 @@ public class ContentModule : InteractionModuleBase<SocketInteractionContext>
         }
         else
         {
-            await SendAsync($"There is no template `{id.Trim()}`.");
+            await SendAsync(Texts.Get("content.noTemplate", ("id", id.Trim())));
             return;
         }
         if (rows.Count == 0)
         {
-            await SendAsync("There are no templates to export.");
+            await SendAsync(Texts.Get("content.export.none"));
             return;
         }
 
         using var stream = new MemoryStream(ContentRules.Export(rows));
         var name = rows.Count == 1 && id is not null ? $"{rows[0].Id}.zip" : "content.zip";
         await FollowupWithFileAsync(stream, name,
-            $"{rows.Count} template{(rows.Count == 1 ? "" : "s")}. Edit the files and `/content import` the zip, or single files, to bring them back.",
+            rows.Count == 1
+                ? Texts.Get("content.export.doneOne", ("count", rows.Count))
+                : Texts.Get("content.export.doneMany", ("count", rows.Count)),
             ephemeral: true);
     }
 
@@ -273,7 +278,7 @@ public class ContentEditModal : IModal
 {
     public const string YamlInputId = "yaml";
 
-    public string Title => "Edit template";
+    public string Title => Texts.Get("content.edit.modalTitle");
 
     [ModalTextInput(YamlInputId, TextInputStyle.Paragraph, maxLength: ContentRules.ModalLimit)]
     public string Yaml { get; set; } = "";

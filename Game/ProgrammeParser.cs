@@ -40,7 +40,7 @@ public static partial class ProgrammeParser
             var colon = line.LastIndexOf(':');
             if (colon < 0)
             {
-                errors.Add(new ProgrammeLineError(lineNumber, line, "no colon; write it as `Issue: Opinion`"));
+                errors.Add(new ProgrammeLineError(lineNumber, line, Texts.Get("programme.noColon")));
                 continue;
             }
 
@@ -51,17 +51,17 @@ public static partial class ProgrammeParser
             string? issueError = null;
             if (issue is null)
                 issueError = Match(allIssues, issueText) is { } closed
-                    ? $"{closed.Title} is closed"
-                    : $"unknown issue \"{issueText}\"";
+                    ? Texts.Get("programme.closed", ("issue", closed.Title))
+                    : Texts.Get("programme.unknownIssue", ("issue", issueText));
             else if (firstLine.TryGetValue(issue.Id, out var earlier))
-                issueError = $"{issue.Title} is already given on line {earlier}";
+                issueError = Texts.Get("programme.duplicate", ("issue", issue.Title), ("line", earlier));
 
             string? opinionError = null;
             Stance stance = Stance.Silent;
             if (opinionText.Equals("silent", StringComparison.OrdinalIgnoreCase))
-                opinionError = "Silent is not an opinion; leave the issue out for no stance";
+                opinionError = Texts.Get("programme.silent");
             else if (!Opinions.TryGetValue(opinionText, out stance))
-                opinionError = $"unrecognised opinion \"{opinionText}\"; use Strongly For, For, Against or Strongly Against";
+                opinionError = Texts.Get("programme.unknownOpinion", ("opinion", opinionText));
 
             if (issueError is not null || opinionError is not null)
             {

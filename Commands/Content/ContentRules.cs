@@ -47,7 +47,7 @@ public static class ContentRules
         var file = $"{originalId}.yaml";
         if (TemplateCodec.Parse(yaml, file, context).Template is { } parsed && parsed.Id != originalId && data.GetTemplate(parsed.Id) is not null)
             return new(new ImportOutcome(file, parsed.Id, parsed.Kind, false, null,
-                [new TemplateParseError(file, null, $"`{parsed.Id}` already exists. Pick a new id for the copy, or edit `{parsed.Id}` itself.")]), originalId);
+                [new TemplateParseError(file, null, Texts.Get("content.import.idTaken", ("id", parsed.Id)))]), originalId);
         return new(ImportOne(data, context, new ImportFile(file, yaml)), originalId);
     }
 
@@ -57,24 +57,33 @@ public static class ContentRules
         var replaced = outcomes.Count(o => o.Imported && o.Replaced);
         var failed = outcomes.Count(o => !o.Imported);
         var sb = new StringBuilder();
-        sb.AppendLine($"**{imported} imported, {replaced} replaced, {failed} with errors.**");
+        sb.AppendLine(Texts.Get("content.import.summary", ("imported", imported), ("replaced", replaced), ("failed", failed)));
         foreach (var outcome in outcomes)
             sb.AppendLine(Describe(outcome));
         foreach (var line in skipped ?? [])
-            sb.AppendLine($"- {line}");
+            sb.AppendLine(Bullet(line));
         return sb.ToString().TrimEnd();
     }
 
     public static string Describe(ImportOutcome outcome)
     {
         if (!outcome.Imported)
-            return $"- `{outcome.File}`: not imported.\n" + string.Join("\n", outcome.Errors.Select(e => $"  - {e}"));
-        var what = $"`{outcome.Id}` ({TemplateCodec.KindName(outcome.Kind!.Value)})";
-        if (!outcome.Replaced) return $"- {what}: imported as a Draft.";
-        return outcome.PreviousStatus == TemplateStatus.Ready
-            ? $"- {what}: replaced, and returned to Draft{(outcome.Kind == TemplateKind.Event ? "; its queued copy is cancelled until it is Ready again" : "")}."
-            : $"- {what}: replaced.";
+            return Texts.Get("content.import.failed", ("file", outcome.File)) + "\n"
+                + string.Join("\n", outcome.Errors.Select(e => Texts.Get("content.subBullet", ("item", e))));
+        var what = Texts.Get("content.import.what", ("id", outcome.Id), ("kind", TemplateCodec.KindName(outcome.Kind!.Value)));
+        if (!outcome.Replaced) return Texts.Get("content.import.imported", ("what", what));
+        if (outcome.PreviousStatus != TemplateStatus.Ready) return Texts.Get("content.import.replaced", ("what", what));
+        return outcome.Kind == TemplateKind.Event
+            ? Texts.Get("content.import.replacedEventToDraft", ("what", what))
+            : Texts.Get("content.import.replacedToDraft", ("what", what));
     }
+
+    public static string Bullet(object item) => Texts.Get("content.bullet", ("item", item));
+
+    public static string BulletList(IEnumerable<object> items) => string.Join("\n", items.Select(Bullet));
+
+    public static string TimesPosted(int count) =>
+        count == 1 ? Texts.Get("content.posted.once") : Texts.Get("content.posted.times", ("count", count));
 
     public static IReadOnlyList<string> ReadinessProblems(Template template, Func<string, TemplateRow?> find)
     {
@@ -84,12 +93,12 @@ public static class ContentRules
             if (id == template.Id) continue;
             var row = find(id);
             var role = template is BillTemplate bill && bill.Issue == id || template is CrisisTemplate crisis && crisis.Issue == id
-                ? "Its issue template"
-                : "The template";
+                ? Texts.Get("content.readiness.issueRole")
+                : Texts.Get("content.readiness.templateRole");
             if (row is null)
-                problems.Add($"{role} `{id}` does not exist.");
+                problems.Add(Texts.Get("content.readiness.missing", ("role", role), ("id", id)));
             else if (row.Status != TemplateStatus.Ready)
-                problems.Add($"{role} `{id}` ({TemplateCodec.KindName(row.Kind)}) is {row.Status}, not Ready.");
+                problems.Add(Texts.Get("content.readiness.notReady", ("role", role), ("id", id), ("kind", TemplateCodec.KindName(row.Kind)), ("status", row.Status)));
         }
         return problems;
     }
@@ -97,10 +106,12 @@ public static class ContentRules
     public static (long? FireAt, string? Problem) ScheduleFireAt(GameState state, EventSchedule schedule)
     {
         if (EventScheduling.FireAtFor(state, schedule) is { } fireAt) return (fireAt, null);
-        var turn = schedule.Season is { } season && schedule.Year is { } year ? GameCalendar.Label(season, year) : "its turn";
+        var turn = schedule.Season is { } season && schedule.Year is { } year
+            ? GameCalendar.Label(season, year)
+            : Texts.Get("content.schedule.itsTurn");
         return (null, state.Started
-            ? $"Its scheduled turn, {turn}, has already started: it is now {state.Label}."
-            : $"Its scheduled turn, {turn}, is before the game starts in {state.Label}.");
+            ? Texts.Get("content.schedule.started", ("turn", turn), ("now", state.Label))
+            : Texts.Get("content.schedule.beforeStart", ("turn", turn), ("start", state.Label)));
     }
 
     public static (Season Season, int Year) TurnOf(GameState state, long fireAt) =>
@@ -108,17 +119,17 @@ public static class ContentRules
 
     public static string DescribeFireAt(GameState state, long fireAt)
     {
-        if (!state.Started && fireAt == 0) return "at /gm start";
+        if (!state.Started && fireAt == 0) return Texts.Get("content.schedule.atGameStart");
         var (season, year) = TurnOf(state, fireAt);
-        return $"at the start of {GameCalendar.Label(season, year)}";
+        return Texts.Get("content.schedule.atTurn", ("turn", GameCalendar.Label(season, year)));
     }
 
     public static ContentResult MakeReady(DatabaseService data, GameConfig config, string id)
     {
-        if (data.GetTemplate(id) is not { } row) return new ContentResult(false, $"There is no template `{id}`.");
+        if (data.GetTemplate(id) is not { } row) return new ContentResult(false, Texts.Get("content.noTemplate", ("id", id)));
         var parsed = TemplateCodec.Parse(row.Yaml, $"{id}.yaml", data.BuildEffectContext(config));
         if (!parsed.IsValid)
-            return new ContentResult(false, $"`{id}` can't be marked Ready:\n" + string.Join("\n", parsed.Errors.Select(e => $"- {e}")));
+            return new ContentResult(false, Texts.Get("content.ready.parseErrors", ("id", id)) + "\n" + BulletList(parsed.Errors));
         var template = parsed.Template!;
 
         var problems = ReadinessProblems(template, data.GetTemplate).ToList();
@@ -128,7 +139,7 @@ public static class ContentRules
         {
             if (data.HasScheduledEventFired(id))
             {
-                note = "Its scheduled event has already fired, so the schedule does nothing more.";
+                note = Texts.Get("content.ready.alreadyFired");
             }
             else
             {
@@ -138,24 +149,24 @@ public static class ContentRules
             }
         }
         if (problems.Count > 0)
-            return new ContentResult(false, $"`{id}` can't be marked Ready yet:\n" + string.Join("\n", problems.Select(p => $"- {p}")));
+            return new ContentResult(false, Texts.Get("content.ready.problems", ("id", id)) + "\n" + BulletList(problems));
 
         data.SetTemplateStatus(id, TemplateStatus.Ready);
-        var message = $"`{id}` ({TemplateCodec.KindName(template.Kind)}) is Ready.";
+        var message = Texts.Get("content.ready.done", ("id", id), ("kind", TemplateCodec.KindName(template.Kind)));
         if (template is EventTemplate ev)
         {
             if (fireAt is { } at)
             {
                 data.ScheduleEvent(ev, at);
-                message += $" Its event is queued to fire {DescribeFireAt(data.GetGameState(), at)}.";
+                message += " " + Texts.Get("content.ready.queued", ("when", DescribeFireAt(data.GetGameState(), at)));
             }
             else if (ev.Schedule is null && data.CancelScheduledEvents(id) > 0)
             {
-                message += " It no longer has a schedule, so its scheduled event was cancelled.";
+                message += " " + Texts.Get("content.ready.scheduleCancelled");
             }
             else if (ev.Schedule is null)
             {
-                message += " It has no schedule: queue it with `/gm event queue`.";
+                message += " " + Texts.Get("content.ready.noSchedule");
             }
         }
         if (note is not null) message += " " + note;
@@ -164,16 +175,17 @@ public static class ContentRules
 
     public static ContentResult Remove(DatabaseService data, string id)
     {
-        if (data.GetTemplate(id) is not { } row) return new ContentResult(false, $"There is no template `{id}`.");
+        if (data.GetTemplate(id) is not { } row) return new ContentResult(false, Texts.Get("content.noTemplate", ("id", id)));
         if (row.Status == TemplateStatus.Draft && row.TimesPosted == 0)
         {
             data.DeleteTemplate(id);
-            return new ContentResult(true, $"Deleted `{id}`: it was a Draft that was never posted.");
+            return new ContentResult(true, Texts.Get("content.remove.deleted", ("id", id)));
         }
         data.SetTemplateStatus(id, TemplateStatus.Archived);
         var cancelled = row.Kind == TemplateKind.Event ? data.CancelScheduledEvents(id) : 0;
-        return new ContentResult(true, $"Archived `{id}`: it is out of use, but kept for the log." +
-            (cancelled > 0 ? " Its queued scheduled event was cancelled." : ""));
+        return new ContentResult(true, cancelled > 0
+            ? Texts.Get("content.remove.archivedCancelled", ("id", id))
+            : Texts.Get("content.remove.archived", ("id", id)));
     }
 
     public static LiveTarget? FindLive(DatabaseService data, string id, out string? refusal)
@@ -182,7 +194,7 @@ public static class ContentRules
         var kind = data.GetTemplate(id)?.Kind;
         if (kind is TemplateKind.Project or TemplateKind.Crisis)
         {
-            refusal = "Editing live projects and crises comes in a later stage.";
+            refusal = Texts.Get("content.live.laterStage");
             return null;
         }
 
@@ -203,10 +215,10 @@ public static class ContentRules
 
         refusal = kind switch
         {
-            TemplateKind.Issue => $"`{id}` has no live issue: it hasn't been opened.",
-            TemplateKind.Bill => $"`{id}` has no live bill: it hasn't been made available.",
-            TemplateKind.Event => $"`{id}` has no queued event to edit.",
-            _ => $"There is nothing live called `{id}`.",
+            TemplateKind.Issue => Texts.Get("content.live.noIssue", ("id", id)),
+            TemplateKind.Bill => Texts.Get("content.live.noBill", ("id", id)),
+            TemplateKind.Event => Texts.Get("content.live.noEvent", ("id", id)),
+            _ => Texts.Get("content.live.nothing", ("id", id)),
         };
         return null;
     }
@@ -215,48 +227,52 @@ public static class ContentRules
     {
         var parsed = TemplateCodec.Parse(yaml, $"{target.Current.Id}.yaml", data.BuildEffectContext(config));
         if (!parsed.IsValid)
-            return new LiveEditResult(false, "Nothing was changed:\n" + string.Join("\n", parsed.Errors.Select(e => $"- {e}")), null);
+            return new LiveEditResult(false, Texts.Get("content.live.nothingChanged") + "\n" + BulletList(parsed.Errors), null);
         var edited = parsed.Template!;
         if (edited.Kind != target.Kind)
-            return new LiveEditResult(false, $"A live {TemplateCodec.KindName(target.Kind)} must stay a {TemplateCodec.KindName(target.Kind)}. Nothing was changed.", null);
+            return new LiveEditResult(false, Texts.Get("content.live.kindChanged", ("kind", TemplateCodec.KindName(target.Kind))), null);
         if (edited.Id != target.Current.Id)
-            return new LiveEditResult(false, "The `id` of a live item can't change. Nothing was changed.", null);
+            return new LiveEditResult(false, Texts.Get("content.live.idChanged"), null);
         var problems = ReadinessProblems(edited, data.GetTemplate);
         if (problems.Count > 0)
-            return new LiveEditResult(false, "Nothing was changed:\n" + string.Join("\n", problems.Select(p => $"- {p}")), null);
+            return new LiveEditResult(false, Texts.Get("content.live.nothingChanged") + "\n" + BulletList(problems), null);
 
         switch (edited, target.Current)
         {
             case (IssueTemplate issue, IssueTemplate old):
             {
                 if (!data.UpdateIssueLive(target.LiveId, issue.Title, issue.For, issue.Against, issue.Opinion, issue.Salience))
-                    return new LiveEditResult(false, $"The live issue `{target.LiveId}` is gone. Nothing was changed.", null);
+                    return new LiveEditResult(false, Texts.Get("content.live.issueGone", ("id", target.LiveId)), null);
                 var news = issue.For != old.For || issue.Against != old.Against
-                    ? $"## {issue.Title}\nThe question now reads:\nFor: {issue.For}\nAgainst: {issue.Against}"
+                    ? Texts.Get("content.live.issueNews", ("title", issue.Title), ("for", issue.For), ("against", issue.Against))
                     : null;
-                return new LiveEditResult(true, $"Edited the live issue `{target.LiveId}`." +
-                    (news is null ? "" : " The new For and Against text is posted to #news."), news);
+                return new LiveEditResult(true, news is null
+                    ? Texts.Get("content.live.issueEdited", ("id", target.LiveId))
+                    : Texts.Get("content.live.issueEditedPosted", ("id", target.LiveId)), news);
             }
             case (BillTemplate bill, BillTemplate old):
             {
                 if (bill.Issue != old.Issue || bill.Lean != old.Lean)
-                    return new LiveEditResult(false, "A live bill keeps its `issue` and `lean`. Nothing was changed.", null);
+                    return new LiveEditResult(false, Texts.Get("content.live.billKeeps"), null);
                 if (!data.UpdateBillLive(target.LiveId, bill.Title, bill.Motion, bill.PassText, bill.PassEffects))
-                    return new LiveEditResult(false,
-                        $"The live bill `{target.LiveId}` can only be edited while it is available or resting after a rejection. Nothing was changed.", null);
-                var news = bill.Motion != old.Motion ? $"## {bill.Title}\nThe motion now reads:\n> {bill.Motion}" : null;
-                return new LiveEditResult(true, $"Edited the live bill `{target.LiveId}`." +
-                    (news is null ? "" : " The new motion is posted to #news."), news);
+                    return new LiveEditResult(false, Texts.Get("content.live.billLocked", ("id", target.LiveId)), null);
+                var news = bill.Motion != old.Motion
+                    ? Texts.Get("content.live.billNews", ("title", bill.Title), ("motion", bill.Motion))
+                    : null;
+                return new LiveEditResult(true, news is null
+                    ? Texts.Get("content.live.billEdited", ("id", target.LiveId))
+                    : Texts.Get("content.live.billEditedPosted", ("id", target.LiveId)), news);
             }
             case (EventTemplate ev, EventTemplate):
             {
                 if (target.EventId is not { } eventId || !data.UpdateQueuedEvent(eventId, ev.Title, ev.Text, ev.Effects))
-                    return new LiveEditResult(false, "That event is no longer queued. Nothing was changed.", null);
-                return new LiveEditResult(true, $"Edited queued event {eventId} from `{ev.Id}`." +
-                    (ev.Schedule is null ? "" : " A queued copy has no schedule: edit the template and mark it Ready again to move it."), null);
+                    return new LiveEditResult(false, Texts.Get("content.live.eventGone"), null);
+                return new LiveEditResult(true, ev.Schedule is null
+                    ? Texts.Get("content.live.eventEdited", ("eventId", eventId), ("id", ev.Id))
+                    : Texts.Get("content.live.eventEditedScheduled", ("eventId", eventId), ("id", ev.Id)), null);
             }
             default:
-                return new LiveEditResult(false, "That kind of live item can't be edited yet.", null);
+                return new LiveEditResult(false, Texts.Get("content.live.unsupported"), null);
         }
     }
 
