@@ -1,60 +1,99 @@
 # Parties
 
-How factions (players) group into parties, and how seats and popularity are tracked.
+How factions (players) group into parties, how membership changes, and how Discord roles and chats
+follow it. The rules are in [Human Rules.md](Human%20Rules.md) and spec section 6; this file describes
+how the code implements them.
 
 Code: [Database/DatabaseService.Factions.cs](Database/DatabaseService.Factions.cs),
-[Database/DatabaseService.Parties.cs](Database/DatabaseService.Parties.cs). Both tables are created in
-`InitializeDatabase()` in [Database/DatabaseService.cs](Database/DatabaseService.cs).
+[Database/DatabaseService.Parties.cs](Database/DatabaseService.Parties.cs),
+[Services/PartySyncService.cs](Services/PartySyncService.cs),
+[Commands/PartyModule.cs](Commands/PartyModule.cs) (`/party apply|leave`, join buttons),
+[Commands/Gm/GmModule.PartyManage.cs](Commands/Gm/GmModule.PartyManage.cs) (`/gm party create|edit|move|delete`),
+[Commands/Gm/GmModule.PartyProgramme.cs](Commands/Gm/GmModule.PartyProgramme.cs) and
+[Game/ProgrammeParser.cs](Game/ProgrammeParser.cs) (programmes).
 
 ## Factions
 
-A faction is a player. Each Discord user has at most one faction, keyed on their user ID. Factions
-have no name; display them as the user mention (`<@user_id>`).
+A faction is a player, keyed on their Discord user id. It has no name of its own: it is shown as
+`<@user_id> (Character Name)` (`Display.Faction`).
 
-| Field | Type | Default | Meaning |
-|---|---|---|---|
-| `user_id` | TEXT (Discord snowflake) | | Primary key: the player |
-| `popularity` | REAL | 0 | The faction's popularity. No scale is enforced yet. |
-| `seats` | INTEGER | 0 | Seats the faction holds |
-| `party_id` | INTEGER, nullable | NULL | The faction's party; NULL means independent |
+| Field | Meaning |
+|---|---|
+| `user_id` | Primary key: the player |
+| `character_name` | The character the GM registered |
+| `popularity` | 0–100 (`popularity.min/max`), clamped on every change; starts at `popularity.start` |
+| `seats` | Seats held. Only elections change them; joining or leaving a party never does |
+| `party_id` | The party; NULL means independent |
+| `home_province_id` | The character's safe borough (a province id from `config/provinces.yaml`) |
+| `private_channel_id` | The faction's private channel, made by `FactionChannelService` |
+| `status` | `Active` or `Retired` |
 
-Popularity and seats are set directly with `SetFactionPopularity` and `SetFactionSeats`. Nothing
-calculates seats from popularity yet.
-
-Faction lists (`GetAllFactions`, `GetPartyMembers`) are sorted by popularity, highest first, then by
-seats.
+- Only the GM registers a faction (`/gm faction create`). A player without one is refused with
+  "You are not registered yet; ask the GM" (`[RequireFaction]`), and the GM is alerted once per player.
+- **Retiring** (`RetireFaction`) makes the faction independent, empties any cabinet post or the
+  Chancellorship it holds, cancels a nomination it is part of, and drops its pending actions and join
+  applications. Its seats stay with it, vacant, until the next election. A retired player cannot be
+  registered again under the same account.
 
 ## Parties
 
-| Field | Type | Meaning |
-|---|---|---|
-| `id` | INTEGER | Auto-assigned key |
-| `name` | TEXT | Party name. It must be unique, and the check ignores capitalisation. |
-| `colour` | TEXT | Hex colour (`#RRGGBB`). This is the same format the seat-chart renderer's `PartyData.HexColor` takes. |
-| `emoji_id` | TEXT (Discord snowflake), nullable | Optional custom emoji representing the party |
+| Field | Meaning |
+|---|---|
+| `id` | Auto-assigned; a lower id is the older party (an election tie-break) |
+| `name` | Unique, ignoring capitalisation |
+| `colour` | `#RRGGBB`, used for the role, the seat chart and the map |
+| `emoji_id` | Optional custom emoji |
+| `created_season`, `created_year` | When it was founded |
+| `role_id`, `channel_id` | Its Discord role and private chat |
+| `programme_message_url` | The message its current programme was recorded from |
 
-- `CreateParty` returns `null` if the name is already taken.
-- `UpdateParty` returns `false` if the new name belongs to another party.
+A party doesn't store a member list: a party's members are the **active** factions pointing at it.
 
 ## Membership
 
-A party doesn't store a member list. A faction's membership is its own `party_id`, and a party's
-members are every faction pointing at it (`GetPartyMembers`). This gives the following rules:
+- **Founding:** only `/gm party create`, with two or more founders, each an active independent.
+  The GM is warned (not refused) when the colour is close to another party's (CIE76 ΔE below 20).
+- **Joining:** `/party apply` by an active independent, only during a pre-election. The application is
+  posted in the party chat with Accept and Decline buttons. Only the party's active members may answer,
+  each answer can be changed, and the request is decided as soon as more than half of the active
+  members accept (joined) or decline (refused). Joining drops the faction's other pending applications.
+  Pending applications are dropped when the election runs.
+- **Leaving:** `/party leave` (behind a Confirm) at any time; the faction becomes independent and keeps
+  its seats.
+- **GM move:** `/gm party move` puts a faction into any party, or makes it independent, at any time,
+  overriding the pre-election rule and the members' vote.
+- **Dissolution:** a party left with fewer than two active members, through leaving, retiring or a GM
+  move, is deleted in the same transaction (`DissolveIfUnderTwoTx`). Its last member becomes independent
+  and keeps its seats. The result carries the last member, so `PartySyncService.HandleDissolutionAsync`
+  can archive the chat, delete the role, announce it in #news and alert the GM.
+- **Deletion:** `/gm party delete` (behind a Confirm) makes every member independent, deletes the party
+  with its programme and join applications, deletes the role and archives the chat.
 
-- **A faction belongs to at most one party.**
-- **Joining a party leaves the previous one.** `SetFactionParty(userId, partyId)` overwrites
-  `party_id`.
-- **Leaving makes the faction independent.** Call `SetFactionParty(userId, null)`.
-- **A party can't be joined if it doesn't exist.** The database enforces the foreign key, so
-  `SetFactionParty` throws a `SqliteException` for an unknown party ID.
-- **Deleting a party keeps its members.** `DeleteParty` turns its factions into independents
-  (`ON DELETE SET NULL`); the factions themselves are kept.
-- **An empty party still exists.** A party with no members stays until it is deleted.
+## Programmes
 
-## Seats
+- A programme is the party's stance on each open issue, stored as `programme_stances` rows; a missing
+  row means no stance (Silent).
+- The GM records one from a Discord message link with `/gm party programme`. `ProgrammeParser` reads
+  `Issue: Opinion` lines (headers starting with `#` ignored; issue by title or id; opinion Strongly For,
+  For, Against or Strongly Against, ignoring case and Markdown emphasis). Any bad line fails the whole
+  message, and every bad line is listed.
+- Recording replaces the whole programme and writes a `Programme` entry to the stance log for each
+  member and stance, so a programme is a faction's latest public stance until it campaigns or votes.
+- Outside a pre-election, every stance that changes sign costs every active member
+  `programme.flipPenalty` popularity, and each flip is announced in #news; the programme goes to
+  #campaign-log. During a pre-election it is a manifesto in #news and changes freely.
 
-Seats are stored per faction only. A party's seat total is the sum of its members' seats, worked
-out when needed; it is never stored, so it can't drift out of sync.
+## Discord roles and chats
 
-Those totals, together with each party's name and colour, are the input the parliament renderers
-need ([Rendering/](Rendering/)). Independents would need their own entries in the chart.
+The database is the truth; `PartySyncService` makes Discord match it and is idempotent, running after
+every membership change, on startup and from `/gm setup`.
+
+- **Role:** named after the party, in its colour, hoisted. Held by exactly its active members.
+- **Chat:** a text channel under the Parties category, visible only to the party role, the GM role and
+  the bot; members can pin.
+- **Archive:** a deleted or dissolved party's chat moves to the Archive category, read-only for the GM
+  role, and its role is deleted.
+- **Cabinet role:** `CabinetSyncService` gives it to exactly the sitting cabinet's Chancellor and
+  ministers.
+- Rejoining the server re-syncs the player's party role and the Cabinet role; leaving it with an active
+  faction alerts the GM. Any Discord refusal (usually the bot's role sitting too low) alerts the GM.
