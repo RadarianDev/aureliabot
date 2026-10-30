@@ -501,6 +501,31 @@ gm:
     electionHeader: "## Election preview (current state, nothing saved)"
     chartTitle: "Preview: the Assembly"
     renderFailed: "⚠️ Could not draw the images: {error}"
+  cabinet:
+    noActiveFaction: "`{text}` is not an active faction. Pick one from the list."
+    appointedSitting: "{faction} is Chancellor at once, filling the vacant seat, and has the Cabinet role. The proclamation is in #news."
+    appointedDesignate: "{faction} is Chancellor-designate and can now `/chancellor nominate` a cabinet; the sitting cabinet stays until one is approved. The proclamation is in #news."
+    alreadyChancellor: "{faction} already sits as Chancellor; the proclamation is in #news."
+    vacatedMinistry: "They left the {ministry}, which is now vacant."
+    cancelled: "Cancelled {count} open nomination(s)."
+    imposed: |-
+      Imposed a caretaker cabinet without a vote; the proclamation is in #news.
+      {cabinet}
+    failed: "The cabinet could not be imposed."
+  proclaim:
+    modalTitle: "Royal proclamation"
+    titleLabel: "Title (optional)"
+    textLabel: "Text of the proclamation"
+    empty: "A proclamation needs some text."
+    post: |-
+      ## By His Majesty's Command
+      {text}
+    postTitled: |-
+      ## By His Majesty's Command
+      **{title}**
+      {text}
+    posted: "The proclamation is in #news."
+    noNews: "⚠️ No #news channel is set, so the proclamation was not posted."
 
 setup:
   ok: "✅ {text}"
@@ -1119,3 +1144,140 @@ digest:
   next: "- Next resolution: {when}"
   attention: "**Needs your attention**"
   alert: "- {alert}"
+
+cabinet:
+  vacant: "*vacant*"
+  noDeadline: "no deadline"
+  deadline: "at the resolution that ends {season}"
+  deadlineNext: "at the resolution that ends {season}, {when}"
+  proclamation: |-
+    ## By His Majesty's Command
+    {text}
+  line:
+    chancellor: "**Chancellor:** {holder}"
+    ministry: "**{ministry}:** {holder}"
+  button:
+    yes: "Yes"
+    no: "No"
+    abstain: "Abstain"
+  choice:
+    yes: "Yes"
+    no: "No"
+    abstain: "Abstain"
+  post:
+    heading: |-
+      ## Approval of the cabinet
+      {chancellor} asks the Assembly to approve this cabinet:
+    tally: "**Yes** {yes} seats · **No** {no} · **Abstain** {abstain}"
+    voters: "Votes: {votes}"
+    voter: "{faction} {choice}"
+    due: "Counted {due}. Every faction with seats votes all its seats, and may change its vote until then."
+    approved: "**Approved.** This cabinet now sits."
+    rejected: "**Rejected.** The sitting cabinet stays in office."
+    withdrawn: "**Withdrawn.** This nomination was cancelled before the count."
+  result:
+    approved: "The Assembly **approves** the cabinet of {chancellor}: Yes {yes} seats, No {no}, Abstain {abstain}."
+    rejected: "The Assembly **rejects** the cabinet of {chancellor}: Yes {yes} seats, No {no}, Abstain {abstain}. The sitting cabinet stays in office."
+  proclaim:
+    appointedSitting: "His Majesty King Arthas II appoints {faction} Chancellor of Aurelia, to take the vacant seat at the head of His Majesty's government at once."
+    appointedDesignate: "His Majesty King Arthas II appoints {faction} Chancellor, and charges them to form a government and lay it before the Assembly."
+    approved: |-
+      The Assembly having given its consent, His Majesty King Arthas II confirms His government:
+      {cabinet}
+    imposed: |-
+      His Majesty King Arthas II, of His own authority, names a caretaker government to serve until the Assembly approves another:
+      {cabinet}
+  nominate:
+    done: |-
+      Your cabinet is before the Assembly, and each nominee has been told. It is counted {due}.
+      {cabinet}
+  vote:
+    recorded: "You voted **{choice}** on the cabinet of {chancellor}. You can change your vote until the count."
+    changed: "You changed your vote on the cabinet of {chancellor} from {previous} to **{choice}**."
+    closed: "This cabinet vote is closed."
+    noSeats: "Only factions with seats in the Assembly vote."
+  refusal:
+    noFaction: "`{text}` (for {ministry}) is not a faction. Pick one from the list."
+    inactive: "{faction} is not an active faction."
+    chancellorHoldsMinistry: "{faction} is the Chancellor, and the Chancellor holds no ministry."
+    twoMinistries: "{faction} is named twice; a faction holds only one ministry."
+    fourNeeded: "Name a minister for each of the four ministries."
+    voteOpen: "A cabinet is already before the Assembly. You can nominate again if it is rejected."
+    designateOnly: "His Majesty has charged {designate} with forming the next government; only they can nominate it."
+    notChancellor: "This needs the Chancellor, or the Chancellor-designate His Majesty has appointed."
+  private:
+    nominated: "{chancellor} has nominated you for the {ministry}. The Assembly votes on the cabinet, counted {due}."
+    appointed: "His Majesty has appointed you Chancellor. Name your ministers with `/chancellor nominate`; the Assembly then votes on them."
+    rejected: "The Assembly rejected your cabinet (Yes {yes}, No {no}). You may nominate again with `/chancellor nominate`."
+  alert:
+    rejected: "The Assembly rejected the cabinet of {chancellor} (Yes {yes}, No {no}). The sitting cabinet stays; the Chancellor may nominate again."
+    postFailed: "Could not post for {source}: {error}"
+
+ministry:
+  office:
+    chancellor: "the Chancellorship"
+  resign:
+    notInCabinet: "Only the Chancellor or a minister of the sitting cabinet can resign."
+    confirm: "You will resign {office} at once. It stays vacant until it is filled, and your resignation is announced in #news."
+    confirmCancels: "The cabinet nomination now before the Assembly includes you, so it will be cancelled."
+    button: "Resign"
+    done: "You have resigned {office}."
+    newsChancellor: "{faction} has resigned the Chancellorship. The ministers remain in office until His Majesty appoints a successor."
+    newsMinister: "{faction} has resigned as head of the {ministry}. The post stands vacant."
+    alertChancellor: "{faction} resigned the Chancellorship; appoint a successor with `/gm cabinet chancellor`. Nominations cancelled: {cancelled}."
+    alertMinister: "{faction} resigned the {ministry}, now vacant; its crises and questions go to the Chancellor. Nominations cancelled: {cancelled}."
+  status:
+    notMinister: "Only ministers and the Chancellor can see a ministry's status."
+    notYours: "Only its minister or the Chancellor can see the {ministry}'s status."
+    heading: "## {ministry} · {holder}"
+    purse: "**Purse:** {balance}"
+    privateLedger: "**Ledger, not yet public**"
+    noPrivateLedger: "No ledger entries are waiting to be made public."
+    ledgerLine: "- {amount} · {label}"
+    questions: "**Open questions**"
+    noQuestions: "No open questions."
+    questionLine: "- {asker}: {text} (due {due})"
+
+questions:
+  asked: "Your question to the {ministry} is posted in #assembly. {minister} must answer it {due}. This spends your opposition action for the season."
+  answered: "Your answer is posted under the question."
+  answerPost: |-
+    **{minister}, for the {ministry}, answers:**
+    {text}
+  button:
+    answer: "Answer"
+  modal:
+    title: "Question"
+    askTitle: "Question to the {ministry}"
+    askLabel: "Your question"
+    answerTitle: "Answer for the {ministry}"
+    answerLabel: "Your answer"
+  post:
+    body: |-
+      ## Question to the {ministry}
+      {asker} asks:
+      > {text}
+      {status}
+    open: "{minister} must answer {due}."
+    answered: "**Answered** below."
+    unanswered: "**Unanswered.** The deadline passed without a reply."
+    dropped: "**Dropped.** Nobody held the ministry or the Chancellorship to answer it."
+  news:
+    unanswered: "{minister} left a question on the {ministry} from {asker} unanswered, and the Assembly took note. ({minister} {ministerChange}, {asker} {askerChange} popularity)"
+  private:
+    dropped: "Your question to the {ministry} was dropped, since nobody holds the ministry or the Chancellorship. Your opposition action is refunded."
+    extended: "The {ministry} has changed hands, and a question now falls to you, with one more turn to answer it: \"{text}\". Use the Answer button on its post in #assembly."
+    asked: |-
+      {asker} has asked you a question for the {ministry}, to answer {due}:
+      > {text}
+  refusal:
+    notAMinistry: "Questions go to one of the four ministries: Treasury, War, Interior, or Commerce and Labor."
+    notOpposition: "Only opposition factions can ask questions: members of a party that holds no cabinet seat."
+    actionUsed: "You have spent this season's opposition action. The next comes with {season}, after the resolution {when}."
+    nobodyToAnswer: "Nobody can answer for the {ministry}: it and the Chancellorship are both vacant."
+    empty: "Write something first."
+    gone: "That question no longer exists."
+    closed: "That question is already closed."
+    notYours: "Only the responsible minister can answer this question: {minister}."
+  alert:
+    nobodyToAnswer: "A question from {asker} to the {ministry} is due at the next resolution, but the ministry and the Chancellorship are both vacant; it will be dropped unless someone is appointed."
