@@ -165,6 +165,8 @@ info:
     discontent: "Discontent: {discontent}"
     conditions: "**Conditions**"
     stationed: "Stationed: {units}"
+    lastElection: "Last election: {results}"
+    result: "{party} {seats}"
     unit: "{name} · d{sides}"
 
 me:

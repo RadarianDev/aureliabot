@@ -239,6 +239,14 @@ public class InfoModule : InteractionModuleBase<SocketInteractionContext>
             sb.AppendLine(Texts.Get("info.province.stationed",
                 ("units", string.Join(", ", units.Select(u => Texts.Get("info.province.unit", ("name", u.Name), ("sides", u.Sides)))))));
         }
+
+        var results = _data.GetProvinceResults().Where(r => r.ProvinceId == provinceId && r.Seats > 0).OrderByDescending(r => r.Seats).ToList();
+        if (results.Count > 0)
+        {
+            if (units.Count == 0) sb.AppendLine();
+            sb.AppendLine(Texts.Get("info.province.lastElection",
+                ("results", string.Join(", ", results.Select(r => Texts.Get("info.province.result", ("party", r.PartyName), ("seats", r.Seats)))))));
+        }
         return sb.ToString();
     }
 }
