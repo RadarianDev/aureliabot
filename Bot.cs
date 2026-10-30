@@ -47,6 +47,7 @@ public class Bot
             .AddSingleton<CrisisPublisher>()
             .AddSingleton<ForcesPublisher>()
             .AddSingleton<ProjectPublisher>()
+            .AddSingleton<ReminderService>()
             .BuildServiceProvider();
 
         _data = _services.GetRequiredService<DatabaseService>();
@@ -141,6 +142,12 @@ public class Bot
         {
             try { await resolution.RunAsync(CancellationToken.None); }
             catch (Exception ex) { Console.WriteLine($"[Resolution] Poller stopped: {ex}"); }
+        });
+
+        _ = Task.Run(async () =>
+        {
+            try { await _services.GetRequiredService<ReminderService>().RunAsync(CancellationToken.None); }
+            catch (Exception ex) { Console.WriteLine($"[Reminders] Loop stopped: {ex}"); }
         });
 
         _ = Task.Run(async () =>

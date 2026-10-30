@@ -10,6 +10,8 @@ public partial class DatabaseService
         using var tx = conn.BeginTransaction();
 
         var state = GetGameStateTx(conn, tx);
+        var before = state;
+        var discontentBefore = GetProvincesTx(conn, tx).ToDictionary(p => p.Id, p => p.Discontent);
         var report = new ResolutionReport
         {
             ResolutionNumber = state.ResolutionNumber + 1,
@@ -45,6 +47,7 @@ public partial class DatabaseService
         {
             FireDueEventsTx(conn, tx, config, report);
             OpenScheduledReadingsTx(conn, tx, config, report);
+            ThresholdAlertsTx(conn, tx, before, discontentBefore, config, report);
         }
 
         LogTx(conn, tx, LogKinds.Resolution, "resolution", $"Resolved {GameCalendar.Label(report.FromSeason, report.FromYear)} with seed {seed}.");
