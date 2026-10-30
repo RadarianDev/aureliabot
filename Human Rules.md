@@ -30,7 +30,7 @@
 - **Issues** are what the people care about. Each has a **public opinion** (for or against), which conditions shift province by province, and a national **salience** (how much it matters).
 - Issues are broad questions, such as Free Trade or the Franchise. They arrive through events and crises, and leave only when an event or a law settles them for good.
 - Laws come as **bills**. Each bill is one law on an issue, leaning *For* or *Against* it, so an issue can carry rival bills. New bills arrive through events, crises and other laws.
-- Every party keeps a **programme**: a stance on any issues it chooses, from *Strongly For*, *For*, *Against* or *Strongly Against*. An issue left off means no stance.
+- Every party keeps a **programme**: a stance on any issues it chooses, from *Strongly For*, *For*, *Against*, *Strongly Against* or *Silent* (non-aligned). Silent, like an issue left off, means no stance.
 - A party sends its programme to the GM, who records it.
 - In the pre-election turn the programme can change freely. At any other time, flipping a stance between for and against is announced publicly and costs every member popularity.
 ## Events & Crises
