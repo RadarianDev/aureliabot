@@ -756,7 +756,6 @@ content:
     missing: "{role} `{id}` does not exist."
     notReady: "{role} `{id}` ({kind}) is {status}, not Ready."
   live:
-    laterStage: Editing live projects and crises comes in a later stage.
     noIssue: "`{id}` has no live issue: it hasn't been opened."
     noBill: "`{id}` has no live bill: it hasn't been made available."
     noEvent: "`{id}` has no queued event to edit."
@@ -1745,3 +1744,75 @@ crackdown:
   alert:
     failed: "The crackdown in {province} failed (gendarmerie {total} against {roll} on a d{sides}); the Interior minister {minister} lost popularity. Write the follow-up, for example with `/gm apply`."
     postFailed: "A crackdown post failed: {error}"
+
+agenda:
+  header: "## The GM's agenda\nThe next resolution: {when}"
+  nobody: "nobody (the ministry and the Chancellorship are both vacant)"
+  events:
+    heading: "**Event queue**"
+    emptyNext: "⚠️ No event is queued for the next resolution, so the next turn opens with no news."
+    emptyStart: "⚠️ No event is queued to fire at `/gm start`."
+    line: "- {title} (`{template}`, #{id}) · fires {when}"
+  crises:
+    heading: "**Crises with no response**"
+    none: "Every live crisis has its answer."
+    line: "- {crisis} (#{id}) · {ministry} · answered by {minister} · due {due}"
+  questions:
+    heading: "**Questions with no answer**"
+    none: "No question is waiting for an answer."
+    line: "- {asker} to the {ministry} · answered by {minister} · due {due}: *{text}*"
+  vacant:
+    heading: "**Vacant posts**"
+    none: "Every post in the cabinet is filled."
+    chancellor: "- The Chancellorship is vacant: no government bill can be proposed, and vacant ministries fall to nobody."
+    covered: "- The {ministry} is vacant; the Chancellor {chancellor} answers for it."
+    uncovered: "- The {ministry} is vacant, and nobody answers for it: its crises run to their default and questions to it are dropped."
+  joins:
+    heading: "**Party join applications**"
+    none: "No application is pending."
+    line: "- {faction} to join {party} · {accepts} accept, {declines} decline, of {members} members"
+  scheduled:
+    heading: "**Scheduled bills**"
+    none: "No bill is scheduled."
+    government: "- {bill}, the government's bill from {sponsor} · its vote opens {opens}"
+    private: "- {bill}, a private bill from {sponsor} · its vote opens {opens}"
+  votes:
+    heading: "**Open votes**"
+    none: "No vote is open."
+    tally: "{yes} Yes, {no} No, {abstain} abstaining (seats)"
+    reading: "- Bill: {bill} · {tally} · counted {due}"
+    noConfidence: "- No confidence, tabled by {tabler} · {tally} · counted {due}"
+    gathering: "- No confidence, tabled by {tabler} · gathering signatures: {supporters} of {threshold} · lapses {until}"
+    cabinet: "- Cabinet approval for Chancellor {chancellor} · {tally} · counted {due}"
+
+gmCrisis:
+  autocomplete:
+    awaiting: "#{id} {crisis} · {ministry} · awaiting an answer"
+    answered: "#{id} {crisis} · {ministry} · answered"
+  cancel:
+    notLive: "That crisis isn't live. Pick one from the list."
+    confirm: "Withdraw the crisis **{crisis}** ({ministry})? It is cancelled at once and never resolves: no answer, complication or default applies, and nobody gains or loses popularity over it. Its post in #news is marked withdrawn, and a note goes to #news."
+    responded: "The minister has already answered it; that answer is discarded."
+    refundOne: "One faction condemned it; its opposition action is given back."
+    refundMany: "{count} factions condemned it; their opposition actions are given back."
+    button: "Withdraw"
+    done: "**{crisis}** is withdrawn."
+  edit:
+    title: "Edit live crisis: {crisis}"
+    tooLong: "The live crisis **{crisis}** is {length} characters of YAML, more than a form holds ({limit})."
+    locked: "**{crisis}** is locked: its minister has already answered, and a crisis can't change under an answer."
+    keeps: "A live crisis keeps its `ministry` and `issue`. Nothing was changed."
+  post:
+    withdrawn: "**Withdrawn.** This crisis no longer needs an answer."
+  news:
+    withdrawn: "## {crisis}\nThe matter has passed out of the government's hands, and the crisis is at an end."
+    withdrawnMessage: "## {crisis}\nThe matter has passed out of the government's hands, and the crisis is at an end.\n> {message}"
+  private:
+    amended: "The crisis **{crisis}** has been amended. Read its post in #news again before you answer."
+
+liveEdit:
+  noCrisis: "`{id}` has no live crisis: none is waiting for an answer."
+  noProject: "`{id}` has no live project: it isn't under way."
+  projectKeeps: "A live project can change only its `effects` and its bonus's `text` and `effects`. Nothing was changed."
+  projectEdited: "Edited the live project **{project}** (`{id}`)."
+  crisisEdited: "Edited the live crisis **{crisis}** (`{id}`). Its post in #news is updated, and its minister is told."

@@ -45,6 +45,41 @@ public class CrisisPublisher
                 ("crisis", crisis.Title), ("ministry", crisis.Ministry.DisplayName()), ("due", GovernmentPublisher.Deadline(state, crisis.DueResolution))));
     }
 
+    public async Task RefreshPostAsync(long crisisId)
+    {
+        if (_data.GetCrisis(crisisId) is not { MessageId: { } messageId } crisis) return;
+        var post = CrisisPost(crisis, _data.GetGameState(), _constants.Config, IssueTitle(_data, crisis.IssueId));
+        if (crisis.Status == CrisisStatus.Cancelled) post = Texts.Get("gmCrisis.post.withdrawn") + "\n" + post;
+        await Safely(() => EditAsync(messageId, post));
+    }
+
+    public async Task WithdrawAsync(Crisis crisis, string? message, string source)
+    {
+        await RefreshPostAsync(crisis.Id);
+        var note = string.IsNullOrWhiteSpace(message)
+            ? Texts.Get("gmCrisis.news.withdrawn", ("crisis", crisis.Title))
+            : Texts.Get("gmCrisis.news.withdrawnMessage", ("crisis", crisis.Title), ("message", message.Trim().ReplaceLineEndings("\n> ")));
+        await Safely(() => PostAsync(note, source));
+    }
+
+    public async Task NotifyAmendedAsync(long crisisId)
+    {
+        if (_data.GetCrisis(crisisId) is not { Status: CrisisStatus.Live } crisis
+            || _data.ResponsibleMinister(crisis.Ministry) is not { } minister) return;
+        await Safely(() => _factionChannels.SendAsync(minister, Texts.Get("gmCrisis.private.amended", ("crisis", crisis.Title))));
+    }
+
+    private async Task EditAsync(ulong messageId, string text)
+    {
+        if (_data.GetChannel(ChannelRole.News) is not { } channelId || _client.GetChannel(channelId) is not IMessageChannel channel
+            || await channel.GetMessageAsync(messageId) is not IUserMessage post) return;
+        await post.ModifyAsync(p =>
+        {
+            p.Content = Display.Truncate(text);
+            p.AllowedMentions = AllowedMentions.None;
+        });
+    }
+
     public static string IssueTitle(DatabaseService data, string issueId) => data.GetIssue(issueId)?.Title ?? issueId;
 
     public static string AnswerLine(int number, CrisisAnswer answer) =>
