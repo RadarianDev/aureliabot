@@ -32,14 +32,14 @@ public class CabinetSyncService
         var problems = new List<string>();
         if (_data.GetChannel(ChannelRole.CabinetRole) is not { } roleId)
         {
-            problems.Add("No Cabinet role is set; set it with `/gm channel set` or `/gm setup`.");
+            problems.Add(Texts.Get("sync.cabinet.noRole"));
             return problems;
         }
 
         var guild = _client.Guilds.FirstOrDefault(g => g.GetRole(roleId) is not null);
         if (guild?.GetRole(roleId) is not { } role)
         {
-            problems.Add($"The Cabinet role <@&{roleId}> no longer exists; set it again with `/gm channel set` or `/gm setup`.");
+            problems.Add(Texts.Get("sync.cabinet.roleGone", ("role", roleId)));
             await _alerts.PostAsync(problems[^1]);
             return problems;
         }
@@ -55,11 +55,11 @@ public class CabinetSyncService
         foreach (var userId in holders)
         {
             if (guild.GetUser(userId) is not { } user || user.Roles.Any(r => r.Id == role.Id)) continue;
-            await TryAsync(problems, $"give {user.Username} the Cabinet role", () => user.AddRoleAsync(role));
+            await TryAsync(problems, Texts.Get("sync.cabinet.give", ("user", user.Username)), () => user.AddRoleAsync(role));
         }
 
         foreach (var user in guild.Users.Where(u => !holders.Contains(u.Id) && u.Roles.Any(r => r.Id == role.Id)).ToList())
-            await TryAsync(problems, $"take the Cabinet role from {user.Username}", () => user.RemoveRoleAsync(role));
+            await TryAsync(problems, Texts.Get("sync.cabinet.take", ("user", user.Username)), () => user.RemoveRoleAsync(role));
 
         return problems;
     }
@@ -72,7 +72,7 @@ public class CabinetSyncService
         }
         catch (Exception ex)
         {
-            var problem = $"Discord refused to {what}: {ex.Message}";
+            var problem = Texts.Get("sync.discordRefused", ("what", what), ("error", ex.Message));
             problems.Add(problem);
             await _alerts.PostAsync(problem);
         }

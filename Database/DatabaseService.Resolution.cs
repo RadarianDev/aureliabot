@@ -126,7 +126,7 @@ public partial class DatabaseService
         foreach (var bill in QueryBillsTx(conn, tx, "status = 'Cooldown' AND cooldown_until <= $resolution", ("$resolution", advanced.ResolutionNumber)))
         {
             Exec(conn, tx, "UPDATE bills SET status = 'Available', cooldown_until = NULL WHERE id = $id;", ("$id", bill.Id));
-            report.Alerts.Add($"{bill.Title} is back from its cooldown and can be proposed again.");
+            report.Alerts.Add(Texts.Get("alerts.billCooldownOver", ("bill", bill.Title)));
         }
     }
 
@@ -144,6 +144,6 @@ public partial class DatabaseService
         }
 
         if (!QueryEventsTx(conn, tx, "status = 'Queued' AND fire_at_resolution <= $next", "id", ("$next", state.ResolutionNumber + 1)).Any())
-            report.Alerts.Add($"No event is queued for the start of the next turn, after {state.Label}.");
+            report.Alerts.Add(Texts.Get("alerts.noEventQueued", ("label", state.Label)));
     }
 }

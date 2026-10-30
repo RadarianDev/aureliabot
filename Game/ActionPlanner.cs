@@ -99,38 +99,38 @@ internal static class ActionPlanner
     private static ActionOutcome PlanCampaign(PendingAction action, IReadOnlyList<PendingAction> campaigns, ActionStartState start, ActionScoring scoring)
     {
         if (!start.IssueOpen(action.IssueId))
-            return Fizzle(action, "Fizzled: the issue was closed.", "Your campaign fizzled: the issue was closed before the resolution.");
+            return Fizzle(action, Texts.Get("data.action.fizzledClosed"), Texts.Get("data.action.campaignClosed"));
         if (action.Stance is not { } stance || stance == Stance.Silent)
-            return Fizzle(action, "Fizzled: no stance.", "Your campaign fizzled: it had no stance.");
+            return Fizzle(action, Texts.Get("data.action.fizzledNoStance"), Texts.Get("data.action.campaignNoStance"));
 
         var m = start.Crowding ? SameSideCampaigners(campaigns, action.IssueId, stance) : 1;
         var gain = scoring.CampaignGain(stance, start.NationalOpinion(action.IssueId), start.Salience(action.IssueId), m);
         return new ActionOutcome(action, false, gain, 0, null,
-            $"Campaigned {stance.DisplayName()}: {Display.Signed(gain)} popularity.", null);
+            Texts.Get("data.action.campaigned", ("stance", stance.DisplayName()), ("change", Display.Signed(gain))), null);
     }
 
     private static ActionOutcome PlanAttack(PendingAction action, ActionStartState start, ActionScoring scoring)
     {
         if (!start.IssueOpen(action.IssueId))
-            return Fizzle(action, "Fizzled: the issue was closed.", "Your attack fizzled: the issue was closed before the resolution.");
+            return Fizzle(action, Texts.Get("data.action.fizzledClosed"), Texts.Get("data.action.attackClosed"));
         var target = start.AttackTargetOf(action);
         if (target.Refusal is not null || target.Stance is not { } stance || stance == Stance.Silent)
-            return Fizzle(action, $"Fizzled: {target.Refusal ?? "the target holds no stance"}.",
-                $"Your attack fizzled: {target.Refusal ?? "the target holds no stance on the issue"}.");
+            return Fizzle(action, Texts.Get("data.action.fizzledBecause", ("reason", target.Refusal ?? Texts.Get("data.action.targetNoStanceShort"))),
+                Texts.Get("data.action.attackFizzled", ("reason", target.Refusal ?? Texts.Get("data.attack.targetNoStance"))));
 
         var result = scoring.Attack(stance, start.NationalOpinion(action.IssueId), start.Salience(action.IssueId));
         var text = result.Succeeded
-            ? $"Attack on {stance.DisplayName()} succeeded: target {Display.Signed(result.TargetChange)} popularity."
-            : $"Attack on {stance.DisplayName()} backfired: {Display.Signed(result.AttackerChange)} popularity.";
+            ? Texts.Get("data.action.attackSucceeded", ("stance", stance.DisplayName()), ("change", Display.Signed(result.TargetChange)))
+            : Texts.Get("data.action.attackBackfired", ("stance", stance.DisplayName()), ("change", Display.Signed(result.AttackerChange)));
         return new ActionOutcome(action, false, result.AttackerChange, result.TargetChange, stance, text, null, result.Succeeded);
     }
 
     private static ActionOutcome PlanPoll(PendingAction action, ActionStartState start, ActionScoring scoring)
     {
         if (!start.IssueOpen(action.IssueId))
-            return Fizzle(action, "Fizzled: the issue was closed.", "Your poll fizzled: the issue was closed before the resolution.");
+            return Fizzle(action, Texts.Get("data.action.fizzledClosed"), Texts.Get("data.action.pollClosed"));
         var line = scoring.Poll(action);
-        return new ActionOutcome(action, false, 0, 0, null, "Poll delivered.", line);
+        return new ActionOutcome(action, false, 0, 0, null, Texts.Get("data.action.pollDelivered"), line);
     }
 
     private static ActionOutcome Fizzle(PendingAction action, string result, string message) =>

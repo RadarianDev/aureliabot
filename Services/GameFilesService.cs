@@ -86,8 +86,8 @@ public class GameFilesService : IDisposable
     {
         var error = _constants.Reload();
         await _alerts.PostAsync(error is null
-            ? "Config files changed: `config/` reloaded. Values already in play are unchanged."
-            : $"⚠️ Config files changed, but they don't load; the old config stays in force.\n{error}");
+            ? Texts.Get("files.config.reloaded")
+            : Texts.Get("files.config.failed", ("error", error)));
     }
 
     public async Task ReportContentAsync()
@@ -177,11 +177,11 @@ public class GameFilesService : IDisposable
     {
         var sb = new StringBuilder();
         var ok = result.Imported.Count(o => o.Imported);
-        sb.AppendLine($"**Content files loaded:** {ok} imported or updated, {result.MadeReady.Count} marked Ready, {result.Unchanged} unchanged.");
+        sb.AppendLine(Texts.Get("files.content.summary", ("ok", ok), ("ready", result.MadeReady.Count), ("unchanged", result.Unchanged)));
         foreach (var failed in result.Imported.Where(o => !o.Imported))
             sb.AppendLine(ContentRules.Describe(failed));
         foreach (var problem in result.NotReady)
-            sb.AppendLine($"- Left as Draft: {problem}");
+            sb.AppendLine(Texts.Get("files.content.leftAsDraft", ("problem", problem)));
         return Display.Truncate(sb.ToString().TrimEnd());
     }
 

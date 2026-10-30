@@ -23,17 +23,17 @@ public class Publisher
 
         if (report.CampaignDay)
         {
-            var dispatch = new List<string> { $"## Dispatches from the hustings\n{GameCalendar.Label(report.FromSeason, report.FromYear)}" };
-            dispatch.Add(actionLines.Count == 0 ? "A quiet day on the hustings." : string.Join("\n", actionLines));
+            var dispatch = new List<string> { Texts.Get("news.dispatches.header", ("season", GameCalendar.Label(report.FromSeason, report.FromYear))) };
+            dispatch.Add(actionLines.Count == 0 ? Texts.Get("news.dispatches.quiet") : string.Join("\n", actionLines));
             await PostAsync(ChannelRole.News, string.Join("\n", dispatch), source);
         }
         else
         {
-            var news = new List<string> { $"## {GameCalendar.Label(report.ToSeason, report.ToYear)}" };
+            var news = new List<string> { Texts.Get("news.season.header", ("season", GameCalendar.Label(report.ToSeason, report.ToYear))) };
             if (report.PreElectionOpened)
-                news.Add("The hustings open: this season ends in an election.");
+                news.Add(Texts.Get("news.season.hustingsOpen"));
             if (_data.GetGameState().NextResolutionAt is { } next)
-                news.Add($"The season closes {Display.When(next)}.");
+                news.Add(Texts.Get("news.season.closes", ("when", Display.When(next))));
             news.AddRange(report.News);
             await PostAsync(ChannelRole.News, string.Join("\n", news), source);
 
@@ -41,7 +41,7 @@ public class Publisher
 
             if (actionLines.Count > 0)
                 await PostAsync(ChannelRole.CampaignLog,
-                    $"## The campaign, {GameCalendar.Label(report.FromSeason, report.FromYear)}\n" + string.Join("\n", actionLines), source);
+                    Texts.Get("news.campaignLog.header", ("season", GameCalendar.Label(report.FromSeason, report.FromYear))) + "\n" + string.Join("\n", actionLines), source);
         }
 
         foreach (var (factionId, messages) in report.PrivateMessages)
@@ -70,7 +70,7 @@ public class Publisher
     public string EventPost(FiredEventReport fired, string when, EffectNames names)
     {
         var lines = EffectSummary.Lines(fired.Effects, names, _constants.Current.Display);
-        var post = $"## {fired.Title}\n{when}\n{fired.Text}";
+        var post = Texts.Get("news.event.post", ("title", fired.Title), ("when", when), ("text", fired.Text));
         return lines.Count == 0 ? post : post + "\n\n" + string.Join("\n", lines);
     }
 
@@ -84,14 +84,16 @@ public class Publisher
             switch (action.Kind)
             {
                 case ActionKind.Campaign:
-                    var stance = action.Stance?.DisplayName() ?? "no stance";
-                    yield return $"{actor} campaigns *{stance}* on {issue}{(action.OffProgramme ? " (off-programme)" : "")}: popularity {Display.Signed(action.ActorPopularityChange)}.";
+                    var stance = action.Stance?.DisplayName() ?? Texts.Get("news.action.noStance");
+                    yield return Texts.Get("news.action.campaign", ("actor", actor), ("stance", stance), ("issue", issue),
+                        ("offProgramme", action.OffProgramme ? Texts.Get("news.action.offProgramme") : ""),
+                        ("change", Display.Signed(action.ActorPopularityChange)));
                     break;
                 case ActionKind.Attack when action.TargetFactionId is { } targetId:
                     var target = Display.Faction(_data, targetId);
                     yield return action.AttackSucceeded
-                        ? $"{actor} attacks {target} on {issue}, and lands the blow: {target} popularity {Display.Signed(action.TargetPopularityChange)}."
-                        : $"{actor} attacks {target} on {issue}, but the nation sides with {target}: {actor} popularity {Display.Signed(action.ActorPopularityChange)}.";
+                        ? Texts.Get("news.action.attackLanded", ("actor", actor), ("target", target), ("issue", issue), ("change", Display.Signed(action.TargetPopularityChange)))
+                        : Texts.Get("news.action.attackBackfired", ("actor", actor), ("target", target), ("issue", issue), ("change", Display.Signed(action.ActorPopularityChange)));
                     break;
             }
         }
@@ -136,29 +138,32 @@ public class Publisher
         var parties = _data.GetAllParties();
         var factions = _data.GetActiveFactions();
 
-        var calendar = $"{state.Label}{(state.IsPreElection ? " · **Pre-election**" : "")}{(state.Paused ? " · Paused" : "")}\n" +
-                       $"Next resolution: {Display.NextResolution(state)}\n" +
-                       $"Next election: end of {GameCalendar.Label(state.PreElectionSeason, state.PreElectionYear)}";
+        var calendar = Texts.Get("dashboard.calendar",
+            ("label", state.Label),
+            ("preElection", state.IsPreElection ? Texts.Get("dashboard.preElectionTag") : ""),
+            ("paused", state.Paused ? Texts.Get("dashboard.pausedTag") : ""),
+            ("nextResolution", Display.NextResolution(state)),
+            ("nextElection", GameCalendar.Label(state.PreElectionSeason, state.PreElectionYear)));
 
         var seatLines = parties
             .Select(p => (Party: p, Members: factions.Where(f => f.PartyId == p.Id).ToList()))
             .OrderByDescending(x => x.Members.Sum(m => m.Seats))
             .ThenBy(x => x.Party.Id)
-            .Select(x => $"{Display.Party(x.Party)}: {x.Members.Sum(m => m.Seats)} seats · {x.Members.Count} members")
+            .Select(x => Texts.Get("dashboard.partyLine", ("party", Display.Party(x.Party)), ("seats", x.Members.Sum(m => m.Seats)), ("members", x.Members.Count)))
             .ToList();
         var independents = factions.Where(f => f.IsIndependent).ToList();
         if (independents.Count > 0)
-            seatLines.Add($"Independents: {independents.Sum(f => f.Seats)} seats · {independents.Count} factions");
+            seatLines.Add(Texts.Get("dashboard.independentsLine", ("seats", independents.Sum(f => f.Seats)), ("factions", independents.Count)));
 
         var openIssues = _data.GetOpenIssues();
 
         return new EmbedBuilder()
-            .WithTitle($"The Kingdom of Aurelia · {state.Label}")
+            .WithTitle(Texts.Get("dashboard.title", ("label", state.Label)))
             .WithColor(new Color(0xB8, 0x86, 0x0B))
-            .AddField("Calendar", calendar)
-            .AddField($"The Assembly · {state.Seats} seats", seatLines.Count == 0 ? "No parties yet." : Display.Truncate(string.Join("\n", seatLines), 1024))
-            .AddField("Open issues", openIssues.Count == 0 ? "None yet." : Display.Truncate(string.Join("\n", openIssues.Select(i => i.Title)), 1024))
-            .WithFooter("Updated after every resolution")
+            .AddField(Texts.Get("dashboard.calendarField"), calendar)
+            .AddField(Texts.Get("dashboard.assemblyField", ("seats", state.Seats)), seatLines.Count == 0 ? Texts.Get("dashboard.noParties") : Display.Truncate(string.Join("\n", seatLines), 1024))
+            .AddField(Texts.Get("dashboard.issuesField"), openIssues.Count == 0 ? Texts.Get("dashboard.noIssues") : Display.Truncate(string.Join("\n", openIssues.Select(i => i.Title)), 1024))
+            .WithFooter(Texts.Get("dashboard.footer"))
             .WithCurrentTimestamp()
             .Build();
     }

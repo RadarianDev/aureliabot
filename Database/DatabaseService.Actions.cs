@@ -122,14 +122,14 @@ public partial class DatabaseService
 
     private static AttackTarget CheckAttackTx(SqliteConnection conn, SqliteTransaction? tx, ulong attackerId, ulong targetId, string issueId)
     {
-        if (attackerId == targetId) return new AttackTarget(null, "you cannot attack yourself");
-        if (GetFactionTx(conn, tx, targetId) is not { IsActive: true } target) return new AttackTarget(null, "the target is not an active faction");
+        if (attackerId == targetId) return new AttackTarget(null, Texts.Get("data.attack.self"));
+        if (GetFactionTx(conn, tx, targetId) is not { IsActive: true } target) return new AttackTarget(null, Texts.Get("data.attack.targetInactive"));
         var attacker = GetFactionTx(conn, tx, attackerId);
         if (attacker?.PartyId is { } partyId && target.PartyId == partyId)
-            return new AttackTarget(null, "the target is a member of your own party");
+            return new AttackTarget(null, Texts.Get("data.attack.ownParty"));
         var stance = GetStanceTx(conn, tx, targetId, issueId);
         return stance is null or Stance.Silent
-            ? new AttackTarget(null, "the target holds no stance on the issue")
+            ? new AttackTarget(null, Texts.Get("data.attack.targetNoStance"))
             : new AttackTarget(stance, null);
     }
 
@@ -161,7 +161,7 @@ public partial class DatabaseService
                 break;
             case ActionKind.Attack:
                 if (targetFactionId is not { } targetId)
-                    return new SubmitActionResult(SubmitActionOutcome.AttackRefused, null, null, pending, "no target was given");
+                    return new SubmitActionResult(SubmitActionOutcome.AttackRefused, null, null, pending, Texts.Get("data.attack.noTarget"));
                 var check = CheckAttackTx(conn, tx, factionId, targetId, issueId);
                 if (check.Refusal is not null)
                     return new SubmitActionResult(SubmitActionOutcome.AttackRefused, null, null, pending, check.Refusal);
@@ -215,9 +215,9 @@ public partial class DatabaseService
             "resolved = 0 AND faction_id IN (SELECT user_id FROM factions WHERE status = 'Active')");
         var resolutionNumber = state.ResolutionNumber + 1;
         Exec(conn, tx, @"
-            UPDATE actions SET resolved = 1, resolution_number = $resolution, result = 'Dropped: the faction is not active.'
+            UPDATE actions SET resolved = 1, resolution_number = $resolution, result = $result
             WHERE resolved = 0 AND faction_id NOT IN (SELECT user_id FROM factions WHERE status = 'Active');",
-            ("$resolution", resolutionNumber));
+            ("$resolution", resolutionNumber), ("$result", Texts.Get("data.action.dropped")));
         if (actions.Count == 0) return;
 
         var snapshot = LoadOpinionSnapshotTx(conn, tx, config);
@@ -225,7 +225,7 @@ public partial class DatabaseService
             .Where(a => a.Kind == ActionKind.Attack)
             .ToDictionary(a => a.Id, a => a.TargetFactionId is { } target
                 ? CheckAttackTx(conn, tx, a.FactionId, target, a.IssueId)
-                : new AttackTarget(null, "no target was given"));
+                : new AttackTarget(null, Texts.Get("data.attack.noTarget")));
 
         var start = new ActionStartState(
             state.ResolutionNumber,

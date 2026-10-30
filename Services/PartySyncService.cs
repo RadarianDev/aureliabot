@@ -130,16 +130,15 @@ public class PartySyncService
         var last = lastMemberId is { } knownLast ? _data.GetFaction(knownLast) : lastMembers.Count == 1 ? lastMembers[0] : null;
 
         var news = last is null
-            ? $"**The {dissolved.Name} dissolves.** Its benches have emptied, and what remains of it sits on as independent."
-            : $"**The {dissolved.Name} dissolves.** With its ranks dwindled to {Display.Faction(last)} alone, the party is no more. "
-              + $"{Display.Faction(last)} sits on as an independent and keeps {SeatsText(last.Seats)}.";
+            ? Texts.Get("news.party.dissolvedEmpty", ("party", dissolved.Name))
+            : Texts.Get("news.party.dissolvedLast", ("party", dissolved.Name), ("faction", Display.Faction(last)), ("seats", SeatsText(last.Seats)));
         var newsProblems = new List<string>();
         await PostNewsAsync(news, "party dissolution", newsProblems);
 
         await _alerts.PostAsync(
-            $"Party '{dissolved.Name}' (id {dissolved.Id}) dissolved"
-            + (last is null ? "; its last member could not be identified from the role holders." : $"; its last member {Display.Faction(last)} is now independent.")
-            + (problems.Count == 0 ? " Its role was deleted and its chat archived." : $" {problems.Count} Discord change(s) failed; see the alerts above.")
+            Texts.Get("alerts.party.dissolved", ("party", dissolved.Name), ("id", dissolved.Id),
+                ("last", last is null ? Texts.Get("alerts.party.lastUnknown") : Texts.Get("alerts.party.lastKnown", ("faction", Display.Faction(last)))),
+                ("outcome", problems.Count == 0 ? Texts.Get("alerts.party.cleanedUp") : Texts.Get("alerts.party.changesFailed", ("count", problems.Count))))
             + (newsProblems.Count > 0 ? "\n" + string.Join("\n", newsProblems) : ""));
     }
 
@@ -164,7 +163,7 @@ public class PartySyncService
         }
         var name = slug.ToString().Trim('-');
         if (name.Length > 100) name = name[..100].Trim('-');
-        return name.Length == 0 ? "party" : name;
+        return name.Length == 0 ? Texts.Get("sync.party.channelNameFallback") : name;
     }
 
     public static Color ParseColour(string hex) =>
@@ -193,13 +192,13 @@ public class PartySyncService
     private static double LabF(double t) =>
         t > 216.0 / 24389 ? Math.Cbrt(t) : (24389.0 / 27 * t + 16) / 116;
 
-    private static string SeatsText(long seats) => seats == 1 ? "its one seat" : $"its {seats} seats";
+    private static string SeatsText(long seats) => seats == 1 ? Texts.Get("news.party.oneSeat") : Texts.Get("news.party.seats", ("seats", seats));
 
     private async Task SyncPartyAsync(SocketGuild guild, long partyId, List<string> problems)
     {
         if (_data.GetParty(partyId) is not { } party)
         {
-            problems.Add($"Party {partyId} does not exist.");
+            problems.Add(Texts.Get("sync.party.missing", ("id", partyId)));
             return;
         }
 
@@ -221,12 +220,12 @@ public class PartySyncService
         IRole? role = party.RoleId is { } id ? guild.GetRole(id) : null;
 
         if (role is null)
-            return await TryAsync(problems, $"create the role for party '{party.Name}'",
+            return await TryAsync(problems, Texts.Get("sync.party.createRole", ("party", party.Name)),
                 async () => (IRole)await guild.CreateRoleAsync(party.Name, GuildPermissions.None, colours, isHoisted: true, isMentionable: false));
 
         if (role.Name != party.Name || role.Colors.PrimaryColor.RawValue != colour.RawValue
             || role.Colors.SecondaryColor is not null || !role.IsHoisted)
-            await TryAsync(problems, $"update the role {role.Name} for party '{party.Name}'",
+            await TryAsync(problems, Texts.Get("sync.party.updateRole", ("role", role.Name), ("party", party.Name)),
                 () => role.ModifyAsync(p =>
                 {
                     p.Name = party.Name;
@@ -243,11 +242,11 @@ public class PartySyncService
         foreach (var userId in members)
         {
             if (guild.GetUser(userId) is not { } user || user.Roles.Any(r => r.Id == role.Id)) continue;
-            await TryAsync(problems, $"give {user.Username} the role of party '{party.Name}'", () => user.AddRoleAsync(role));
+            await TryAsync(problems, Texts.Get("sync.party.giveRole", ("user", user.Username), ("party", party.Name)), () => user.AddRoleAsync(role));
         }
 
         foreach (var user in guild.Users.Where(u => !members.Contains(u.Id) && u.Roles.Any(r => r.Id == role.Id)).ToList())
-            await TryAsync(problems, $"take the role of party '{party.Name}' from {user.Username}", () => user.RemoveRoleAsync(role));
+            await TryAsync(problems, Texts.Get("sync.party.takeRole", ("user", user.Username), ("party", party.Name)), () => user.RemoveRoleAsync(role));
     }
 
     private async Task<ITextChannel?> EnsureChannelAsync(SocketGuild guild, Party party, IRole? role, List<string> problems)
@@ -255,7 +254,7 @@ public class PartySyncService
         var categoryId = _data.GetChannel(ChannelRole.PartyCategory);
         if (categoryId is not null && guild.GetCategoryChannel(categoryId.Value) is null)
         {
-            problems.Add($"The party category <#{categoryId}> no longer exists; set it again with `/gm channel set` or `/gm setup`.");
+            problems.Add(Texts.Get("sync.party.categoryGone", ("category", categoryId)));
             await _alerts.PostAsync(problems[^1]);
             categoryId = null;
         }
@@ -268,11 +267,11 @@ public class PartySyncService
         {
             if (categoryId is null)
             {
-                problems.Add($"No party category is set, so the chat of party '{party.Name}' could not be created.");
+                problems.Add(Texts.Get("sync.party.noCategory", ("party", party.Name)));
                 await _alerts.PostAsync(problems[^1]);
                 return null;
             }
-            return await TryAsync(problems, $"create the chat for party '{party.Name}'",
+            return await TryAsync(problems, Texts.Get("sync.party.createChat", ("party", party.Name)),
                 async () => (ITextChannel)await guild.CreateTextChannelAsync(name, p =>
                 {
                     p.CategoryId = categoryId.Value;
@@ -289,7 +288,7 @@ public class PartySyncService
         if (needsName || needsCategory || needsOverwrites)
         {
             var kept = channel.PermissionOverwrites.Where(e => overwrites.All(o => o.TargetId != e.TargetId));
-            await TryAsync(problems, $"update the chat <#{channel.Id}> of party '{party.Name}'",
+            await TryAsync(problems, Texts.Get("sync.party.updateChat", ("channel", channel.Id), ("party", party.Name)),
                 () => channel.ModifyAsync(p =>
                 {
                     if (needsName) p.Name = name;
@@ -333,11 +332,11 @@ public class PartySyncService
                 if (role is null)
                     await SyncPartyAsync(guild, party.Id, problems);
                 else if (!holds)
-                    await TryAsync(problems, $"give {user.Username} the role of party '{party.Name}'", () => user.AddRoleAsync(role));
+                    await TryAsync(problems, Texts.Get("sync.party.giveRole", ("user", user.Username), ("party", party.Name)), () => user.AddRoleAsync(role));
             }
             else if (holds)
             {
-                await TryAsync(problems, $"take the role of party '{party.Name}' from {user.Username}", () => user.RemoveRoleAsync(role!));
+                await TryAsync(problems, Texts.Get("sync.party.takeRole", ("user", user.Username), ("party", party.Name)), () => user.RemoveRoleAsync(role!));
             }
         }
     }
@@ -345,7 +344,7 @@ public class PartySyncService
     private async Task ArchiveAsync(SocketGuild guild, Party deleted, List<string> problems)
     {
         if (deleted.RoleId is { } roleId && guild.GetRole(roleId) is { } role)
-            await TryAsync(problems, $"delete the role of party '{deleted.Name}'", () => role.DeleteAsync());
+            await TryAsync(problems, Texts.Get("sync.party.deleteRole", ("party", deleted.Name)), () => role.DeleteAsync());
 
         if (deleted.ChannelId is not { } channelId || guild.GetTextChannel(channelId) is not { } channel) return;
 
@@ -353,7 +352,7 @@ public class PartySyncService
         if (archiveId is not null && guild.GetCategoryChannel(archiveId.Value) is null) archiveId = null;
         if (archiveId is null)
         {
-            problems.Add($"No archive category is set, so the chat <#{channel.Id}> of party '{deleted.Name}' was locked where it is.");
+            problems.Add(Texts.Get("sync.party.noArchive", ("channel", channel.Id), ("party", deleted.Name)));
             await _alerts.PostAsync(problems[^1]);
         }
 
@@ -366,7 +365,7 @@ public class PartySyncService
             overwrites.Add(new(gmRole.Id, PermissionTarget.Role,
                 new OverwritePermissions((ulong)ArchiveReadPermissions, (ulong)ArchiveDeniedPermissions)));
 
-        await TryAsync(problems, $"archive the chat <#{channel.Id}> of party '{deleted.Name}'",
+        await TryAsync(problems, Texts.Get("sync.party.archiveChat", ("channel", channel.Id), ("party", deleted.Name)),
             () => channel.ModifyAsync(p =>
             {
                 if (archiveId is not null) p.CategoryId = archiveId.Value;
@@ -385,12 +384,12 @@ public class PartySyncService
             }
             else
             {
-                problems.Add("No #news channel is set, so an announcement was not posted.");
+                problems.Add(Texts.Get("sync.party.noNews"));
             }
         }
         catch (Exception ex)
         {
-            problems.Add($"Could not post to #news: {ex.Message}");
+            problems.Add(Texts.Get("sync.party.newsFailed", ("error", ex.Message)));
         }
     }
 
@@ -399,7 +398,7 @@ public class PartySyncService
         var guild = FindGuild();
         if (guild is null)
         {
-            problems.Add("The bot is not connected to a server.");
+            problems.Add(Texts.Get("sync.party.noGuild"));
             return null;
         }
         if (!guild.HasAllMembers)
@@ -433,7 +432,7 @@ public class PartySyncService
         }
         catch (Exception ex)
         {
-            var problem = $"Discord refused to {what}: {ex.Message}";
+            var problem = Texts.Get("sync.discordRefused", ("what", what), ("error", ex.Message));
             problems.Add(problem);
             await _alerts.PostAsync(problem);
             return default;

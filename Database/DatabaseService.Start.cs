@@ -13,7 +13,7 @@ public partial class DatabaseService
         using var conn = Open();
         using var tx = conn.BeginTransaction();
         var state = GetGameStateTx(conn, tx);
-        if (state.Started) return new StartResult("The game has already started.", null);
+        if (state.Started) return new StartResult(Texts.Get("data.start.alreadyStarted"), null);
 
         Exec(conn, tx, "DELETE FROM province_conditions;");
         Exec(conn, tx, "DELETE FROM provinces;");
@@ -62,10 +62,12 @@ public partial class DatabaseService
             for (var i = 0; i < count; i++)
             {
                 var number = GetUnitsTx(conn, tx, UnitType.Division).Count + 1;
-                InsertUnitTx(conn, tx, UnitType.Division, $"{Ordinal(number)} {config.Province(provinceId)!.Name} Division", c.Division.BaseSides, provinceId);
+                InsertUnitTx(conn, tx, UnitType.Division,
+                    Texts.Get("data.unit.division", ("ordinal", Ordinal(number)), ("province", config.Province(provinceId)!.Name)), c.Division.BaseSides, provinceId);
             }
         foreach (var provinceId in c.StartingForces.Gendarmerie)
-            InsertUnitTx(conn, tx, UnitType.Gendarmerie, $"{config.Province(provinceId)!.Name} Gendarmerie", c.Gendarmerie.BaseSides, provinceId);
+            InsertUnitTx(conn, tx, UnitType.Gendarmerie,
+                Texts.Get("data.unit.gendarmerie", ("province", config.Province(provinceId)!.Name)), c.Gendarmerie.BaseSides, provinceId);
 
         var report = new ResolutionReport
         {
@@ -77,7 +79,7 @@ public partial class DatabaseService
             PreElectionOpened = true,
         };
 
-        PostLedgerTx(conn, tx, LedgerAccount.Reserve, c.Reserve.Start, LedgerKind.CarryOver, "The opening reserve", "start", null, publicNow: true);
+        PostLedgerTx(conn, tx, LedgerAccount.Reserve, c.Reserve.Start, LedgerKind.CarryOver, Texts.Get("data.ledger.openingReserve"), "start", null, publicNow: true);
         ComputeBudgetTx(conn, tx, config, c.Start.Year);
         OpenFiscalYearTx(conn, tx, config, c.Start.Year, c.DefaultAllocation, report);
 
@@ -133,13 +135,13 @@ public partial class DatabaseService
             var leftover = GetBalanceTx(conn, tx, (LedgerAccount)(int)ministry);
             if (leftover > 0)
             {
-                PostLedgerTx(conn, tx, (LedgerAccount)(int)ministry, -leftover, LedgerKind.CarryOver, $"Unspent {fiscalYear - 1} funds to the reserve", "fiscal", fiscalYear.ToString(), true);
-                PostLedgerTx(conn, tx, LedgerAccount.Reserve, leftover, LedgerKind.CarryOver, $"Unspent {fiscalYear - 1} funds from {ministry.DisplayName()}", "fiscal", fiscalYear.ToString(), true);
+                PostLedgerTx(conn, tx, (LedgerAccount)(int)ministry, -leftover, LedgerKind.CarryOver, Texts.Get("data.ledger.unspentToReserve", ("year", fiscalYear - 1)), "fiscal", fiscalYear.ToString(), true);
+                PostLedgerTx(conn, tx, LedgerAccount.Reserve, leftover, LedgerKind.CarryOver, Texts.Get("data.ledger.unspentFrom", ("year", fiscalYear - 1), ("ministry", ministry.DisplayName())), "fiscal", fiscalYear.ToString(), true);
             }
         }
 
         var reserve = GetBalanceTx(conn, tx, LedgerAccount.Reserve);
-        PostLedgerTx(conn, tx, LedgerAccount.Reserve, reserve * (decimal)c.Reserve.Interest, LedgerKind.Interest, $"Interest {fiscalYear}", "fiscal", fiscalYear.ToString(), true);
+        PostLedgerTx(conn, tx, LedgerAccount.Reserve, reserve * (decimal)c.Reserve.Interest, LedgerKind.Interest, Texts.Get("data.ledger.interest", ("year", fiscalYear)), "fiscal", fiscalYear.ToString(), true);
 
         var allocated = 0m;
         foreach (var ministry in Enum.GetValues<Ministry>())
@@ -152,12 +154,12 @@ public partial class DatabaseService
                 INSERT INTO allocations (year, ministry, amount, submitted_by, submitted_at) VALUES ($year, $ministry, $amount, NULL, $now)
                 ON CONFLICT(year, ministry) DO NOTHING;",
                 ("$year", fiscalYear), ("$ministry", ministry.ToString()), ("$amount", Money(amount)), ("$now", Now()));
-            PostLedgerTx(conn, tx, (LedgerAccount)(int)ministry, amount, LedgerKind.Allocation, $"Allocation {fiscalYear}", "fiscal", fiscalYear.ToString(), true);
+            PostLedgerTx(conn, tx, (LedgerAccount)(int)ministry, amount, LedgerKind.Allocation, Texts.Get("data.ledger.allocation", ("year", fiscalYear)), "fiscal", fiscalYear.ToString(), true);
             if (ministry == Ministry.Navy)
-                PostLedgerTx(conn, tx, LedgerAccount.Navy, -amount, LedgerKind.Allocation, "Contribution paid to the Anzarian fleet", "fiscal", fiscalYear.ToString(), true);
+                PostLedgerTx(conn, tx, LedgerAccount.Navy, -amount, LedgerKind.Allocation, Texts.Get("data.ledger.navyContribution"), "fiscal", fiscalYear.ToString(), true);
         }
         if (budget - allocated > 0)
-            PostLedgerTx(conn, tx, LedgerAccount.Reserve, budget - allocated, LedgerKind.Allocation, $"Unallocated {fiscalYear} budget", "fiscal", fiscalYear.ToString(), true);
+            PostLedgerTx(conn, tx, LedgerAccount.Reserve, budget - allocated, LedgerKind.Allocation, Texts.Get("data.ledger.unallocated", ("year", fiscalYear)), "fiscal", fiscalYear.ToString(), true);
 
         PayUpkeepTx(conn, tx, config, fiscalYear, report);
 
@@ -177,13 +179,14 @@ public partial class DatabaseService
             var ministry = type.MinistryOf();
             var due = constants.Upkeep * units.Count;
             var balance = GetBalanceTx(conn, tx, (LedgerAccount)(int)ministry);
-            PostLedgerTx(conn, tx, (LedgerAccount)(int)ministry, -due, LedgerKind.Upkeep, $"Upkeep {fiscalYear}: {units.Count} {type.ToString().ToLowerInvariant()} unit(s)", "fiscal", fiscalYear.ToString(), true);
+            PostLedgerTx(conn, tx, (LedgerAccount)(int)ministry, -due, LedgerKind.Upkeep,
+                Texts.Get("data.ledger.upkeep", ("year", fiscalYear), ("count", units.Count), ("type", type.ToString().ToLowerInvariant())), "fiscal", fiscalYear.ToString(), true);
             if (balance >= due) continue;
 
             foreach (var unit in units)
                 Exec(conn, tx, "UPDATE units SET sides = MAX($base, sides - $step) WHERE id = $id;",
                     ("$base", constants.BaseSides), ("$step", constants.SidesStep), ("$id", unit.Id));
-            report.Alerts.Add($"The {ministry.DisplayName()} purse could not cover its {Display.Crowns(due)} upkeep; every {type.ToString().ToLowerInvariant()} unit lost a training step.");
+            report.Alerts.Add(Texts.Get("alerts.upkeepShort", ("ministry", ministry.DisplayName()), ("due", Display.Crowns(due)), ("type", type.ToString().ToLowerInvariant())));
         }
     }
 }
