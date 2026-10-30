@@ -101,7 +101,18 @@ public partial class DatabaseService
 
         public string? MakeBillAvailable(string templateId) => MakeBillAvailableTx(conn, tx, State, templateId);
 
-        public string? StartProject(string templateId) => Texts.Get("data.effect.projectNotBuilt");
+        public string? StartProject(string templateId) => StartProjectTx(conn, tx, config, templateId, null, source, report);
+
+        public int UnitCount(UnitType type, string provinceId) =>
+            GetUnitsTx(conn, tx, type).Count(u => u.ProvinceId == provinceId);
+
+        public string? RaiseUnits(UnitType type, string provinceId, int count) => RaiseUnitsTx(conn, tx, config, type, provinceId, count);
+
+        public string? RemoveUnits(UnitType type, string provinceId, int count) => RemoveUnitsTx(conn, tx, type, provinceId, count);
+
+        public string? ProgressProject(string templateId, decimal amount) => ProgressProjectTx(conn, tx, templateId, amount);
+
+        public string? HaltProject(string templateId) => HaltProjectTx(conn, tx, templateId);
 
         public string? PostCrisis(string templateId) => PostCrisisTx(conn, tx, State, config, templateId, source, report);
 

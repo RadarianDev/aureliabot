@@ -45,7 +45,7 @@ public enum UnitType { Division, Gendarmerie }
 
 public enum OrderKind { Raise, Train, Station, Crackdown }
 
-public enum ProjectStatus { Active, Stalled, Finished }
+public enum ProjectStatus { Active, Stalled, Finished, Halted }
 
 public enum ActionKind { Campaign, Attack, Poll }
 

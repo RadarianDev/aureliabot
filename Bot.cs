@@ -45,6 +45,8 @@ public class Bot
             .AddSingleton<AssemblyPublisher>()
             .AddSingleton<GovernmentPublisher>()
             .AddSingleton<CrisisPublisher>()
+            .AddSingleton<ForcesPublisher>()
+            .AddSingleton<ProjectPublisher>()
             .BuildServiceProvider();
 
         _data = _services.GetRequiredService<DatabaseService>();

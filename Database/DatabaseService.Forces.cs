@@ -57,3 +57,16 @@ public partial class DatabaseService
         },
     };
 }
+
+public partial class DatabaseService
+{
+    private static string? RaiseUnitsTx(SqliteConnection conn, SqliteTransaction tx, GameConfig config, UnitType type, string provinceId, int count) =>
+        Texts.Get("data.effect.forcesNotBuilt");
+
+    private static string? RemoveUnitsTx(SqliteConnection conn, SqliteTransaction tx, UnitType type, string provinceId, int count) =>
+        Texts.Get("data.effect.forcesNotBuilt");
+
+    private static void ApplyOrdersTx(SqliteConnection conn, SqliteTransaction tx, GameState state, GameConfig config, IRandomSource random, ResolutionReport report)
+    {
+    }
+}

@@ -26,7 +26,10 @@ public partial class DatabaseService
             ResolveDueCrisesTx(conn, tx, GetGameStateTx(conn, tx), config, report);
             ResolveDueQuestionsTx(conn, tx, GetGameStateTx(conn, tx), config, report);
             ResolveActionsTx(conn, tx, GetGameStateTx(conn, tx), config, random, report);
+            ApplyOrdersTx(conn, tx, GetGameStateTx(conn, tx), config, random, report);
+            PayProjectsTx(conn, tx, GetGameStateTx(conn, tx), config, report);
             SeasonalChangesTx(conn, tx, GetGameStateTx(conn, tx), config);
+            FiscalStepTx(conn, tx, GetGameStateTx(conn, tx), config, report);
         }
 
         state = GetGameStateTx(conn, tx);

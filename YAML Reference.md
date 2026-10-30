@@ -51,6 +51,9 @@ effects: { economy: -2, discontent.north_arpal: 1, open.labour: true, bill.ten_h
 | `condition.all.{condition}` | `1` or `-1` | Gives or removes a condition in every province. |
 | `event.{eventTemplate}` | `true` or a number | Queues a follow-up event from a Ready template: at the start of the next turn, or that many turns later. Players don't see it in the summary. |
 | `cancel.{eventTemplate}` | `true` | Cancels every queued copy of that event, so an answer or a law can avert it. Players don't see it in the summary. |
+| `division.{province}` / `gendarmerie.{province}` | whole number | Raises that many units there at their base die, or with a negative number destroys that many, the weakest first. |
+| `progress.{projectTemplate}` | number | Adds (or with a negative number removes) crowns of work on that live project; it finishes if the work reaches its price. |
+| `halt.{projectTemplate}` | `true` | Halts that live project for good; its effects never apply. |
 | `open.{issueTemplate}` | `true` | Opens a live issue from a Ready template. |
 | `close.{issue}` | `true` | Closes a live issue, and withdraws its bills. |
 | `bill.{billTemplate}` | `true` | Makes a bill available to propose. Its issue must be open. |

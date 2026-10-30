@@ -856,6 +856,8 @@ effects:
     noCrisisTemplate: no crisis template `{id}`.
     noFaction: no faction for user `{id}`.
     noEventTemplate: no event template `{id}`.
+    unitsShape: "write it as `{prefix}.<province>`."
+    unitsWhole: "give a whole number of units."
     eventDelay: "`{value}` is not a delay: give a whole number of turns, or nothing for the start of the next turn."
   summary:
     open: "New issue: {issue}"
@@ -883,6 +885,10 @@ effects:
     popularityHome: "Popularity of every faction from {province}"
     discontent: Discontent in {province}
     discontentAll: Discontent across the kingdom
+    divisions: "Divisions in {province}"
+    gendarmerie: "Gendarmerie in {province}"
+    progress: "Work on {project}"
+    halt: "Project halted: {project}"
     opinion: Opinion on {issue}
     salience: "Salience: {issue}"
     favour: Anzarian Favour
@@ -1121,6 +1127,7 @@ data:
   effect:
     warning: "{source}: `{key}`: {warning}"
     noPopularityTarget: "nobody holds that role or matches `{target}` right now"
+    forcesNotBuilt: forces are changed once stage 7 is built; nothing changed
     noProvince: no province {id}
     noCondition: no condition {id}
     issueNotOpen: issue {id} is not open

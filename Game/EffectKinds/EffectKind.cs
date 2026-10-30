@@ -31,6 +31,12 @@ public interface IEffectStore
     string? PostCrisis(string templateId);
     string? QueueEvent(string templateId, int delay);
     string? CancelEvents(string templateId);
+
+    int UnitCount(UnitType type, string provinceId);
+    string? RaiseUnits(UnitType type, string provinceId, int count);
+    string? RemoveUnits(UnitType type, string provinceId, int count);
+    string? ProgressProject(string templateId, decimal amount);
+    string? HaltProject(string templateId);
 }
 
 public abstract class EffectKind
@@ -101,6 +107,10 @@ public static class EffectKinds
         new CrisisEffect(),
         new QueueEventEffect(),
         new CancelEventEffect(),
+        new UnitsEffect("division", UnitType.Division),
+        new UnitsEffect("gendarmerie", UnitType.Gendarmerie),
+        new ProgressProjectEffect(),
+        new HaltProjectEffect(),
     ];
 
     private static readonly Dictionary<string, EffectKind> ByPrefix = All.ToDictionary(k => k.Prefix, StringComparer.Ordinal);
