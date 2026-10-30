@@ -20,7 +20,7 @@ public static partial class TemplateCodec
         }
         catch (YamlException ex)
         {
-            reader.ErrorAtLine((int)ex.Start.Line, $"YAML syntax: {YamlMessage(ex)}");
+            reader.ErrorAtLine((int)ex.Start.Line, Texts.Get("templates.yamlSyntax", ("message", YamlMessage(ex))));
         }
         return new TemplateParseResult(reader.Errors.Count == 0 ? template : null, reader.Errors);
     }
@@ -42,7 +42,15 @@ public static partial class TemplateCodec
         _ => kind.ToString().ToLowerInvariant() + "s",
     };
 
-    public static string KindName(TemplateKind kind) => kind.ToString().ToLowerInvariant();
+    public static string KindName(TemplateKind kind) => kind switch
+    {
+        TemplateKind.Issue => Texts.Get("names.templateKind.issue"),
+        TemplateKind.Bill => Texts.Get("names.templateKind.bill"),
+        TemplateKind.Project => Texts.Get("names.templateKind.project"),
+        TemplateKind.Event => Texts.Get("names.templateKind.event"),
+        TemplateKind.Crisis => Texts.Get("names.templateKind.crisis"),
+        _ => kind.ToString().ToLowerInvariant(),
+    };
 
     [GeneratedRegex("^[a-z0-9_]+$")]
     private static partial Regex SlugPattern();
@@ -66,14 +74,14 @@ public static partial class TemplateCodec
             stream.Load(new StringReader(yaml));
             if (stream.Documents.Count == 0)
             {
-                ErrorAtLine(null, "The file is empty.");
+                ErrorAtLine(null, Texts.Get("templates.emptyFile"));
                 return null;
             }
             if (stream.Documents.Count > 1)
-                Error(stream.Documents[1].RootNode, "Write one template per file.");
+                Error(stream.Documents[1].RootNode, Texts.Get("templates.onePerFile"));
             if (stream.Documents[0].RootNode is not YamlMappingNode root)
             {
-                Error(stream.Documents[0].RootNode, "The file must be a map of fields, such as `id: labour`.");
+                Error(stream.Documents[0].RootNode, Texts.Get("templates.notAMap"));
                 return null;
             }
 
@@ -98,8 +106,7 @@ public static partial class TemplateCodec
 
         private Template? Unknown(YamlNode root)
         {
-            Error(root, "Can't tell what kind of template this is: a crisis has `answers`, a bill `lean`, " +
-                        "a project `price`, an event `text` and an issue `for`.");
+            Error(root, Texts.Get("templates.unknownKind"));
             return null;
         }
 
@@ -122,7 +129,7 @@ public static partial class TemplateCodec
             var title = map.Text("title", required: true) ?? "";
             var issue = map.Slug("issue", required: true);
             if (issue is not null && context is not null && !context.IssueTemplates.Contains(issue))
-                Error(map.KeyNode("issue")!, $"`issue`: no issue template `{issue}`.");
+                Error(map.KeyNode("issue")!, Texts.Get("templates.noIssueTemplate", ("issue", issue)));
             var lean = map.Lean("lean", required: true, allowNeutral: false) ?? Lean.For;
             var motion = map.Text("motion", required: true) ?? "";
             var pass = map.Child("pass", required: true, "text", "effects");
@@ -146,11 +153,10 @@ public static partial class TemplateCodec
             var ministerial = map.Boolean("ministerial") ?? false;
             var requires = map.Slug("requires", required: false);
             if (requires is not null && context is not null && !context.Conditions.Contains(requires))
-                Error(map.KeyNode("requires")!, $"`requires`: unknown condition `{requires}`.");
+                Error(map.KeyNode("requires")!, Texts.Get("templates.unknownCondition", ("condition", requires)));
 
             if (province is null && !ministerial && effects.Concat(bonus?.Effects ?? []).Any(e => e.Target == EffectParser.Here))
-                Error(map.KeyNode("effects") ?? map.KeyNode("bonus") ?? (YamlNode)root,
-                    "`here` needs a `province`, or `ministerial: true` so the minister chooses one.");
+                Error(map.KeyNode("effects") ?? map.KeyNode("bonus") ?? (YamlNode)root, Texts.Get("templates.hereNeedsProvince"));
 
             return new ProjectTemplate(id, title, purse, province, price, term, effects, bonus, ministerial, requires);
         }
@@ -170,7 +176,7 @@ public static partial class TemplateCodec
             }
             if (bonus.Has("within")) within = bonus.Integer("within", required: true, 1);
             if (bonus.Has("by") == bonus.Has("within"))
-                Error(bonus.Node, "`bonus` needs exactly one deadline: `by: { season, year }` or `within: <seasons>`.");
+                Error(bonus.Node, Texts.Get("templates.bonusDeadline"));
             return new ProjectBonus(
                 season, year, within,
                 bonus.Text("text", required: false) ?? "",
@@ -190,7 +196,7 @@ public static partial class TemplateCodec
             {
                 var hasDate = node.Has("season") || node.Has("year");
                 if (hasDate && node.Has("delay") || !hasDate && !node.Has("delay"))
-                    Error(node.Node, "`schedule` takes either `{ season, year }` or `{ delay }`.");
+                    Error(node.Node, Texts.Get("templates.scheduleShape"));
                 if (node.Has("delay"))
                     schedule = new EventSchedule(null, null, node.Integer("delay", required: true, 0) ?? 0);
                 else
@@ -208,7 +214,7 @@ public static partial class TemplateCodec
             var province = map.Province("province", required: true) ?? "";
             var issue = map.Slug("issue", required: true);
             if (issue is not null && context is not null && !context.IssueTemplates.Contains(issue))
-                Error(map.KeyNode("issue")!, $"`issue`: no issue template `{issue}`.");
+                Error(map.KeyNode("issue")!, Texts.Get("templates.noIssueTemplate", ("issue", issue)));
 
             var answers = new List<CrisisAnswer>();
             var answersNode = map.Value("answers");
@@ -220,10 +226,10 @@ public static partial class TemplateCodec
                     number++;
                     if (item is not YamlMappingNode answerNode)
                     {
-                        Error(item, $"answer {number} must be a map with `lean`, `label`, `text` and optionally `price` and `effects`.");
+                        Error(item, Texts.Get("templates.answerNotMap", ("number", number)));
                         continue;
                     }
-                    var answer = new Map(this, answerNode, $"answer {number}: ", "lean", "label", "price", "text", "effects");
+                    var answer = new Map(this, answerNode, Texts.Get("templates.answerPath", ("number", number)),"lean", "label", "price", "text", "effects");
                     answers.Add(new CrisisAnswer(
                         answer.Lean("lean", required: true, allowNeutral: true) ?? Lean.Neutral,
                         answer.Text("label", required: true) ?? "",
@@ -232,11 +238,11 @@ public static partial class TemplateCodec
                         answer.Effects("effects", allowHere: false, allowCrisis: false)));
                 }
                 if (sequence.Children.Count < 2)
-                    Error(sequence, "A crisis needs at least two answers.");
+                    Error(sequence, Texts.Get("templates.twoAnswers"));
             }
             else if (answersNode is not null)
             {
-                Error(answersNode, "`answers` must be a list, each item starting with `- lean:`.");
+                Error(answersNode, Texts.Get("templates.answersList"));
             }
 
             var complication = ReadOutcome(map, "complication", required: false);
@@ -270,19 +276,22 @@ public static partial class TemplateCodec
                 {
                     if (key is not YamlScalarNode scalar || scalar.Value is null)
                     {
-                        reader.Error(key, $"{path}field names must be plain words.");
+                        reader.Error(key, Texts.Get("templates.plainFieldNames", ("path", path)));
                         continue;
                     }
                     if (!allowed.Contains(scalar.Value))
                     {
-                        reader.Error(key, $"{path}unknown field `{scalar.Value}`. Allowed here: {string.Join(", ", allowed.Select(a => $"`{a}`"))}.");
+                        reader.Error(key, Texts.Get("templates.unknownField", ("path", path), ("field", scalar.Value), ("allowed", QuotedList(allowed))));
                         continue;
                     }
                     _entries[scalar.Value] = (scalar, value);
                 }
             }
 
-            private string Name(string field) => $"{_path}`{field}`";
+            private static string QuotedList(IEnumerable<string> fields) =>
+                string.Join(", ", fields.Select(a => Texts.Get("templates.quotedField", ("field", a))));
+
+            private string Name(string field) => Texts.Get("templates.fieldName", ("path", _path), ("field", field));
 
             public bool Has(string field) => _entries.ContainsKey(field);
 
@@ -294,17 +303,17 @@ public static partial class TemplateCodec
             {
                 if (!_entries.TryGetValue(field, out var entry))
                 {
-                    if (required) _reader.Error(Node, $"{Name(field)} is required.");
+                    if (required) _reader.Error(Node, Texts.Get("templates.required", ("field", Name(field))));
                     return null;
                 }
                 if (entry.Value is not YamlScalarNode scalar)
                 {
-                    _reader.Error(entry.Value, $"{Name(field)} must be a single value.");
+                    _reader.Error(entry.Value, Texts.Get("templates.singleValue", ("field", Name(field))));
                     return null;
                 }
                 if (string.IsNullOrWhiteSpace(scalar.Value))
                 {
-                    if (required) _reader.Error(entry.Key, $"{Name(field)} is empty.");
+                    if (required) _reader.Error(entry.Key, Texts.Get("templates.emptyField", ("field", Name(field))));
                     return null;
                 }
                 return scalar.Value;
@@ -319,7 +328,7 @@ public static partial class TemplateCodec
                 var value = Scalar(field, required);
                 if (value is null) return null;
                 if (IsSlug(value)) return value;
-                _reader.Error(Line(field), $"{Name(field)} must be a slug of lowercase letters, digits and underscores, not `{value}`.");
+                _reader.Error(Line(field), Texts.Get("templates.slug", ("field", Name(field)), ("value", value)));
                 return null;
             }
 
@@ -327,7 +336,7 @@ public static partial class TemplateCodec
             {
                 var value = Slug(field, required);
                 if (value is not null && _reader.Context is { } context && !context.Provinces.Contains(value))
-                    _reader.Error(Line(field), $"{Name(field)}: unknown province `{value}`.");
+                    _reader.Error(Line(field), Texts.Get("templates.unknownProvince", ("field", Name(field)), ("value", value)));
                 return value;
             }
 
@@ -337,12 +346,13 @@ public static partial class TemplateCodec
                 if (value is null) return null;
                 if (!EffectParser.TryParseNumber(value, out var number))
                 {
-                    _reader.Error(Line(field), $"{Name(field)} must be a number, not `{value}`.");
+                    _reader.Error(Line(field), Texts.Get("templates.number", ("field", Name(field)), ("value", value)));
                     return null;
                 }
                 if (number < min || number > max)
                 {
-                    _reader.Error(Line(field), $"{Name(field)} must be from {EffectParser.FormatNumber(min)} to {EffectParser.FormatNumber(max)}, not {value}.");
+                    _reader.Error(Line(field), Texts.Get("templates.range", ("field", Name(field)),
+                        ("min", EffectParser.FormatNumber(min)), ("max", EffectParser.FormatNumber(max)), ("value", value)));
                     return null;
                 }
                 return number;
@@ -354,12 +364,12 @@ public static partial class TemplateCodec
                 if (value is null) return null;
                 if (!decimal.TryParse(value.Replace('−', '-'), NumberStyles.Number, CultureInfo.InvariantCulture, out var number))
                 {
-                    _reader.Error(Line(field), $"{Name(field)} must be a number of crowns, not `{value}`.");
+                    _reader.Error(Line(field), Texts.Get("templates.money", ("field", Name(field)), ("value", value)));
                     return null;
                 }
                 if (number < 0)
                 {
-                    _reader.Error(Line(field), $"{Name(field)} can't be negative.");
+                    _reader.Error(Line(field), Texts.Get("templates.negative", ("field", Name(field))));
                     return null;
                 }
                 return number;
@@ -371,12 +381,12 @@ public static partial class TemplateCodec
                 if (value is null) return null;
                 if (!int.TryParse(value.Replace('−', '-'), NumberStyles.Integer, CultureInfo.InvariantCulture, out var number))
                 {
-                    _reader.Error(Line(field), $"{Name(field)} must be a whole number, not `{value}`.");
+                    _reader.Error(Line(field), Texts.Get("templates.wholeNumber", ("field", Name(field)), ("value", value)));
                     return null;
                 }
                 if (number < min)
                 {
-                    _reader.Error(Line(field), $"{Name(field)} must be at least {min}.");
+                    _reader.Error(Line(field), Texts.Get("templates.atLeast", ("field", Name(field)), ("min", min)));
                     return null;
                 }
                 return number;
@@ -387,7 +397,7 @@ public static partial class TemplateCodec
                 var value = Scalar(field, required: false);
                 if (value is null) return null;
                 if (bool.TryParse(value, out var flag)) return flag;
-                _reader.Error(Line(field), $"{Name(field)} must be `true` or `false`.");
+                _reader.Error(Line(field), Texts.Get("templates.boolean", ("field", Name(field))));
                 return null;
             }
 
@@ -399,8 +409,8 @@ public static partial class TemplateCodec
                     && !int.TryParse(value, out _) && (allowNeutral || lean != global::Lean.Neutral))
                     return lean;
                 _reader.Error(Line(field), allowNeutral
-                    ? $"{Name(field)} must be `For`, `Against` or `Neutral`, not `{value}`."
-                    : $"{Name(field)} must be `For` or `Against`, not `{value}`.");
+                    ? Texts.Get("templates.leanWithNeutral", ("field", Name(field)), ("value", value))
+                    : Texts.Get("templates.lean", ("field", Name(field)), ("value", value)));
                 return null;
             }
 
@@ -411,8 +421,8 @@ public static partial class TemplateCodec
                 var match = PurseMinistries.Where(m => m.ToString().Equals(value, StringComparison.OrdinalIgnoreCase)).ToList();
                 if (match.Count == 1) return match[0];
                 _reader.Error(Line(field), value.Equals(nameof(global::Ministry.Navy), StringComparison.OrdinalIgnoreCase)
-                    ? $"{Name(field)}: the Navy has no minister; use `War`, `Interior`, `CommerceLabor` or `Treasury`."
-                    : $"{Name(field)} must be `War`, `Interior`, `CommerceLabor` or `Treasury`, not `{value}`.");
+                    ? Texts.Get("templates.navyMinistry", ("field", Name(field)))
+                    : Texts.Get("templates.ministry", ("field", Name(field)), ("value", value)));
                 return null;
             }
 
@@ -422,7 +432,7 @@ public static partial class TemplateCodec
                 if (value is null) return null;
                 if (Enum.TryParse<Season>(value, ignoreCase: true, out var season) && Enum.IsDefined(season) && !int.TryParse(value, out _))
                     return season;
-                _reader.Error(Line(field), $"{Name(field)} must be `Spring`, `Summer`, `Autumn` or `Winter`, not `{value}`.");
+                _reader.Error(Line(field), Texts.Get("templates.season", ("field", Name(field)), ("value", value)));
                 return null;
             }
 
@@ -430,12 +440,12 @@ public static partial class TemplateCodec
             {
                 if (!_entries.TryGetValue(field, out var entry))
                 {
-                    if (required) _reader.Error(Node, $"{Name(field)} is required.");
+                    if (required) _reader.Error(Node, Texts.Get("templates.required", ("field", Name(field))));
                     return null;
                 }
                 if (entry.Value is not YamlMappingNode mapping)
                 {
-                    _reader.Error(entry.Value, $"{Name(field)} must be a map with {string.Join(", ", allowed.Select(a => $"`{a}`"))}.");
+                    _reader.Error(entry.Value, Texts.Get("templates.childMap", ("field", Name(field)), ("allowed", QuotedList(allowed))));
                     return null;
                 }
                 return new Map(_reader, mapping, $"{_path}{field}.", allowed);
@@ -447,7 +457,7 @@ public static partial class TemplateCodec
                 if (entry.Value is YamlScalarNode { Value: null or "" }) return [];
                 if (entry.Value is not YamlMappingNode mapping)
                 {
-                    _reader.Error(entry.Value, $"{Name(field)} must be a map such as `{{ economy: -2, open.labour: true }}`.");
+                    _reader.Error(entry.Value, Texts.Get("templates.effectsMap", ("field", Name(field))));
                     return [];
                 }
 
@@ -457,18 +467,18 @@ public static partial class TemplateCodec
                 {
                     if (key is not YamlScalarNode { Value: { Length: > 0 } keyText })
                     {
-                        _reader.Error(key, $"{Name(field)}: each effect key must be a plain word, such as `economy`.");
+                        _reader.Error(key, Texts.Get("templates.effectKeyPlain", ("field", Name(field))));
                         continue;
                     }
                     if (value is not YamlScalarNode scalar)
                     {
-                        _reader.Error(value, $"{Name(field)}: `{keyText}` takes a single value.");
+                        _reader.Error(value, Texts.Get("templates.effectSingleValue", ("field", Name(field)), ("key", keyText)));
                         continue;
                     }
                     var raw = string.IsNullOrWhiteSpace(scalar.Value) ? null : scalar.Value;
                     var parsed = EffectParser.FromPairs([(keyText, raw)], context, allowHere, allowCrisis);
                     foreach (var error in parsed.Errors)
-                        _reader.Error(key, $"{Name(field)}: {error}");
+                        _reader.Error(key, Texts.Get("templates.effectError", ("field", Name(field)), ("error", error)));
                     effects.AddRange(parsed.Effects);
                 }
                 return effects;

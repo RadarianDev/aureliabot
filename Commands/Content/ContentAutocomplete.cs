@@ -13,7 +13,7 @@ public class ContentAutocomplete : AutocompleteHandler
             .OrderBy(t => t.Id.StartsWith(typed, StringComparison.OrdinalIgnoreCase) ? 0 : 1)
             .ThenBy(t => t.Id, StringComparer.Ordinal)
             .Take(25)
-            .Select(t => new AutocompleteResult(Display.Truncate($"{t.Id} · {TemplateCodec.KindName(t.Kind)} · {t.Status}", 100), t.Id));
+            .Select(t => new AutocompleteResult(Display.Truncate(Texts.Get("content.autocomplete", ("id", t.Id), ("kind", TemplateCodec.KindName(t.Kind)), ("status", t.Status)), 100), t.Id));
         return Task.FromResult(AutocompletionResult.FromSuccess(results));
     }
 }

@@ -56,7 +56,7 @@ public static class EffectParser
             var tokens = raw.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
             if (tokens.Length > 2)
             {
-                errors.Add($"`{raw}`: write one key and at most one value, such as `economy -2`.");
+                errors.Add(Texts.Get("effects.errors.tooManyTokens", ("raw", raw)));
                 continue;
             }
             pairs.Add((tokens[0], tokens.Length == 2 ? tokens[1] : null));
@@ -80,7 +80,7 @@ public static class EffectParser
             if (error is null && context is not null)
                 error = CheckIds(effect!, context);
             if (error is null) effects.Add(effect!);
-            else errors.Add($"`{key}`: {error}");
+            else errors.Add(Texts.Get("effects.errors.forKey", ("key", key), ("error", error)));
         }
         return new EffectParseResult(effects, errors);
     }
@@ -92,37 +92,37 @@ public static class EffectParser
     {
         effect = null;
         var parts = key.Split('.');
-        if (parts.Any(string.IsNullOrWhiteSpace)) return "is not a valid effect key.";
+        if (parts.Any(string.IsNullOrWhiteSpace)) return Texts.Get("effects.errors.invalidKey");
         var prefix = parts[0];
 
         if (Effect.ActionPrefixes.Contains(prefix))
         {
-            if (parts.Length != 2) return $"write it as `{prefix}.<id>`.";
+            if (parts.Length != 2) return Texts.Get("effects.errors.actionShape", ("prefix", prefix));
             if (rawValue is not null && !rawValue.Equals("true", StringComparison.OrdinalIgnoreCase))
-                return "an action takes no value (or `true` in YAML).";
-            if (prefix == "crisis" && !allowCrisis) return "only events can post a crisis.";
+                return Texts.Get("effects.errors.actionValue");
+            if (prefix == "crisis" && !allowCrisis) return Texts.Get("effects.errors.crisisOnlyEvents");
             effect = new Effect(key, null);
             return null;
         }
 
-        if (rawValue is null) return "needs a number.";
-        if (!TryParseNumber(rawValue, out var value)) return $"`{rawValue}` is not a number.";
+        if (rawValue is null) return Texts.Get("effects.errors.needsNumber");
+        if (!TryParseNumber(rawValue, out var value)) return Texts.Get("effects.errors.notANumber", ("value", rawValue));
 
         var shapeError = prefix switch
         {
-            _ when Effect.ScalarKeys.Contains(prefix) => parts.Length == 1 ? null : $"`{prefix}` takes no id.",
-            "purse" => parts.Length != 2 ? "write it as `purse.<ministry>`."
-                : parts[1] == nameof(Ministry.Navy) ? "the Navy purse is a contribution and cannot be changed by effects."
+            _ when Effect.ScalarKeys.Contains(prefix) => parts.Length == 1 ? null : Texts.Get("effects.errors.scalarNoId", ("prefix", prefix)),
+            "purse" => parts.Length != 2 ? Texts.Get("effects.errors.purseShape")
+                : parts[1] == nameof(Ministry.Navy) ? Texts.Get("effects.errors.navyPurse")
                 : PurseMinistries.Contains(parts[1]) ? null
-                : "the ministry must be War, Interior, CommerceLabor or Treasury.",
-            "discontent" => parts.Length == 2 ? HereCheck(parts[1], allowHere) : "write it as `discontent.<province>`.",
-            "condition" => parts.Length != 3 ? "write it as `condition.<province>.<condition>`."
-                : value is not (1 or -1) ? "a condition takes 1 (gives it) or -1 (removes it)."
+                : Texts.Get("effects.errors.purseMinistry"),
+            "discontent" => parts.Length == 2 ? HereCheck(parts[1], allowHere) : Texts.Get("effects.errors.discontentShape"),
+            "condition" => parts.Length != 3 ? Texts.Get("effects.errors.conditionShape")
+                : value is not (1 or -1) ? Texts.Get("effects.errors.conditionValue")
                 : HereCheck(parts[1], allowHere),
-            "opinion" or "salience" => parts.Length == 2 ? null : $"write it as `{prefix}.<issue>`.",
-            "popularity" => parts.Length == 2 && ulong.TryParse(parts[1], out _) ? null : "write it as `popularity.<faction user id>`.",
-            "baseline" => "issue opinion has no baseline; use `opinion.<issue>`, which lasts.",
-            _ => "is not an effect key.",
+            "opinion" or "salience" => parts.Length == 2 ? null : Texts.Get("effects.errors.issueShape", ("prefix", prefix)),
+            "popularity" => parts.Length == 2 && ulong.TryParse(parts[1], out _) ? null : Texts.Get("effects.errors.popularityShape"),
+            "baseline" => Texts.Get("effects.errors.noBaseline"),
+            _ => Texts.Get("effects.errors.unknownKey"),
         };
         if (shapeError is not null) return shapeError;
         effect = new Effect(key, value);
@@ -130,22 +130,22 @@ public static class EffectParser
     }
 
     private static string? HereCheck(string province, bool allowHere) =>
-        province == Here && !allowHere ? "`here` only works in a project's effects." : null;
+        province == Here && !allowHere ? Texts.Get("effects.errors.hereOnlyInProjects") : null;
 
     private static string? CheckIds(Effect effect, EffectContext context)
     {
         var target = effect.Target;
         return effect.Prefix switch
         {
-            "discontent" when target != Here && !context.Provinces.Contains(target!) => $"unknown province `{target}`.",
-            "condition" when target != Here && !context.Provinces.Contains(target!) => $"unknown province `{target}`.",
-            "condition" when !context.Conditions.Contains(effect.SubTarget!) => $"unknown condition `{effect.SubTarget}`.",
-            "opinion" or "salience" or "close" when !context.Issues.Contains(target!) => $"unknown issue `{target}`.",
-            "open" when !context.IssueTemplates.Contains(target!) => $"no issue template `{target}`.",
-            "bill" when !context.BillTemplates.Contains(target!) => $"no bill template `{target}`.",
-            "project" when !context.ProjectTemplates.Contains(target!) => $"no project template `{target}`.",
-            "crisis" when !context.CrisisTemplates.Contains(target!) => $"no crisis template `{target}`.",
-            "popularity" when !context.Factions.Contains(target!) => $"no faction for user `{target}`.",
+            "discontent" when target != Here && !context.Provinces.Contains(target!) => Texts.Get("effects.errors.unknownProvince", ("id", target)),
+            "condition" when target != Here && !context.Provinces.Contains(target!) => Texts.Get("effects.errors.unknownProvince", ("id", target)),
+            "condition" when !context.Conditions.Contains(effect.SubTarget!) => Texts.Get("effects.errors.unknownCondition", ("id", effect.SubTarget)),
+            "opinion" or "salience" or "close" when !context.Issues.Contains(target!) => Texts.Get("effects.errors.unknownIssue", ("id", target)),
+            "open" when !context.IssueTemplates.Contains(target!) => Texts.Get("effects.errors.noIssueTemplate", ("id", target)),
+            "bill" when !context.BillTemplates.Contains(target!) => Texts.Get("effects.errors.noBillTemplate", ("id", target)),
+            "project" when !context.ProjectTemplates.Contains(target!) => Texts.Get("effects.errors.noProjectTemplate", ("id", target)),
+            "crisis" when !context.CrisisTemplates.Contains(target!) => Texts.Get("effects.errors.noCrisisTemplate", ("id", target)),
+            "popularity" when !context.Factions.Contains(target!) => Texts.Get("effects.errors.noFaction", ("id", target)),
             _ => null,
         };
     }
