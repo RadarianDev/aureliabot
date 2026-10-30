@@ -314,11 +314,13 @@ public sealed class ConstantsStore
         var conditions = Read<Dictionary<string, ConditionDefinition>>(deserializer, directory, ConditionsFile)
             .Select(kv => kv.Value with { Id = kv.Key })
             .ToList();
+        var texts = TextCatalog.Load(directory);
 
         var config = new GameConfig(constants, provinces, conditions);
         var errors = Validate(config);
         if (errors.Count > 0)
             throw new ConfigException("Config is invalid:\n" + string.Join("\n", errors.Select(e => $"- {e}")));
+        Texts.Use(texts);
         return config;
     }
 

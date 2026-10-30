@@ -19,6 +19,17 @@ advancement, test fixture, help embeds).
 ## Conventions
 
 Code should be self-explanatory: avoid comments, and rely on clear naming and structure instead.
+
+**Every text the bot sends lives in [config/texts.yaml](config/texts.yaml)**, never as a literal in code:
+posts, replies, refusals, alerts, button labels, modal labels, poll and summary wording. Code calls
+`Texts.Get("section.key", ("name", value), ...)` with a literal key; the file holds the wording with
+`{name}` placeholders, grouped by section (`party.apply.posted`). Logic stays in code: choose between
+keys for different cases (singular and plural, success and failure) rather than putting conditions in
+the text. Numbers and names are formatted in code (`Display.*`) and passed in as values. The file is
+reloaded with the rest of `config/`, so wording changes need no rebuild. `TextsTests` fails if code uses
+a key the file lacks, or the file has a key no code uses. Exempt: console logs, `LogEntry` payloads,
+exception messages meant for developers, and slash command and option descriptions (Discord reads
+those attributes at registration).
 Document large mechanics and features in dedicated `.md` files rather than in code comments.
 Existing mechanic docs:
 - [Human Rules.md](Human%20Rules.md): the player-facing rules, written by the GM. They win over

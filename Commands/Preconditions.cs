@@ -4,7 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 public static class FactionGate
 {
-    public const string NotRegistered = "You are not registered yet; ask the GM.";
+    public static string NotRegistered => Texts.Get("common.notRegistered");
     public const string Retired = "Your faction has retired from politics.";
 
     public static async Task<string?> RefusalAsync(IServiceProvider services, IUser user)
