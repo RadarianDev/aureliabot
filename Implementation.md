@@ -136,11 +136,14 @@ never touched by a reload.
 
 ### 4.2 Calendar and scheduling
 
-- `GameCalendar` is pure: `Next(season, year)`, `IsPreElection(state)`, `TermEnd(state)`,
-  `NextResolutionAt(lastResolution, constants, seasonLengthDays)`. Time zone via
-  `TimeZoneInfo.FindSystemTimeZoneById(constants.TimeZone)` (IANA ids work on Windows .NET).
+- `GameCalendar` is pure: `Next`, `Add`, `SeasonsBetween`, `PreElectionOfTermStarting`,
+  `SeasonLengthDays(state, constants)`, `NextResolutionAt(from, constants, seasonLengthDays)`,
+  `CampaignDays(nextResolutionAt, constants, seasonLengthDays)` and `ResolutionForTurn(state, season, year)`.
+  `GameState.IsPreElection` tells whether the current season is the pre-election. Time zone via
+  `TimeZoneInfo.FindSystemTimeZoneById(constants.TimeZone)` (IANA ids work on Windows .NET); the
+  12-hour minimum is elapsed time, and the resolution hour is local wall-clock time across DST.
 - `ResolutionService` polls every minute. Each tick:
-  1. skip if paused;
+  1. skip if the game has not started or is paused;
   2. if a campaign day is due, run the campaign-day variant;
   3. if `nextResolutionAt <= now`, run one full resolution, then schedule the next one from the
      current time, so a missed day runs once and is never replayed (alert the GM when the
@@ -202,11 +205,17 @@ and waits when two renames already happened in the last 10 minutes.
 
 ### 4.5 Snapshots and undo
 
-- Backup with `SqliteConnection.BackupDatabase` into `snapshots/<yyyy-MM-dd-HHmm>-<Season><Year>.db`;
-  keep the newest 30.
-- Undo: pause the schedule, `SqliteConnection.ClearAllPools()`, copy the snapshot over the live
-  file, delete that resolution's posts (message ids are kept in the log), re-pin the old dashboard,
-  list the lost commands from `LogEntry` to the GM, and leave the game paused.
+- Backup with `SqliteConnection.BackupDatabase` into `snapshots/<yyyy-MM-dd-HHmmss>-<Season><Year>.db`
+  (UTC), next to the database file; keep the newest 30. The folder is the registry: there is no
+  snapshot table, since a restore would roll it back. Before each backup the resolution's seed is
+  written to `game_state.rng_seed`, so the snapshot carries it and a re-run reuses it.
+- Undo (`SnapshotService.UndoAsync`): read the lost commands and the undone resolution's posts from the
+  log first (the restore wipes them), `SqliteConnection.ClearAllPools()`, back the snapshot up *into*
+  the live database, delete the consumed snapshot (so a second undo goes one snapshot further back,
+  which may be a campaign day), pause, then delete the posts. `/gm undo` lists the lost commands to
+  the GM and renames the turn tracker; re-pinning the dashboard joins in stage 2.
+- Every successful slash command is logged as a `Command` LogEntry (`/gm resolve action:Now`), and every
+  bot post as a `Post` entry (`channelId:messageId`) through `Publisher.PostAsync`.
 
 ### 4.6 Effects
 
