@@ -12,3 +12,9 @@ obj/
 
 # Visual Studio
 .vs/
+
+# Agent worktrees and local Claude state
+.claude/worktrees/
+
+# Resolution snapshots
+snapshots/
