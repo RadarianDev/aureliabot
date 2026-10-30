@@ -13,13 +13,13 @@ as the pattern library below).
 
 Things only the GM can do, all needed before stage 2 can be tested live:
 
-- [ ] Bot token in `appsettings.Local.json` (`Discord:Token`). The guild id is already set.
-- [ ] In the Discord developer portal, enable the **Server Members** and **Message Content**
+- [x] Bot token in `appsettings.Local.json` (`Discord:Token`). The guild id is already set.
+- [x] In the Discord developer portal, enable the **Server Members** and **Message Content**
       privileged intents. The second lets `/gm party programme` read the linked message's text, and
       both go into `GatewayIntents` in `Bot.cs`.
-- [ ] Give the bot **Manage Channels** and **Manage Roles**, and drag its role above where the
+- [x] Give the bot **Manage Channels** and **Manage Roles**, and drag its role above where the
       party roles will go. Move any other coloured roles below that point.
-- [ ] Create the categories (factions, parties, archive), the channels (#news, #dashboard,
+- [x] Create the categories (factions, parties, archive), the channels (#news, #dashboard,
       #assembly, #campaign-log, #cabinet, #gm), a GM role and a Cabinet role (`/gm setup` does all of this). Deny Connect on the turn tracker
       voice channel `1565059818731995166`.
 - [x] Province populations and geography: in [Lore.md](Lore.md).
