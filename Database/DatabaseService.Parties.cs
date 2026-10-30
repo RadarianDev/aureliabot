@@ -20,7 +20,7 @@ public enum PartyCreateOutcome { Created, NameTaken, TooFewFounders, FounderNotR
 
 public sealed record PartyCreateResult(PartyCreateOutcome Outcome, long? PartyId, ulong? OffendingFaction = null);
 
-public sealed record MoveResult(Faction Faction, long? FromPartyId, Party? DissolvedParty);
+public sealed record MoveResult(Faction Faction, long? FromPartyId, Party? DissolvedParty, ulong? DissolvedLastMemberId = null);
 
 public enum JoinRequestOutcome { Created, NotIndependent, NotRegistered, AlreadyPending, NoSuchParty }
 
@@ -184,10 +184,10 @@ public partial class DatabaseService
         if (partyId is not null)
             Exec(conn, tx, "UPDATE party_join_requests SET status = 'Dropped' WHERE faction_id = $user AND status = 'Pending';",
                 ("$user", userId.ToString()));
-        var dissolved = faction.PartyId is { } from ? DissolveIfUnderTwoTx(conn, tx, from) : null;
+        var (dissolved, lastMember) = faction.PartyId is { } from ? DissolveIfUnderTwoTx(conn, tx, from) : (null, null);
         LogTx(conn, tx, LogKinds.StateChange, source, $"Moved {userId} from {faction.PartyId?.ToString() ?? "independent"} to {partyId?.ToString() ?? "independent"}.", userId);
         tx.Commit();
-        return new MoveResult(faction with { PartyId = partyId }, faction.PartyId, dissolved);
+        return new MoveResult(faction with { PartyId = partyId }, faction.PartyId, dissolved, lastMember);
     }
 
     public Party? DeleteParty(long partyId, string source)
@@ -209,14 +209,14 @@ public partial class DatabaseService
         return party;
     }
 
-    private static Party? DissolveIfUnderTwoTx(SqliteConnection conn, SqliteTransaction tx, long partyId)
+    private static (Party? Party, ulong? LastMemberId) DissolveIfUnderTwoTx(SqliteConnection conn, SqliteTransaction tx, long partyId)
     {
         var members = QueryFactionsTx(conn, tx, "party_id = $party AND status = 'Active'", ("$party", partyId));
-        if (members.Count >= 2) return null;
+        if (members.Count >= 2) return (null, null);
         var party = DeletePartyTx(conn, tx, partyId);
         if (party is not null)
             LogTx(conn, tx, LogKinds.StateChange, "dissolution", $"Party {partyId} '{party.Name}' dissolved with {members.Count} active member(s).");
-        return party;
+        return (party, members.Count == 1 ? members[0].UserId : null);
     }
 
     public JoinRequestResult CreateJoinRequest(ulong userId, long partyId)

@@ -17,7 +17,7 @@ public record Faction(
     public bool IsIndependent => PartyId is null;
 }
 
-public sealed record RetireResult(Faction Faction, Party? DissolvedParty);
+public sealed record RetireResult(Faction Faction, Party? DissolvedParty, ulong? DissolvedLastMemberId = null);
 
 public partial class DatabaseService
 {
@@ -160,10 +160,10 @@ public partial class DatabaseService
         Exec(conn, tx, "DELETE FROM actions WHERE faction_id = $user AND resolved = 0;", ("$user", id));
         Exec(conn, tx, "UPDATE party_join_requests SET status = 'Dropped' WHERE faction_id = $user AND status = 'Pending';", ("$user", id));
 
-        var dissolved = faction.PartyId is { } partyId ? DissolveIfUnderTwoTx(conn, tx, partyId) : null;
+        var (dissolved, lastMember) = faction.PartyId is { } partyId ? DissolveIfUnderTwoTx(conn, tx, partyId) : (null, null);
         LogTx(conn, tx, LogKinds.StateChange, "gm faction retire", $"Retired {id}.", userId);
         tx.Commit();
-        return new RetireResult(faction, dissolved);
+        return new RetireResult(faction, dissolved, lastMember);
     }
 
     public bool TryMarkUnregisteredAlert(ulong userId)

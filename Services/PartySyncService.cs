@@ -97,9 +97,9 @@ public class PartySyncService
         }
     }
 
-    public Task HandleDissolutionAsync(Party dissolved) => HandleDissolutionAsync(dissolved, null);
+    public Task HandleDissolutionAsync(Party dissolved) => HandleDissolutionAsync(dissolved, null, null);
 
-    public async Task HandleDissolutionAsync(Party dissolved, ulong? departedId)
+    public async Task HandleDissolutionAsync(Party dissolved, ulong? departedId, ulong? lastMemberId = null)
     {
         var problems = new List<string>();
         var formerHolders = new List<ulong>();
@@ -127,7 +127,7 @@ public class PartySyncService
             .OfType<Faction>()
             .Where(f => f.IsActive && f.IsIndependent)
             .ToList();
-        var last = lastMembers.Count == 1 ? lastMembers[0] : null;
+        var last = lastMemberId is { } knownLast ? _data.GetFaction(knownLast) : lastMembers.Count == 1 ? lastMembers[0] : null;
 
         var news = last is null
             ? $"**The {dissolved.Name} dissolves.** Its benches have emptied, and what remains of it sits on as independent."

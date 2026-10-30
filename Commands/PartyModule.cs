@@ -172,7 +172,7 @@ public class PartyModule : InteractionModuleBase<SocketInteractionContext>
         {
             try
             {
-                await _partySync.HandleDissolutionAsync(dissolved);
+                await _partySync.HandleDissolutionAsync(dissolved, Context.User.Id, result.DissolvedLastMemberId);
             }
             catch (Exception ex)
             {

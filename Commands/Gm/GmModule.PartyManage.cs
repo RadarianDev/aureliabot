@@ -184,7 +184,7 @@ public partial class GmModule
                 problems.AddRange(await _partySync.SyncAsync(joined));
             await _partySync.SyncMemberAsync(faction.Id);
             if (result.DissolvedParty is { } dissolved)
-                await _partySync.HandleDissolutionAsync(dissolved, faction.Id);
+                await _partySync.HandleDissolutionAsync(dissolved, faction.Id, result.DissolvedLastMemberId);
             else if (result.FromPartyId is { } from)
                 problems.AddRange(await _partySync.SyncAsync(from));
 

@@ -166,7 +166,7 @@ public partial class GmModule
             if (result.DissolvedParty is { } dissolved)
             {
                 lines.Add($"{Display.Party(dissolved)} dissolved.");
-                lines.Add(await TryAsync("party dissolution", () => _partySync.HandleDissolutionAsync(dissolved)));
+                lines.Add(await TryAsync("party dissolution", () => _partySync.HandleDissolutionAsync(dissolved, null, result.DissolvedLastMemberId)));
             }
             else
             {
