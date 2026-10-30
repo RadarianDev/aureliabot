@@ -1275,9 +1275,10 @@ questions:
     unanswered: "**Unanswered.** The deadline passed without a reply."
     dropped: "**Dropped.** Nobody held the ministry or the Chancellorship to answer it."
   news:
-    unanswered: "{minister} left a question on the {ministry} from {asker} unanswered, and the Assembly took note. ({minister} {ministerChange}, {asker} {askerChange} popularity)"
+    unansweredHeading: "A question to the {ministry} goes unanswered"
+    unanswered: "{minister} left a question on the {ministry} from {asker} unanswered, and the Assembly took note."
   private:
-    dropped: "Your question to the {ministry} was dropped, since nobody holds the ministry or the Chancellorship. Your opposition action is refunded."
+    dropped: "Your question to the {ministry} was dropped, since nobody holds the ministry or the Chancellorship. Nobody gains or loses popularity over it."
     extended: "The {ministry} has changed hands, and a question now falls to you, with one more turn to answer it: \"{text}\". Use the Answer button on its post in #assembly."
     asked: |-
       {asker} has asked you a question for the {ministry}, to answer {due}:
@@ -1299,6 +1300,7 @@ bill:
   proposedGovernment: "**{bill}** is scheduled as the government's bill for next turn. Its vote opens at the next resolution, {when}, and is counted at the one after. It is announced in #assembly now."
   proposedPrivate: "**{bill}** is scheduled as your private bill for next turn, spending this season's opposition action and this year's private bill. Its vote opens at the next resolution, {when}, and is counted at the one after. It is announced in #assembly now."
   withdrawHint: "You can withdraw it until its vote opens, here or from `/me`, which gives the bill back."
+  publicAgainst: "⚠️ The nation leans the other way on this issue: if the bill passes now, it will cost its sponsor popularity."
   withdrawButton: "Withdraw the bill"
   alertNoAssembly: "{bill} was proposed, but there is no #assembly channel to announce it in. Set one with `/gm channel set`."
   withdraw:
@@ -1329,6 +1331,7 @@ vote:
   noSuchVote: "There is no such vote."
   noSeats: "Only active factions with seats in the Assembly can vote."
   closed: "That vote is not open."
+  cabinetCast: "You voted {choice} on the cabinet's approval. You can change your vote until the deadline."
   theMotion: "the motion of no confidence"
   recorded: "You vote **{choice}** on {what}."
   changed: "You change your vote on {what} from {previous} to **{choice}**."
@@ -1338,6 +1341,7 @@ vote:
   autocomplete:
     reading: "Bill: {bill} · {lean} · {mine}"
     motion: "No confidence, tabled by {tabler} · {mine}"
+    cabinet: "Approval of the cabinet of {chancellor} · {mine}"
     voted: "you voted {choice}"
     notVoted: "not voted"
 
@@ -1374,6 +1378,7 @@ noConfidence:
     cancelled: "**Cancelled.**"
   result:
     lapsed: "The motion of no confidence tabled by {tabler} lapses without reaching the Assembly."
+    cancelled: "The motion of no confidence tabled by {tabler} falls with the dissolution of the Assembly for the election."
     passed: "**The motion of no confidence tabled by {tabler} passes**, {yes} seats to {no} of {filled} filled seats. The government falls to caretaker, and Parliament is dissolved."
     failed: "The motion of no confidence tabled by {tabler} fails, {yes} seats to {no} of {filled} filled seats."
   alert:

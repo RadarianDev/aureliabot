@@ -35,6 +35,7 @@ public class VoteSubjectAutocomplete : AutocompleteHandler
 {
     private const string ReadingPrefix = "reading:";
     private const string MotionPrefix = "nc:";
+    private const string CabinetPrefix = "cabinet:";
 
     public static string ReadingValue(long readingId) => ReadingPrefix + readingId;
 
@@ -47,6 +48,8 @@ public class VoteSubjectAutocomplete : AutocompleteHandler
             return (VoteSubject.Reading, reading);
         if (trimmed.StartsWith(MotionPrefix, StringComparison.Ordinal) && long.TryParse(trimmed[MotionPrefix.Length..], out var motion))
             return (VoteSubject.NoConfidence, motion);
+        if (trimmed.StartsWith(CabinetPrefix, StringComparison.Ordinal) && long.TryParse(trimmed[CabinetPrefix.Length..], out var cabinet))
+            return (VoteSubject.Cabinet, cabinet);
         return null;
     }
 
@@ -67,6 +70,9 @@ public class VoteSubjectAutocomplete : AutocompleteHandler
         foreach (var motion in data.GetMotions(NoConfidenceStatus.Voting))
             options.Add((Texts.Get("vote.autocomplete.motion", ("tabler", data.GetFaction(motion.TablerId)?.CharacterName ?? motion.TablerId.ToString()),
                 ("mine", MineLabel(mine(VoteSubject.NoConfidence, motion.Id), context.User.Id))), MotionValue(motion.Id)));
+        foreach (var cabinet in data.GetCabinetsInVote())
+            options.Add((Texts.Get("vote.autocomplete.cabinet", ("chancellor", cabinet.ChancellorId is { } c ? data.GetFaction(c)?.CharacterName ?? c.ToString() : ""),
+                ("mine", MineLabel(mine(VoteSubject.Cabinet, cabinet.Id), context.User.Id))), CabinetPrefix + cabinet.Id));
 
         var results = options
             .Where(o => o.Label.Contains(typed, StringComparison.OrdinalIgnoreCase))

@@ -8,10 +8,13 @@ public class GovernmentPublisher
     private readonly CabinetSyncService _cabinetSync;
     private readonly FactionChannelService _factionChannels;
     private readonly AlertService _alerts;
+    private readonly ConstantsStore _constants;
 
     public GovernmentPublisher(
-        DiscordSocketClient client, DatabaseService data, CabinetSyncService cabinetSync, FactionChannelService factionChannels, AlertService alerts)
+        DiscordSocketClient client, DatabaseService data, CabinetSyncService cabinetSync, FactionChannelService factionChannels, AlertService alerts,
+        ConstantsStore constants)
     {
+        _constants = constants;
         _client = client;
         _data = data;
         _cabinetSync = cabinetSync;
@@ -38,12 +41,23 @@ public class GovernmentPublisher
         foreach (var outcome in report.Questions)
         {
             if (outcome.Outcome == QuestionOutcomeKind.Unanswered)
-                await PostAsync(ChannelRole.News, Texts.Get("questions.news.unanswered",
-                    ("minister", Who(outcome.MinisterId)), ("ministry", outcome.Ministry.DisplayName()), ("asker", Who(outcome.AskerId)),
-                    ("ministerChange", Display.Signed(outcome.MinisterChange)), ("askerChange", Display.Signed(outcome.AskerChange))), source);
+                await PostAsync(ChannelRole.News, UnansweredPost(outcome), source);
             if (_data.GetQuestion(outcome.QuestionId) is { } question)
                 await RefreshQuestionAsync(question);
         }
+    }
+
+    private string UnansweredPost(QuestionReport outcome)
+    {
+        var config = _constants.Config;
+        var effects = new List<Effect>();
+        if (outcome.MinisterId is { } minister) effects.Add(new Effect($"popularity.{minister}", outcome.MinisterChange));
+        effects.Add(new Effect($"popularity.{outcome.AskerId}", outcome.AskerChange));
+        return Publisher.FormatEffectPost(
+            Texts.Get("questions.news.unansweredHeading", ("ministry", outcome.Ministry.DisplayName())),
+            [],
+            Texts.Get("questions.news.unanswered", ("minister", Who(outcome.MinisterId)), ("ministry", outcome.Ministry.DisplayName()), ("asker", Who(outcome.AskerId))),
+            EffectSummary.Lines(effects, Publisher.Names(_data, config), config.Constants.Display));
     }
 
     public async Task<IUserMessage?> ProclaimAsync(string text, string source) =>

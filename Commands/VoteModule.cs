@@ -5,11 +5,13 @@ public class VoteModule : InteractionModuleBase<SocketInteractionContext>
 {
     private readonly DatabaseService _data;
     private readonly AssemblyPublisher _assembly;
+    private readonly GovernmentPublisher _government;
 
-    public VoteModule(DatabaseService data, AssemblyPublisher assembly)
+    public VoteModule(DatabaseService data, AssemblyPublisher assembly, GovernmentPublisher government)
     {
         _data = data;
         _assembly = assembly;
+        _government = government;
     }
 
     [SlashCommand("vote", "Cast or change your vote on an open reading or no-confidence motion")]
@@ -21,6 +23,18 @@ public class VoteModule : InteractionModuleBase<SocketInteractionContext>
         if (VoteSubjectAutocomplete.Parse(subject) is not { } parsed)
         {
             await RespondAsync(Texts.Get("vote.noSuchVote"), ephemeral: true);
+            return;
+        }
+        if (parsed.Subject == VoteSubject.Cabinet)
+        {
+            var cast = _data.CastCabinetVote(parsed.Id, Context.User.Id, choice);
+            if (cast.Refusal is { } refusal)
+            {
+                await RespondAsync(refusal, ephemeral: true);
+                return;
+            }
+            await RespondAsync(Texts.Get("vote.cabinetCast", ("choice", AssemblyPublisher.ChoiceName(choice))), ephemeral: true);
+            await _government.RefreshNominationAsync(parsed.Id);
             return;
         }
         await CastAsync(parsed.Subject, parsed.Id, choice);

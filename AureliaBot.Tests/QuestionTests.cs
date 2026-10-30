@@ -119,7 +119,7 @@ public class QuestionTests : IDisposable
     }
 
     [Fact]
-    public void AQuestionWithNobodyToAnswer_IsDropped_AndTheActionRefunded()
+    public void AQuestionWithNobodyToAnswer_IsDropped_WithNoPenaltyOrReward()
     {
         Start();
         var question = Ask(Asker, Ministry.War);
@@ -131,7 +131,6 @@ public class QuestionTests : IDisposable
 
         Assert.Equal(QuestionOutcomeKind.Dropped, outcome.Outcome);
         Assert.Equal(QuestionStatus.Dropped, Db.GetQuestion(question.Id)!.Status);
-        Assert.True(Db.GetOppositionStanding(Asker, Constants).CanAct);
         Assert.Equal(20, Popularity(Asker));
     }
 

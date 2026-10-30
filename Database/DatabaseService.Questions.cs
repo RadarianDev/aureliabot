@@ -193,7 +193,6 @@ public partial class DatabaseService
             if (minister is not { } ministerId)
             {
                 Exec(conn, tx, "UPDATE questions SET status = 'Dropped' WHERE id = $id;", ("$id", question.Id));
-                RefundOppositionActionTx(conn, tx, OppositionActionKind.Question, question.Id);
                 report.Questions.Add(new QuestionReport(question.Id, question.Ministry, question.AskerId, null, QuestionOutcomeKind.Dropped, 0, 0));
                 report.AddPrivate(question.AskerId, Texts.Get("questions.private.dropped", ("ministry", question.Ministry.DisplayName())));
                 LogTx(conn, tx, LogKinds.Resolution, "question", $"Question {question.Id} dropped: nobody holds {question.Ministry} or the Chancellorship.", question.AskerId);

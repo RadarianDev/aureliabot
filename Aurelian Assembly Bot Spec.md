@@ -560,7 +560,7 @@ A faction cannot attack a member of its own party.
 **Vacant ministries**
 
 - A vacant ministry's crises and questions go to the **Chancellor**, who answers them as its minister would, paying from that ministry's purse and gaining or losing popularity in its place.
-- If the Chancellorship is vacant too, a due crisis applies its default and no faction loses popularity, and a question cannot be asked; an open one is dropped and the asker's opposition action refunded. The GM is alerted a resolution in advance.
+- If the Chancellorship is vacant too, a due crisis applies its default and no faction loses popularity, and a question cannot be asked; an open one is dropped, and nobody gains or loses over it (the season its opposition action was spent has passed). The GM is alerted a resolution in advance.
 
 **Crisis resolution**, where the minister chose one of the crisis's answers, and L is that answer's lean: +1 for *For*, −1 for *Against* and 0 for *Neutral*
 

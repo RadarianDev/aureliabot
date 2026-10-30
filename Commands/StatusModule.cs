@@ -85,12 +85,13 @@ public class StatusModule : InteractionModuleBase<SocketInteractionContext>
             waiting.Add(Texts.Get("me.cabinetVote", ("chancellor", cabinet.ChancellorId is { } c ? Display.Faction(_data, c) : Texts.Get("me.unknownTarget"))));
             VoteRow(choice => GovernmentPublisher.CabinetVoteButtonId(choice, cabinet.Id));
         }
-        foreach (var reading in _data.GetOpenReadingsNotVotedBy(faction.UserId))
+        var canVote = faction.Seats > 0;
+        foreach (var reading in canVote ? _data.GetOpenReadingsNotVotedBy(faction.UserId) : [])
         {
             waiting.Add(Texts.Get("me.readingVote", ("bill", _data.GetBill(reading.BillId)?.Title ?? reading.BillId)));
             VoteRow(choice => AssemblyPublisher.ReadingVoteButtonId(choice, reading.Id));
         }
-        foreach (var motion in _data.GetVotingMotionsNotVotedBy(faction.UserId))
+        foreach (var motion in canVote ? _data.GetVotingMotionsNotVotedBy(faction.UserId) : [])
         {
             waiting.Add(Texts.Get("me.motionVote", ("tabler", Display.Faction(_data, motion.TablerId))));
             VoteRow(choice => AssemblyPublisher.MotionVoteButtonId(choice, motion.Id));

@@ -134,6 +134,7 @@ public class AssemblyPublisher
         var text = outcome.Outcome switch
         {
             NoConfidenceStatus.Lapsed => Texts.Get("noConfidence.result.lapsed", ("tabler", tabler)),
+            NoConfidenceStatus.Cancelled => Texts.Get("noConfidence.result.cancelled", ("tabler", tabler)),
             NoConfidenceStatus.Passed => Texts.Get("noConfidence.result.passed", ("tabler", tabler), ("yes", outcome.YesSeats), ("no", outcome.NoSeats), ("filled", outcome.FilledSeats)),
             _ => Texts.Get("noConfidence.result.failed", ("tabler", tabler), ("yes", outcome.YesSeats), ("no", outcome.NoSeats), ("filled", outcome.FilledSeats)),
         };
@@ -322,11 +323,19 @@ public class AssemblyPublisher
         }
 
         IUserMessage? first = null;
-        foreach (var chunk in Publisher.Chunk(text))
+        try
         {
-            var message = await channel.SendMessageAsync(chunk, components: first is null ? components : null, allowedMentions: AllowedMentions.None);
-            _data.LogPost(channelId, message.Id, source);
-            first ??= message;
+            foreach (var chunk in Publisher.Chunk(text))
+            {
+                var message = await channel.SendMessageAsync(chunk, components: first is null ? components : null, allowedMentions: AllowedMentions.None);
+                _data.LogPost(channelId, message.Id, source);
+                first ??= message;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[AssemblyPublisher] Posting to {role} failed: {ex}");
+            await _alerts.PostAsync(Texts.Get("assembly.alert.postFailed", ("error", ex.Message)));
         }
         return first;
     }

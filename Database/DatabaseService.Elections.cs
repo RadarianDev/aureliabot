@@ -97,6 +97,14 @@ public partial class DatabaseService
             Exec(conn, tx, "UPDATE opposition_actions SET cancelled = 1 WHERE kind = 'Bill' AND subject_id = $id;", ("$id", reading.Id));
             report.ReadingsCancelled.Add(new ReadingCancelledReport(reading.Id, reading.BillId, reading.Title, Texts.Get("data.election.readingCancelled")));
         }
+        using (var motions = conn.CreateCommand())
+        {
+            motions.Transaction = tx;
+            motions.CommandText = "SELECT id, tabler_faction_id FROM no_confidence WHERE status IN ('Gathering', 'Voting');";
+            using var r = motions.ExecuteReader();
+            while (r.Read())
+                report.NoConfidenceMotions.Add(new NoConfidenceReport(r.GetInt64(0), ulong.Parse(r.GetString(1)), NoConfidenceStatus.Cancelled, 0, 0, 0));
+        }
         Exec(conn, tx, "UPDATE no_confidence SET status = 'Cancelled' WHERE status IN ('Gathering', 'Voting');");
         Exec(conn, tx, "UPDATE cabinets SET status = 'Cancelled' WHERE kind = 'Nominated' AND status IN ('Forming', 'Voting');");
         DropPendingJoinRequestsTx(conn, tx);

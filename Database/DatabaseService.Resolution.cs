@@ -21,8 +21,8 @@ public partial class DatabaseService
         if (state.Started)
         {
             CountDueReadingsTx(conn, tx, GetGameStateTx(conn, tx), config, report);
-            CountDueCabinetVotesTx(conn, tx, GetGameStateTx(conn, tx), config, report);
             CountDueNoConfidenceTx(conn, tx, GetGameStateTx(conn, tx), config, report);
+            CountDueCabinetVotesTx(conn, tx, GetGameStateTx(conn, tx), config, report);
             ResolveDueQuestionsTx(conn, tx, GetGameStateTx(conn, tx), config, report);
             ResolveActionsTx(conn, tx, GetGameStateTx(conn, tx), config, random, report);
             SeasonalChangesTx(conn, tx, GetGameStateTx(conn, tx), config);

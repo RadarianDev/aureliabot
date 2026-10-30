@@ -38,6 +38,9 @@ public class BillModule : InteractionModuleBase<SocketInteractionContext>
                 : Texts.Get("bill.proposedPrivate", ("bill", result.Bill!.Title), ("when", Display.NextResolution(state))),
             Texts.Get("bill.withdrawHint"),
         };
+        var opinion = _data.LoadOpinionSnapshot(_constants.Config).National(result.Bill.IssueId);
+        if ((int)result.Bill.Lean * opinion < 0)
+            lines.Insert(1, Texts.Get("bill.publicAgainst"));
         await RespondAsync(string.Join("\n", lines),
             components: new ComponentBuilder().WithButton(Texts.Get("bill.withdrawButton"), AssemblyPublisher.WithdrawButtonId(reading.Id), ButtonStyle.Secondary).Build(),
             ephemeral: true, allowedMentions: AllowedMentions.None);

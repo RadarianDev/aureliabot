@@ -501,9 +501,9 @@ public partial class DatabaseService
                 var snapshot = LoadOpinionSnapshotTx(conn, tx, config);
                 var reward = rules.SponsorReward(c, bill.Lean, snapshot.National(bill.IssueId), snapshot.Salience(bill.IssueId));
                 AddPopularityTx(conn, tx, reading.SponsorId, reward, c.Popularity);
-                var applied = ApplyEffectsTx(conn, tx, bill.ParsedPassEffects, config, new EffectSource(bill.Title, "law", bill.Id, PublicLedger: true), report);
                 Exec(conn, tx, "UPDATE bills SET status = 'Passed', cooldown_until = NULL WHERE id = $id;", ("$id", bill.Id));
                 Exec(conn, tx, "UPDATE readings SET status = 'Passed' WHERE id = $id;", ("$id", reading.Id));
+                var applied = ApplyEffectsTx(conn, tx, bill.ParsedPassEffects, config, new EffectSource(bill.Title, "law", bill.Id, PublicLedger: true), report);
                 report.Laws.Add(new LawReport(bill.Id, bill.Title, reading.SponsorId, tally.YesSeats, tally.NoSeats, reward, bill.PassText, applied.Applied));
                 report.AddPrivate(reading.SponsorId, Texts.Get("law.sponsorPrivate", ("bill", bill.Title), ("change", Display.Signed(reward))));
             }
@@ -530,6 +530,7 @@ public partial class DatabaseService
         SqliteConnection conn, SqliteTransaction tx, GameState state, GameConfig config, ResolutionReport report, AssemblyRules rules)
     {
         var c = config.Constants;
+        if (state.IsPreElection) return;
         var resolution = state.ResolutionNumber + 1;
 
         foreach (var motion in QueryMotionsTx(conn, tx, "status = 'Gathering' AND gather_until_resolution <= $resolution", ("$resolution", resolution)))
