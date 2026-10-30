@@ -168,6 +168,18 @@ info:
     lastElection: "Last election: {results}"
     result: "{party} {seats}"
     unit: "{name} · d{sides}"
+  crisis:
+    kind: "Crisis · {name}"
+    missing: "That crisis doesn't exist."
+    live: "**Live crises**"
+    liveLine: "- {crisis} · {ministry}"
+    clean: "**Resolved.** The minister chose: {answer}."
+    complicated: "**Resolved.** The minister chose: {answer}. The ministry could not pay, and the plan went wrong."
+    default: "**Resolved.** No answer came, and the crisis ran its course."
+    cancelled: "**Cancelled.**"
+    story: "*{text}*"
+    condemnations: "**Condemnations**"
+    condemnation: "- {faction} stands {side}"
 
 me:
   cabinetVote: "The cabinet nominated by {chancellor} awaits the Assembly's approval: cast your vote."
@@ -1434,3 +1446,62 @@ assembly:
     rejected: "**{bill}** is rejected, {yes} seats to {no} ({abstain} abstaining). It rests until {season}; other bills on its issue can still be proposed."
   alert:
     postFailed: "An Assembly post failed: {error}"
+
+crisis:
+  answerLine: "{number}. {label} · {lean} · {price}"
+  free: "free"
+  ledger: "{crisis}: {answer}"
+  standardComplication: "The money runs out, and the province pays for it."
+  autocomplete:
+    awaiting: "{crisis} · {ministry} · awaiting your answer"
+    answered: "{crisis} · {ministry} · answered, can be changed"
+  post:
+    heading: "## Crisis: {crisis}"
+    meta: "Ministry of {ministry} · {province} · {issue}"
+    due: "Due {due}"
+  private:
+    awaits: "A crisis awaits your answer for the {ministry}: **{crisis}**. Choose an answer with `/crisis respond` before the deadline, {due}; with no answer, the crisis runs its course and you lose popularity."
+  outcome:
+    chose: "{minister}, for the {ministry}, chose: {answer}"
+    response: "> {text}"
+    couldNotPay: "The ministry could not pay, and the plan went wrong."
+    noAnswer: "No answer came from the {ministry}. {minister} loses popularity: {change}."
+    nobody: "No answer came from the {ministry}, which had neither a minister nor a Chancellor to answer for it."
+  respond:
+    recorded: "Your answer to **{crisis}** is recorded: {answer}. It stays private until the resolution {due}, and you can change it until then with `/crisis respond`."
+    changed: "Your answer to **{crisis}** is changed to: {answer}. It stays private until the resolution {due}, and you can change it again until then."
+    free: "It costs nothing."
+    covered: "It costs {price}; the {ministry} purse holds {balance}, so it will be paid in full."
+    short: "⚠️ It costs {price}, but the {ministry} purse holds only {balance}. Unless the purse is topped up before the resolution, it is emptied and the answer goes ahead with a complication. The Treasury can grant money from the reserve with `/treasury grant`."
+  modal:
+    title: "Response: {crisis}"
+    label: "Your response: {answer}"
+    fallbackTitle: "Crisis response"
+  refusal:
+    gone: "That crisis doesn't exist or is no longer live."
+    closed: "**{crisis}** is no longer live."
+    notYours: "Only the responsible minister can answer **{crisis}**: {minister}."
+    noAnswer: "**{crisis}** has no answer `{answer}`. Pick one from the list."
+    empty: "Write your response first."
+  warning:
+    ministry: "the {ministry} cannot hold a crisis."
+    issueNotOpen: "the crisis's issue `{id}` is not open."
+    noProvince: "no province `{id}`."
+  alert:
+    nobody: "**{crisis}** was posted for the {ministry}, but the ministry and the Chancellorship are both vacant: its default will apply at the next resolution, with no penalty, unless someone is appointed."
+    postFailed: "A crisis post failed: {error}"
+
+condemn:
+  autocomplete: "{crisis} · {issue}"
+  post: "{faction} condemns the handling of **{crisis}**, and stands {side} {issue}."
+  done: "Your condemnation of **{crisis}** is posted in #news. It spends this season's opposition action, and is scored when the crisis is resolved, {when}."
+  score:
+    right: "Condemnation: {faction} was right where the minister was not: popularity {change}."
+    wrong: "Condemnation: {faction} was wrong where the minister was right: popularity {change}."
+    withMinister: "Condemnation: {faction} stood with the minister, and gains nothing."
+    nothing: "Condemnation: {faction} stood {side}, and neither gains nor loses."
+  refusal:
+    notOpposition: "Only opposition factions can condemn a crisis: members of a party that holds no cabinet seat."
+    actionUsed: "You have spent this season's opposition action. The next comes with {season}, after the resolution {when}."
+    already: "You have already condemned **{crisis}**."
+    side: "A condemnation stands For or Against the crisis's issue."

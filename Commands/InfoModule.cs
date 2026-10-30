@@ -22,6 +22,9 @@ public class InfoAutocomplete : AutocompleteHandler
             entries.Add((Texts.Get("info.kind.issue", ("name", issue.Title)), $"issue:{issue.Id}"));
         foreach (var province in constants.Config.Provinces)
             entries.Add((Texts.Get("info.kind.province", ("name", province.Name)), $"province:{province.Id}"));
+        foreach (var crisis in data.GetCrises().Where(c => c.Status != CrisisStatus.Cancelled)
+                     .OrderByDescending(c => c.Status == CrisisStatus.Live).ThenByDescending(c => c.Id))
+            entries.Add((Texts.Get("info.crisis.kind", ("name", crisis.Title)), $"crisis:{crisis.Id}"));
 
         var results = entries
             .Where(e => e.Label.Contains(typed, StringComparison.OrdinalIgnoreCase))
@@ -70,6 +73,7 @@ public class InfoModule : InteractionModuleBase<SocketInteractionContext>
             "issue" => IssueInfo(id),
             "province" => ProvinceInfo(id),
             "bill" => BillInfo(id),
+            "crisis" when long.TryParse(id, out var crisisId) => CrisisInfo(crisisId),
             _ => _data.GetAllParties().FirstOrDefault(p => p.Name.Equals(thing, StringComparison.OrdinalIgnoreCase)) is { } party
                 ? PartyInfo(party.Id)
                 : _data.GetIssue(thing) is not null ? IssueInfo(thing)
@@ -94,7 +98,65 @@ public class InfoModule : InteractionModuleBase<SocketInteractionContext>
         sb.AppendLine();
         sb.AppendLine(Texts.Get("info.live.parties"));
         sb.AppendLine(parties.Count == 0 ? Texts.Get("info.live.noneYet") : string.Join("\n", parties.Select(p => $"- {Display.Party(p)}")));
+        var crises = _data.GetCrises(CrisisStatus.Live);
+        sb.AppendLine();
+        sb.AppendLine(Texts.Get("info.crisis.live"));
+        sb.AppendLine(crises.Count == 0 ? Texts.Get("info.live.noneYet") : string.Join("\n", crises.Select(c =>
+            Texts.Get("info.crisis.liveLine", ("crisis", c.Title), ("ministry", c.Ministry.DisplayName())))));
         return sb.ToString();
+    }
+
+    private string CrisisInfo(long crisisId)
+    {
+        if (_data.GetCrisis(crisisId) is not { } crisis) return Texts.Get("info.crisis.missing");
+        var issueTitle = CrisisPublisher.IssueTitle(_data, crisis.IssueId);
+        if (crisis.Status == CrisisStatus.Live)
+            return CrisisPublisher.CrisisPost(crisis, _data.GetGameState(), _constants.Config, issueTitle) + CondemnationsText(crisis);
+
+        var sb = new StringBuilder();
+        sb.AppendLine(Texts.Get("crisis.post.heading", ("crisis", crisis.Title)));
+        sb.AppendLine(CrisisPublisher.MetaLine(crisis, _constants.Config, issueTitle));
+        sb.AppendLine();
+        sb.AppendLine(string.Join("\n", crisis.Answers.Select((answer, index) => CrisisPublisher.AnswerLine(index + 1, answer))));
+        sb.AppendLine();
+        var chosen = crisis.Chosen;
+        switch (crisis.Outcome)
+        {
+            case CrisisOutcome.Clean when chosen is not null:
+                sb.AppendLine(Texts.Get("info.crisis.clean", ("answer", chosen.Label)));
+                AppendResponse(sb, crisis);
+                sb.AppendLine(Texts.Get("info.crisis.story", ("text", chosen.Text)));
+                break;
+            case CrisisOutcome.Complicated when chosen is not null:
+                sb.AppendLine(Texts.Get("info.crisis.complicated", ("answer", chosen.Label)));
+                AppendResponse(sb, crisis);
+                sb.AppendLine(Texts.Get("info.crisis.story", ("text", chosen.Text)));
+                sb.AppendLine(Texts.Get("info.crisis.story", ("text", crisis.Complication?.Text ?? Texts.Get("crisis.standardComplication"))));
+                break;
+            case CrisisOutcome.Default:
+                sb.AppendLine(Texts.Get("info.crisis.default"));
+                sb.AppendLine(Texts.Get("info.crisis.story", ("text", crisis.Default.Text)));
+                break;
+            default:
+                sb.AppendLine(Texts.Get("info.crisis.cancelled"));
+                break;
+        }
+        sb.Append(CondemnationsText(crisis));
+        return sb.ToString();
+    }
+
+    private static void AppendResponse(StringBuilder sb, Crisis crisis)
+    {
+        if (!string.IsNullOrWhiteSpace(crisis.ResponseText))
+            sb.AppendLine(Texts.Get("crisis.outcome.response", ("text", crisis.ResponseText.ReplaceLineEndings("\n> "))));
+    }
+
+    private string CondemnationsText(Crisis crisis)
+    {
+        var condemnations = _data.GetCondemnations(crisis.Id);
+        if (condemnations.Count == 0) return "";
+        return "\n\n" + Texts.Get("info.crisis.condemnations") + "\n" + string.Join("\n", condemnations.Select(c =>
+            Texts.Get("info.crisis.condemnation", ("faction", Display.Faction(_data, c.FactionId)), ("side", AssemblyPublisher.LeanName(c.Side)))));
     }
 
     private string FactionInfo(ulong userId)
