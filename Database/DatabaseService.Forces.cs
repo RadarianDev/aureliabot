@@ -311,8 +311,7 @@ public partial class DatabaseService
         if (GetUnitTx(conn, tx, unitId) is not { } unit || unit.Type != type) return new DisbandResult(Texts.Get("forces.refusal.noUnit"));
 
         var cancelled = GetPendingOrdersTx(conn, tx).Count(o => o.UnitId == unitId);
-        Exec(conn, tx, "DELETE FROM pending_orders WHERE unit_id = $id;", ("$id", unitId));
-        Exec(conn, tx, "DELETE FROM units WHERE id = $id;", ("$id", unitId));
+        DeleteUnitTx(conn, tx, unitId);
         LogTx(conn, tx, LogKinds.StateChange, "forces disband", $"{factionId} disbanded {type} '{unit.Name}'.", factionId);
         tx.Commit();
         return new DisbandResult(null, unit, cancelled);
@@ -355,11 +354,30 @@ public partial class DatabaseService
             .ToList();
         if (count > 0 && weakest.Count == 0) return Texts.Get("forces.effect.noneToRemove", ("province", provinceId));
         foreach (var unit in weakest)
-        {
-            Exec(conn, tx, "DELETE FROM pending_orders WHERE unit_id = $id;", ("$id", unit.Id));
-            Exec(conn, tx, "DELETE FROM units WHERE id = $id;", ("$id", unit.Id));
-        }
+            DeleteUnitTx(conn, tx, unit.Id);
         return null;
+    }
+
+    private static void DeleteUnitTx(SqliteConnection conn, SqliteTransaction tx, long unitId)
+    {
+        Exec(conn, tx, "DELETE FROM pending_orders WHERE unit_id = $id;", ("$id", unitId));
+        Exec(conn, tx, "DELETE FROM units WHERE id = $id;", ("$id", unitId));
+    }
+
+    public List<Unit> RemoveUnitsAsGm(IEnumerable<long> unitIds, ulong gmId, string source)
+    {
+        using var conn = Open();
+        using var tx = conn.BeginTransaction();
+        var removed = new List<Unit>();
+        foreach (var id in unitIds.Distinct())
+        {
+            if (GetUnitTx(conn, tx, id) is not { } unit) continue;
+            DeleteUnitTx(conn, tx, id);
+            LogTx(conn, tx, LogKinds.GmOverride, source, $"{gmId} removed {unit.Type} '{unit.Name}' ({unit.Id}).", gmId);
+            removed.Add(unit);
+        }
+        tx.Commit();
+        return removed;
     }
 
     internal ResolutionReport ApplyOrders(GameConfig config, IRandomSource random)
