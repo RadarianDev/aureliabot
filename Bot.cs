@@ -39,6 +39,7 @@ public class Bot
             .AddSingleton<FactionChannelService>()
             .AddSingleton<ResolutionService>()
             .AddSingleton<Confirmations>()
+            .AddSingleton<SetupChecklistService>()
             .BuildServiceProvider();
 
         _data = _services.GetRequiredService<DatabaseService>();
@@ -60,6 +61,12 @@ public class Bot
         _client.Ready += ReadyAsync;
         _client.UserJoined += UserJoinedAsync;
         _client.UserLeft += UserLeftAsync;
+        _client.ChannelCreated += _ => RefreshChecklist();
+        _client.ChannelDestroyed += _ => RefreshChecklist();
+        _client.ChannelUpdated += (_, _) => RefreshChecklist();
+        _client.RoleCreated += _ => RefreshChecklist();
+        _client.RoleDeleted += _ => RefreshChecklist();
+        _client.RoleUpdated += (_, _) => RefreshChecklist();
         _client.InteractionCreated += interaction =>
         {
             _ = Task.Run(async () =>
@@ -110,6 +117,7 @@ public class Bot
             catch (Exception ex) { Console.WriteLine($"[TurnTracker] Loop stopped: {ex}"); }
         });
         turnTracker.RequestCurrent();
+        _services.GetRequiredService<SetupChecklistService>().RequestRefresh();
 
         _ = Task.Run(async () =>
         {
@@ -127,6 +135,12 @@ public class Bot
             }
             catch (Exception ex) { Console.WriteLine($"[Startup] Sync failed: {ex}"); }
         });
+    }
+
+    private Task RefreshChecklist()
+    {
+        _services.GetRequiredService<SetupChecklistService>().RequestRefresh();
+        return Task.CompletedTask;
     }
 
     private Task UserJoinedAsync(SocketGuildUser user)

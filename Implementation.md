@@ -20,7 +20,7 @@ Things only the GM can do, all needed before stage 2 can be tested live:
 - [x] Give the bot **Manage Channels** and **Manage Roles**, and drag its role above where the
       party roles will go. Move any other coloured roles below that point.
 - [x] Create the categories (factions, parties, archive), the channels (#news, #dashboard,
-      #assembly, #campaign-log, #cabinet, #gm), a GM role and a Cabinet role (`/gm setup` does all of this). Deny Connect on the turn tracker
+      #assembly, #campaign-log, #cabinet, #gm), a GM role and a Cabinet role, registered with `/gm channel set` (the `/gm setup` checklist tracks them). Deny Connect on the turn tracker
       voice channel `1565059818731995166`.
 - [x] Province populations and geography: in [Lore.md](Lore.md).
 - [x] Province ids, starting conditions and coastal flags: in [config/provinces.yaml](config/provinces.yaml).
@@ -181,7 +181,7 @@ ResolutionService
 
 Party roles and chats, faction channels and the turn tracker follow one rule: **the database is
 the truth, and a sync method makes Discord match it.** Each sync method is idempotent, so the same
-code runs after a command, on startup, and from `/gm setup`.
+code runs after a command, on startup, and from the Repair button on the `/gm setup` checklist.
 
 `PartySyncService.SyncAsync(partyId)`:
 1. Role: create if `roleId` is missing or the role is gone; set name, colour, hoisted.
@@ -196,8 +196,8 @@ role. `UserJoined` re-runs the sync for the rejoining player's party and the cab
 `CabinetSyncService.SyncAsync()` works the same way for the one Cabinet role: holders are the
 sitting cabinet's Chancellor and ministers (spec section 5, Cabinet role). It runs after every
 cabinet change (approval, imposition, appointment, resignation, retirement), on startup and from
-`/gm setup`. It only manages membership: the role is uncoloured and not hoisted, and #cabinet's
-overwrites (the Cabinet role, the GM role and the bot) are set once by `/gm setup`.
+the checklist. It only manages membership: the role is uncoloured and not hoisted, and #cabinet's
+overwrites (the Cabinet role, the GM role and the bot) are set by the GM; the checklist warns when they are wrong.
 Both need the Server Members intent added to `GatewayIntents` in `Bot.cs`.
 
 `TurnTrackerService` keeps only the latest requested name and a timestamp list of recent renames,
@@ -293,7 +293,7 @@ DST change), undo restoring a known state.
   yet" refusal for players without a faction, `FactionChannelService`, `/gm setup`.
 - `Confirmations` and `Preconditions`, used by every later stage.
 - `/gm party create|edit|move|delete` (create is the only way a party is founded; colour-similarity
-  warning on create and edit; move overrides the joining rules), party repair in `/gm setup`,
+  warning on create and edit; move overrides the joining rules), party repair from the setup checklist,
   `/gm faction edit|retire`, `/gm reward` (a royal commendation in #news).
 - `/party apply|leave`, join applications with Accept/Decline buttons in the party chat, decided by a
   majority of active members (`PartyJoinAnswer`); applying only during a pre-election.

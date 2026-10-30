@@ -19,10 +19,12 @@ public partial class GmModule
         private static readonly HashSet<ChannelRole> Roles = [ChannelRole.GmRole, ChannelRole.CabinetRole];
 
         private readonly DatabaseService _data;
+        private readonly SetupChecklistService _checklist;
 
-        public ChannelGroup(DatabaseService data)
+        public ChannelGroup(DatabaseService data, SetupChecklistService checklist)
         {
             _data = data;
+            _checklist = checklist;
         }
 
         [SlashCommand("set", "Set a game channel, category, the turn tracker, the GM role or the Cabinet role")]
@@ -39,6 +41,7 @@ public partial class GmModule
                     return;
                 }
                 _data.SetChannel(kind, role.Id);
+                _checklist.RequestRefresh();
                 _data.Log(LogKinds.GmOverride, "gm channel set", $"{kind} = role {role.Id}", Context.User.Id);
                 await RespondAsync($"{kind} is now {role.Mention}.", ephemeral: true, allowedMentions: AllowedMentions.None);
                 return;
@@ -64,6 +67,7 @@ public partial class GmModule
             }
 
             _data.SetChannel(kind, channel.Id);
+            _checklist.RequestRefresh();
             _data.Log(LogKinds.GmOverride, "gm channel set", $"{kind} = channel {channel.Id}", Context.User.Id);
             var whitelisted = TextChannels.Contains(kind) && _data.AddWhitelistedChannel(Context.Guild.Id, channel.Id, Context.User.Id);
             await RespondAsync(

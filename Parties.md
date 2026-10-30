@@ -86,7 +86,7 @@ A party doesn't store a member list: a party's members are the **active** factio
 ## Discord roles and chats
 
 The database is the truth; `PartySyncService` makes Discord match it and is idempotent, running after
-every membership change, on startup and from `/gm setup`.
+every membership change, on startup and from the Repair button on the `/gm setup` checklist.
 
 - **Role:** named after the party, in its colour, hoisted. Held by exactly its active members.
 - **Chat:** a text channel under the Parties category, visible only to the party role, the GM role and
