@@ -9,16 +9,15 @@ public partial class GmModule
         await DeferAsync(ephemeral: true);
         if (Context.Channel is not IMessageChannel channel)
         {
-            await FollowupAsync("Run this in a text channel, ideally #gm.", ephemeral: true);
+            await FollowupAsync(Texts.Get("gm.setup.notTextChannel"), ephemeral: true);
             return;
         }
 
         var checklist = await _setupChecklist.PostAsync(channel);
         await FollowupAsync(
             checklist is null
-                ? "I couldn't post the checklist here."
-                : $"The setup checklist is in {checklist.GetJumpUrl()}. It updates itself whenever a channel or role changes, " +
-                  "or you register something with `/gm channel set`. Nothing was created.",
+                ? Texts.Get("gm.setup.couldNotPost")
+                : Texts.Get("gm.setup.posted", ("url", checklist.GetJumpUrl())),
             ephemeral: true);
     }
 }
@@ -66,8 +65,9 @@ public class SetupChecklistModule : InteractionModuleBase<SocketInteractionConte
         await _checklist.RefreshAsync();
         await FollowupAsync(
             suggestions.Count == 0
-                ? "There was nothing to register: no unset item has a channel or role with a matching name."
-                : "Registered: " + string.Join(", ", suggestions.Select(s => $"{s.Role} → {s.Mention}")),
+                ? Texts.Get("setup.register.nothing")
+                : Texts.Get("setup.register.done",
+                    ("items", string.Join(", ", suggestions.Select(s => Texts.Get("setup.register.item", ("role", s.Role), ("mention", s.Mention)))))),
             ephemeral: true,
             allowedMentions: AllowedMentions.None);
     }
@@ -77,14 +77,14 @@ public class SetupChecklistModule : InteractionModuleBase<SocketInteractionConte
     {
         await DeferAsync(ephemeral: true);
         var problems = new List<string>();
-        problems.AddRange(await Guarded("faction channels", () => _factionChannels.SyncAllAsync()));
-        problems.AddRange(await Guarded("parties", () => _partySync.SyncAllAsync()));
-        problems.AddRange(await Guarded("the Cabinet role", () => _cabinetSync.SyncAsync()));
+        problems.AddRange(await Guarded(Texts.Get("setup.repair.factionChannels"), () => _factionChannels.SyncAllAsync()));
+        problems.AddRange(await Guarded(Texts.Get("setup.repair.parties"), () => _partySync.SyncAllAsync()));
+        problems.AddRange(await Guarded(Texts.Get("setup.repair.cabinetRole"), () => _cabinetSync.SyncAsync()));
         await _checklist.RefreshAsync();
         await FollowupAsync(
             Display.Truncate(problems.Count == 0
-                ? "Party roles and chats, faction channels and the Cabinet role all match the game."
-                : "Repaired what I could. Still wrong:\n" + string.Join("\n", problems.Select(p => $"- {p}"))),
+                ? Texts.Get("setup.repair.allGood")
+                : Texts.Get("setup.repair.stillWrong") + "\n" + string.Join("\n", problems.Select(p => $"- {p}"))),
             ephemeral: true,
             allowedMentions: AllowedMentions.None);
     }
@@ -104,7 +104,7 @@ public class SetupChecklistModule : InteractionModuleBase<SocketInteractionConte
         }
         catch (Exception ex)
         {
-            return [$"{what}: {ex.Message}"];
+            return [Texts.Get("setup.repair.failed", ("what", what), ("error", ex.Message))];
         }
     }
 }

@@ -50,7 +50,7 @@ public class GmSetKeyAutocomplete : AutocompleteHandler
         var results = GameStateFields.All
             .Where(f => f.Name.Contains(typed, StringComparison.OrdinalIgnoreCase))
             .Take(25)
-            .Select(f => new AutocompleteResult($"{f.Name} (now {f.Get(state)})", f.Name));
+            .Select(f => new AutocompleteResult(Texts.Get("gm.set.keyChoice", ("name", f.Name), ("value", f.Get(state))), f.Name));
         return Task.FromResult(AutocompletionResult.FromSuccess(results));
     }
 }
@@ -72,19 +72,19 @@ public partial class GmModule
         var before = _data.GetGameState();
         if (field.MovesCalendar && !before.Started)
         {
-            await RespondAsync("The calendar can't be changed before `/gm start`; the game always opens in the start season from `constants.yaml`.", ephemeral: true);
+            await RespondAsync(Texts.Get("gm.set.calendarNotStarted"), ephemeral: true);
             return;
         }
         if (field.Set(before, value.Trim()) is not { } preview)
         {
-            await RespondAsync($"`{value}` is not a valid value for `{field.Name}`.", ephemeral: true);
+            await RespondAsync(Texts.Get("gm.set.invalidValue", ("value", value), ("field", field.Name)), ephemeral: true);
             return;
         }
 
         var confirm = _confirmations.Create(Context.User.Id, () => _resolution.ExclusiveAsync(() =>
         {
             var current = _data.GetGameState();
-            if (field.Set(current, value.Trim()) is not { } updated) return Task.FromResult("The value is no longer valid.");
+            if (field.Set(current, value.Trim()) is not { } updated) return Task.FromResult(Texts.Get("gm.set.noLongerValid"));
             var oldValue = field.Get(current);
             if (field.MovesCalendar && updated.NextResolutionAt is not null)
             {
@@ -98,12 +98,14 @@ public partial class GmModule
             _data.SaveGameState(updated);
             _data.Log(LogKinds.GmOverride, "gm set", $"{field.Name}: {oldValue} -> {field.Get(updated)}", Context.User.Id);
             if (field.MovesCalendar) _turnTracker.RequestCurrent();
-            var schedule = field.MovesCalendar ? $" Next resolution: {NextResolutionText(updated)}." : "";
-            return Task.FromResult($"`{field.Name}` changed from {oldValue} to {field.Get(updated)}.{schedule}");
-        }), "Set");
+            return Task.FromResult(field.MovesCalendar
+                ? Texts.Get("gm.set.changedWithSchedule",
+                    ("field", field.Name), ("from", oldValue), ("to", field.Get(updated)), ("next", NextResolutionText(updated)))
+                : Texts.Get("gm.set.changed", ("field", field.Name), ("from", oldValue), ("to", field.Get(updated))));
+        }), Texts.Get("gm.set.button"));
 
         await RespondAsync(
-            $"Set `{field.Name}` from **{field.Get(before)}** to **{field.Get(preview)}**? Nothing is posted.",
+            Texts.Get("gm.set.confirm", ("field", field.Name), ("from", field.Get(before)), ("to", field.Get(preview))),
             components: confirm,
             ephemeral: true);
     }
@@ -115,15 +117,14 @@ public partial class GmModule
         if (!parsed.IsValid || parsed.Effects is not [{ IsAction: false } effect] || effect.Prefix == "condition")
         {
             await RespondAsync(
-                $"`{key}` is not a value `/gm set` knows. Use a game value from the list, or an effect key such as " +
-                "`purse.War`, `discontent.north_arpal`, `opinion.labour`, `salience.labour` or `popularity.<user id>`." +
+                Texts.Get("gm.set.unknownKey", ("key", key)) +
                 (parsed.IsValid ? "" : "\n" + string.Join("\n", parsed.Errors)),
                 ephemeral: true);
             return;
         }
         if (_data.GetEffectValue(effect.Key) is not { } current)
         {
-            await RespondAsync($"`{effect.Key}` has no current value (is the game started and the issue open?).", ephemeral: true);
+            await RespondAsync(Texts.Get("gm.set.noCurrentValue", ("key", effect.Key)), ephemeral: true);
             return;
         }
 
@@ -132,14 +133,16 @@ public partial class GmModule
         {
             var now = _data.GetEffectValue(effect.Key) ?? current;
             var result = _data.ApplyEffects([new Effect(effect.Key, target - now)], config,
-                new EffectSource("Royal adjustment", "gm set", Context.User.Id.ToString(), LedgerKind.Adjustment));
+                new EffectSource(Texts.Get("gm.royalAdjustment"), "gm set", Context.User.Id.ToString(), LedgerKind.Adjustment));
             var after = _data.GetEffectValue(effect.Key);
-            var warning = result.Warnings.Count > 0 ? "\n⚠️ " + string.Join("\n⚠️ ", result.Warnings) : "";
-            return Task.FromResult($"`{effect.Key}` changed from {EffectParser.FormatNumber(now)} to {(after is { } a ? EffectParser.FormatNumber(a) : "?")}.{warning}");
-        }), "Set");
+            var warnings = string.Concat(result.Warnings.Select(w => "\n" + Texts.Get("gm.warning", ("warning", w))));
+            return Task.FromResult(Texts.Get("gm.set.effectChanged",
+                ("key", effect.Key), ("from", EffectParser.FormatNumber(now)),
+                ("to", after is { } a ? EffectParser.FormatNumber(a) : Texts.Get("gm.set.unknownValue"))) + warnings);
+        }), Texts.Get("gm.set.button"));
 
         await RespondAsync(
-            $"Set `{effect.Key}` from **{EffectParser.FormatNumber(current)}** to **{EffectParser.FormatNumber(target)}** (clamped to its range)? Nothing is posted.",
+            Texts.Get("gm.set.effectConfirm", ("key", effect.Key), ("from", EffectParser.FormatNumber(current)), ("to", EffectParser.FormatNumber(target))),
             components: confirm,
             ephemeral: true);
     }

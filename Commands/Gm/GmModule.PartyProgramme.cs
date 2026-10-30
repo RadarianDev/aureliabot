@@ -16,25 +16,23 @@ public partial class GmModule
 
             if (PartyModule.FindParty(_data, party) is not { } target)
             {
-                await FollowupAsync($"There is no party called \"{party}\".", ephemeral: true, allowedMentions: AllowedMentions.None);
+                await FollowupAsync(Texts.Get("gm.party.programme.noParty", ("party", party)), ephemeral: true, allowedMentions: AllowedMentions.None);
                 return;
             }
 
             if (!ProgrammeParser.TryParseMessageLink(message, out var link))
             {
-                await FollowupAsync(
-                    "That is not a message link. Use **Copy Message Link** in Discord: `https://discord.com/channels/<server>/<channel>/<message>`.",
-                    ephemeral: true);
+                await FollowupAsync(Texts.Get("gm.party.programme.notLink"), ephemeral: true);
                 return;
             }
             if (link.GuildId != Context.Guild.Id)
             {
-                await FollowupAsync("That message is on another server.", ephemeral: true);
+                await FollowupAsync(Texts.Get("gm.party.programme.otherServer"), ephemeral: true);
                 return;
             }
             if (Context.Client.GetChannel(link.ChannelId) is not IMessageChannel channel)
             {
-                await FollowupAsync($"I cannot see the channel <#{link.ChannelId}>.", ephemeral: true);
+                await FollowupAsync(Texts.Get("gm.party.programme.cantSeeChannel", ("channel", link.ChannelId)), ephemeral: true);
                 return;
             }
 
@@ -45,12 +43,14 @@ public partial class GmModule
             }
             catch (Discord.Net.HttpException ex)
             {
-                await FollowupAsync($"I can't read <#{link.ChannelId}> ({ex.Reason ?? ex.Message}). Give the bot access to it, or record from another channel.", ephemeral: true);
+                await FollowupAsync(
+                    Texts.Get("gm.party.programme.cantRead", ("channel", link.ChannelId), ("reason", ex.Reason ?? ex.Message)),
+                    ephemeral: true);
                 return;
             }
             if (source is null)
             {
-                await FollowupAsync($"I cannot find that message in <#{link.ChannelId}>.", ephemeral: true);
+                await FollowupAsync(Texts.Get("gm.party.programme.messageNotFound", ("channel", link.ChannelId)), ephemeral: true);
                 return;
             }
 
@@ -58,9 +58,10 @@ public partial class GmModule
             var parsed = ProgrammeParser.Parse(source.Content, openIssues, _data.GetAllIssues());
             if (!parsed.IsValid)
             {
-                var errors = parsed.Errors.Select(e => $"Line {e.LineNumber}: `{e.Text.Replace("`", "'")}` — {e.Reason}");
+                var errors = parsed.Errors.Select(e => Texts.Get("gm.party.programme.badLine",
+                    ("line", e.LineNumber), ("text", e.Text.Replace("`", "'")), ("reason", e.Reason)));
                 await FollowupAsync(
-                    Display.Truncate($"The programme of {Display.Party(target)} has {parsed.Errors.Count} bad line(s). Nothing was recorded.\n" +
+                    Display.Truncate(Texts.Get("gm.party.programme.badLines", ("party", Display.Party(target)), ("count", parsed.Errors.Count)) + "\n" +
                                      string.Join("\n", errors)),
                     ephemeral: true);
                 return;
@@ -72,28 +73,28 @@ public partial class GmModule
             var penalty = state.IsPreElection ? 0 : flips.Count * _constants.Current.Programme.FlipPenalty;
             var members = _data.GetPartyMembers(target.Id);
 
-            var preview = new List<string> { $"**Programme of {Display.Party(target)}** ({source.GetJumpUrl()})" };
-            if (openIssues.Count == 0) preview.Add("There are no open issues.");
+            var preview = new List<string> { Texts.Get("gm.party.programme.previewTitle", ("party", Display.Party(target)), ("url", source.GetJumpUrl())) };
+            if (openIssues.Count == 0) preview.Add(Texts.Get("gm.party.programme.noOpenIssues"));
             foreach (var issue in openIssues)
             {
                 var stance = parsed.Stances.GetValueOrDefault(issue.Id, Stance.Silent);
-                var line = $"{issue.Title}: {(stance == Stance.Silent ? "*no stance*" : stance.DisplayName())}";
-                if (flips.Contains(issue.Id))
-                    line += $" ⚠️ flips from {before[issue.Id].DisplayName()}";
-                preview.Add(line);
+                var stanceText = stance == Stance.Silent ? Texts.Get("gm.party.programme.noStance") : stance.DisplayName();
+                preview.Add(flips.Contains(issue.Id)
+                    ? Texts.Get("gm.party.programme.previewLineFlip", ("issue", issue.Title), ("stance", stanceText), ("from", before[issue.Id].DisplayName()))
+                    : Texts.Get("gm.party.programme.previewLine", ("issue", issue.Title), ("stance", stanceText)));
             }
 
             preview.Add("");
             if (state.IsPreElection)
-                preview.Add("This is the pre-election, so the programme is a manifesto: it changes freely and is posted to #news.");
+                preview.Add(Texts.Get("gm.party.programme.preElection"));
             else
             {
                 preview.Add(flips.Count == 0
-                    ? "No stance flips sign, so the change is free."
-                    : $"{flips.Count} stance(s) flip sign: each of the {members.Count} members loses {Display.Number(penalty)} popularity, and each flip is announced in #news.");
-                preview.Add("The programme is posted to #campaign-log.");
+                    ? Texts.Get("gm.party.programme.noFlips")
+                    : Texts.Get("gm.party.programme.flips", ("flips", flips.Count), ("members", members.Count), ("penalty", Display.Number(penalty))));
+                preview.Add(Texts.Get("gm.party.programme.postedToCampaignLog"));
             }
-            preview.Add("I will reply to the original message with the recorded programme.");
+            preview.Add(Texts.Get("gm.party.programme.willReply"));
 
             var partyId = target.Id;
             var stances = parsed.Stances;
@@ -101,14 +102,14 @@ public partial class GmModule
             var components = _confirmations.Create(
                 Context.User.Id,
                 () => RecordProgrammeAsync(partyId, stances, url, link),
-                "Record",
+                Texts.Get("gm.party.programme.button"),
                 ButtonStyle.Success);
             await FollowupAsync(Display.Truncate(string.Join("\n", preview)), components: components, ephemeral: true);
         }
 
         private async Task<string> RecordProgrammeAsync(long partyId, IReadOnlyDictionary<string, Stance> stances, string url, MessageLink link)
         {
-            if (_data.GetParty(partyId) is not { } party) return "That party no longer exists. Nothing was recorded.";
+            if (_data.GetParty(partyId) is not { } party) return Texts.Get("gm.party.programme.gone");
 
             var state = _data.GetGameState();
             var result = _data.RecordProgramme(partyId, stances, url, _constants.Current);
@@ -120,19 +121,22 @@ public partial class GmModule
             try
             {
                 if (state.IsPreElection)
-                    await _publisher.PostAsync(ChannelRole.News, $"## Manifesto of {TheParty(party.Name)}\n{programme}", ProgrammeSource);
+                    await _publisher.PostAsync(ChannelRole.News,
+                        Texts.Get("gm.party.programme.manifestoPost", ("party", TheParty(party.Name)), ("programme", programme)), ProgrammeSource);
                 else
                 {
-                    await _publisher.PostAsync(ChannelRole.CampaignLog, $"## Programme of {TheParty(party.Name)}\n{programme}", ProgrammeSource);
+                    await _publisher.PostAsync(ChannelRole.CampaignLog,
+                        Texts.Get("gm.party.programme.programmePost", ("party", TheParty(party.Name)), ("programme", programme)), ProgrammeSource);
                     foreach (var issueId in result.FlippedIssueIds)
                         await _publisher.PostAsync(ChannelRole.News,
-                            $"{Capitalise(TheParty(party.Name))} changes its line on {titles.GetValueOrDefault(issueId, issueId)}.",
+                            Texts.Get("gm.party.programme.flipNews",
+                                ("party", Capitalise(TheParty(party.Name))), ("issue", titles.GetValueOrDefault(issueId, issueId))),
                             ProgrammeSource);
                 }
             }
             catch (Exception ex)
             {
-                problems.Add($"posting it publicly failed: {ex.Message}");
+                problems.Add(Texts.Get("gm.party.programme.postFailed", ("error", ex.Message)));
             }
 
             try
@@ -140,30 +144,32 @@ public partial class GmModule
                 if (Context.Client.GetChannel(link.ChannelId) is IMessageChannel channel)
                 {
                     var recordedReply = await channel.SendMessageAsync(
-                        Display.Truncate($"Recorded as the programme of {Display.Party(party)}:\n{programme}"),
+                        Display.Truncate(Texts.Get("gm.party.programme.recordedReply", ("party", Display.Party(party)), ("programme", programme))),
                         allowedMentions: AllowedMentions.None,
                         messageReference: new MessageReference(link.MessageId, link.ChannelId, link.GuildId, false));
                     _data.LogPost(link.ChannelId, recordedReply.Id, "gm party programme");
                 }
                 else
-                    problems.Add("I could not reach the original message's channel to reply");
+                    problems.Add(Texts.Get("gm.party.programme.cantReachChannel"));
             }
             catch (Exception ex)
             {
-                problems.Add($"replying to the original message failed: {ex.Message}");
+                problems.Add(Texts.Get("gm.party.programme.replyFailed", ("error", ex.Message)));
             }
 
             if (problems.Count > 0)
-                await _alerts.PostAsync($"The programme of {party.Name} was recorded, but {string.Join("; ", problems)}.");
+                await _alerts.PostAsync(Texts.Get("gm.party.programme.alert", ("party", party.Name), ("problems", string.Join("; ", problems))));
 
-            var reply = $"Recorded the programme of {Display.Party(party)}: {stances.Count(kv => kv.Value != Stance.Silent)} stance(s).";
-            reply += state.IsPreElection
-                ? " Posted to #news as its manifesto."
+            var partyText = Display.Party(party);
+            var count = stances.Count(kv => kv.Value != Stance.Silent);
+            var reply = state.IsPreElection
+                ? Texts.Get("gm.party.programme.recordedManifesto", ("party", partyText), ("count", count))
                 : result.FlippedIssueIds.Count == 0
-                    ? " Posted to #campaign-log; no stance flipped."
-                    : $" Posted to #campaign-log. Flipped: {string.Join(", ", result.FlippedIssueIds.Select(id => titles.GetValueOrDefault(id, id)))}; " +
-                      $"{result.PenalisedFactions.Count} member(s) lost {Display.Number(result.PenaltyPerMember)} popularity each.";
-            if (problems.Count > 0) reply += $"\n⚠️ But {string.Join("; ", problems)}.";
+                    ? Texts.Get("gm.party.programme.recordedNoFlip", ("party", partyText), ("count", count))
+                    : Texts.Get("gm.party.programme.recordedFlips", ("party", partyText), ("count", count),
+                        ("issues", string.Join(", ", result.FlippedIssueIds.Select(id => titles.GetValueOrDefault(id, id)))),
+                        ("members", result.PenalisedFactions.Count), ("penalty", Display.Number(result.PenaltyPerMember)));
+            if (problems.Count > 0) reply += "\n" + Texts.Get("gm.party.programme.butProblems", ("problems", string.Join("; ", problems)));
             return reply;
         }
 
@@ -171,18 +177,18 @@ public partial class GmModule
         {
             var stanced = openIssues
                 .Where(i => stances.GetValueOrDefault(i.Id, Stance.Silent) != Stance.Silent)
-                .Select(i => $"{i.Title}: *{stances[i.Id].DisplayName()}*")
+                .Select(i => Texts.Get("gm.party.programme.stanceLine", ("issue", i.Title), ("stance", stances[i.Id].DisplayName())))
                 .ToList();
             var silent = openIssues.Where(i => stances.GetValueOrDefault(i.Id, Stance.Silent) == Stance.Silent).Select(i => i.Title).ToList();
 
-            List<string> lines = stanced.Count == 0 ? ["No stance on any issue."] : stanced;
+            List<string> lines = stanced.Count == 0 ? [Texts.Get("gm.party.programme.noStanceAtAll")] : stanced;
             if (stanced.Count > 0 && silent.Count > 0)
-                lines.Add($"No stance on {string.Join(", ", silent)}.");
+                lines.Add(Texts.Get("gm.party.programme.noStanceOn", ("issues", string.Join(", ", silent))));
             return string.Join("\n", lines);
         }
 
         private static string TheParty(string name) =>
-            name.StartsWith("the ", StringComparison.OrdinalIgnoreCase) ? name : $"the {name}";
+            name.StartsWith("the ", StringComparison.OrdinalIgnoreCase) ? name : Texts.Get("gm.party.programme.theParty", ("name", name));
 
         private static string Capitalise(string text) =>
             text.Length == 0 ? text : char.ToUpperInvariant(text[0]) + text[1..];

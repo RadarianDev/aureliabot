@@ -7,9 +7,9 @@ public sealed record CheckLine(CheckStatus Status, string Text)
 {
     public string Render() => Status switch
     {
-        CheckStatus.Ok => $"✅ {Text}",
-        CheckStatus.Warning => $"⚠️ {Text}",
-        _ => $"❌ {Text}",
+        CheckStatus.Ok => Texts.Get("setup.ok", ("text", Text)),
+        CheckStatus.Warning => Texts.Get("setup.warning", ("text", Text)),
+        _ => Texts.Get("setup.missing", ("text", Text)),
     };
 }
 
@@ -22,22 +22,40 @@ public class SetupChecklistService
 
     private enum Kind { Text, Voice, Category, Role }
 
-    private sealed record Item(ChannelRole Role, string Label, Kind Kind, string? MatchName);
+    private sealed record Item(ChannelRole Role, Kind Kind, string? MatchName)
+    {
+        public string Label => Role switch
+        {
+            ChannelRole.News => Texts.Get("setup.item.news"),
+            ChannelRole.Dashboard => Texts.Get("setup.item.dashboard"),
+            ChannelRole.Assembly => Texts.Get("setup.item.assembly"),
+            ChannelRole.CampaignLog => Texts.Get("setup.item.campaignLog"),
+            ChannelRole.Cabinet => Texts.Get("setup.item.cabinet"),
+            ChannelRole.Gm => Texts.Get("setup.item.gm"),
+            ChannelRole.TurnTracker => Texts.Get("setup.item.turnTracker"),
+            ChannelRole.FactionCategory => Texts.Get("setup.item.factionCategory"),
+            ChannelRole.PartyCategory => Texts.Get("setup.item.partyCategory"),
+            ChannelRole.ArchiveCategory => Texts.Get("setup.item.archiveCategory"),
+            ChannelRole.GmRole => Texts.Get("setup.item.gmRole"),
+            ChannelRole.CabinetRole => Texts.Get("setup.item.cabinetRole"),
+            _ => Role.ToString(),
+        };
+    }
 
     private static readonly IReadOnlyList<Item> Items =
     [
-        new(ChannelRole.News, "#news", Kind.Text, "news"),
-        new(ChannelRole.Dashboard, "#dashboard", Kind.Text, "dashboard"),
-        new(ChannelRole.Assembly, "#assembly", Kind.Text, "assembly"),
-        new(ChannelRole.CampaignLog, "#campaign-log", Kind.Text, "campaign-log"),
-        new(ChannelRole.Cabinet, "#cabinet", Kind.Text, "cabinet"),
-        new(ChannelRole.Gm, "#gm", Kind.Text, "gm"),
-        new(ChannelRole.TurnTracker, "Turn tracker", Kind.Voice, null),
-        new(ChannelRole.FactionCategory, "Factions category", Kind.Category, "factions"),
-        new(ChannelRole.PartyCategory, "Parties category", Kind.Category, "parties"),
-        new(ChannelRole.ArchiveCategory, "Archive category", Kind.Category, "archive"),
-        new(ChannelRole.GmRole, "GM role", Kind.Role, "gm"),
-        new(ChannelRole.CabinetRole, "Cabinet role", Kind.Role, "cabinet"),
+        new(ChannelRole.News, Kind.Text, "news"),
+        new(ChannelRole.Dashboard, Kind.Text, "dashboard"),
+        new(ChannelRole.Assembly, Kind.Text, "assembly"),
+        new(ChannelRole.CampaignLog, Kind.Text, "campaign-log"),
+        new(ChannelRole.Cabinet, Kind.Text, "cabinet"),
+        new(ChannelRole.Gm, Kind.Text, "gm"),
+        new(ChannelRole.TurnTracker, Kind.Voice, null),
+        new(ChannelRole.FactionCategory, Kind.Category, "factions"),
+        new(ChannelRole.PartyCategory, Kind.Category, "parties"),
+        new(ChannelRole.ArchiveCategory, Kind.Category, "archive"),
+        new(ChannelRole.GmRole, Kind.Role, "gm"),
+        new(ChannelRole.CabinetRole, Kind.Role, "cabinet"),
     ];
 
     private static readonly HashSet<ChannelRole> PublicReadOnly =
@@ -134,9 +152,9 @@ public class SetupChecklistService
     }
 
     public static MessageComponent Buttons() => new ComponentBuilder()
-        .WithButton("Register the suggestions", "setup:register", ButtonStyle.Primary)
-        .WithButton("Repair parties, factions and Cabinet role", "setup:repair", ButtonStyle.Secondary)
-        .WithButton("Refresh", "setup:refresh", ButtonStyle.Secondary)
+        .WithButton(Texts.Get("setup.button.register"), "setup:register", ButtonStyle.Primary)
+        .WithButton(Texts.Get("setup.button.repair"), "setup:repair", ButtonStyle.Secondary)
+        .WithButton(Texts.Get("setup.button.refresh"), "setup:refresh", ButtonStyle.Secondary)
         .Build();
 
     public IReadOnlyList<SetupSuggestion> Suggestions()
@@ -154,7 +172,7 @@ public class SetupChecklistService
 
     public string Build()
     {
-        if (Guild is not { } guild) return "## Setup checklist\n❌ The bot can't see the server yet.";
+        if (Guild is not { } guild) return Texts.Get("setup.noGuild");
         var registered = _data.GetChannels();
         var me = guild.CurrentUser;
         var sections = new List<(string Title, List<CheckLine> Lines)>();
@@ -167,18 +185,18 @@ public class SetupChecklistService
             var line = Check(guild, me, item, registered);
             (item.Kind switch { Kind.Category => categories, Kind.Role => roles, _ => channels }).Add(line);
         }
-        sections.Add(("Channels", channels));
-        sections.Add(("Categories", categories));
-        sections.Add(("Roles", roles));
-        sections.Add(("The bot", BotChecks(guild, me, registered)));
-        sections.Add(("Game", GameChecks(guild)));
+        sections.Add((Texts.Get("setup.section.channels"), channels));
+        sections.Add((Texts.Get("setup.section.categories"), categories));
+        sections.Add((Texts.Get("setup.section.roles"), roles));
+        sections.Add((Texts.Get("setup.section.bot"), BotChecks(guild, me, registered)));
+        sections.Add((Texts.Get("setup.section.game"), GameChecks(guild)));
 
         var all = sections.SelectMany(s => s.Lines).ToList();
         var ready = all.Count(l => l.Status == CheckStatus.Ok);
-        var text = $"## Setup checklist · {ready} of {all.Count} ready\n" +
-                   string.Join("\n", sections.Select(s => $"**{s.Title}**\n" + string.Join("\n", s.Lines.Select(l => l.Render())))) +
-                   "\n\nRegister anything with `/gm channel set`. This message updates itself. " +
-                   $"Last checked {Display.Timestamp(DateTimeOffset.UtcNow, 'R')}.";
+        var text = Texts.Get("setup.heading", ("ready", ready), ("total", all.Count)) + "\n" +
+                   string.Join("\n", sections.Select(s =>
+                       Texts.Get("setup.sectionTitle", ("title", s.Title)) + "\n" + string.Join("\n", s.Lines.Select(l => l.Render())))) +
+                   "\n\n" + Texts.Get("setup.footer", ("when", Display.Timestamp(DateTimeOffset.UtcNow, 'R')));
         return Display.Truncate(text);
     }
 
@@ -186,13 +204,14 @@ public class SetupChecklistService
     {
         if (!registered.TryGetValue(item.Role, out var id))
         {
-            var hint = FindByName(guild, item) is { } match ? $" Found {match.Mention}: press *Register the suggestions*." : "";
-            return new(CheckStatus.Missing, $"{item.Label}: not set.{hint}");
+            return new(CheckStatus.Missing, FindByName(guild, item) is { } match
+                ? Texts.Get("setup.check.notSetFound", ("item", item.Label), ("match", match.Mention))
+                : Texts.Get("setup.check.notSet", ("item", item.Label)));
         }
 
         var resolved = Resolve(guild, item, id);
         if (resolved is null)
-            return new(CheckStatus.Missing, $"{item.Label}: the registered {KindWord(item.Kind)} is gone or is the wrong type.");
+            return new(CheckStatus.Missing, Texts.Get("setup.check.gone", ("item", item.Label), ("kind", KindWord(item.Kind))));
 
         var problems = item.Kind == Kind.Role
             ? RoleProblems(me, item, (SocketRole)resolved)
@@ -204,8 +223,8 @@ public class SetupChecklistService
             _ => $"<#{id}>",
         };
         return problems.Count == 0
-            ? new(CheckStatus.Ok, $"{item.Label}: {mention}")
-            : new(CheckStatus.Warning, $"{item.Label}: {mention}: {string.Join("; ", problems)}.");
+            ? new(CheckStatus.Ok, Texts.Get("setup.check.ok", ("item", item.Label), ("mention", mention)))
+            : new(CheckStatus.Warning, Texts.Get("setup.check.problems", ("item", item.Label), ("mention", mention), ("problems", string.Join("; ", problems))));
     }
 
     private static object? Resolve(SocketGuild guild, Item item, ulong id) => item.Kind switch
@@ -239,10 +258,10 @@ public class SetupChecklistService
 
     private static string KindWord(Kind kind) => kind switch
     {
-        Kind.Role => "role",
-        Kind.Category => "category",
-        Kind.Voice => "voice channel",
-        _ => "text channel",
+        Kind.Role => Texts.Get("setup.kind.role"),
+        Kind.Category => Texts.Get("setup.kind.category"),
+        Kind.Voice => Texts.Get("setup.kind.voice"),
+        _ => Texts.Get("setup.kind.text"),
     };
 
     private static bool EveryoneCan(SocketGuild guild, IGuildChannel channel, ChannelPermission permission)
@@ -273,35 +292,35 @@ public class SetupChecklistService
         var problems = new List<string>();
         var mine = me.GetPermissions(channel);
 
-        if (!mine.ViewChannel) problems.Add("the bot can't see it");
+        if (!mine.ViewChannel) problems.Add(Texts.Get("setup.problem.botCantSee"));
         if (item.Kind == Kind.Text)
         {
-            if (!mine.SendMessages) problems.Add("the bot can't post here");
-            if (item.Role == ChannelRole.Dashboard && !mine.ManageMessages) problems.Add("the bot needs Manage Messages to pin the dashboard");
+            if (!mine.SendMessages) problems.Add(Texts.Get("setup.problem.botCantPost"));
+            if (item.Role == ChannelRole.Dashboard && !mine.ManageMessages) problems.Add(Texts.Get("setup.problem.dashboardNeedsManageMessages"));
             if (PublicReadOnly.Contains(item.Role))
             {
-                if (!EveryoneCan(guild, channel, ChannelPermission.ViewChannel)) problems.Add("players can't read it");
-                if (EveryoneCan(guild, channel, ChannelPermission.SendMessages)) problems.Add("players can post here (only the bot should)");
+                if (!EveryoneCan(guild, channel, ChannelPermission.ViewChannel)) problems.Add(Texts.Get("setup.problem.playersCantRead"));
+                if (EveryoneCan(guild, channel, ChannelPermission.SendMessages)) problems.Add(Texts.Get("setup.problem.playersCanPost"));
             }
             if (item.Role is ChannelRole.Gm or ChannelRole.Cabinet && EveryoneCan(guild, channel, ChannelPermission.ViewChannel))
-                problems.Add("everyone can see it; it should be private");
+                problems.Add(Texts.Get("setup.problem.shouldBePrivate"));
             if (item.Role == ChannelRole.Cabinet && registered.TryGetValue(ChannelRole.CabinetRole, out var cabinetRoleId)
                 && guild.GetRole(cabinetRoleId) is { } cabinetRole && !RoleCanView(guild, channel, cabinetRole))
-                problems.Add("the Cabinet role can't see it");
+                problems.Add(Texts.Get("setup.problem.cabinetRoleCantSee"));
             if (item.Role is ChannelRole.Gm or ChannelRole.Cabinet && registered.TryGetValue(ChannelRole.GmRole, out var gmRoleId)
                 && guild.GetRole(gmRoleId) is { } gmRole && !RoleCanView(guild, channel, gmRole))
-                problems.Add("the GM role can't see it");
+                problems.Add(Texts.Get("setup.problem.gmRoleCantSee"));
         }
         if (item.Kind == Kind.Voice)
         {
-            if (!mine.ManageChannel) problems.Add("the bot needs Manage Channels on it to rename it");
-            if (EveryoneCan(guild, channel, ChannelPermission.Connect)) problems.Add("deny Connect to @everyone to keep it display-only");
+            if (!mine.ManageChannel) problems.Add(Texts.Get("setup.problem.trackerNeedsManageChannels"));
+            if (EveryoneCan(guild, channel, ChannelPermission.Connect)) problems.Add(Texts.Get("setup.problem.trackerConnect"));
         }
         if (item.Kind == Kind.Category)
         {
-            if (!mine.ManageChannel) problems.Add("the bot needs Manage Channels in it");
+            if (!mine.ManageChannel) problems.Add(Texts.Get("setup.problem.categoryNeedsManageChannels"));
             if (item.Role == ChannelRole.ArchiveCategory && EveryoneCan(guild, channel, ChannelPermission.ViewChannel))
-                problems.Add("everyone can see archived chats");
+                problems.Add(Texts.Get("setup.problem.archiveVisible"));
         }
         return problems;
     }
@@ -311,8 +330,8 @@ public class SetupChecklistService
         var problems = new List<string>();
         if (item.Role == ChannelRole.CabinetRole)
         {
-            if (role.Position >= me.Hierarchy) problems.Add("it sits above the bot's role, so the bot can't give it out");
-            if (role.Colors.PrimaryColor.RawValue != 0) problems.Add("it has a colour, which hides party colours");
+            if (role.Position >= me.Hierarchy) problems.Add(Texts.Get("setup.problem.roleAboveBot"));
+            if (role.Colors.PrimaryColor.RawValue != 0) problems.Add(Texts.Get("setup.problem.roleColoured"));
         }
         return problems;
     }
@@ -322,18 +341,18 @@ public class SetupChecklistService
         var lines = new List<CheckLine>();
         var permissions = me.GuildPermissions;
         lines.Add(permissions.ManageChannels
-            ? new(CheckStatus.Ok, "Manage Channels")
-            : new(CheckStatus.Missing, "Manage Channels: the bot needs it for party chats, faction channels and the turn tracker."));
+            ? new(CheckStatus.Ok, Texts.Get("setup.bot.manageChannelsOk"))
+            : new(CheckStatus.Missing, Texts.Get("setup.bot.manageChannelsMissing")));
         lines.Add(permissions.ManageRoles
-            ? new(CheckStatus.Ok, "Manage Roles")
-            : new(CheckStatus.Missing, "Manage Roles: the bot needs it for party roles and the Cabinet role."));
+            ? new(CheckStatus.Ok, Texts.Get("setup.bot.manageRolesOk"))
+            : new(CheckStatus.Missing, Texts.Get("setup.bot.manageRolesMissing")));
 
         var partyRoles = _data.GetAllParties().Where(p => p.RoleId is not null)
             .Select(p => (Party: p, Role: guild.GetRole(p.RoleId!.Value))).Where(x => x.Role is not null).ToList();
         var tooHigh = partyRoles.Where(x => x.Role!.Position >= me.Hierarchy).Select(x => x.Party.Name).ToList();
         lines.Add(tooHigh.Count == 0
-            ? new(CheckStatus.Ok, partyRoles.Count == 0 ? "Role position: no party roles yet; keep the bot's role near the top" : "Role position: above every party role")
-            : new(CheckStatus.Missing, $"Role position: drag the bot's role above {string.Join(", ", tooHigh)}."));
+            ? new(CheckStatus.Ok, partyRoles.Count == 0 ? Texts.Get("setup.bot.rolePositionNoParties") : Texts.Get("setup.bot.rolePositionOk"))
+            : new(CheckStatus.Missing, Texts.Get("setup.bot.rolePositionTooLow", ("roles", string.Join(", ", tooHigh)))));
 
         var coloured = guild.Roles
             .Where(r => !r.IsEveryone && r.Colors.PrimaryColor.RawValue != 0 && !r.IsManaged
@@ -341,12 +360,12 @@ public class SetupChecklistService
                         && partyRoles.Any(p => r.Position > p.Role!.Position))
             .Select(r => r.Name).ToList();
         if (coloured.Count > 0)
-            lines.Add(new(CheckStatus.Warning, $"Coloured roles above party roles hide party colours: {string.Join(", ", coloured.Take(5))}."));
+            lines.Add(new(CheckStatus.Warning, Texts.Get("setup.bot.colouredRoles", ("roles", string.Join(", ", coloured.Take(5))))));
 
         lines.Add(guild.HasAllMembers
-            ? new(CheckStatus.Ok, "Server Members intent: the member list is loaded")
-            : new(CheckStatus.Warning, "Server Members intent: the member list isn't loaded yet; check the intent in the Developer Portal if this stays."));
-        lines.Add(new(CheckStatus.Ok, "Message Content intent: requested at login (Discord refuses the connection if it's off)"));
+            ? new(CheckStatus.Ok, Texts.Get("setup.bot.membersOk"))
+            : new(CheckStatus.Warning, Texts.Get("setup.bot.membersWarning")));
+        lines.Add(new(CheckStatus.Ok, Texts.Get("setup.bot.messageContent")));
         return lines;
     }
 
@@ -358,21 +377,21 @@ public class SetupChecklistService
                                         || p.ChannelId is not { } c || guild.GetTextChannel(c) is null)
             .Select(p => p.Name).ToList();
         lines.Add(broken.Count == 0
-            ? new(CheckStatus.Ok, $"Parties: {parties.Count}, each with its role and chat")
-            : new(CheckStatus.Warning, $"Parties missing a role or chat: {string.Join(", ", broken)}. Press *Repair*."));
+            ? new(CheckStatus.Ok, Texts.Get("setup.game.partiesOk", ("count", parties.Count)))
+            : new(CheckStatus.Warning, Texts.Get("setup.game.partiesBroken", ("parties", string.Join(", ", broken)))));
 
         var factions = _data.GetActiveFactions();
         var noChannel = factions.Count(f => f.PrivateChannelId is not { } id || guild.GetTextChannel(id) is null);
         lines.Add(noChannel == 0
-            ? new(CheckStatus.Ok, $"Factions: {factions.Count}, each with its private channel")
-            : new(CheckStatus.Warning, $"{noChannel} faction(s) without a private channel. Press *Repair*."));
+            ? new(CheckStatus.Ok, Texts.Get("setup.game.factionsOk", ("count", factions.Count)))
+            : new(CheckStatus.Warning, Texts.Get("setup.game.factionsNoChannel", ("count", noChannel))));
 
         var state = _data.GetGameState();
         var readyTemplates = _data.GetTemplates(status: TemplateStatus.Ready).Count;
         lines.Add(state.Started
-            ? new(CheckStatus.Ok, $"Game started: {state.Label}")
-            : new(CheckStatus.Warning, $"Game not started yet: {readyTemplates} Ready template(s), " +
-                                       $"{_data.GetQueuedEvents().Count(e => e.FireAtResolution <= 0)} event(s) waiting for `/gm start`."));
+            ? new(CheckStatus.Ok, Texts.Get("setup.game.started", ("label", state.Label)))
+            : new(CheckStatus.Warning, Texts.Get("setup.game.notStarted",
+                ("templates", readyTemplates), ("events", _data.GetQueuedEvents().Count(e => e.FireAtResolution <= 0)))));
         return lines;
     }
 }
