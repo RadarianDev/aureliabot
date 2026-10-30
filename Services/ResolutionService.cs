@@ -95,8 +95,8 @@ public class ResolutionService
             {
                 var random = new SeededRandomSource(seed);
                 report = campaignDay
-                    ? _data.ResolveCampaignDay(constants, random, seed, DateTimeOffset.UtcNow)
-                    : _data.Resolve(constants, random, seed, DateTimeOffset.UtcNow);
+                    ? _data.ResolveCampaignDay(_constants.Config, random, seed, DateTimeOffset.UtcNow)
+                    : _data.Resolve(_constants.Config, random, seed, DateTimeOffset.UtcNow);
             }
             catch (Exception ex)
             {

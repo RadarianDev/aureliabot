@@ -16,6 +16,8 @@ public class InfoAutocomplete : AutocompleteHandler
             entries.Add(($"Party · {party.Name}", $"party:{party.Id}"));
         foreach (var faction in data.GetActiveFactions())
             entries.Add(($"Faction · {FactionLabel(faction, context)}", $"faction:{faction.UserId}"));
+        foreach (var bill in data.GetBills())
+            entries.Add(($"Bill · {bill.Title}", $"bill:{bill.Id}"));
         foreach (var issue in data.GetAllIssues())
             entries.Add(($"Issue · {issue.Title}", $"issue:{issue.Id}"));
         foreach (var province in constants.Config.Provinces)
@@ -67,6 +69,7 @@ public class InfoModule : InteractionModuleBase<SocketInteractionContext>
             "party" when long.TryParse(id, out var partyId) => PartyInfo(partyId),
             "issue" => IssueInfo(id),
             "province" => ProvinceInfo(id),
+            "bill" => BillInfo(id),
             _ => _data.GetAllParties().FirstOrDefault(p => p.Name.Equals(thing, StringComparison.OrdinalIgnoreCase)) is { } party
                 ? PartyInfo(party.Id)
                 : _data.GetIssue(thing) is not null ? IssueInfo(thing)
@@ -157,6 +160,16 @@ public class InfoModule : InteractionModuleBase<SocketInteractionContext>
         sb.AppendLine($"For: {issue.ForText}");
         sb.AppendLine($"Against: {issue.AgainstText}");
         sb.AppendLine($"Status: {issue.Status}");
+
+        var bills = _data.GetBills(issueId);
+        if (bills.Count > 0)
+        {
+            sb.AppendLine();
+            sb.AppendLine("**Bills**");
+            foreach (var bill in bills)
+                sb.AppendLine($"{bill.Title} · {bill.Lean} · {BillStatusText(bill)}");
+        }
+
         sb.AppendLine();
         foreach (var party in _data.GetAllParties())
         {
@@ -166,17 +179,54 @@ public class InfoModule : InteractionModuleBase<SocketInteractionContext>
         return sb.ToString();
     }
 
+    private string BillStatusText(Bill bill)
+    {
+        var state = _data.GetGameState();
+        return bill.Status switch
+        {
+            BillStatus.Available => "available",
+            BillStatus.Voting => "before the Assembly",
+            BillStatus.Cooldown when bill.CooldownUntil is { } until =>
+                $"resting until {GameCalendar.Label(GameCalendar.Add(state.Season, state.Year, (int)(until - state.ResolutionNumber)).Season, GameCalendar.Add(state.Season, state.Year, (int)(until - state.ResolutionNumber)).Year)}",
+            BillStatus.Passed => "passed into law",
+            BillStatus.Withdrawn => "withdrawn",
+            _ => bill.Status.ToString(),
+        };
+    }
+
+    private string BillInfo(string billId)
+    {
+        if (_data.GetBill(billId) is not { } bill) return "That bill doesn't exist.";
+        var issue = _data.GetIssue(bill.IssueId);
+        var sb = new StringBuilder();
+        sb.AppendLine($"## {bill.Title}");
+        sb.AppendLine($"{issue?.Title ?? bill.IssueId} · {bill.Lean} · {BillStatusText(bill)}");
+        sb.AppendLine();
+        sb.AppendLine($"*{bill.Motion}*");
+        return sb.ToString();
+    }
+
     private string ProvinceInfo(string provinceId)
     {
-        if (_constants.Config.Province(provinceId) is not { } province) return "That province doesn't exist.";
+        if (_constants.Config.Province(provinceId) is not { } definition) return "That province doesn't exist.";
+        var live = _data.GetProvince(provinceId);
+        var conditionIds = live is null ? definition.Conditions : _data.GetProvinceConditions().GetValueOrDefault(provinceId, []);
         var sb = new StringBuilder();
-        sb.AppendLine($"## {province.Name}");
-        sb.AppendLine(province.Description);
+        sb.AppendLine($"## {definition.Name}");
+        sb.AppendLine(definition.Description);
+        if (live is not null) sb.AppendLine($"Discontent: {Wording.Discontent(live.Discontent)}");
         sb.AppendLine();
         sb.AppendLine("**Conditions**");
-        foreach (var conditionId in province.Conditions)
+        foreach (var conditionId in conditionIds)
             if (_constants.Config.Condition(conditionId) is { } condition)
                 sb.AppendLine($"{condition.Name}: {condition.Description}");
+
+        var units = _data.GetUnits().Where(u => u.ProvinceId == provinceId).ToList();
+        if (units.Count > 0)
+        {
+            sb.AppendLine();
+            sb.AppendLine("Stationed: " + string.Join(", ", units.Select(u => $"{u.Name} · d{u.Sides}")));
+        }
         return sb.ToString();
     }
 }

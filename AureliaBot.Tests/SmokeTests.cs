@@ -22,7 +22,7 @@ public class SmokeTests : IDisposable
     [Fact]
     public void Resolve_AdvancesTheCalendar()
     {
-        var report = Db.Resolve(DatabaseFixture.Constants, new ScriptedRandomSource(), 7, DateTimeOffset.UtcNow);
+        var report = Db.Resolve(DatabaseFixture.Config, new ScriptedRandomSource(), 7, DateTimeOffset.UtcNow);
 
         Assert.Equal(1, report.ResolutionNumber);
         Assert.Equal(Season.Summer, report.ToSeason);
@@ -35,7 +35,7 @@ public class SmokeTests : IDisposable
     public void Resolve_RollsTheYearAfterWinter()
     {
         Db.SaveGameState(Db.GetGameState() with { Season = Season.Winter });
-        Db.Resolve(DatabaseFixture.Constants, new ScriptedRandomSource(), 7, DateTimeOffset.UtcNow);
+        Db.Resolve(DatabaseFixture.Config, new ScriptedRandomSource(), 7, DateTimeOffset.UtcNow);
         var state = Db.GetGameState();
         Assert.Equal(Season.Spring, state.Season);
         Assert.Equal(1851, state.Year);

@@ -65,6 +65,35 @@ public class StatusModule : InteractionModuleBase<SocketInteractionContext>
             if (_data.GetParty(request.PartyId) is { } target)
                 waiting.Add($"Your application to {target.Name} is waiting for its members' answers.");
 
+        var pending = _data.GetPendingActions(faction.UserId);
+        if (pending.Count > 0)
+        {
+            var titles = _data.GetAllIssues().ToDictionary(i => i.Id, i => i.Title);
+            sb.AppendLine();
+            sb.AppendLine($"**Pending actions** (resolve {Display.NextResolution(state)})");
+            foreach (var action in pending)
+            {
+                var issue = titles.GetValueOrDefault(action.IssueId, action.IssueId);
+                var text = action.Kind switch
+                {
+                    ActionKind.Campaign => $"Campaign *{action.Stance?.DisplayName()}* on {issue}{(action.OffProgramme ? " (off-programme)" : "")}",
+                    ActionKind.Attack => $"Attack {(action.TargetFactionId is { } t ? Display.Faction(_data, t) : "?")} on {issue}",
+                    _ => $"Poll {issue}{(action.ProvinceId is { } p ? $" in {Display.Province(_constants.Config, p)}" : " nationally")}",
+                };
+                sb.AppendLine($"- {text}");
+                if (row < 5)
+                {
+                    buttons.WithButton($"Cancel {action.Kind.ToString().ToLowerInvariant()}", $"action:cancel:{action.Id}", ButtonStyle.Secondary, row: row);
+                    row++;
+                }
+            }
+        }
+        else
+        {
+            sb.AppendLine();
+            sb.AppendLine($"You have {_constants.Current.Campaign.ActionsPerTurn} actions this turn, each of a different kind: `/campaign`, `/attack`, `/poll`.");
+        }
+
         sb.AppendLine();
         if (waiting.Count > 0)
         {

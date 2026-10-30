@@ -67,7 +67,7 @@ public partial class GmModule
         var field = GameStateFields.Find(key);
         if (field is null)
         {
-            await RespondAsync($"`{key}` is not a value `/gm set` knows. Pick one from the list.", ephemeral: true);
+            await SetEffectKeyAsync(key.Trim(), value.Trim());
             return;
         }
 
@@ -101,6 +101,42 @@ public partial class GmModule
 
         await RespondAsync(
             $"Set `{field.Name}` from **{field.Get(before)}** to **{field.Get(preview)}**? Nothing is posted.",
+            components: confirm,
+            ephemeral: true);
+    }
+
+    private async Task SetEffectKeyAsync(string key, string value)
+    {
+        var config = _constants.Config;
+        var parsed = EffectParser.ParseText($"{key} {value}", _data.BuildEffectContext(config));
+        if (!parsed.IsValid || parsed.Effects is not [{ IsAction: false } effect] || effect.Prefix == "condition")
+        {
+            await RespondAsync(
+                $"`{key}` is not a value `/gm set` knows. Use a game value from the list, or an effect key such as " +
+                "`purse.War`, `discontent.north_arpal`, `opinion.labour`, `salience.labour` or `popularity.<user id>`." +
+                (parsed.IsValid ? "" : "\n" + string.Join("\n", parsed.Errors)),
+                ephemeral: true);
+            return;
+        }
+        if (_data.GetEffectValue(effect.Key) is not { } current)
+        {
+            await RespondAsync($"`{effect.Key}` has no current value (is the game started and the issue open?).", ephemeral: true);
+            return;
+        }
+
+        var target = effect.Amount;
+        var confirm = _confirmations.Create(Context.User.Id, () =>
+        {
+            var now = _data.GetEffectValue(effect.Key) ?? current;
+            var result = _data.ApplyEffects([new Effect(effect.Key, target - now)], config,
+                new EffectSource("Royal adjustment", "gm set", Context.User.Id.ToString(), LedgerKind.Adjustment));
+            var after = _data.GetEffectValue(effect.Key);
+            var warning = result.Warnings.Count > 0 ? "\n⚠️ " + string.Join("\n⚠️ ", result.Warnings) : "";
+            return Task.FromResult($"`{effect.Key}` changed from {EffectParser.FormatNumber(now)} to {(after is { } a ? EffectParser.FormatNumber(a) : "?")}.{warning}");
+        }, "Set");
+
+        await RespondAsync(
+            $"Set `{effect.Key}` from **{EffectParser.FormatNumber(current)}** to **{EffectParser.FormatNumber(target)}** (clamped to its range)? Nothing is posted.",
             components: confirm,
             ephemeral: true);
     }

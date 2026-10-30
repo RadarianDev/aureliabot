@@ -5,32 +5,96 @@ public class Publisher
 {
     private readonly DiscordSocketClient _client;
     private readonly DatabaseService _data;
+    private readonly ConstantsStore _constants;
+    private readonly FactionChannelService _factionChannels;
 
-    public Publisher(DiscordSocketClient client, DatabaseService data)
+    public Publisher(DiscordSocketClient client, DatabaseService data, ConstantsStore constants, FactionChannelService factionChannels)
     {
         _client = client;
         _data = data;
+        _constants = constants;
+        _factionChannels = factionChannels;
     }
 
     public async Task PublishAsync(ResolutionReport report)
     {
-        var news = new List<string>();
+        var source = $"resolution {report.ResolutionNumber}";
+        var actionLines = ActionLines(report).ToList();
+
         if (report.CampaignDay)
         {
-            news.Add($"## Dispatches from the hustings\n{GameCalendar.Label(report.FromSeason, report.FromYear)}");
+            var dispatch = new List<string> { $"## Dispatches from the hustings\n{GameCalendar.Label(report.FromSeason, report.FromYear)}" };
+            dispatch.Add(actionLines.Count == 0 ? "A quiet day on the hustings." : string.Join("\n", actionLines));
+            await PostAsync(ChannelRole.News, string.Join("\n", dispatch), source);
         }
         else
         {
-            news.Add($"## {GameCalendar.Label(report.ToSeason, report.ToYear)}");
+            var news = new List<string> { $"## {GameCalendar.Label(report.ToSeason, report.ToYear)}" };
             if (report.PreElectionOpened)
                 news.Add("The hustings open: this season ends in an election.");
             if (_data.GetGameState().NextResolutionAt is { } next)
-                news.Add($"The season closes <t:{next.ToUnixTimeSeconds()}:F>.");
-        }
-        news.AddRange(report.News);
+                news.Add($"The season closes {Display.When(next)}.");
+            news.AddRange(report.News);
+            await PostAsync(ChannelRole.News, string.Join("\n", news), source);
 
-        await PostAsync(ChannelRole.News, string.Join("\n", news), $"resolution {report.ResolutionNumber}");
+            await PostEventsAsync(report, source);
+
+            if (actionLines.Count > 0)
+                await PostAsync(ChannelRole.CampaignLog,
+                    $"## The campaign, {GameCalendar.Label(report.FromSeason, report.FromYear)}\n" + string.Join("\n", actionLines), source);
+        }
+
+        foreach (var (factionId, messages) in report.PrivateMessages)
+        {
+            try
+            {
+                await _factionChannels.SendAsync(factionId, string.Join("\n\n", messages));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Publisher] Private report to {factionId} failed: {ex.Message}");
+            }
+        }
+
         await UpdateDashboardAsync();
+    }
+
+    public async Task PostEventsAsync(ResolutionReport report, string source)
+    {
+        if (report.FiredEvents.Count == 0) return;
+        var names = Names(_data, _constants.Config);
+        foreach (var fired in report.FiredEvents)
+            await PostAsync(ChannelRole.News, EventPost(fired, GameCalendar.Label(report.ToSeason, report.ToYear), names), source);
+    }
+
+    public string EventPost(FiredEventReport fired, string when, EffectNames names)
+    {
+        var lines = EffectSummary.Lines(fired.Effects, names, _constants.Current.Display);
+        var post = $"## {fired.Title}\n{when}\n{fired.Text}";
+        return lines.Count == 0 ? post : post + "\n\n" + string.Join("\n", lines);
+    }
+
+    private IEnumerable<string> ActionLines(ResolutionReport report)
+    {
+        var titles = _data.GetAllIssues().ToDictionary(i => i.Id, i => i.Title);
+        foreach (var action in report.Actions)
+        {
+            var actor = Display.Faction(_data, action.FactionId);
+            var issue = titles.GetValueOrDefault(action.IssueId, action.IssueId);
+            switch (action.Kind)
+            {
+                case ActionKind.Campaign:
+                    var stance = action.Stance?.DisplayName() ?? "no stance";
+                    yield return $"{actor} campaigns *{stance}* on {issue}{(action.OffProgramme ? " (off-programme)" : "")}: popularity {Display.Signed(action.ActorPopularityChange)}.";
+                    break;
+                case ActionKind.Attack when action.TargetFactionId is { } targetId:
+                    var target = Display.Faction(_data, targetId);
+                    yield return action.TargetPopularityChange < 0
+                        ? $"{actor} attacks {target} on {issue}, and lands the blow: {target} popularity {Display.Signed(action.TargetPopularityChange)}."
+                        : $"{actor} attacks {target} on {issue}, but the nation sides with {target}: {actor} popularity {Display.Signed(action.ActorPopularityChange)}.";
+                    break;
+            }
+        }
     }
 
     public static EffectNames Names(DatabaseService data, GameConfig config)

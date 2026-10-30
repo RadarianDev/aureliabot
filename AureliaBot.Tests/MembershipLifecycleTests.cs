@@ -26,7 +26,7 @@ public class MembershipLifecycleTests : IDisposable
         var party = SetUpParty(3);
         var request = Db.CreateJoinRequest(Applicant, party).RequestId!.Value;
 
-        Db.Resolve(DatabaseFixture.Constants, new ScriptedRandomSource(), 1, DateTimeOffset.UtcNow);
+        Db.Resolve(DatabaseFixture.Config, new ScriptedRandomSource(), 1, DateTimeOffset.UtcNow);
 
         Assert.Equal(JoinRequestStatus.Dropped, Db.GetJoinRequest(request)!.Status);
     }
