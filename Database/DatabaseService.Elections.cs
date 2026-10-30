@@ -98,7 +98,7 @@ public partial class DatabaseService
             report.ReadingsCancelled.Add(new ReadingCancelledReport(reading.Id, reading.BillId, reading.Title, Texts.Get("data.election.readingCancelled")));
         }
         Exec(conn, tx, "UPDATE no_confidence SET status = 'Cancelled' WHERE status IN ('Gathering', 'Voting');");
-        Exec(conn, tx, "UPDATE cabinets SET status = 'Cancelled' WHERE kind = 'Nominated' AND status = 'Voting';");
+        Exec(conn, tx, "UPDATE cabinets SET status = 'Cancelled' WHERE kind = 'Nominated' AND status IN ('Forming', 'Voting');");
         DropPendingJoinRequestsTx(conn, tx);
     }
 

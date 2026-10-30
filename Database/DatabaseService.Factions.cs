@@ -155,7 +155,7 @@ public partial class DatabaseService
         Exec(conn, tx, "UPDATE cabinets SET chancellor_faction_id = NULL WHERE kind = 'Sitting' AND chancellor_faction_id = $user;", ("$user", id));
         Exec(conn, tx, @"
             UPDATE cabinets SET status = 'Cancelled'
-            WHERE kind = 'Nominated' AND status = 'Voting'
+            WHERE kind = 'Nominated' AND status IN ('Forming', 'Voting')
               AND (chancellor_faction_id = $user OR id IN (SELECT cabinet_id FROM cabinet_posts WHERE faction_id = $user));", ("$user", id));
         Exec(conn, tx, "DELETE FROM actions WHERE faction_id = $user AND resolved = 0;", ("$user", id));
         Exec(conn, tx, "UPDATE party_join_requests SET status = 'Dropped' WHERE faction_id = $user AND status = 'Pending';", ("$user", id));
