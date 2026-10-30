@@ -47,7 +47,13 @@ public partial class DatabaseService
 
     public static string Ordinal(int n) => (n % 100) switch
     {
-        11 or 12 or 13 => $"{n}th",
-        _ => (n % 10) switch { 1 => $"{n}st", 2 => $"{n}nd", 3 => $"{n}rd", _ => $"{n}th" },
+        11 or 12 or 13 => Texts.Get("data.ordinal.th", ("n", n)),
+        _ => (n % 10) switch
+        {
+            1 => Texts.Get("data.ordinal.st", ("n", n)),
+            2 => Texts.Get("data.ordinal.nd", ("n", n)),
+            3 => Texts.Get("data.ordinal.rd", ("n", n)),
+            _ => Texts.Get("data.ordinal.th", ("n", n)),
+        },
     };
 }

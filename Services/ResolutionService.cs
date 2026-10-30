@@ -55,7 +55,7 @@ public class ResolutionService
         {
             if (now - next > PollInterval * 2)
                 await _alerts.PostAsync(
-                    $"The resolution due <t:{next.ToUnixTimeSeconds()}:F> was missed while the bot was offline. Running it once now.");
+                    Texts.Get("alerts.resolution.missed", ("time", next.ToUnixTimeSeconds())));
             await ResolveAsync(campaignDay: false);
         }
         else if (state.CampaignDaysRun < campaignDays.Count && now >= campaignDays[state.CampaignDaysRun])
@@ -105,8 +105,7 @@ public class ResolutionService
                 _data.SaveGameState(_data.GetGameState() with { Paused = true });
                 _turnTracker.RequestCurrent();
                 await _alerts.PostAsync(
-                    $"⚠️ The resolution of {state.Label} failed and was rolled back; nothing was posted. " +
-                    $"The schedule is paused. Seed {seed}.\n```\n{ex.Message}\n```");
+                    Texts.Get("alerts.resolution.failed", ("label", state.Label), ("seed", seed), ("error", ex.Message)));
                 return null;
             }
 
@@ -128,7 +127,7 @@ public class ResolutionService
         catch (Exception ex)
         {
             Console.WriteLine($"[Resolution] Publishing failed: {ex}");
-            await _alerts.PostAsync($"⚠️ Resolution {report.ResolutionNumber} committed, but publishing failed half way: {ex.Message}");
+            await _alerts.PostAsync(Texts.Get("alerts.resolution.publishFailed", ("number", report.ResolutionNumber), ("error", ex.Message)));
         }
         _turnTracker.RequestCurrent();
         await _alerts.PostAllAsync(report.Alerts);

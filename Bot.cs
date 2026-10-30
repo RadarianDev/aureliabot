@@ -178,8 +178,7 @@ public class Bot
             {
                 if (_data.GetFaction(user.Id) is not { IsActive: true } faction) return;
                 await _services.GetRequiredService<AlertService>().PostAsync(
-                    $"{Display.Faction(faction)} ({user.Username}) left the server while their faction is active. " +
-                    "Consider `/gm faction retire`.");
+                    Texts.Get("bot.userLeft", ("faction", Display.Faction(faction)), ("user", user.Username)));
             }
             catch (Exception ex) { Console.WriteLine($"[UserLeft] Alert for {user.Id} failed: {ex}"); }
         });
@@ -200,7 +199,7 @@ public class Bot
             && !_data.IsChannelAllowed(guildChannel.Guild.Id, guildChannel.Id))
         {
             await interaction.RespondAsync(
-                "This channel isn't whitelisted for bot commands. Ask a server manager to run `/whitelist add` here.",
+                Texts.Get("bot.notWhitelisted"),
                 ephemeral: true);
             return;
         }
@@ -223,7 +222,7 @@ public class Bot
         if (!result.IsSuccess && interaction.Type != InteractionType.ApplicationCommandAutocomplete)
         {
             Console.WriteLine($"[CommandFailure] /{interaction}: {result.Error} — {result.ErrorReason}");
-            try { await interaction.RespondAsync($"⚠️ {result.ErrorReason}", ephemeral: true); }
+            try { await interaction.RespondAsync(Texts.Get("bot.failed", ("reason", result.ErrorReason)), ephemeral: true); }
             catch (Exception ex) { Console.WriteLine($"[CommandFailure] fallback response also failed: {ex.Message}"); }
         }
     }

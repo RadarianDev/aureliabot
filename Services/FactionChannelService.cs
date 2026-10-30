@@ -38,7 +38,7 @@ public class FactionChannelService
         if (_data.GetFaction(factionId) is not { } faction) return null;
         if (await FactionCategoryAsync() is not { } category)
         {
-            await _alerts.PostAsync($"Could not open a private channel for <@{factionId}>: no Factions category is set. Run `/gm setup`.");
+            await _alerts.PostAsync(Texts.Get("sync.faction.noCategoryFor", ("faction", factionId)));
             return null;
         }
         var (channelId, problem) = await EnsureAsync(faction, category);
@@ -51,7 +51,7 @@ public class FactionChannelService
         var factions = _data.GetActiveFactions();
         if (factions.Count == 0) return [];
         if (await FactionCategoryAsync() is not { } category)
-            return ["No Factions category is set, so no private faction channel could be checked."];
+            return [Texts.Get("sync.faction.noCategory")];
 
         var problems = new List<string>();
         foreach (var faction in factions)
@@ -86,7 +86,7 @@ public class FactionChannelService
         }
         catch (HttpException ex)
         {
-            await _alerts.PostAsync($"Could not post in the private channel of <@{factionId}>: {ex.Message}");
+            await _alerts.PostAsync(Texts.Get("sync.faction.postFailed", ("faction", factionId), ("error", ex.Message)));
             return false;
         }
     }
@@ -107,7 +107,7 @@ public class FactionChannelService
     private async Task<(ulong? ChannelId, string? Problem)> EnsureLockedAsync(Faction faction, ICategoryChannel category)
     {
         if (_client.GetGuild(category.GuildId) is not { } guild)
-            return (null, $"Could not open a private channel for <@{faction.UserId}>: the bot cannot see the Factions category's server.");
+            return (null, Texts.Get("sync.faction.noGuild", ("faction", faction.UserId)));
 
         var overwrites = Overwrites(guild, faction.UserId);
         try
@@ -124,8 +124,8 @@ public class FactionChannelService
             {
                 p.CategoryId = category.Id;
                 p.Topic = string.IsNullOrWhiteSpace(faction.CharacterName)
-                    ? "Private office: poll results, reminders and your commands."
-                    : $"The private office of {faction.CharacterName}: poll results, reminders and your commands.";
+                    ? Texts.Get("private.topic")
+                    : Texts.Get("private.topicNamed", ("name", faction.CharacterName));
                 p.PermissionOverwrites = overwrites;
             });
             _data.SetFactionPrivateChannel(faction.UserId, created.Id);
@@ -135,7 +135,7 @@ public class FactionChannelService
         }
         catch (HttpException ex)
         {
-            return (null, $"Discord refused the private channel of <@{faction.UserId}>: {ex.Message}");
+            return (null, Texts.Get("sync.faction.refused", ("faction", faction.UserId), ("error", ex.Message)));
         }
     }
 
@@ -192,7 +192,7 @@ public class FactionChannelService
     {
         var name = Slug(faction.CharacterName);
         if (name.Length == 0 && guild.GetUser(faction.UserId) is { } member) name = Slug(member.Username);
-        return name.Length == 0 ? $"faction-{faction.UserId}" : name;
+        return name.Length == 0 ? Texts.Get("private.channelName", ("id", faction.UserId)) : name;
     }
 
     public static string Slug(string text)

@@ -1,0 +1,176 @@
+news:
+  dispatches:
+    header: |-
+      ## Dispatches from the hustings
+      {season}
+    quiet: A quiet day on the hustings.
+  season:
+    header: "## {season}"
+    hustingsOpen: "The hustings open: this season ends in an election."
+    closes: The season closes {when}.
+  campaignLog:
+    header: "## The campaign, {season}"
+  event:
+    post: |-
+      ## {title}
+      {when}
+      {text}
+  action:
+    noStance: no stance
+    offProgramme: " (off-programme)"
+    campaign: "{actor} campaigns *{stance}* on {issue}{offProgramme}: popularity {change}."
+    attackLanded: "{actor} attacks {target} on {issue}, and lands the blow: {target} popularity {change}."
+    attackBackfired: "{actor} attacks {target} on {issue}, but the nation sides with {target}: {actor} popularity {change}."
+  party:
+    dissolvedEmpty: "**The {party} dissolves.** Its benches have emptied, and what remains of it sits on as independent."
+    dissolvedLast: "**The {party} dissolves.** With its ranks dwindled to {faction} alone, the party is no more. {faction} sits on as an independent and keeps {seats}."
+    oneSeat: its one seat
+    seats: its {seats} seats
+  turnTracker:
+    preElection: "{name} · Pre-election"
+    paused: "{name} · Paused"
+
+dashboard:
+  title: The Kingdom of Aurelia · {label}
+  calendarField: Calendar
+  calendar: |-
+    {label}{preElection}{paused}
+    Next resolution: {nextResolution}
+    Next election: end of {nextElection}
+  preElectionTag: " · **Pre-election**"
+  pausedTag: " · Paused"
+  assemblyField: The Assembly · {seats} seats
+  partyLine: "{party}: {seats} seats · {members} members"
+  independentsLine: "Independents: {seats} seats · {factions} factions"
+  noParties: No parties yet.
+  issuesField: Open issues
+  noIssues: None yet.
+  footer: Updated after every resolution
+
+alerts:
+  resolution:
+    missed: The resolution due <t:{time}:F> was missed while the bot was offline. Running it once now.
+    failed: |-
+      ⚠️ The resolution of {label} failed and was rolled back; nothing was posted. The schedule is paused. Seed {seed}.
+      ```
+      {error}
+      ```
+    publishFailed: "⚠️ Resolution {number} committed, but publishing failed half way: {error}"
+  party:
+    dissolved: Party '{party}' (id {id}) dissolved{last}{outcome}
+    lastUnknown: "; its last member could not be identified from the role holders."
+    lastKnown: "; its last member {faction} is now independent."
+    cleanedUp: " Its role was deleted and its chat archived."
+    changesFailed: " {count} Discord change(s) failed; see the alerts above."
+  billCooldownOver: "{bill} is back from its cooldown and can be proposed again."
+  noEventQueued: No event is queued for the start of the next turn, after {label}.
+  upkeepShort: The {ministry} purse could not cover its {due} upkeep; every {type} unit lost a training step.
+
+private:
+  topic: "Private office: poll results, reminders and your commands."
+  topicNamed: "The private office of {name}: poll results, reminders and your commands."
+  channelName: faction-{id}
+
+sync:
+  discordRefused: "Discord refused to {what}: {error}"
+  faction:
+    noCategoryFor: "Could not open a private channel for <@{faction}>: no Factions category is set. Run `/gm setup`."
+    noCategory: No Factions category is set, so no private faction channel could be checked.
+    postFailed: "Could not post in the private channel of <@{faction}>: {error}"
+    noGuild: "Could not open a private channel for <@{faction}>: the bot cannot see the Factions category's server."
+    refused: "Discord refused the private channel of <@{faction}>: {error}"
+  cabinet:
+    noRole: No Cabinet role is set; set it with `/gm channel set` or `/gm setup`.
+    roleGone: The Cabinet role <@&{role}> no longer exists; set it again with `/gm channel set` or `/gm setup`.
+    give: give {user} the Cabinet role
+    take: take the Cabinet role from {user}
+  party:
+    channelNameFallback: party
+    missing: Party {id} does not exist.
+    createRole: create the role for party '{party}'
+    updateRole: update the role {role} for party '{party}'
+    giveRole: give {user} the role of party '{party}'
+    takeRole: take the role of party '{party}' from {user}
+    categoryGone: The party category <#{category}> no longer exists; set it again with `/gm channel set` or `/gm setup`.
+    noCategory: No party category is set, so the chat of party '{party}' could not be created.
+    createChat: create the chat for party '{party}'
+    updateChat: update the chat <#{channel}> of party '{party}'
+    deleteRole: delete the role of party '{party}'
+    noArchive: No archive category is set, so the chat <#{channel}> of party '{party}' was locked where it is.
+    archiveChat: archive the chat <#{channel}> of party '{party}'
+    noNews: "No #news channel is set, so an announcement was not posted."
+    newsFailed: "Could not post to #news: {error}"
+    noGuild: The bot is not connected to a server.
+
+data:
+  attack:
+    self: you cannot attack yourself
+    targetInactive: the target is not an active faction
+    ownParty: the target is a member of your own party
+    targetNoStance: the target holds no stance on the issue
+    noTarget: no target was given
+  action:
+    dropped: "Dropped: the faction is not active."
+    fizzledClosed: "Fizzled: the issue was closed."
+    fizzledNoStance: "Fizzled: no stance."
+    fizzledBecause: "Fizzled: {reason}."
+    targetNoStanceShort: the target holds no stance
+    campaignClosed: "Your campaign fizzled: the issue was closed before the resolution."
+    campaignNoStance: "Your campaign fizzled: it had no stance."
+    attackClosed: "Your attack fizzled: the issue was closed before the resolution."
+    attackFizzled: "Your attack fizzled: {reason}."
+    pollClosed: "Your poll fizzled: the issue was closed before the resolution."
+    campaigned: "Campaigned {stance}: {change} popularity."
+    attackSucceeded: "Attack on {stance} succeeded: target {change} popularity."
+    attackBackfired: "Attack on {stance} backfired: {change} popularity."
+    pollDelivered: Poll delivered.
+  effect:
+    warning: "{source}: `{key}`: {warning}"
+    noFaction: no faction {id}
+    noProvince: no province {id}
+    noCondition: no condition {id}
+    issueNotOpen: issue {id} is not open
+    issueAlreadyOpen: issue {id} is already open
+    noTemplate: no template {id}
+    templateNotReady: template {id} is {status}, not Ready
+    templateInvalid: template {id} is not a valid {type}
+    billIssueNotOpen: its issue {id} is not open
+    billInPlay: bill {id} is already in play
+    billPassed: bill {id} has already passed
+    projectNotBuilt: projects start once stage 7 is built; the project was not started
+    crisisNotBuilt: crises are posted once stage 6 is built; the crisis was not posted
+    unknownKey: unknown effect key {key}
+  start:
+    alreadyStarted: The game has already started.
+  unit:
+    division: "{ordinal} {province} Division"
+    gendarmerie: "{province} Gendarmerie"
+  ordinal:
+    st: "{n}st"
+    nd: "{n}nd"
+    rd: "{n}rd"
+    th: "{n}th"
+  ledger:
+    openingReserve: The opening reserve
+    unspentToReserve: Unspent {year} funds to the reserve
+    unspentFrom: Unspent {year} funds from {ministry}
+    interest: Interest {year}
+    allocation: Allocation {year}
+    navyContribution: Contribution paid to the Anzarian fleet
+    unallocated: Unallocated {year} budget
+    upkeep: "Upkeep {year}: {count} {type} unit(s)"
+
+files:
+  config:
+    reloaded: "Config files changed: `config/` reloaded. Values already in play are unchanged."
+    failed: |-
+      ⚠️ Config files changed, but they don't load; the old config stays in force.
+      {error}
+  content:
+    summary: "**Content files loaded:** {ok} imported or updated, {ready} marked Ready, {unchanged} unchanged."
+    leftAsDraft: "- Left as Draft: {problem}"
+
+bot:
+  notWhitelisted: This channel isn't whitelisted for bot commands. Ask a server manager to run `/whitelist add` here.
+  failed: ⚠️ {reason}
+  userLeft: "{faction} ({user}) left the server while their faction is active. Consider `/gm faction retire`."

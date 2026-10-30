@@ -4,7 +4,6 @@ using Discord.WebSocket;
 
 public class TurnTrackerService
 {
-    private const string Separator = " · ";
     private static readonly TimeSpan ErrorBackoff = TimeSpan.FromSeconds(30);
 
     private readonly DiscordSocketClient _client;
@@ -31,8 +30,8 @@ public class TurnTrackerService
     public static string NameFor(GameState state)
     {
         var name = state.Label;
-        if (state.IsPreElection) name += Separator + "Pre-election";
-        if (state.Paused) name += Separator + "Paused";
+        if (state.IsPreElection) name = Texts.Get("news.turnTracker.preElection", ("name", name));
+        if (state.Paused) name = Texts.Get("news.turnTracker.paused", ("name", name));
         return name;
     }
 

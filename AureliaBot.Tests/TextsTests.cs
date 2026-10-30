@@ -22,8 +22,9 @@ public class TextsTests
         foreach (var file in Directory.EnumerateFiles(root, "*.cs", SearchOption.AllDirectories))
         {
             var relative = Path.GetRelativePath(root, file);
-            if (relative.StartsWith("DiscordBot") || relative.StartsWith("AureliaBot.Tests") || relative.Contains("obj")
-                || relative.StartsWith(".claude") || relative.Contains("bin")) continue;
+            var folders = relative.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            if (relative.StartsWith("DiscordBot") || relative.StartsWith("AureliaBot.Tests") || folders.Contains("obj")
+                || relative.StartsWith(".claude") || folders.Contains("bin")) continue;
             foreach (Match match in KeyUse.Matches(File.ReadAllText(file)))
                 yield return (relative, match.Groups[1].Value);
         }

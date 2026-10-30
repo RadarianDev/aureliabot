@@ -47,20 +47,20 @@ public partial class DatabaseService
                 "salience" => ApplyIssueValueTx(conn, tx, target!, "salience", effect.Amount, c.Salience.Min, c.Salience.Max,
                     effect.Amount > 0 ? state.ResolutionNumber : null),
                 "popularity" => ulong.TryParse(target, out var factionId) && AddPopularityTx(conn, tx, factionId, effect.Amount, c.Popularity) is not null
-                    ? null : $"no faction {target}",
+                    ? null : Texts.Get("data.effect.noFaction", ("id", target)),
                 "open" => OpenIssueFromTemplateTx(conn, tx, state, target!),
                 "close" => CloseIssueTx(conn, tx, state, target!),
                 "bill" => MakeBillAvailableTx(conn, tx, state, target!),
-                "project" => "projects start once stage 7 is built; the project was not started",
-                "crisis" => "crises are posted once stage 6 is built; the crisis was not posted",
-                _ => $"unknown effect key {effect.Key}",
+                "project" => Texts.Get("data.effect.projectNotBuilt"),
+                "crisis" => Texts.Get("data.effect.crisisNotBuilt"),
+                _ => Texts.Get("data.effect.unknownKey", ("key", effect.Key)),
             };
 
             if (warning is null)
                 applied.Add(before is { } old && CurrentEffectValueTx(conn, tx, effect.Key) is { } now
                     ? effect with { Value = Math.Round(now - old, 6) }
                     : effect);
-            else warnings.Add($"{source.Label}: `{effect.Key}`: {warning}");
+            else warnings.Add(Texts.Get("data.effect.warning", ("source", source.Label), ("key", effect.Key), ("warning", warning)));
         }
 
         if (report is not null)
@@ -82,7 +82,7 @@ public partial class DatabaseService
 
     private static string? ApplyDiscontentTx(SqliteConnection conn, SqliteTransaction tx, GameConstants c, string provinceId, double amount)
     {
-        if (GetProvincesTx(conn, tx).FirstOrDefault(p => p.Id == provinceId) is not { } province) return $"no province {provinceId}";
+        if (GetProvincesTx(conn, tx).FirstOrDefault(p => p.Id == provinceId) is not { } province) return Texts.Get("data.effect.noProvince", ("id", provinceId));
         SetDiscontentTx(conn, tx, provinceId, Math.Clamp(province.Discontent + amount, c.Discontent.Min, c.Discontent.Max));
         return null;
     }
@@ -90,8 +90,8 @@ public partial class DatabaseService
     private static string? ApplyConditionTx(
         SqliteConnection conn, SqliteTransaction tx, GameConfig config, GameState state, string provinceId, string conditionId, bool present)
     {
-        if (GetProvincesTx(conn, tx).All(p => p.Id != provinceId)) return $"no province {provinceId}";
-        if (config.Condition(conditionId) is null) return $"no condition {conditionId}";
+        if (GetProvincesTx(conn, tx).All(p => p.Id != provinceId)) return Texts.Get("data.effect.noProvince", ("id", provinceId));
+        if (config.Condition(conditionId) is null) return Texts.Get("data.effect.noCondition", ("id", conditionId));
         SetConditionTx(conn, tx, state, provinceId, conditionId, present);
         return null;
     }
@@ -99,7 +99,7 @@ public partial class DatabaseService
     private static string? ApplyIssueValueTx(
         SqliteConnection conn, SqliteTransaction tx, string issueId, string column, double amount, double min, double max, long? raisedMarker)
     {
-        if (GetIssueTx(conn, tx, issueId) is not { Status: IssueStatus.Open } issue) return $"issue {issueId} is not open";
+        if (GetIssueTx(conn, tx, issueId) is not { Status: IssueStatus.Open } issue) return Texts.Get("data.effect.issueNotOpen", ("id", issueId));
         var current = column == "opinion" ? issue.Opinion : issue.Salience;
         Exec(conn, tx, $"UPDATE issues SET {column} = $value WHERE id = $id;",
             ("$id", issueId), ("$value", Math.Clamp(current + amount, min, max)));
@@ -112,16 +112,16 @@ public partial class DatabaseService
     {
         problem = null;
         var row = GetTemplateTx(conn, tx, id);
-        if (row is null) { problem = $"no template {id}"; return null; }
-        if (row.Status != TemplateStatus.Ready) { problem = $"template {id} is {row.Status}, not Ready"; return null; }
-        if (TemplateCodec.Parse(row.Yaml, id).Template is not T template) { problem = $"template {id} is not a valid {typeof(T).Name}"; return null; }
+        if (row is null) { problem = Texts.Get("data.effect.noTemplate", ("id", id)); return null; }
+        if (row.Status != TemplateStatus.Ready) { problem = Texts.Get("data.effect.templateNotReady", ("id", id), ("status", row.Status)); return null; }
+        if (TemplateCodec.Parse(row.Yaml, id).Template is not T template) { problem = Texts.Get("data.effect.templateInvalid", ("id", id), ("type", typeof(T).Name)); return null; }
         return template;
     }
 
     private static string? OpenIssueFromTemplateTx(SqliteConnection conn, SqliteTransaction tx, GameState state, string templateId)
     {
         if (ReadyTemplateTx<IssueTemplate>(conn, tx, templateId, out var problem) is not { } template) return problem;
-        if (GetIssueTx(conn, tx, template.Id) is { Status: IssueStatus.Open }) return $"issue {template.Id} is already open";
+        if (GetIssueTx(conn, tx, template.Id) is { Status: IssueStatus.Open }) return Texts.Get("data.effect.issueAlreadyOpen", ("id", template.Id));
         Exec(conn, tx, @"
             INSERT INTO issues (id, template_id, title, for_text, against_text, opinion, salience, status, opened_resolution)
             VALUES ($id, $template, $title, $for, $against, $opinion, $salience, 'Open', $resolution)
@@ -137,7 +137,7 @@ public partial class DatabaseService
 
     private static string? CloseIssueTx(SqliteConnection conn, SqliteTransaction tx, GameState state, string issueId)
     {
-        if (GetIssueTx(conn, tx, issueId) is not { Status: IssueStatus.Open }) return $"issue {issueId} is not open";
+        if (GetIssueTx(conn, tx, issueId) is not { Status: IssueStatus.Open }) return Texts.Get("data.effect.issueNotOpen", ("id", issueId));
         Exec(conn, tx, "DELETE FROM programme_stances WHERE issue_id = $id;", ("$id", issueId));
         Exec(conn, tx, "UPDATE issues SET status = 'Closed', closed_resolution = $resolution WHERE id = $id;",
             ("$id", issueId), ("$resolution", state.ResolutionNumber));
@@ -153,12 +153,12 @@ public partial class DatabaseService
     {
         if (ReadyTemplateTx<BillTemplate>(conn, tx, templateId, out var problem) is not { } template) return problem;
         if (GetIssueTx(conn, tx, template.Issue) is not { Status: IssueStatus.Open })
-            return $"its issue {template.Issue} is not open";
+            return Texts.Get("data.effect.billIssueNotOpen", ("id", template.Issue));
         var existing = QueryBillsTx(conn, tx, "id = $id", ("$id", template.Id)).FirstOrDefault();
         if (existing is { Status: BillStatus.Available or BillStatus.Voting or BillStatus.Cooldown })
-            return $"bill {template.Id} is already in play";
+            return Texts.Get("data.effect.billInPlay", ("id", template.Id));
         if (existing is { Status: BillStatus.Passed })
-            return $"bill {template.Id} has already passed";
+            return Texts.Get("data.effect.billPassed", ("id", template.Id));
 
         Exec(conn, tx, @"
             INSERT INTO bills (id, template_id, issue_id, title, motion, lean, pass_text, pass_effects, status, available_resolution)
