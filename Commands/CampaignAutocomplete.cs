@@ -41,8 +41,8 @@ public class CampaignIssueAutocomplete : AutocompleteHandler
             .Take(25)
             .Select(i => new AutocompleteResult(
                 Display.Truncate(programme.TryGetValue(i.Id, out var stance) && stance != Stance.Silent
-                    ? $"{i.Title} · programme: {stance.DisplayName()}"
-                    : $"{i.Title} · choose a stance", 100),
+                    ? Texts.Get("campaign.autocomplete.programme", ("issue", i.Title), ("stance", stance.DisplayName()))
+                    : Texts.Get("campaign.autocomplete.chooseStance", ("issue", i.Title)), 100),
                 i.Id));
         return Task.FromResult(AutocompletionResult.FromSuccess(results));
     }
@@ -73,7 +73,7 @@ public class RivalAutocomplete : AutocompleteHandler
         var who = username ?? faction.UserId.ToString();
         var name = string.IsNullOrWhiteSpace(faction.CharacterName) ? who : $"{faction.CharacterName} ({who})";
         var party = faction.PartyId is { } partyId ? data.GetParty(partyId)?.Name : null;
-        return $"{name} · {party ?? "independent"}";
+        return $"{name} · {party ?? Display.Independent}";
     }
 }
 

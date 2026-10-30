@@ -11,7 +11,7 @@ public class Confirmations
 
     private readonly ConcurrentDictionary<string, Pending> _pending = new();
 
-    public MessageComponent Create(ulong userId, Func<Task<string>> onConfirm, string confirmLabel = "Confirm", ButtonStyle style = ButtonStyle.Danger)
+    public MessageComponent Create(ulong userId, Func<Task<string>> onConfirm, string? confirmLabel = null, ButtonStyle style = ButtonStyle.Danger)
     {
         foreach (var expired in _pending.Where(p => p.Value.ExpiresAt < DateTimeOffset.UtcNow).Select(p => p.Key).ToList())
             _pending.TryRemove(expired, out _);
@@ -19,8 +19,8 @@ public class Confirmations
         var id = Guid.NewGuid().ToString("N");
         _pending[id] = new Pending(userId, DateTimeOffset.UtcNow + Lifetime, onConfirm);
         return new ComponentBuilder()
-            .WithButton(confirmLabel, $"confirm:yes:{id}", style)
-            .WithButton("Cancel", $"confirm:no:{id}", ButtonStyle.Secondary)
+            .WithButton(confirmLabel ?? Texts.Get("confirm.button"), $"confirm:yes:{id}", style)
+            .WithButton(Texts.Get("confirm.cancel"),$"confirm:no:{id}", ButtonStyle.Secondary)
             .Build();
     }
 
@@ -52,12 +52,12 @@ public class ConfirmationModule : InteractionModuleBase<SocketInteractionContext
         var (found, wrongUser, action) = _confirmations.Take(id, Context.User.Id);
         if (wrongUser)
         {
-            await RespondAsync("Only the person who ran the command can confirm it.", ephemeral: true);
+            await RespondAsync(Texts.Get("confirm.onlyConfirmer"), ephemeral: true);
             return;
         }
         if (!found || action is null)
         {
-            await Finish("This confirmation has expired. Run the command again.");
+            await Finish(Texts.Get("confirm.expired"));
             return;
         }
 
@@ -70,7 +70,7 @@ public class ConfirmationModule : InteractionModuleBase<SocketInteractionContext
         catch (Exception ex)
         {
             Console.WriteLine($"[Confirmations] Confirmed action failed: {ex}");
-            result = $"⚠️ {ex.Message}";
+            result = Texts.Get("confirm.failed", ("error", ex.Message));
         }
         await ModifyOriginalResponseAsync(p =>
         {
@@ -86,10 +86,10 @@ public class ConfirmationModule : InteractionModuleBase<SocketInteractionContext
         var (_, wrongUser, _) = _confirmations.Take(id, Context.User.Id);
         if (wrongUser)
         {
-            await RespondAsync("Only the person who ran the command can cancel it.", ephemeral: true);
+            await RespondAsync(Texts.Get("confirm.onlyCanceller"), ephemeral: true);
             return;
         }
-        await Finish("Cancelled. Nothing was changed.");
+        await Finish(Texts.Get("confirm.cancelled"));
     }
 
     private Task Finish(string content) =>

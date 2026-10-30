@@ -39,9 +39,11 @@ public class StatusModule : InteractionModuleBase<SocketInteractionContext>
 
         var sb = new StringBuilder();
         sb.AppendLine($"## {Display.Faction(faction)}");
-        sb.AppendLine($"{state.Label}{(state.IsPreElection ? " · Pre-election" : "")} · next resolution {Display.NextResolution(state)}");
-        sb.AppendLine($"Popularity {Display.Number(faction.Popularity)} · {faction.Seats} seats · " +
-                      $"{(party is null ? "independent" : Display.Party(party))} · {role.ToString().ToLowerInvariant()}");
+        sb.AppendLine(state.IsPreElection
+            ? Texts.Get("me.statusPreElection", ("season", state.Label), ("when", Display.NextResolution(state)))
+            : Texts.Get("me.status", ("season", state.Label), ("when", Display.NextResolution(state))));
+        sb.AppendLine(Texts.Get("me.summary", ("popularity", Display.Number(faction.Popularity)), ("seats", faction.Seats),
+            ("party", party is null ? Display.Independent : Display.Party(party)), ("role", role.ToString().ToLowerInvariant())));
 
         var buttons = new ComponentBuilder();
         var waiting = new List<string>();
@@ -51,39 +53,47 @@ public class StatusModule : InteractionModuleBase<SocketInteractionContext>
             foreach (var request in _data.GetPendingJoinRequests().Where(r => r.PartyId == party.Id))
             {
                 var answers = _data.GetJoinAnswers(request.Id);
-                var mine = answers.TryGetValue(faction.UserId, out var accept) ? (accept ? "you accepted" : "you declined") : "not answered yet";
-                waiting.Add($"Application from {Display.Faction(_data, request.FactionId)} to join {party.Name} ({mine})");
+                var mine = answers.TryGetValue(faction.UserId, out var accept)
+                    ? (accept ? Texts.Get("me.youAccepted") : Texts.Get("me.youDeclined"))
+                    : Texts.Get("me.notAnswered");
+                waiting.Add(Texts.Get("me.application",
+                    ("applicant", Display.Faction(_data, request.FactionId)), ("party", party.Name), ("answer", mine)));
                 if (row < 5)
                 {
-                    buttons.WithButton($"Accept #{request.Id}", $"join:accept:{request.Id}", ButtonStyle.Success, row: row);
-                    buttons.WithButton($"Decline #{request.Id}", $"join:decline:{request.Id}", ButtonStyle.Danger, row: row);
+                    buttons.WithButton(Texts.Get("me.acceptButton", ("request", request.Id)), $"join:accept:{request.Id}", ButtonStyle.Success, row: row);
+                    buttons.WithButton(Texts.Get("me.declineButton", ("request", request.Id)),$"join:decline:{request.Id}", ButtonStyle.Danger, row: row);
                     row++;
                 }
             }
         }
         foreach (var request in _data.GetPendingJoinRequests().Where(r => r.FactionId == faction.UserId))
             if (_data.GetParty(request.PartyId) is { } target)
-                waiting.Add($"Your application to {target.Name} is waiting for its members' answers.");
+                waiting.Add(Texts.Get("me.ownApplication", ("party", target.Name)));
 
         var pending = _data.GetPendingActions(faction.UserId);
         if (pending.Count > 0)
         {
             var titles = _data.GetAllIssues().ToDictionary(i => i.Id, i => i.Title);
             sb.AppendLine();
-            sb.AppendLine($"**Pending actions** (resolve {Display.NextResolution(state)})");
+            sb.AppendLine(Texts.Get("me.pendingActions", ("when", Display.NextResolution(state))));
             foreach (var action in pending)
             {
                 var issue = titles.GetValueOrDefault(action.IssueId, action.IssueId);
                 var text = action.Kind switch
                 {
-                    ActionKind.Campaign => $"Campaign *{action.Stance?.DisplayName()}* on {issue}{(action.OffProgramme ? " (off-programme)" : "")}",
-                    ActionKind.Attack => $"Attack {(action.TargetFactionId is { } t ? Display.Faction(_data, t) : "?")} on {issue}",
-                    _ => $"Poll {issue}{(action.ProvinceId is { } p ? $" in {Display.Province(_constants.Config, p)}" : " nationally")}",
+                    ActionKind.Campaign => action.OffProgramme
+                        ? Texts.Get("me.campaignOff", ("stance", action.Stance?.DisplayName()), ("issue", issue))
+                        : Texts.Get("me.campaign", ("stance", action.Stance?.DisplayName()), ("issue", issue)),
+                    ActionKind.Attack => Texts.Get("me.attack",
+                        ("target", action.TargetFactionId is { } t ? Display.Faction(_data, t) : Texts.Get("me.unknownTarget")), ("issue", issue)),
+                    _ => action.ProvinceId is { } p
+                        ? Texts.Get("me.pollProvince", ("issue", issue), ("province", Display.Province(_constants.Config, p)))
+                        : Texts.Get("me.pollNational", ("issue", issue)),
                 };
                 sb.AppendLine($"- {text}");
                 if (row < 5)
                 {
-                    buttons.WithButton($"Cancel {action.Kind.ToString().ToLowerInvariant()}", $"action:cancel:{action.Id}", ButtonStyle.Secondary, row: row);
+                    buttons.WithButton(Texts.Get("me.cancelButton", ("kind", action.Kind.ToString().ToLowerInvariant())),$"action:cancel:{action.Id}", ButtonStyle.Secondary, row: row);
                     row++;
                 }
             }
@@ -91,18 +101,18 @@ public class StatusModule : InteractionModuleBase<SocketInteractionContext>
         else
         {
             sb.AppendLine();
-            sb.AppendLine($"You have {_constants.Current.Campaign.ActionsPerTurn} actions this turn, each of a different kind: `/campaign`, `/attack`, `/poll`.");
+            sb.AppendLine(Texts.Get("me.noActions", ("count", _constants.Current.Campaign.ActionsPerTurn)));
         }
 
         sb.AppendLine();
         if (waiting.Count > 0)
         {
-            sb.AppendLine("**Waiting on you**");
+            sb.AppendLine(Texts.Get("me.waiting"));
             foreach (var line in waiting) sb.AppendLine($"- {line}");
         }
         else
         {
-            sb.AppendLine("**Nothing is waiting on you.**");
+            sb.AppendLine(Texts.Get("me.nothingWaiting"));
             sb.AppendLine(NextSteps(faction, state));
         }
 
@@ -114,9 +124,9 @@ public class StatusModule : InteractionModuleBase<SocketInteractionContext>
     {
         if (faction.IsIndependent)
             return state.IsPreElection
-                ? "You are independent, and only parties stand in elections: `/party apply` to join one this season."
-                : $"You are independent. Parties can be joined in the pre-election, {GameCalendar.Label(state.PreElectionSeason, state.PreElectionYear)}.";
-        return "Talk with your party, and see `/help` for what you can do.";
+                ? Texts.Get("me.independentPreElection")
+                : Texts.Get("me.independent", ("preElection", GameCalendar.Label(state.PreElectionSeason, state.PreElectionYear)));
+        return Texts.Get("me.member");
     }
 
     [SlashCommand("help", "Explain how part of the game works")]
@@ -125,44 +135,14 @@ public class StatusModule : InteractionModuleBase<SocketInteractionContext>
         var c = _constants.Current;
         var text = topic switch
         {
-            HelpTopic.Basics =>
-                "## How Aurelia works\n" +
-                "Each turn is one season and lasts one real day; it ends at the daily resolution. " +
-                $"The pre-election turn lasts {c.PreElectionDays} days and ends in an election.\n" +
-                "Money, popularity, seats and forces are public numbers. The people's mood is told in words.\n" +
-                "`/me` shows what is waiting on you, `/info` shows anything in the game.",
-            HelpTopic.Parties =>
-                "## Parties\n" +
-                "The GM founds parties at the request of two or more factions. Only parties stand in elections.\n" +
-                "- `/party apply` joins a party, only during the pre-election, with the agreement of a majority of its members.\n" +
-                "- `/party leave` makes you independent; you keep your seats. A party left with one faction dissolves.\n" +
-                "- A party writes its programme as a message and sends the GM its link. Outside the pre-election, " +
-                $"flipping a stance between For and Against costs every member {Display.Number(c.Programme.FlipPenalty)} popularity.",
-            HelpTopic.Campaigning =>
-                "## Campaigning\n" +
-                $"Each turn you take up to {c.Campaign.ActionsPerTurn} actions of different kinds (per day in the pre-election):\n" +
-                "- **Campaign** on an issue: gain popularity if the nation agrees with you.\n" +
-                "- **Attack** a rival's stance: they lose popularity if the nation disagrees with them; otherwise it backfires.\n" +
-                "- **Poll** an issue, nationally or in one province.\n" +
-                "All actions are revealed together when the turn ends. *(Coming in a later update.)*",
-            HelpTopic.Opposition =>
-                "## Opposition\n" +
-                "A faction in a party with no cabinet seat is in opposition, and has one opposition action a season: " +
-                "question a minister, condemn a crisis, or propose a bill (once a year). *(Coming in a later update.)*",
-            HelpTopic.Voting =>
-                "## Voting\n" +
-                "Each faction votes all its seats one way. A bill passes when more seats vote for it than against. " +
-                "Cabinet and no-confidence votes stay open until the end of the next turn. *(Coming in a later update.)*",
-            HelpTopic.Ministries =>
-                "## Ministries\n" +
-                "The Chancellor names four ministers: Treasury, War, Interior, and Commerce and Labor. " +
-                "Ministers answer crises, manage forces and run projects. *(Coming in a later update.)*",
-            HelpTopic.Elections =>
-                "## Elections\n" +
-                "Seats are counted province by province, by population. A party's strength is its factions' combined popularity, " +
-                "weighed by how well its programme fits the local mood. Every faction in a standing party also wins a safe borough " +
-                "seat in its home province. *(Coming in a later update.)*",
-            _ => "Unknown topic.",
+            HelpTopic.Basics => Texts.Get("help.basics", ("preElectionDays", c.PreElectionDays)),
+            HelpTopic.Parties => Texts.Get("help.parties", ("flipPenalty", Display.Number(c.Programme.FlipPenalty))),
+            HelpTopic.Campaigning => Texts.Get("help.campaigning", ("actionsPerTurn", c.Campaign.ActionsPerTurn)),
+            HelpTopic.Opposition => Texts.Get("help.opposition"),
+            HelpTopic.Voting => Texts.Get("help.voting"),
+            HelpTopic.Ministries => Texts.Get("help.ministries"),
+            HelpTopic.Elections => Texts.Get("help.elections"),
+            _ => Texts.Get("help.unknown"),
         };
         await RespondAsync(text, ephemeral: true);
     }

@@ -13,15 +13,15 @@ public class InfoAutocomplete : AutocompleteHandler
 
         var entries = new List<(string Label, string Value)>();
         foreach (var party in data.GetAllParties())
-            entries.Add(($"Party · {party.Name}", $"party:{party.Id}"));
+            entries.Add((Texts.Get("info.kind.party", ("name", party.Name)), $"party:{party.Id}"));
         foreach (var faction in data.GetActiveFactions())
-            entries.Add(($"Faction · {FactionLabel(faction, context)}", $"faction:{faction.UserId}"));
+            entries.Add((Texts.Get("info.kind.faction", ("name", FactionLabel(faction, context))), $"faction:{faction.UserId}"));
         foreach (var bill in data.GetBills())
-            entries.Add(($"Bill · {bill.Title}", $"bill:{bill.Id}"));
+            entries.Add((Texts.Get("info.kind.bill", ("name", bill.Title)), $"bill:{bill.Id}"));
         foreach (var issue in data.GetAllIssues())
-            entries.Add(($"Issue · {issue.Title}", $"issue:{issue.Id}"));
+            entries.Add((Texts.Get("info.kind.issue", ("name", issue.Title)), $"issue:{issue.Id}"));
         foreach (var province in constants.Config.Provinces)
-            entries.Add(($"Province · {province.Name}", $"province:{province.Id}"));
+            entries.Add((Texts.Get("info.kind.province", ("name", province.Name)), $"province:{province.Id}"));
 
         var results = entries
             .Where(e => e.Label.Contains(typed, StringComparison.OrdinalIgnoreCase))
@@ -74,7 +74,7 @@ public class InfoModule : InteractionModuleBase<SocketInteractionContext>
                 ? PartyInfo(party.Id)
                 : _data.GetIssue(thing) is not null ? IssueInfo(thing)
                 : _constants.Config.Province(thing) is not null ? ProvinceInfo(thing)
-                : $"Nothing called `{thing}` was found. Pick something from the list.",
+                : Texts.Get("info.notFound", ("thing", thing)),
         };
     }
 
@@ -82,63 +82,74 @@ public class InfoModule : InteractionModuleBase<SocketInteractionContext>
     {
         var state = _data.GetGameState();
         var sb = new StringBuilder();
-        sb.AppendLine($"## {state.Label}{(state.IsPreElection ? " · Pre-election" : "")}");
-        sb.AppendLine($"Next resolution: {Display.NextResolution(state)}");
+        sb.AppendLine(state.IsPreElection
+            ? Texts.Get("info.live.headingPreElection", ("season", state.Label))
+            : Texts.Get("info.live.heading", ("season", state.Label)));
+        sb.AppendLine(Texts.Get("info.live.next", ("when", Display.NextResolution(state))));
         var issues = _data.GetOpenIssues();
         sb.AppendLine();
-        sb.AppendLine("**Open issues**");
-        sb.AppendLine(issues.Count == 0 ? "None yet." : string.Join("\n", issues.Select(i => $"- {i.Title}")));
+        sb.AppendLine(Texts.Get("info.live.openIssues"));
+        sb.AppendLine(issues.Count == 0 ? Texts.Get("info.live.noneYet") : string.Join("\n", issues.Select(i => $"- {i.Title}")));
         var parties = _data.GetAllParties();
         sb.AppendLine();
-        sb.AppendLine("**Parties**");
-        sb.AppendLine(parties.Count == 0 ? "None yet." : string.Join("\n", parties.Select(p => $"- {Display.Party(p)}")));
+        sb.AppendLine(Texts.Get("info.live.parties"));
+        sb.AppendLine(parties.Count == 0 ? Texts.Get("info.live.noneYet") : string.Join("\n", parties.Select(p => $"- {Display.Party(p)}")));
         return sb.ToString();
     }
 
     private string FactionInfo(ulong userId)
     {
-        if (_data.GetFaction(userId) is not { } faction) return "That faction doesn't exist.";
+        if (_data.GetFaction(userId) is not { } faction) return Texts.Get("info.faction.missing");
         var party = faction.PartyId is { } partyId ? _data.GetParty(partyId) : null;
         var sb = new StringBuilder();
         sb.AppendLine($"## {Display.Faction(faction)}");
-        if (!faction.IsActive) sb.AppendLine("*Retired from politics.*");
-        sb.AppendLine($"Popularity: {Display.Number(faction.Popularity)}");
-        sb.AppendLine($"Party: {(party is null ? "independent" : Display.Party(party))}");
-        sb.AppendLine($"Seats: {faction.Seats}");
-        sb.AppendLine($"Home province: {Display.Province(_constants.Config, faction.HomeProvinceId)}");
+        if (!faction.IsActive) sb.AppendLine(Texts.Get("info.faction.retired"));
+        sb.AppendLine(Texts.Get("info.faction.popularity", ("popularity", Display.Number(faction.Popularity))));
+        sb.AppendLine(Texts.Get("info.faction.party", ("party", party is null ? Display.Independent : Display.Party(party))));
+        sb.AppendLine(Texts.Get("info.seats", ("seats", faction.Seats)));
+        sb.AppendLine(Texts.Get("info.faction.home", ("province", Display.Province(_constants.Config, faction.HomeProvinceId))));
 
         var log = _data.GetLatestStances(userId);
         if (log.Count > 0)
         {
             var titles = _data.GetAllIssues().ToDictionary(i => i.Id, i => i.Title);
             sb.AppendLine();
-            sb.AppendLine("**Stances**");
+            sb.AppendLine(Texts.Get("info.faction.stances"));
             foreach (var entry in log)
-                sb.AppendLine($"- {titles.GetValueOrDefault(entry.IssueId, entry.IssueId)}: {entry.Stance.DisplayName()} " +
-                              $"({entry.Source.ToString().ToLowerInvariant()}, {GameCalendar.Label(entry.Season, entry.Year)}" +
-                              $"{(entry.OffProgramme ? ", off-programme" : "")})");
+            {
+                var issue = titles.GetValueOrDefault(entry.IssueId, entry.IssueId);
+                var stance = entry.Stance.DisplayName();
+                var source = entry.Source.ToString().ToLowerInvariant();
+                var season = GameCalendar.Label(entry.Season, entry.Year);
+                sb.AppendLine(entry.OffProgramme
+                    ? Texts.Get("info.faction.stanceOff", ("issue", issue), ("stance", stance), ("source", source), ("season", season))
+                    : Texts.Get("info.faction.stance", ("issue", issue), ("stance", stance), ("source", source), ("season", season)));
+            }
         }
         return sb.ToString();
     }
 
     private string PartyInfo(long partyId)
     {
-        if (_data.GetParty(partyId) is not { } party) return "That party doesn't exist.";
+        if (_data.GetParty(partyId) is not { } party) return Texts.Get("info.party.missing");
         var members = _data.GetPartyMembers(partyId);
         var inGovernment = _data.GetGoverningPartyIds().Contains(partyId);
         var sb = new StringBuilder();
         sb.AppendLine($"## {Display.Party(party)}");
-        sb.AppendLine($"Colour: `{party.Colour}` · {(inGovernment ? "in government" : "in opposition")}");
+        sb.AppendLine(inGovernment
+            ? Texts.Get("info.party.colourGovernment", ("colour", party.Colour))
+            : Texts.Get("info.party.colourOpposition", ("colour", party.Colour)));
         if (party.CreatedSeason is { } season && party.CreatedYear is { } year)
-            sb.AppendLine($"Founded {GameCalendar.Label(season, year)}");
-        sb.AppendLine($"Seats: {members.Sum(m => m.Seats)}");
+            sb.AppendLine(Texts.Get("info.party.founded", ("season", GameCalendar.Label(season, year))));
+        sb.AppendLine(Texts.Get("info.seats", ("seats", members.Sum(m => m.Seats))));
         sb.AppendLine();
-        sb.AppendLine("**Members**");
+        sb.AppendLine(Texts.Get("info.party.members"));
         foreach (var member in members)
-            sb.AppendLine($"- {Display.Faction(member)} · popularity {Display.Number(member.Popularity)} · {member.Seats} seats");
+            sb.AppendLine(Texts.Get("info.party.member",
+                ("faction", Display.Faction(member)), ("popularity", Display.Number(member.Popularity)), ("seats", member.Seats)));
 
         sb.AppendLine();
-        sb.AppendLine("**Programme**");
+        sb.AppendLine(Texts.Get("info.party.programme"));
         sb.Append(ProgrammeText(partyId));
         return sb.ToString();
     }
@@ -147,25 +158,25 @@ public class InfoModule : InteractionModuleBase<SocketInteractionContext>
     {
         var programme = _data.GetProgramme(partyId);
         var open = _data.GetOpenIssues();
-        if (open.Count == 0) return "No issues are open yet.";
+        if (open.Count == 0) return Texts.Get("info.party.noOpenIssues");
         return string.Join("\n", open.Select(i =>
-            $"- {i.Title}: {(programme.TryGetValue(i.Id, out var stance) ? stance.DisplayName() : "no stance")}"));
+            $"- {i.Title}: {(programme.TryGetValue(i.Id, out var stance) ? stance.DisplayName() : Texts.Get("info.party.noStance"))}"));
     }
 
     private string IssueInfo(string issueId)
     {
-        if (_data.GetIssue(issueId) is not { } issue) return "That issue doesn't exist.";
+        if (_data.GetIssue(issueId) is not { } issue) return Texts.Get("info.issue.missing");
         var sb = new StringBuilder();
         sb.AppendLine($"## {issue.Title}");
-        sb.AppendLine($"For: {issue.ForText}");
-        sb.AppendLine($"Against: {issue.AgainstText}");
-        sb.AppendLine($"Status: {issue.Status}");
+        sb.AppendLine(Texts.Get("info.issue.for", ("text", issue.ForText)));
+        sb.AppendLine(Texts.Get("info.issue.against", ("text", issue.AgainstText)));
+        sb.AppendLine(Texts.Get("info.issue.status", ("status", issue.Status)));
 
         var bills = _data.GetBills(issueId);
         if (bills.Count > 0)
         {
             sb.AppendLine();
-            sb.AppendLine("**Bills**");
+            sb.AppendLine(Texts.Get("info.issue.bills"));
             foreach (var bill in bills)
                 sb.AppendLine($"{bill.Title} · {bill.Lean} · {BillStatusText(bill)}");
         }
@@ -184,19 +195,19 @@ public class InfoModule : InteractionModuleBase<SocketInteractionContext>
         var state = _data.GetGameState();
         return bill.Status switch
         {
-            BillStatus.Available => "available",
-            BillStatus.Voting => "before the Assembly",
+            BillStatus.Available => Texts.Get("info.bill.available"),
+            BillStatus.Voting => Texts.Get("info.bill.voting"),
             BillStatus.Cooldown when bill.CooldownUntil is { } until =>
-                $"resting until {GameCalendar.Label(GameCalendar.Add(state.Season, state.Year, (int)(until - state.ResolutionNumber)).Season, GameCalendar.Add(state.Season, state.Year, (int)(until - state.ResolutionNumber)).Year)}",
-            BillStatus.Passed => "passed into law",
-            BillStatus.Withdrawn => "withdrawn",
+                Texts.Get("info.bill.resting", ("season", GameCalendar.Label(GameCalendar.Add(state.Season, state.Year, (int)(until - state.ResolutionNumber)).Season, GameCalendar.Add(state.Season, state.Year, (int)(until - state.ResolutionNumber)).Year))),
+            BillStatus.Passed => Texts.Get("info.bill.passed"),
+            BillStatus.Withdrawn => Texts.Get("info.bill.withdrawn"),
             _ => bill.Status.ToString(),
         };
     }
 
     private string BillInfo(string billId)
     {
-        if (_data.GetBill(billId) is not { } bill) return "That bill doesn't exist.";
+        if (_data.GetBill(billId) is not { } bill) return Texts.Get("info.bill.missing");
         var issue = _data.GetIssue(bill.IssueId);
         var sb = new StringBuilder();
         sb.AppendLine($"## {bill.Title}");
@@ -208,15 +219,15 @@ public class InfoModule : InteractionModuleBase<SocketInteractionContext>
 
     private string ProvinceInfo(string provinceId)
     {
-        if (_constants.Config.Province(provinceId) is not { } definition) return "That province doesn't exist.";
+        if (_constants.Config.Province(provinceId) is not { } definition) return Texts.Get("info.province.missing");
         var live = _data.GetProvince(provinceId);
         var conditionIds = live is null ? definition.Conditions : _data.GetProvinceConditions().GetValueOrDefault(provinceId, []);
         var sb = new StringBuilder();
         sb.AppendLine($"## {definition.Name}");
         sb.AppendLine(definition.Description);
-        if (live is not null) sb.AppendLine($"Discontent: {Wording.Discontent(live.Discontent)}");
+        if (live is not null) sb.AppendLine(Texts.Get("info.province.discontent", ("discontent", Wording.Discontent(live.Discontent))));
         sb.AppendLine();
-        sb.AppendLine("**Conditions**");
+        sb.AppendLine(Texts.Get("info.province.conditions"));
         foreach (var conditionId in conditionIds)
             if (_constants.Config.Condition(conditionId) is { } condition)
                 sb.AppendLine($"{condition.Name}: {condition.Description}");
@@ -225,7 +236,8 @@ public class InfoModule : InteractionModuleBase<SocketInteractionContext>
         if (units.Count > 0)
         {
             sb.AppendLine();
-            sb.AppendLine("Stationed: " + string.Join(", ", units.Select(u => $"{u.Name} · d{u.Sides}")));
+            sb.AppendLine(Texts.Get("info.province.stationed",
+                ("units", string.Join(", ", units.Select(u => Texts.Get("info.province.unit", ("name", u.Name), ("sides", u.Sides)))))));
         }
         return sb.ToString();
     }

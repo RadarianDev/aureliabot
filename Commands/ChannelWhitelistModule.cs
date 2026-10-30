@@ -20,8 +20,8 @@ public class ChannelWhitelistModule : InteractionModuleBase<SocketInteractionCon
         var added = data.AddWhitelistedChannel(Context.Guild.Id, channel.Id, Context.User.Id);
         await RespondAsync(
             added
-                ? $"Whitelisted <#{channel.Id}> for bot commands."
-                : $"<#{channel.Id}> is already whitelisted.",
+                ? Texts.Get("whitelist.added", ("channel", channel.Id))
+                : Texts.Get("whitelist.alreadyListed", ("channel", channel.Id)),
             ephemeral: true);
     }
 
@@ -33,8 +33,8 @@ public class ChannelWhitelistModule : InteractionModuleBase<SocketInteractionCon
         var removed = data.RemoveWhitelistedChannel(Context.Guild.Id, channel.Id);
         await RespondAsync(
             removed
-                ? $"Removed <#{channel.Id}> from the whitelist."
-                : $"<#{channel.Id}> wasn't whitelisted.",
+                ? Texts.Get("whitelist.removed", ("channel", channel.Id))
+                : Texts.Get("whitelist.notListed", ("channel", channel.Id)),
             ephemeral: true);
     }
 
@@ -45,11 +45,11 @@ public class ChannelWhitelistModule : InteractionModuleBase<SocketInteractionCon
         var channels = data.GetWhitelistedChannels(Context.Guild.Id);
         if (channels.Count == 0)
         {
-            await RespondAsync("No channels are whitelisted — bot commands work in every channel.", ephemeral: true);
+            await RespondAsync(Texts.Get("whitelist.empty"), ephemeral: true);
             return;
         }
 
         var lines = channels.Select(c => $"<#{c}>");
-        await RespondAsync("Whitelisted channels:\n" + string.Join("\n", lines), ephemeral: true);
+        await RespondAsync(Texts.Get("whitelist.list", ("channels", string.Join("\n", lines))), ephemeral: true);
     }
 }

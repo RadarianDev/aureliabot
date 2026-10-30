@@ -5,7 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 public static class FactionGate
 {
     public static string NotRegistered => Texts.Get("common.notRegistered");
-    public const string Retired = "Your faction has retired from politics.";
+    public static string Retired => Texts.Get("common.retired");
 
     public static async Task<string?> RefusalAsync(IServiceProvider services, IUser user)
     {
@@ -16,7 +16,7 @@ public static class FactionGate
 
         if (data.TryMarkUnregisteredAlert(user.Id))
             await services.GetRequiredService<AlertService>().PostAsync(
-                $"{user.Mention} ({user.Username}) tried a game command but has no faction. Register them with `/gm faction create`.");
+                Texts.Get("common.unregisteredAlert", ("user", user.Mention), ("username", user.Username)));
         return NotRegistered;
     }
 }
@@ -40,7 +40,7 @@ public class RequirePartyMemberAttribute : PreconditionAttribute
         if (refusal is not null) return PreconditionResult.FromError(refusal);
         var faction = services.GetRequiredService<DatabaseService>().GetFaction(context.User.Id)!;
         return faction.IsIndependent
-            ? PreconditionResult.FromError("This needs a party member; you are an independent.")
+            ? PreconditionResult.FromError(Texts.Get("common.needsPartyMember"))
             : PreconditionResult.FromSuccess();
     }
 }

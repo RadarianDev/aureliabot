@@ -32,17 +32,16 @@ public class PartyModule : InteractionModuleBase<SocketInteractionContext>
     {
         if (state.IsPreElection) return null;
         var preElection = (state.PreElectionSeason, state.PreElectionYear);
-        var opens = GameCalendar.Next(state.Season, state.Year) == preElection && state.NextResolutionAt is not null
-            ? $", which opens {Display.NextResolution(state)}"
-            : "";
-        return $"You can apply to join a party only during a pre-election. The next pre-election is " +
-               $"{GameCalendar.Label(state.PreElectionSeason, state.PreElectionYear)}{opens}.";
+        var label = GameCalendar.Label(state.PreElectionSeason, state.PreElectionYear);
+        return GameCalendar.Next(state.Season, state.Year) == preElection && state.NextResolutionAt is not null
+            ? Texts.Get("party.apply.notPreElectionOpens", ("preElection", label), ("opens", Display.NextResolution(state)))
+            : Texts.Get("party.apply.notPreElection", ("preElection", label));
     }
 
     public static int MajorityOf(int members) => members / 2 + 1;
 
     public static string Tally(int accepts, int declines, int members) =>
-        $"Accepts {accepts} of {MajorityOf(members)} needed · Declines {declines}";
+        Texts.Get("party.tally", ("accepts", accepts), ("needed", MajorityOf(members)), ("declines", declines));
 
     [SlashCommand("apply", "Apply to join a party (pre-election only)")]
     [RequireFaction]
@@ -58,7 +57,7 @@ public class PartyModule : InteractionModuleBase<SocketInteractionContext>
 
         if (FindParty(_data, party) is not { } target)
         {
-            await RespondAsync($"There is no party called \"{party}\".", ephemeral: true, allowedMentions: AllowedMentions.None);
+            await RespondAsync(Texts.Get("party.apply.noSuchParty", ("party", party)), ephemeral: true, allowedMentions: AllowedMentions.None);
             return;
         }
 
@@ -67,7 +66,8 @@ public class PartyModule : InteractionModuleBase<SocketInteractionContext>
         {
             var current = faction.PartyId is { } id ? _data.GetParty(id) : null;
             await RespondAsync(
-                $"You are already a member of {(current is null ? "a party" : Display.Party(current))}. Only an independent can apply; leave first with `/party leave`.",
+                Texts.Get("party.apply.alreadyMember",
+                    ("party", current is null ? Texts.Get("party.apply.aParty") : Display.Party(current))),
                 ephemeral: true);
             return;
         }
@@ -75,9 +75,9 @@ public class PartyModule : InteractionModuleBase<SocketInteractionContext>
         if (target.ChannelId is not { } chatId || Context.Client.GetChannel(chatId) is not IMessageChannel chat)
         {
             await _alerts.PostAsync(
-                $"{Context.User.Mention} tried to apply to {target.Name}, but the party has no chat I can reach. Repair it with `/gm setup`.");
+                Texts.Get("party.alert.noChat", ("user", Context.User.Mention), ("party", target.Name)));
             await RespondAsync(
-                $"{Display.Party(target)} has no party chat to post your application in. The GM has been told; try again once it is repaired.",
+                Texts.Get("party.apply.noChat", ("party", Display.Party(target))),
                 ephemeral: true);
             return;
         }
@@ -87,13 +87,13 @@ public class PartyModule : InteractionModuleBase<SocketInteractionContext>
         switch (result.Outcome)
         {
             case JoinRequestOutcome.AlreadyPending:
-                await FollowupAsync($"You already have an application pending with {Display.Party(target)}. Its members are still answering.", ephemeral: true);
+                await FollowupAsync(Texts.Get("party.apply.alreadyPending", ("party", Display.Party(target))), ephemeral: true);
                 return;
             case JoinRequestOutcome.NotIndependent:
-                await FollowupAsync("Only an independent can apply; leave your party first with `/party leave`.", ephemeral: true);
+                await FollowupAsync(Texts.Get("party.apply.notIndependent"), ephemeral: true);
                 return;
             case JoinRequestOutcome.NoSuchParty:
-                await FollowupAsync($"There is no party called \"{party}\" any more.", ephemeral: true, allowedMentions: AllowedMentions.None);
+                await FollowupAsync(Texts.Get("party.apply.partyGone", ("party", party)), ephemeral: true, allowedMentions: AllowedMentions.None);
                 return;
             case JoinRequestOutcome.NotRegistered:
                 await FollowupAsync(FactionGate.NotRegistered, ephemeral: true);
@@ -114,19 +114,17 @@ public class PartyModule : InteractionModuleBase<SocketInteractionContext>
         catch (Exception ex)
         {
             await _alerts.PostAsync(
-                $"Could not post {Context.User.Mention}'s application (request {requestId}) in {target.Name}'s chat: {ex.Message}");
+                Texts.Get("party.alert.postFailed", ("user", Context.User.Mention), ("request", requestId), ("party", target.Name), ("error", ex.Message)));
             await FollowupAsync(
-                $"Your application to {Display.Party(target)} is recorded, but I could not post it in the party chat. The GM has been told.",
+                Texts.Get("party.apply.postFailed", ("party", Display.Party(target))),
                 ephemeral: true);
             return;
         }
 
         var majority = MajorityOf(members);
         await FollowupAsync(
-            $"Your application to join {Display.Party(target)} is posted in its chat. " +
-            $"You join as soon as {majority} of its {members} members accept, and it is declined as soon as {majority} decline. " +
-            $"Joining does not change your seats. An application still pending when the election runs, at the end of {state.Label} " +
-            $"({Display.NextResolution(state)}), is dropped.",
+            Texts.Get("party.apply.posted", ("party", Display.Party(target)), ("majority", majority), ("members", members),
+                ("season", state.Label), ("when", Display.NextResolution(state))),
             ephemeral: true);
     }
 
@@ -136,18 +134,20 @@ public class PartyModule : InteractionModuleBase<SocketInteractionContext>
     {
         var faction = _data.GetFaction(Context.User.Id)!;
         var party = _data.GetParty(faction.PartyId!.Value);
-        var partyName = party is null ? "your party" : Display.Party(party);
+        var partyName = party is null ? Texts.Get("party.leave.yourParty") : Display.Party(party);
         var remaining = _data.GetPartyMembers(faction.PartyId.Value).Count(m => m.UserId != faction.UserId);
 
-        var text = $"You will leave {partyName} and become independent. You keep your {faction.Seats} seats; seats only change at an election.";
+        var text = Texts.Get("party.leave.confirm", ("party", partyName), ("seats", faction.Seats));
         if (remaining < 2)
-            text += $"\n{partyName} would be left with {remaining} active member{(remaining == 1 ? "" : "s")}, so it dissolves at once, and the dissolution is announced in #news.";
-        text += "\nYou could only join a party again during a pre-election.";
+            text += "\n" + (remaining == 1
+                ? Texts.Get("party.leave.dissolvesOne", ("party", partyName), ("remaining", remaining))
+                : Texts.Get("party.leave.dissolvesMany", ("party", partyName), ("remaining", remaining)));
+        text += "\n" + Texts.Get("party.leave.rejoin");
 
         var userId = Context.User.Id;
         await RespondAsync(
             text,
-            components: _confirmations.Create(userId, () => LeaveConfirmedAsync(userId), "Leave the party"),
+            components: _confirmations.Create(userId, () => LeaveConfirmedAsync(userId), Texts.Get("party.leave.button")),
             ephemeral: true);
     }
 
@@ -155,10 +155,10 @@ public class PartyModule : InteractionModuleBase<SocketInteractionContext>
     {
         var result = _data.MoveFaction(userId, null, "party leave");
         if (result is null) return FactionGate.NotRegistered;
-        if (result.FromPartyId is not { } fromId) return "You are already independent. Nothing was changed.";
+        if (result.FromPartyId is not { } fromId) return Texts.Get("party.leave.alreadyIndependent");
 
         var party = _data.GetParty(fromId) ?? result.DissolvedParty;
-        var partyName = party is null ? "your party" : Display.Party(party);
+        var partyName = party is null ? Texts.Get("party.leave.yourParty") : Display.Party(party);
 
         try
         {
@@ -168,7 +168,8 @@ public class PartyModule : InteractionModuleBase<SocketInteractionContext>
         }
         catch (Exception ex)
         {
-            await _alerts.PostAsync($"Party sync failed after <@{userId}> left {party?.Name ?? fromId.ToString()}: {ex.Message}");
+            await _alerts.PostAsync(Texts.Get("party.alert.leaveSyncFailed",
+                ("user", userId), ("party", party?.Name ?? fromId.ToString()), ("error", ex.Message)));
         }
 
         if (result.DissolvedParty is { } dissolved)
@@ -179,15 +180,14 @@ public class PartyModule : InteractionModuleBase<SocketInteractionContext>
             }
             catch (Exception ex)
             {
-                await _alerts.PostAsync($"Handling the dissolution of {dissolved.Name} failed: {ex.Message}");
+                await _alerts.PostAsync(Texts.Get("party.alert.dissolutionFailed", ("party", dissolved.Name), ("error", ex.Message)));
             }
-            return $"You have left {partyName} and are now independent, keeping your {result.Faction.Seats} seats. " +
-                   $"With fewer than two active members left, {partyName} has dissolved.";
+            return Texts.Get("party.leave.doneDissolved", ("party", partyName), ("seats", result.Faction.Seats));
         }
 
-        await PostInPartyChatAsync(party, $"{Display.Faction(result.Faction)} has left the party.", "party leave");
+        await PostInPartyChatAsync(party, Texts.Get("party.leave.posted", ("faction", Display.Faction(result.Faction))), "party leave");
 
-        return $"You have left {partyName} and are now independent, keeping your {result.Faction.Seats} seats.";
+        return Texts.Get("party.leave.done", ("party", partyName), ("seats", result.Faction.Seats));
     }
 
     [ComponentInteraction("join:accept:*", ignoreGroupNames: true)]
@@ -200,16 +200,16 @@ public class PartyModule : InteractionModuleBase<SocketInteractionContext>
     {
         if (!long.TryParse(rawId, out var requestId) || _data.GetJoinRequest(requestId) is not { } request)
         {
-            await RespondAsync("This application no longer exists.", ephemeral: true);
+            await RespondAsync(Texts.Get("party.join.gone"), ephemeral: true);
             return;
         }
 
         var party = _data.GetParty(request.PartyId);
-        var partyName = party is null ? "this party" : Display.Party(party);
+        var partyName = party is null ? Texts.Get("party.join.thisParty") : Display.Party(party);
         var voter = _data.GetFaction(Context.User.Id);
         if (voter is not { IsActive: true } || voter.PartyId != request.PartyId)
         {
-            await RespondAsync($"Only active members of {partyName} can answer its applications.", ephemeral: true);
+            await RespondAsync(Texts.Get("party.join.notMember", ("party", partyName)), ephemeral: true);
             return;
         }
 
@@ -219,7 +219,7 @@ public class PartyModule : InteractionModuleBase<SocketInteractionContext>
 
         if (answer.Outcome == JoinAnswerOutcome.NotAMember)
         {
-            await FollowupAsync($"Only active members of {partyName} can answer its applications.", ephemeral: true);
+            await FollowupAsync(Texts.Get("party.join.notMember", ("party", partyName)), ephemeral: true);
             return;
         }
 
@@ -227,40 +227,43 @@ public class PartyModule : InteractionModuleBase<SocketInteractionContext>
         {
             var status = answer.Request?.Status ?? request.Status;
             await UpdateApplicationPostAsync(request, party, null, disabled: true);
-            await FollowupAsync($"This application is already closed ({StatusWord(status)}). Nothing was changed.", ephemeral: true);
+            await FollowupAsync(Texts.Get("party.join.closed", ("status", StatusWord(status))), ephemeral: true);
             return;
         }
 
         var tally = Tally(answer.Accepts, answer.Declines, answer.Members);
         var closing = answer.Outcome switch
         {
-            JoinAnswerOutcome.Accepted => "**Accepted.**",
-            JoinAnswerOutcome.Declined => "**Declined.**",
-            JoinAnswerOutcome.Dropped => "**Dropped:** the applicant is no longer an independent.",
+            JoinAnswerOutcome.Accepted => Texts.Get("party.join.closingAccepted"),
+            JoinAnswerOutcome.Declined => Texts.Get("party.join.closingDeclined"),
+            JoinAnswerOutcome.Dropped => Texts.Get("party.join.closingDropped"),
             _ => null,
         };
         var open = answer.Outcome == JoinAnswerOutcome.Recorded;
         await UpdateApplicationPostAsync(request, party,
             party is null ? null : JoinPostText(applicant, party, tally, closing), disabled: !open);
 
-        var verb = accept ? "accepted" : "declined";
+        var verb = accept ? Texts.Get("party.join.verbAccepted") : Texts.Get("party.join.verbDeclined");
         switch (answer.Outcome)
         {
             case JoinAnswerOutcome.Accepted:
                 await JoinedAsync(request, partyName, applicant);
-                await FollowupAsync($"You {verb}. That makes a majority: {applicant} has joined {partyName}.", ephemeral: true, allowedMentions: AllowedMentions.None);
+                await FollowupAsync(Texts.Get("party.join.joinedMajority", ("verb", verb), ("applicant", applicant), ("party", partyName)),
+                    ephemeral: true, allowedMentions: AllowedMentions.None);
                 break;
             case JoinAnswerOutcome.Declined:
                 await TellApplicantAsync(request.FactionId,
-                    $"{partyName} has declined your application. You remain independent.");
-                await FollowupAsync($"You {verb}. That makes a majority: the application from {applicant} is declined.", ephemeral: true, allowedMentions: AllowedMentions.None);
+                    Texts.Get("party.join.declinedApplicant", ("party", partyName)));
+                await FollowupAsync(Texts.Get("party.join.declinedMajority", ("verb", verb), ("applicant", applicant)),
+                    ephemeral: true, allowedMentions: AllowedMentions.None);
                 break;
             case JoinAnswerOutcome.Dropped:
-                await FollowupAsync($"You {verb}, but {applicant} is no longer an independent, so the application is dropped.", ephemeral: true, allowedMentions: AllowedMentions.None);
+                await FollowupAsync(Texts.Get("party.join.dropped", ("verb", verb), ("applicant", applicant)),
+                    ephemeral: true, allowedMentions: AllowedMentions.None);
                 break;
             default:
                 await FollowupAsync(
-                    $"You {verb} the application from {applicant}. {tally}. You can change your answer while it is open.",
+                    Texts.Get("party.join.recorded", ("verb", verb), ("applicant", applicant), ("tally", tally)),
                     ephemeral: true, allowedMentions: AllowedMentions.None);
                 break;
         }
@@ -274,13 +277,15 @@ public class PartyModule : InteractionModuleBase<SocketInteractionContext>
         }
         catch (Exception ex)
         {
-            await _alerts.PostAsync($"Party sync failed after <@{request.FactionId}> joined party {request.PartyId}: {ex.Message}");
+            await _alerts.PostAsync(Texts.Get("party.alert.joinSyncFailed",
+                ("user", request.FactionId), ("party", request.PartyId), ("error", ex.Message)));
         }
 
-        await PostInPartyChatAsync(_data.GetParty(request.PartyId), $"{applicant} joins {partyName}. Welcome to the party.", "party join");
+        await PostInPartyChatAsync(_data.GetParty(request.PartyId),
+            Texts.Get("party.join.welcome", ("applicant", applicant), ("party", partyName)), "party join");
 
         await TellApplicantAsync(request.FactionId,
-            $"{partyName} has accepted your application: you are now a member. Your seats are unchanged.");
+            Texts.Get("party.join.acceptedApplicant", ("party", partyName)));
     }
 
     private async Task UpdateApplicationPostAsync(JoinRequest request, Party? party, string? content, bool disabled)
@@ -325,28 +330,28 @@ public class PartyModule : InteractionModuleBase<SocketInteractionContext>
         }
         catch (Exception ex)
         {
-            await _alerts.PostAsync($"Could not tell <@{factionId}> about their party application: {ex.Message}");
+            await _alerts.PostAsync(Texts.Get("party.alert.tellFailed", ("user", factionId), ("error", ex.Message)));
         }
     }
 
     private static string StatusWord(JoinRequestStatus status) => status switch
     {
-        JoinRequestStatus.Accepted => "accepted",
-        JoinRequestStatus.Declined => "declined",
-        JoinRequestStatus.Dropped => "dropped",
-        _ => "pending",
+        JoinRequestStatus.Accepted => Texts.Get("party.status.accepted"),
+        JoinRequestStatus.Declined => Texts.Get("party.status.declined"),
+        JoinRequestStatus.Dropped => Texts.Get("party.status.dropped"),
+        _ => Texts.Get("party.status.pending"),
     };
 
     private static string JoinPostText(string applicant, Party party, string tally, string? closing)
     {
-        var text = $"**Application to join {Display.Party(party)}**\n{applicant} applies to join the party.\n{tally}";
+        var text = Texts.Get("party.join.post", ("party", Display.Party(party)), ("applicant", applicant), ("tally", tally));
         return closing is null ? text : $"{text}\n{closing}";
     }
 
     private static MessageComponent JoinButtons(long requestId, bool disabled) =>
         new ComponentBuilder()
-            .WithButton("Accept", $"join:accept:{requestId}", ButtonStyle.Success, disabled: disabled)
-            .WithButton("Decline", $"join:decline:{requestId}", ButtonStyle.Danger, disabled: disabled)
+            .WithButton(Texts.Get("party.join.accept"), $"join:accept:{requestId}", ButtonStyle.Success, disabled: disabled)
+            .WithButton(Texts.Get("party.join.decline"),$"join:decline:{requestId}", ButtonStyle.Danger, disabled: disabled)
             .Build();
 
     private sealed class PartyNameAutocomplete : AutocompleteHandler

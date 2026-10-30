@@ -24,20 +24,24 @@ public class CampaignModule : InteractionModuleBase<SocketInteractionContext>
 
     public static string Describe(DatabaseService data, GameConfig config, PendingAction action)
     {
-        var issue = $"*{data.GetIssue(action.IssueId)?.Title ?? action.IssueId}*";
+        var issue = Texts.Get("campaign.describe.issue", ("issue", data.GetIssue(action.IssueId)?.Title ?? action.IssueId));
+        var stance = action.Stance?.DisplayName() ?? Texts.Get("campaign.describe.noStance");
         return action.Kind switch
         {
-            ActionKind.Campaign =>
-                $"a campaign {action.Stance?.DisplayName() ?? "with no stance"} on {issue}{(action.OffProgramme ? " (off-programme)" : "")}",
-            ActionKind.Attack =>
-                $"an attack on {(action.TargetFactionId is { } target ? Display.Faction(data, target) : "nobody")}'s stance on {issue}",
-            _ => $"a poll on {issue} {(action.ProvinceId is null ? "nationally" : $"in {Display.Province(config, action.ProvinceId)}")}",
+            ActionKind.Campaign => action.OffProgramme
+                ? Texts.Get("campaign.describe.campaignOff", ("stance", stance), ("issue", issue))
+                : Texts.Get("campaign.describe.campaign", ("stance", stance), ("issue", issue)),
+            ActionKind.Attack => Texts.Get("campaign.describe.attack",
+                ("target", action.TargetFactionId is { } target ? Display.Faction(data, target) : Texts.Get("campaign.describe.nobody")),
+                ("issue", issue)),
+            _ => action.ProvinceId is null
+                ? Texts.Get("campaign.describe.pollNational", ("issue", issue))
+                : Texts.Get("campaign.describe.pollProvince", ("issue", issue), ("province", Display.Province(config, action.ProvinceId))),
         };
     }
 
     public static string Resolves(GameState state) =>
-        $"It resolves at the next resolution, {Display.NextResolution(state)}, simultaneously with everyone else's actions; " +
-        "results are revealed then.";
+        Texts.Get("campaign.resolves", ("when", Display.NextResolution(state)));
 
     [SlashCommand("campaign", "Campaign on an issue nationally")]
     [RequireFaction]
@@ -58,8 +62,8 @@ public class CampaignModule : InteractionModuleBase<SocketInteractionContext>
         {
             await RespondAsync(
                 faction.IsIndependent
-                    ? $"As an independent you must give a stance to campaign on *{target.Title}*."
-                    : $"Your party's programme takes no stance on *{target.Title}*, so you must give one. It will not count as off-programme.",
+                    ? Texts.Get("campaign.needStanceIndependent", ("issue", target.Title))
+                    : Texts.Get("campaign.needStanceSilent", ("issue", target.Title)),
                 ephemeral: true);
             return;
         }
@@ -80,12 +84,12 @@ public class CampaignModule : InteractionModuleBase<SocketInteractionContext>
         var userId = faction.UserId;
         var issueId = target.Id;
         await RespondAsync(
-            $"Your party's programme is **{decision.ProgrammeStance!.Value.DisplayName()}** on *{target.Title}*. Campaigning " +
-            $"**{chosen.DisplayName()}** goes **off-programme**, and will be logged publicly as off-programme in #campaign-log " +
-            $"at the next resolution, {Display.NextResolution(_data.GetGameState())}. Confirm?",
+            Texts.Get("campaign.offProgrammeConfirm",
+                ("programme", decision.ProgrammeStance!.Value.DisplayName()), ("issue", target.Title),
+                ("stance", chosen.DisplayName()), ("when", Display.NextResolution(_data.GetGameState()))),
             components: _confirmations.Create(userId,
                 () => Task.FromResult(Submit(userId, ActionKind.Campaign, issueId, stance: chosen)),
-                "Campaign off-programme"),
+                Texts.Get("campaign.offProgrammeButton")),
             ephemeral: true,
             allowedMentions: AllowedMentions.None);
     }
@@ -98,7 +102,7 @@ public class CampaignModule : InteractionModuleBase<SocketInteractionContext>
     {
         if (FactionAutocomplete.Find(_data, faction) is not { } rival)
         {
-            await RespondAsync("There is no such faction. Pick a rival from the list.", ephemeral: true);
+            await RespondAsync(Texts.Get("campaign.noSuchFaction"), ephemeral: true);
             return;
         }
         if (OpenIssueAutocomplete.Find(_data, issue) is not { } target)
@@ -110,7 +114,8 @@ public class CampaignModule : InteractionModuleBase<SocketInteractionContext>
         var check = _data.CheckAttack(Context.User.Id, rival.UserId, target.Id);
         if (check.Refusal is not null)
         {
-            await RespondAsync($"You cannot attack {Display.Faction(rival)} on *{target.Title}*: {check.Refusal}.",
+            await RespondAsync(Texts.Get("campaign.attackRefusal",
+                    ("rival", Display.Faction(rival)), ("issue", target.Title), ("reason", check.Refusal)),
                 ephemeral: true, allowedMentions: AllowedMentions.None);
             return;
         }
@@ -136,7 +141,7 @@ public class CampaignModule : InteractionModuleBase<SocketInteractionContext>
         {
             if (ProvinceAutocomplete.Find(_constants.Config, province) is not { } found)
             {
-                await RespondAsync($"There is no province called \"{province}\".", ephemeral: true, allowedMentions: AllowedMentions.None);
+                await RespondAsync(Texts.Get("campaign.noSuchProvince", ("province", province)), ephemeral: true, allowedMentions: AllowedMentions.None);
                 return;
             }
             provinceId = found.Id;
@@ -153,7 +158,7 @@ public class CampaignModule : InteractionModuleBase<SocketInteractionContext>
         if (!long.TryParse(rawId, out var actionId) || _data.GetPendingAction(actionId) is not { } action
             || action.FactionId != Context.User.Id)
         {
-            await RespondAsync("That action is no longer pending; it was already cancelled, replaced or resolved.", ephemeral: true);
+            await RespondAsync(Texts.Get("campaign.noLongerPending"), ephemeral: true);
             return;
         }
 
@@ -161,8 +166,8 @@ public class CampaignModule : InteractionModuleBase<SocketInteractionContext>
         var cancelled = _data.CancelAction(actionId, Context.User.Id);
         await RespondAsync(
             cancelled
-                ? $"Cancelled {description}. You have a free action slot until the next resolution, {Display.NextResolution(_data.GetGameState())}."
-                : "That action is no longer pending; it was already cancelled, replaced or resolved.",
+                ? Texts.Get("campaign.cancelled", ("action", description), ("when", Display.NextResolution(_data.GetGameState())))
+                : Texts.Get("campaign.noLongerPending"),
             ephemeral: true,
             allowedMentions: AllowedMentions.None);
     }
@@ -175,9 +180,8 @@ public class CampaignModule : InteractionModuleBase<SocketInteractionContext>
     }
 
     private string TooMany(IReadOnlyList<PendingAction> pending) =>
-        $"You already have {pending.Count} pending actions, the most you can have, each of a different kind: " +
-        $"{string.Join("; ", pending.Select(a => Describe(_data, _constants.Config, a)))}. " +
-        "Cancel one in `/me` to free a slot, or submit an action of a kind already pending to replace it.";
+        Texts.Get("campaign.tooMany", ("count", pending.Count),
+            ("actions", string.Join("; ", pending.Select(a => Describe(_data, _constants.Config, a)))));
 
     private string Submit(ulong factionId, ActionKind kind, string issueId, Stance? stance = null, string? provinceId = null, ulong? targetFactionId = null)
     {
@@ -191,29 +195,29 @@ public class CampaignModule : InteractionModuleBase<SocketInteractionContext>
             case SubmitActionOutcome.NotActive:
                 return FactionGate.Retired;
             case SubmitActionOutcome.IssueNotOpen:
-                return "That issue is no longer open.";
+                return Texts.Get("campaign.issueNotOpen");
             case SubmitActionOutcome.StanceRequired:
-                return "You must give a stance on this issue.";
+                return Texts.Get("campaign.stanceRequired");
             case SubmitActionOutcome.UnknownProvince:
-                return "That province is not in play yet.";
+                return Texts.Get("campaign.provinceNotInPlay");
             case SubmitActionOutcome.AttackRefused:
-                return $"The attack was refused: {result.Refusal}.";
+                return Texts.Get("campaign.attackRefused", ("reason", result.Refusal));
         }
 
         var action = result.Action!;
-        var lines = new List<string> { $"Recorded {Describe(_data, config, action)}." };
+        var lines = new List<string> { Texts.Get("campaign.recorded", ("action", Describe(_data, config, action))) };
         if (result.Replaced is { } replaced)
-            lines.Add($"This replaces your pending {Describe(_data, config, replaced)}, which is cancelled.");
+            lines.Add(Texts.Get("campaign.replaces", ("action", Describe(_data, config, replaced))));
         if (action.OffProgramme)
-            lines.Add("It will be logged publicly as **off-programme** in #campaign-log.");
+            lines.Add(Texts.Get("campaign.loggedOffProgramme"));
         lines.Add(kind == ActionKind.Poll
-            ? $"The poll is taken at the next resolution, {Display.NextResolution(state)}, against the mood at its start, and the answer comes to your private channel in words."
+            ? Texts.Get("campaign.pollTiming", ("when", Display.NextResolution(state)))
             : Resolves(state));
         if (kind != ActionKind.Poll)
-            lines.Add("Campaigns and attacks are posted to #campaign-log with the resolution.");
-        lines.Add($"Pending actions: {result.Pending.Count} of {config.Constants.Campaign.ActionsPerTurn}.");
+            lines.Add(Texts.Get("campaign.postedWithResolution"));
+        lines.Add(Texts.Get("campaign.pendingCount", ("count", result.Pending.Count), ("max", config.Constants.Campaign.ActionsPerTurn)));
         return string.Join("\n", lines);
     }
 
-    private static string NoOpenIssue(string text) => $"There is no open issue \"{text}\". Pick one from the list.";
+    private static string NoOpenIssue(string text) => Texts.Get("campaign.noOpenIssue", ("issue", text));
 }
