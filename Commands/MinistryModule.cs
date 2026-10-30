@@ -23,11 +23,15 @@ public class MinistryModule : InteractionModuleBase<SocketInteractionContext>
     private readonly CabinetSyncService _cabinetSync;
     private readonly Confirmations _confirmations;
     private readonly AlertService _alerts;
+    private readonly ProjectPublisher _projects;
+    private readonly ConstantsStore _constants;
 
     public MinistryModule(
         DatabaseService data, Publisher publisher, GovernmentPublisher government, CabinetSyncService cabinetSync,
-        Confirmations confirmations, AlertService alerts)
+        Confirmations confirmations, AlertService alerts, ProjectPublisher projects, ConstantsStore constants)
     {
+        _projects = projects;
+        _constants = constants;
         _data = data;
         _publisher = publisher;
         _government = government;
@@ -132,6 +136,95 @@ public class MinistryModule : InteractionModuleBase<SocketInteractionContext>
             : Texts.Get("ministry.status.questions") + "\n" + string.Join("\n", questions.Select(q =>
                 Texts.Get("ministry.status.questionLine", ("asker", Display.Faction(_data, q.AskerId)),
                     ("text", Display.Truncate(q.Text, 200)), ("due", GovernmentPublisher.Deadline(state, q.DueResolution))))));
+        return string.Join("\n", lines);
+    }
+
+    [SlashCommand("project", "Start a ministerial project in a province")]
+    [RequireFaction]
+    public async Task ProjectAsync(
+        [Summary("project", "The ministerial project to start"), Autocomplete(typeof(MinisterialProjectAutocomplete))] string project,
+        [Summary("province", "Where to build it"), Autocomplete(typeof(ProvinceAutocomplete))] string province)
+    {
+        var config = _constants.Config;
+        if (ProvinceAutocomplete.Find(config, province) is not { } where)
+        {
+            await RespondAsync(Texts.Get("projects.refusal.unknownProvince", ("province", province)), ephemeral: true);
+            return;
+        }
+
+        var templateId = MinisterialProjectAutocomplete.Find(_data, project)?.Id ?? project.Trim();
+        var result = _data.StartMinisterialProject(Context.User.Id, templateId, where.Id, config);
+        if (result.Refusal is not null || result.Project is not { } started)
+        {
+            await RespondAsync(result.Refusal ?? Texts.Get("projects.refusal.noProject"), ephemeral: true);
+            return;
+        }
+
+        var state = _data.GetGameState();
+        await RespondAsync(Texts.Get("projects.started", ("project", started.Title), ("province", where.Name),
+            ("due", GovernmentPublisher.Deadline(state, started.FirstPaymentResolution)), ("pace", Display.Crowns(started.Pace)),
+            ("ministry", started.Purse.DisplayName())), ephemeral: true);
+        await _projects.PublishStartedAsync(started.Id, "ministry project");
+    }
+
+    [SlashCommand("fund", "Set a project's spending per season")]
+    [RequireFaction]
+    public async Task FundAsync(
+        [Summary("project", "The project to fund"), Autocomplete(typeof(ProjectAutocomplete))] string project,
+        [Summary("amount", "Crowns a season, from 0 up"), MinValue(0)] double amount)
+    {
+        if (ProjectAutocomplete.Find(_data, project) is not { } live)
+        {
+            await RespondAsync(Texts.Get("projects.refusal.noProject"), ephemeral: true);
+            return;
+        }
+
+        var config = _constants.Config;
+        var result = _data.FundProject(Context.User.Id, live.Id, (decimal)amount, config);
+        if (result.Refusal is not null || result.Project is not { } funded || result.Forecast is not { } forecast)
+        {
+            await RespondAsync(result.Refusal ?? Texts.Get("projects.refusal.noProject"), ephemeral: true);
+            return;
+        }
+
+        await RespondAsync(FundReply(funded, forecast, result.Balance, config, _data.GetGameState()), ephemeral: true);
+    }
+
+    public static string FundReply(LiveProject project, ProjectForecast forecast, decimal balance, GameConfig config, GameState state)
+    {
+        var ministry = project.Purse.DisplayName();
+        var spending = Display.Crowns(forecast.Spending);
+        var lines = new List<string>();
+        if (forecast.Spending <= 0)
+            lines.Add(Texts.Get("projects.fund.paused", ("project", project.Title), ("ministry", ministry)));
+        else if (forecast.Excess > 0)
+            lines.Add(Texts.Get("projects.fund.above", ("project", project.Title), ("spending", spending), ("ministry", ministry),
+                ("excess", Display.Crowns(forecast.Excess))));
+        else if (forecast.Spending < forecast.Pace)
+            lines.Add(Texts.Get("projects.fund.below", ("project", project.Title), ("spending", spending), ("ministry", ministry),
+                ("pace", Display.Crowns(forecast.Pace))));
+        else
+            lines.Add(Texts.Get("projects.fund.atPace", ("project", project.Title), ("spending", spending), ("ministry", ministry)));
+
+        if (forecast.FinishTurn is { } finish)
+        {
+            var when = GameCalendar.Label(finish.Season, finish.Year);
+            var work = Display.Crowns(forecast.WorkPerSeason);
+            lines.Add(forecast.Excess > 0
+                ? Texts.Get("projects.fund.graft", ("share", Display.Number((double)config.Constants.Project.Graft * 100)), ("work", work), ("finish", when))
+                : Texts.Get("projects.fund.noGraft", ("work", work), ("finish", when)));
+        }
+
+        var tail = new List<string>();
+        if (project.BonusDueResolution is { } due)
+        {
+            var deadline = ProjectPublisher.TurnLabel(state, due);
+            tail.Add(forecast.BeatsBonus == true
+                ? Texts.Get("projects.fund.beats", ("deadline", deadline))
+                : Texts.Get("projects.fund.misses", ("deadline", deadline)));
+        }
+        tail.Add(Texts.Get("projects.fund.balance", ("balance", Display.Crowns(balance))));
+        lines.Add(string.Join(" ", tail));
         return string.Join("\n", lines);
     }
 
