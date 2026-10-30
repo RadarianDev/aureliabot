@@ -119,6 +119,17 @@ public partial class DatabaseService
         }
     }
 
+    private static string? ApplyIssueValueTx(
+        SqliteConnection conn, SqliteTransaction tx, string issueId, string column, double amount, double min, double max, long? raisedMarker)
+    {
+        if (GetIssueTx(conn, tx, issueId) is not { Status: IssueStatus.Open } issue) return Texts.Get("data.effect.issueNotOpen", ("id", issueId));
+        var current = column == "opinion" ? issue.Opinion : issue.Salience;
+        Exec(conn, tx, $"UPDATE issues SET {column} = $value WHERE id = $id;", ("$id", issueId), ("$value", Math.Clamp(current + amount, min, max)));
+        if (raisedMarker is { } marker)
+            Exec(conn, tx, "UPDATE issues SET salience_raised_resolution = $marker WHERE id = $id;", ("$id", issueId), ("$marker", marker));
+        return null;
+    }
+
     private static string? SetStateTx(SqliteConnection conn, SqliteTransaction tx, string column, double value)
     {
         Exec(conn, tx, $"UPDATE game_state SET {column} = $value WHERE id = 1;", ("$value", value));

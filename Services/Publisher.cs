@@ -257,6 +257,9 @@ public class Publisher
             .AddField(Texts.Get("dashboard.calendarField"), calendar)
             .AddField(Texts.Get("dashboard.assemblyField", ("seats", state.Seats)), seatLines.Count == 0 ? Texts.Get("dashboard.noParties") : Display.Truncate(string.Join("\n", seatLines), 1024))
             .AddField(Texts.Get("dashboard.issuesField"), openIssues.Count == 0 ? Texts.Get("dashboard.noIssues") : Display.Truncate(string.Join("\n", openIssues.Select(i => i.Title)), 1024))
+            .AddField(Texts.Get("dashboard.crisesField"), _data.GetCrises(CrisisStatus.Live) is { Count: > 0 } crises
+                ? Display.Truncate(string.Join("\n", crises.Select(c => Texts.Get("dashboard.crisisLine", ("crisis", c.Title), ("ministry", c.Ministry.DisplayName())))), 1024)
+                : Texts.Get("dashboard.noCrises"))
             .WithFooter(Texts.Get("dashboard.footer"))
             .WithCurrentTimestamp()
             .Build();

@@ -338,7 +338,7 @@ public partial class DatabaseService
             var answer = minister is null ? null : crisis.Chosen;
             var texts = new List<string>();
             var effects = new List<Effect>();
-            var source = new EffectSource(crisis.Title, "crisis", crisis.Id.ToString(), PublicLedger: true);
+            var source = new EffectSource(crisis.Title, "crisis", crisis.Id.ToString(), PublicLedger: true, ActorId: minister);
             CrisisOutcome outcome;
             double change = 0;
 

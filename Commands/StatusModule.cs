@@ -111,6 +111,10 @@ public class StatusModule : InteractionModuleBase<SocketInteractionContext>
             waiting.Add(Texts.Get("me.questionToAnswer", ("ministry", question.Ministry.DisplayName()), ("asker", Display.Faction(_data, question.AskerId))));
             SingleButton(Texts.Get("me.answerButton"), GovernmentPublisher.AnswerButtonId(question.Id), ButtonStyle.Primary);
         }
+        foreach (var awaiting in _data.CrisesAwaiting(faction.UserId))
+            waiting.Add(awaiting.Responded
+                ? Texts.Get("me.crisisAnswered", ("crisis", awaiting.Crisis.Title), ("when", Display.NextResolution(state)))
+                : Texts.Get("me.crisisAwaiting", ("crisis", awaiting.Crisis.Title), ("ministry", awaiting.Crisis.Ministry.DisplayName()), ("when", Display.NextResolution(state))));
 
         if (role == FactionRole.Opposition)
         {

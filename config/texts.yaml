@@ -191,6 +191,8 @@ me:
   withdrawButton: "Withdraw"
   questionToAnswer: "A question to the {ministry} from {asker} awaits your answer."
   answerButton: "Answer"
+  crisisAwaiting: "**Crisis:** {crisis} awaits your answer as {ministry} minister: `/crisis respond` before {when}."
+  crisisAnswered: "**Crisis:** you have answered {crisis}; you can change your answer with `/crisis respond` until {when}."
   oppositionFreeWithBill: "Your opposition action this season is unused: `/opposition question`, or `/bill propose` (a private bill is still allowed this year)."
   oppositionFree: "Your opposition action this season is unused: `/opposition question` (your private bill for this year is spent)."
   oppositionUsed: "Your opposition action this season is used."
@@ -240,13 +242,13 @@ help:
     All actions are revealed together when the turn ends.
   opposition: |-
     ## Opposition
-    A faction in a party with no cabinet seat is in opposition, and has one opposition action a season: `/opposition question` to question a minister, or `/bill propose` to put a private bill to the Assembly (one a year). Condemning a crisis arrives with crises.
+    A faction in a party with no cabinet seat is in opposition, and has one opposition action a season: `/opposition question` to question a minister, or `/bill propose` to put a private bill to the Assembly (one a year). `/opposition condemn` backs *For* or *Against* on a live crisis before the minister answers: being right where the minister was wrong earns popularity, being wrong where the minister was right costs it.
   voting: |-
     ## Voting
     Each faction votes all its seats one way, with the buttons on the post in #assembly, `/vote`, or from `/me`. A bill passes when more seats vote for it than against; a tie fails. Voting Yes on a bill takes its side of the issue as your stance, No the other side. Cabinet and no-confidence votes stay open until the end of the next turn. Any faction outside the cabinet can table a motion of no confidence with `/noconfidence`; it goes to a vote once its backers hold a sixth of the seats.
   ministries: |-
     ## Ministries
-    The King appoints a Chancellor, who names four ministers with `/chancellor nominate`: Treasury, War, Interior, and Commerce and Labor. The Assembly then approves the cabinet. The Chancellor alone puts government bills before the Assembly, one a turn, with `/bill propose`. Ministers answer questions; `/ministry status` shows a ministry's purse and business, and `/ministry resign` steps down. Crises, forces and projects arrive in later updates.
+    The King appoints a Chancellor, who names four ministers with `/chancellor nominate`: Treasury, War, Interior, and Commerce and Labor. The Assembly then approves the cabinet. The Chancellor alone puts government bills before the Assembly, one a turn, with `/bill propose`. A crisis goes to the minister of its ministry (the Chancellor if the ministry is empty), who picks an answer with `/crisis respond` before the next resolution: leaning with the people of its province gains popularity, against them costs it, and an answer the purse cannot pay goes wrong. Ministers also answer questions; `/ministry status` shows a ministry's purse and business, and `/ministry resign` steps down.
   elections: |-
     ## Elections
     Seats are counted province by province, by population. A party's strength is its factions' combined popularity, weighed by how well its programme fits the local mood. Every faction in a standing party also wins a safe borough seat in its home province.
@@ -1030,6 +1032,9 @@ dashboard:
   noParties: No parties yet.
   issuesField: Open issues
   noIssues: None yet.
+  crisesField: Open crises
+  crisisLine: "{crisis} · {ministry}"
+  noCrises: None.
   footer: Updated after every resolution
 
 alerts:
