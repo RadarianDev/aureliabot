@@ -162,7 +162,7 @@ public partial class DatabaseService
         PayUpkeepTx(conn, tx, config, fiscalYear, report);
 
         var state = GetGameStateTx(conn, tx);
-        var navyShare = budget > 0 ? (double)(Math.Round(budget * (decimal)shares.GetValueOrDefault(Ministry.Navy), 2) / budget) : 0;
+        var navyShare = shares.GetValueOrDefault(Ministry.Navy);
         SetStateTx(conn, tx, "favour", Math.Clamp(state.Favour + (navyShare - state.LastNavyShare) * c.Favour.NavyFactor, 0, 100));
         SetStateTx(conn, tx, "last_navy_share", navyShare);
     }

@@ -21,7 +21,7 @@ public sealed class DatabaseFixture : IDisposable
 
     public void Dispose()
     {
-        SqliteConnection.ClearAllPools();
+        using (var pooled = new SqliteConnection(ConnectionString)) SqliteConnection.ClearPool(pooled);
         for (var attempt = 0; attempt < 10; attempt++)
         {
             try

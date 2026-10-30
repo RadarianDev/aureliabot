@@ -19,7 +19,6 @@ public class SnapshotTests : IDisposable
 
     public void Dispose()
     {
-        SqliteConnection.ClearAllPools();
         try
         {
             if (Directory.Exists(_folder)) Directory.Delete(_folder, true);

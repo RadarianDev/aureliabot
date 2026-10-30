@@ -90,7 +90,7 @@ public partial class SnapshotService
                 .Where(p => p.At >= latest.TakenAt)
                 .ToList();
 
-            SqliteConnection.ClearAllPools();
+            using (var pooled = new SqliteConnection(_data.ConnectionString)) SqliteConnection.ClearPool(pooled);
             using (var source = new SqliteConnection(UnpooledConnectionString(latest.Path)))
             using (var live = new SqliteConnection(_data.ConnectionString))
             {
@@ -98,7 +98,7 @@ public partial class SnapshotService
                 live.Open();
                 source.BackupDatabase(live);
             }
-            SqliteConnection.ClearAllPools();
+            using (var pooled = new SqliteConnection(_data.ConnectionString)) SqliteConnection.ClearPool(pooled);
 
             File.Delete(latest.Path);
             _data.SaveGameState(_data.GetGameState() with { Paused = true });
