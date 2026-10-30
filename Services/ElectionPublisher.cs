@@ -226,11 +226,41 @@ public class ElectionPublisher
         return result;
     }
 
-    public static string PartyLabel(ElectionPartySnapshot party) =>
-        party.EmojiId is { } emoji ? $"<:p:{emoji}> {party.Name}" : party.Name;
+    private static string PartyEmoji(IReadOnlyDictionary<long, ElectionPartySnapshot> parties, long id) =>
+        parties.TryGetValue(id, out var party) ? PartyEmoji(party) : Texts.Get("election.unknownParty", ("id", id));
 
-    private static string PartyLabel(IReadOnlyDictionary<long, ElectionPartySnapshot> parties, long id) =>
-        parties.TryGetValue(id, out var party) ? PartyLabel(party) : Texts.Get("election.unknownParty", ("id", id));
+    public static string PartyEmoji(ElectionPartySnapshot party) =>
+        party.EmojiId is { } emoji ? $"<:p:{emoji}>" : ColourSquare(party.Colour);
+
+    public static string ColourSquare(string hex)
+    {
+        if (!ConstantsStore.IsHexColour(hex)) return "⬜";
+        var r = Convert.ToInt32(hex[1..3], 16) / 255.0;
+        var g = Convert.ToInt32(hex[3..5], 16) / 255.0;
+        var b = Convert.ToInt32(hex[5..7], 16) / 255.0;
+        var max = Math.Max(r, Math.Max(g, b));
+        var min = Math.Min(r, Math.Min(g, b));
+        var chroma = max - min;
+        if (max < 0.2) return "⬛";
+        if (max == 0 || chroma / max < 0.2) return max > 0.6 ? "⬜" : "⬛";
+
+        var hue = max == r ? 60 * ((g - b) / chroma % 6)
+            : max == g ? 60 * ((b - r) / chroma + 2)
+            : 60 * ((r - g) / chroma + 4);
+        if (hue < 0) hue += 360;
+
+        return hue switch
+        {
+            < 15 or >= 345 => "🟥",
+            < 40 => max < 0.55 ? "🟫" : "🟧",
+            < 70 => "🟨",
+            < 170 => "🟩",
+            < 260 => "🟦",
+            _ => "🟪",
+        };
+    }
+
+    public static string PartyName(ElectionPartySnapshot party) => $"{PartyEmoji(party)} {party.Name}";
 
     private static string ProvinceName(GameConfig config, string id) => config.Province(id)?.Name ?? id;
 
@@ -244,7 +274,7 @@ public class ElectionPublisher
             .OrderByDescending(x => x.Provinces.Count)
             .ThenBy(x => x.Party.Id)
             .Select(x => Texts.Get("election.legendLine",
-                ("party", PartyLabel(x.Party)),
+                ("party", PartyName(x.Party)),
                 ("colour", x.Party.Colour.ToUpperInvariant()),
                 ("count", x.Provinces.Count),
                 ("provinces", string.Join(", ", x.Provinces.Select(id => ProvinceName(config, id))))))
@@ -276,7 +306,7 @@ public class ElectionPublisher
             .ThenBy(id => id)
             .ToList();
         lines.AddRange(partyIds.Select(id => Texts.Get("election.partyLine",
-            ("party", PartyLabel(byId, id)),
+            ("party", byId.TryGetValue(id, out var named) ? PartyName(named) : Texts.Get("election.unknownParty", ("id", id))),
             ("seats", result.PartySeats.GetValueOrDefault(id)),
             ("share", Percent(result.VoteShare.GetValueOrDefault(id))))));
         if (partyIds.Count == 0) lines.Add(Texts.Get("election.nobody"));
@@ -298,11 +328,11 @@ public class ElectionPublisher
                 .Where(x => x.Seats > 0)
                 .OrderByDescending(x => x.Seats)
                 .ThenBy(x => x.Id)
-                .Select(x => Texts.Get("election.provinceSeat", ("party", PartyLabel(byId, x.Id)), ("seats", x.Seats)))
+                .Select(x => Texts.Get("election.provinceSeat", ("party", PartyEmoji(byId, x.Id)), ("seats", x.Seats)))
                 .ToList();
             lines.Add(Texts.Get("election.provinceLine",
                 ("province", ProvinceName(config, provinceId)),
-                ("seats", seats.Count == 0 ? Texts.Get("election.provinceEmpty") : string.Join(", ", seats))));
+                ("seats", seats.Count == 0 ? Texts.Get("election.provinceEmpty") : string.Join(Texts.Get("election.provinceSeparator"), seats))));
         }
         return string.Join("\n", lines);
     }

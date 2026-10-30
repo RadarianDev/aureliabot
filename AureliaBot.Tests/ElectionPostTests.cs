@@ -94,12 +94,15 @@ public class ElectionPostTests
         var text = ElectionPublisher.ResultsText(report, DatabaseFixture.Config, id => $"<@{id}>");
         var proclamation = ElectionPublisher.Proclamation(report);
 
-        Assert.Contains(Texts.Get("election.partyLine", ("party", "Liberal Union"), ("seats", 7), ("share", "45.0")), text);
-        Assert.Contains(Texts.Get("election.partyLine", ("party", "<:p:555> Tory Club"), ("seats", 8), ("share", "40.0")), text);
-        Assert.Contains(Texts.Get("election.partyLine", ("party", "Radicals"), ("seats", 2), ("share", "15.0")), text);
+        string Named(long id) => ElectionPublisher.PartyName(Parties.Single(p => p.Id == id));
+        string Emoji(long id) => ElectionPublisher.PartyEmoji(Parties.Single(p => p.Id == id));
+        Assert.Contains(Texts.Get("election.partyLine", ("party", Named(1)), ("seats", 7), ("share", "45.0")), text);
+        Assert.Contains(Texts.Get("election.partyLine", ("party", Named(2)), ("seats", 8), ("share", "40.0")), text);
+        Assert.Contains(Texts.Get("election.partyLine", ("party", Named(3)), ("seats", 2), ("share", "15.0")), text);
+        Assert.Equal("<:p:555>", Emoji(2));
         Assert.Contains(Texts.Get("election.factionLine", ("faction", "<@202>"), ("seats", 8)), text);
-        Assert.Contains("Liberal Union 7, <:p:555> Tory Club 4", text);
-        Assert.Contains("<:p:555> Tory Club 4, Radicals 2", text);
+        Assert.Contains($"{Emoji(1)} 7 · {Emoji(2)} 4", text);
+        Assert.Contains($"{Emoji(2)} 4 · {Emoji(3)} 2", text);
         Assert.Contains("By His Majesty's Command", proclamation);
         Assert.Contains("17", proclamation);
         Assert.DoesNotContain("[election.", text + proclamation);

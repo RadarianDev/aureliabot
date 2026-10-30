@@ -31,7 +31,7 @@ public partial class GmModule
                 Texts.Get("gm.start.proclamation", ("label", after.Label), ("when", Display.When(after.NextResolutionAt!.Value))), source);
             await _publisher.UpdateDashboardAsync();
             _turnTracker.RequestCurrent();
-            await _alerts.PostAllAsync(report.Alerts);
+            await _publisher.PostGmDigestAsync(report, gameStart: true);
 
             return Texts.Get("gm.start.started",
                 ("label", after.Label), ("events", report.FiredEvents.Count),

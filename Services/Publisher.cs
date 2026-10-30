@@ -72,6 +72,66 @@ public class Publisher
             await PostAsync(ChannelRole.News, EventPost(fired, names), source);
     }
 
+    public async Task PostGmDigestAsync(ResolutionReport report, bool gameStart = false)
+    {
+        var text = GmDigest(report, gameStart, _data.GetGameState(), _constants.Config, id => Display.Faction(_data, id));
+        var source = gameStart ? "gm start" : $"resolution {report.ResolutionNumber}";
+        if (await PostAsync(ChannelRole.Gm, text, source) is null)
+            foreach (var alert in report.Alerts)
+                Console.WriteLine($"[Alert] {alert}");
+    }
+
+    public static string GmDigest(ResolutionReport report, bool gameStart, GameState state, GameConfig config, Func<ulong, string> factionName)
+    {
+        var lines = new List<string>
+        {
+            gameStart
+                ? Texts.Get("digest.headerStart", ("season", GameCalendar.Label(report.ToSeason, report.ToYear)))
+                : report.CampaignDay
+                    ? Texts.Get("digest.headerCampaignDay", ("day", state.CampaignDaysRun), ("season", GameCalendar.Label(report.FromSeason, report.FromYear)))
+                    : Texts.Get("digest.header", ("number", report.ResolutionNumber),
+                        ("from", GameCalendar.Label(report.FromSeason, report.FromYear)), ("to", GameCalendar.Label(report.ToSeason, report.ToYear))),
+        };
+        if (!gameStart) lines.Add(Texts.Get("digest.seed", ("seed", report.Seed)));
+
+        lines.Add(report.FiredEvents.Count == 0
+            ? Texts.Get("digest.noEvents")
+            : Texts.Get("digest.events", ("events", string.Join(", ", report.FiredEvents.Select(e => e.Title)))));
+
+        if (!gameStart)
+            lines.Add(Texts.Get("digest.actions",
+                ("campaigns", report.Actions.Count(a => a.Kind == ActionKind.Campaign)),
+                ("attacks", report.Actions.Count(a => a.Kind == ActionKind.Attack)),
+                ("private", report.PrivateMessages.Values.Sum(m => m.Count))));
+
+        if (report.Election is { } election)
+        {
+            var names = election.Parties.ToDictionary(p => p.Id, p => p.Name);
+            lines.Add(Texts.Get("digest.election", ("term", election.TermNumber),
+                ("seats", string.Join(", ", election.Result.PartySeats.OrderByDescending(kv => kv.Value)
+                    .Select(kv => Texts.Get("digest.electionSeat", ("party", names.GetValueOrDefault(kv.Key, kv.Key.ToString())), ("seats", kv.Value)))))));
+            foreach (var province in election.Result.Provinces)
+                lines.Add(Texts.Get("digest.electionProvince",
+                    ("province", config.Province(province.ProvinceId)?.Name ?? province.ProvinceId),
+                    ("strengths", string.Join(", ", province.Strength.Where(kv => kv.Value > 0).OrderByDescending(kv => kv.Value)
+                        .Select(kv => Texts.Get("digest.electionStrength", ("party", names.GetValueOrDefault(kv.Key, kv.Key.ToString())),
+                            ("strength", kv.Value.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture))))))));
+        }
+
+        foreach (var cancelled in report.ReadingsCancelled)
+            lines.Add(Texts.Get("digest.readingCancelled", ("bill", cancelled.Title), ("reason", cancelled.Reason)));
+
+        lines.Add(Texts.Get("digest.next", ("when", Display.NextResolution(state))));
+
+        if (report.Alerts.Count > 0)
+        {
+            lines.Add("");
+            lines.Add(Texts.Get("digest.attention"));
+            lines.AddRange(report.Alerts.Select(a => Texts.Get("digest.alert", ("alert", a))));
+        }
+        return string.Join("\n", lines);
+    }
+
     public string EventPost(FiredEventReport fired, EffectNames names) =>
         FormatEvent(fired.Title, fired.Text, EffectSummary.Lines(fired.Effects, names, _constants.Current.Display));
 

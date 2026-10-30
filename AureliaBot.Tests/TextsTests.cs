@@ -7,9 +7,9 @@ public class TextsTests
 {
     private static readonly Regex KeyUse = new(@"Texts\.Get\(\s*""([^""]+)""", RegexOptions.Compiled);
 
-    private static string RepoRoot()
+    private static string RepoRoot([System.Runtime.CompilerServices.CallerFilePath] string source = "")
     {
-        for (var dir = new DirectoryInfo(AppContext.BaseDirectory); dir is not null; dir = dir.Parent)
+        for (var dir = new DirectoryInfo(Path.GetDirectoryName(source)!); dir is not null; dir = dir.Parent)
             if (File.Exists(Path.Combine(dir.FullName, "AureliaBot.csproj"))) return dir.FullName;
         throw new InvalidOperationException("Can't find the repository root.");
     }

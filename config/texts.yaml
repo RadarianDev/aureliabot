@@ -925,19 +925,20 @@ election:
     ## The nation has voted
     The returns are in for the Assembly of term {term}.
   partiesHeading: "**Seats and votes**"
-  partyLine: "{party}: **{seats}** seats · {share}% of the vote"
+  partyLine: "- {party}: **{seats}** seats · {share}% of the vote"
   factionsHeading: "**The members returned**"
-  factionLine: "{faction} · {seats}"
+  factionLine: "- {faction} · {seats}"
   provincesHeading: "**The provinces**"
-  provinceLine: "{province}: {seats}"
+  provinceLine: "- **{province}**: {seats}"
   provinceSeat: "{party} {seats}"
+  provinceSeparator: " · "
   provinceEmpty: "no seats returned"
   nobody: "None."
   unknownParty: "Party #{id}"
   chartTitle: "The Assembly of term {term}"
   mapTitle: "The provinces"
-  legendLine: "{party} · `{colour}` · {count}: {provinces}"
-  legendUnclaimed: "Original fill: {provinces}"
+  legendLine: "- {party} · {count}: {provinces}"
+  legendUnclaimed: "- Original fill: {provinces}"
   legendEmpty: "No province returned a winner."
   proclamation: |-
     ## By His Majesty's Command
@@ -1101,3 +1102,20 @@ bot:
   notWhitelisted: This channel isn't whitelisted for bot commands. Ask a server manager to run `/whitelist add` here.
   failed: ⚠️ {reason}
   userLeft: "{faction} ({user}) left the server while their faction is active. Consider `/gm faction retire`."
+
+digest:
+  header: "## Resolution {number}: {from} → {to}"
+  headerCampaignDay: "## Campaign day {day} of {season}"
+  headerStart: "## The game has started: {season}"
+  seed: "- Seed: {seed}"
+  events: "- Events fired: {events}"
+  noEvents: "- No event fired."
+  actions: "- Actions resolved: {campaigns} campaign(s), {attacks} attack(s); {private} private message(s) sent"
+  election: "- Election for term {term}: {seats}"
+  electionSeat: "{party} {seats}"
+  electionProvince: "  - {province}: {strengths}"
+  electionStrength: "{party} {strength}"
+  readingCancelled: "- Cancelled: {bill} ({reason})"
+  next: "- Next resolution: {when}"
+  attention: "**Needs your attention**"
+  alert: "- {alert}"

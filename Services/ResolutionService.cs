@@ -130,6 +130,6 @@ public class ResolutionService
             await _alerts.PostAsync(Texts.Get("alerts.resolution.publishFailed", ("number", report.ResolutionNumber), ("error", ex.Message)));
         }
         _turnTracker.RequestCurrent();
-        await _alerts.PostAllAsync(report.Alerts);
+        await _publisher.PostGmDigestAsync(report);
     }
 }

@@ -89,6 +89,30 @@ public class ElectionFlowTests : IDisposable
         Assert.Null(result.Provinces[0].WinnerPartyId);
     }
 
+    [Theory]
+    [InlineData("#FF0000", "🟥")]
+    [InlineData("#FFCC00", "🟨")]
+    [InlineData("#336699", "🟦")]
+    [InlineData("#2E8B57", "🟩")]
+    [InlineData("#111111", "⬛")]
+    public void APartyWithoutAnEmoji_GetsTheNearestColourSquare(string colour, string square) =>
+        Assert.Equal(square, ElectionPublisher.ColourSquare(colour));
+
+    [Fact]
+    public void TheGmDigest_SummarisesTheElection_AndGathersTheAlerts()
+    {
+        StartWithTwoParties();
+        var report = Db.Resolve(Config, new ScriptedRandomSource(), 1, DateTimeOffset.UtcNow);
+        report.Alerts.Add("Something needs a hand.");
+
+        var digest = Publisher.GmDigest(report, false, Db.GetGameState(), Config, id => id.ToString());
+
+        Assert.Contains("Spring 1850 → Summer 1850", digest);
+        Assert.Contains("Liberal Union", digest);
+        Assert.Contains("Aurenten", digest);
+        Assert.Contains("- Something needs a hand.", digest);
+    }
+
     [Fact]
     public void NoElection_RunsOutsideAPreElection()
     {
