@@ -170,6 +170,18 @@ info:
     unit: "{name} · d{sides}"
 
 me:
+  cabinetVote: "The cabinet nominated by {chancellor} awaits the Assembly's approval: cast your vote."
+  readingVote: "**{bill}** is before the Assembly: cast your vote."
+  motionVote: "The motion of no confidence tabled by {tabler} is at a vote: cast your vote."
+  motionCosign: "{tabler} has tabled a motion of no confidence, gathering support: you can co-sign it."
+  cosignButton: "Co-sign"
+  scheduledBill: "Your bill **{bill}** is scheduled for next turn; you can withdraw it until its vote opens."
+  withdrawButton: "Withdraw"
+  questionToAnswer: "A question to the {ministry} from {asker} awaits your answer."
+  answerButton: "Answer"
+  oppositionFreeWithBill: "Your opposition action this season is unused: `/opposition question`, or `/bill propose` (a private bill is still allowed this year)."
+  oppositionFree: "Your opposition action this season is unused: `/opposition question` (your private bill for this year is spent)."
+  oppositionUsed: "Your opposition action this season is used."
   status: "{season} · next resolution {when}"
   statusPreElection: "{season} · Pre-election · next resolution {when}"
   summary: "Popularity {popularity} · {seats} seats · {party} · {role}"
@@ -213,19 +225,19 @@ help:
     - **Campaign** on an issue: gain popularity if the nation agrees with you.
     - **Attack** a rival's stance: they lose popularity if the nation disagrees with them; otherwise it backfires.
     - **Poll** an issue, nationally or in one province.
-    All actions are revealed together when the turn ends. *(Coming in a later update.)*
+    All actions are revealed together when the turn ends.
   opposition: |-
     ## Opposition
-    A faction in a party with no cabinet seat is in opposition, and has one opposition action a season: question a minister, condemn a crisis, or propose a bill (once a year). *(Coming in a later update.)*
+    A faction in a party with no cabinet seat is in opposition, and has one opposition action a season: `/opposition question` to question a minister, or `/bill propose` to put a private bill to the Assembly (one a year). Condemning a crisis arrives with crises.
   voting: |-
     ## Voting
-    Each faction votes all its seats one way. A bill passes when more seats vote for it than against. Cabinet and no-confidence votes stay open until the end of the next turn. *(Coming in a later update.)*
+    Each faction votes all its seats one way, with the buttons on the post in #assembly, `/vote`, or from `/me`. A bill passes when more seats vote for it than against; a tie fails. Voting Yes on a bill takes its side of the issue as your stance, No the other side. Cabinet and no-confidence votes stay open until the end of the next turn. Any faction outside the cabinet can table a motion of no confidence with `/noconfidence`; it goes to a vote once its backers hold a sixth of the seats.
   ministries: |-
     ## Ministries
-    The Chancellor names four ministers: Treasury, War, Interior, and Commerce and Labor. Ministers answer crises, manage forces and run projects. *(Coming in a later update.)*
+    The King appoints a Chancellor, who names four ministers with `/chancellor nominate`: Treasury, War, Interior, and Commerce and Labor. The Assembly then approves the cabinet. The Chancellor alone puts government bills before the Assembly, one a turn, with `/bill propose`. Ministers answer questions; `/ministry status` shows a ministry's purse and business, and `/ministry resign` steps down. Crises, forces and projects arrive in later updates.
   elections: |-
     ## Elections
-    Seats are counted province by province, by population. A party's strength is its factions' combined popularity, weighed by how well its programme fits the local mood. Every faction in a standing party also wins a safe borough seat in its home province. *(Coming in a later update.)*
+    Seats are counted province by province, by population. A party's strength is its factions' combined popularity, weighed by how well its programme fits the local mood. Every faction in a standing party also wins a safe borough seat in its home province.
   unknown: "Unknown topic."
 
 confirm:

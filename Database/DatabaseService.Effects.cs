@@ -142,6 +142,11 @@ public partial class DatabaseService
         Exec(conn, tx, "UPDATE issues SET status = 'Closed', closed_resolution = $resolution WHERE id = $id;",
             ("$id", issueId), ("$resolution", state.ResolutionNumber));
         Exec(conn, tx, @"
+            UPDATE opposition_actions SET cancelled = 1
+            WHERE kind = 'Bill' AND subject_id IN (
+                SELECT r.id FROM readings r JOIN bills b ON b.id = r.bill_id
+                WHERE b.issue_id = $id AND r.status IN ('Scheduled', 'Open'));", ("$id", issueId));
+        Exec(conn, tx, @"
             UPDATE readings SET status = 'Cancelled'
             WHERE status IN ('Scheduled', 'Open') AND bill_id IN (SELECT id FROM bills WHERE issue_id = $id);", ("$id", issueId));
         Exec(conn, tx, "UPDATE bills SET status = 'Withdrawn' WHERE issue_id = $id AND status IN ('Available', 'Voting', 'Cooldown');",

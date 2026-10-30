@@ -64,6 +64,61 @@ public class StatusModule : InteractionModuleBase<SocketInteractionContext>
             if (_data.GetParty(request.PartyId) is { } target)
                 waiting.Add(Texts.Get("me.ownApplication", ("party", target.Name)));
 
+        void VoteRow(Func<VoteChoice, string> id)
+        {
+            if (row >= 5) return;
+            buttons.WithButton(Texts.Get("assembly.choice.yes"), id(VoteChoice.Yes), ButtonStyle.Success, row: row);
+            buttons.WithButton(Texts.Get("assembly.choice.no"), id(VoteChoice.No), ButtonStyle.Danger, row: row);
+            buttons.WithButton(Texts.Get("assembly.choice.abstain"), id(VoteChoice.Abstain), ButtonStyle.Secondary, row: row);
+            row++;
+        }
+
+        void SingleButton(string label, string id, ButtonStyle style)
+        {
+            if (row >= 5) return;
+            buttons.WithButton(label, id, style, row: row);
+            row++;
+        }
+
+        foreach (var cabinet in _data.CabinetVotesAwaiting(faction.UserId))
+        {
+            waiting.Add(Texts.Get("me.cabinetVote", ("chancellor", cabinet.ChancellorId is { } c ? Display.Faction(_data, c) : Texts.Get("me.unknownTarget"))));
+            VoteRow(choice => GovernmentPublisher.CabinetVoteButtonId(choice, cabinet.Id));
+        }
+        foreach (var reading in _data.GetOpenReadingsNotVotedBy(faction.UserId))
+        {
+            waiting.Add(Texts.Get("me.readingVote", ("bill", _data.GetBill(reading.BillId)?.Title ?? reading.BillId)));
+            VoteRow(choice => AssemblyPublisher.ReadingVoteButtonId(choice, reading.Id));
+        }
+        foreach (var motion in _data.GetVotingMotionsNotVotedBy(faction.UserId))
+        {
+            waiting.Add(Texts.Get("me.motionVote", ("tabler", Display.Faction(_data, motion.TablerId))));
+            VoteRow(choice => AssemblyPublisher.MotionVoteButtonId(choice, motion.Id));
+        }
+        foreach (var motion in _data.GetCosignableMotions(faction.UserId))
+        {
+            waiting.Add(Texts.Get("me.motionCosign", ("tabler", Display.Faction(_data, motion.TablerId))));
+            SingleButton(Texts.Get("me.cosignButton"), AssemblyPublisher.CosignButtonId(motion.Id), ButtonStyle.Danger);
+        }
+        foreach (var reading in _data.GetScheduledReadingsBy(faction.UserId))
+        {
+            waiting.Add(Texts.Get("me.scheduledBill", ("bill", _data.GetBill(reading.BillId)?.Title ?? reading.BillId)));
+            SingleButton(Texts.Get("me.withdrawButton"), AssemblyPublisher.WithdrawButtonId(reading.Id), ButtonStyle.Secondary);
+        }
+        foreach (var question in _data.QuestionsToAnswer(faction.UserId))
+        {
+            waiting.Add(Texts.Get("me.questionToAnswer", ("ministry", question.Ministry.DisplayName()), ("asker", Display.Faction(_data, question.AskerId))));
+            SingleButton(Texts.Get("me.answerButton"), GovernmentPublisher.AnswerButtonId(question.Id), ButtonStyle.Primary);
+        }
+
+        if (role == FactionRole.Opposition)
+        {
+            var standing = _data.GetOppositionStanding(faction.UserId, _constants.Current);
+            sb.AppendLine(standing.CanAct
+                ? standing.CanProposeBill ? Texts.Get("me.oppositionFreeWithBill") : Texts.Get("me.oppositionFree")
+                : Texts.Get("me.oppositionUsed"));
+        }
+
         var pending = _data.GetPendingActions(faction.UserId);
         if (pending.Count > 0)
         {

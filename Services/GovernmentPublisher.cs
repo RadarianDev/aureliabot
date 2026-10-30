@@ -140,16 +140,20 @@ public class GovernmentPublisher
 
     private static string Quoted(string text) => text.ReplaceLineEndings("\n> ");
 
+    public static string CabinetVoteButtonId(VoteChoice choice, long cabinetId) => $"vote:cabinet:{choice.ToString().ToLowerInvariant()}:{cabinetId}";
+
+    public static string AnswerButtonId(long questionId) => $"question:answer:{questionId}";
+
     public static MessageComponent VoteButtons(long cabinetId, bool disabled) =>
         new ComponentBuilder()
-            .WithButton(Texts.Get("cabinet.button.yes"), $"vote:cabinet:yes:{cabinetId}", ButtonStyle.Success, disabled: disabled)
-            .WithButton(Texts.Get("cabinet.button.no"), $"vote:cabinet:no:{cabinetId}", ButtonStyle.Danger, disabled: disabled)
-            .WithButton(Texts.Get("cabinet.button.abstain"), $"vote:cabinet:abstain:{cabinetId}", ButtonStyle.Secondary, disabled: disabled)
+            .WithButton(Texts.Get("cabinet.button.yes"), CabinetVoteButtonId(VoteChoice.Yes, cabinetId), ButtonStyle.Success, disabled: disabled)
+            .WithButton(Texts.Get("cabinet.button.no"), CabinetVoteButtonId(VoteChoice.No, cabinetId), ButtonStyle.Danger, disabled: disabled)
+            .WithButton(Texts.Get("cabinet.button.abstain"), CabinetVoteButtonId(VoteChoice.Abstain, cabinetId), ButtonStyle.Secondary, disabled: disabled)
             .Build();
 
     public static MessageComponent AnswerButton(long questionId, bool disabled) =>
         new ComponentBuilder()
-            .WithButton(Texts.Get("questions.button.answer"), $"question:answer:{questionId}", ButtonStyle.Primary, disabled: disabled)
+            .WithButton(Texts.Get("questions.button.answer"), AnswerButtonId(questionId), ButtonStyle.Primary, disabled: disabled)
             .Build();
 
     public static string ChoiceName(VoteChoice choice) => choice switch
