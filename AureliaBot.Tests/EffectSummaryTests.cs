@@ -6,6 +6,8 @@ public class EffectSummaryTests
 {
     private const string Up = "<:up:1>";
     private const string Down = "<:down:2>";
+    private const string UpLine = "[" + Up + "]";
+    private const string DownLine = "[" + Down + "]";
 
     private static readonly DisplayConstants Display = new() { UpEmoji = Up, DownEmoji = Down };
 
@@ -25,28 +27,28 @@ public class EffectSummaryTests
     private static string Single(string key, double? value) => Assert.Single(Lines((key, value)));
 
     [Theory]
-    [InlineData("economy", -5, Down + " Economy −5")]
-    [InlineData("economy", 2.5, Up + " Economy +2.5")]
-    [InlineData("purse.CommerceLabor", -2, Down + " Commerce and Labor purse −2")]
-    [InlineData("purse.War", 1.25, Up + " War purse +1.25")]
-    [InlineData("reserve", 3, Up + " Reserve +3")]
-    [InlineData("popularity.123456789", 2, Up + " <@123456789> popularity +2")]
-    [InlineData("popularity.123456789", -1.333, Down + " <@123456789> popularity −1.33")]
-    [InlineData("seats", 30, Up + " Assembly seats +30")]
-    [InlineData("seats", -10, Down + " Assembly seats −10")]
-    [InlineData("taxRate", 0.05, Up + " Tax rate +5%")]
-    [InlineData("taxRate", -0.025, Down + " Tax rate −2.5%")]
+    [InlineData("economy", -5, DownLine + " Economy −5")]
+    [InlineData("economy", 2.5, UpLine + " Economy +2.5")]
+    [InlineData("purse.CommerceLabor", -2, DownLine + " Commerce and Labor purse −2")]
+    [InlineData("purse.War", 1.25, UpLine + " War purse +1.25")]
+    [InlineData("reserve", 3, UpLine + " Reserve +3")]
+    [InlineData("popularity.123456789", 2, UpLine + " <@123456789> popularity +2")]
+    [InlineData("popularity.123456789", -1.333, DownLine + " <@123456789> popularity −1.33")]
+    [InlineData("seats", 30, UpLine + " Assembly seats +30")]
+    [InlineData("seats", -10, DownLine + " Assembly seats −10")]
+    [InlineData("taxRate", 0.05, UpLine + " Tax rate +5%")]
+    [InlineData("taxRate", -0.025, DownLine + " Tax rate −2.5%")]
     public void Public_numbers_show_their_amount(string key, double value, string expected) =>
         Assert.Equal(expected, Single(key, value));
 
     [Theory]
-    [InlineData("discontent.iracterie", -3, Down + " Discontent in Iracterie")]
-    [InlineData("discontent.north_arpal", 1, Up + " Discontent in North Arpal")]
-    [InlineData("opinion.labour", 0.05, Up + " Opinion on The Condition of Labour")]
-    [InlineData("opinion.labour", -0.2, Down + " Opinion on The Condition of Labour")]
-    [InlineData("salience.labour", 1, Up + " Salience: The Condition of Labour")]
-    [InlineData("favour", -10, Down + " Anzarian Favour")]
-    [InlineData("threat", 2, Up + " Foreign Threat")]
+    [InlineData("discontent.iracterie", -3, DownLine + " Discontent in Iracterie")]
+    [InlineData("discontent.north_arpal", 1, UpLine + " Discontent in North Arpal")]
+    [InlineData("opinion.labour", 0.05, UpLine + " Opinion on The Condition of Labour")]
+    [InlineData("opinion.labour", -0.2, DownLine + " Opinion on The Condition of Labour")]
+    [InlineData("salience.labour", 1, UpLine + " Salience: The Condition of Labour")]
+    [InlineData("favour", -10, DownLine + " Anzarian Favour")]
+    [InlineData("threat", 2, UpLine + " Foreign Threat")]
     public void Mood_and_threat_show_direction_only(string key, double value, string expected) =>
         Assert.Equal(expected, Single(key, value));
 
@@ -91,8 +93,8 @@ public class EffectSummaryTests
             ("crisis.dock_strike_carden", null));
         Assert.Equal(
         [
-            Up + " Discontent in North Arpal",
-            Up + " Salience: The Condition of Labour",
+            UpLine + " Discontent in North Arpal",
+            UpLine + " Salience: The Condition of Labour",
             "North Arpal is now *Strike*",
             "Crisis: The Carden Dock Strike",
         ], lines);
@@ -105,10 +107,10 @@ public class EffectSummaryTests
             "economy -5, purse.CommerceLabor -2, discontent.iracterie -3, discontent.north_arpal -1").Effects;
         Assert.Equal(
         [
-            Down + " Economy −5",
-            Down + " Commerce and Labor purse −2",
-            Down + " Discontent in Iracterie",
-            Down + " Discontent in North Arpal",
+            DownLine + " Economy −5",
+            DownLine + " Commerce and Labor purse −2",
+            DownLine + " Discontent in Iracterie",
+            DownLine + " Discontent in North Arpal",
         ], EffectSummary.Lines(effects, Names, Display));
     }
 }

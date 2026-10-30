@@ -27,7 +27,7 @@ public static class ContentPreview
             IssueTemplate issue => Issue(issue),
             BillTemplate bill => Bill(bill, names, summary),
             ProjectTemplate project => Project(project, config, summary),
-            EventTemplate ev => Event(ev, state, summary),
+            EventTemplate ev => Event(ev, summary),
             CrisisTemplate crisis => Crisis(crisis, config, names, summary),
             _ => "",
         };
@@ -39,6 +39,8 @@ public static class ContentPreview
         if (template is IssueTemplate hidden)
             sb.AppendLine(Texts.Get("content.preview.hidden",
                 ("opinion", EffectParser.FormatNumber(hidden.Opinion)), ("salience", EffectParser.FormatNumber(hidden.Salience))));
+        if (template is EventTemplate scheduled)
+            sb.AppendLine(Texts.Get("content.preview.fires", ("when", FiresWhen(scheduled.Schedule, state))));
         if (template is ProjectTemplate works)
         {
             if (works.Ministerial) sb.AppendLine(Texts.Get("content.preview.ministerial"));
@@ -66,6 +68,17 @@ public static class ContentPreview
 
     private static string Issue(IssueTemplate issue) =>
         Texts.Get("content.preview.issue", ("title", issue.Title), ("for", issue.For), ("against", issue.Against));
+
+    private static string FiresWhen(EventSchedule? schedule, GameState state)
+    {
+        if (schedule?.Season is { } season && schedule.Year is { } year) return GameCalendar.Label(season, year);
+        if (schedule?.Delay is { } delay)
+        {
+            var (s, y) = ContentRules.TurnOf(state, EventScheduling.FireAtForDelay(state, delay));
+            return GameCalendar.Label(s, y);
+        }
+        return Texts.Get("content.preview.whenQueued");
+    }
 
     private static string Title(string title) => Texts.Get("content.preview.title", ("title", title));
 
@@ -108,25 +121,9 @@ public static class ContentPreview
         return sb.ToString();
     }
 
-    private static string Event(EventTemplate ev, GameState state, Summariser summary)
+    private static string Event(EventTemplate ev, Summariser summary)
     {
-        var sb = new StringBuilder();
-        sb.AppendLine(Title(ev.Title));
-        sb.AppendLine(When(ev.Schedule, state));
-        sb.AppendLine(ev.Text);
-        summary.Append(sb, ev.Effects);
-        return sb.ToString();
-    }
-
-    private static string When(EventSchedule? schedule, GameState state)
-    {
-        if (schedule?.Season is { } season && schedule.Year is { } year) return GameCalendar.Label(season, year);
-        if (schedule?.Delay is { } delay)
-        {
-            var (s, y) = ContentRules.TurnOf(state, EventScheduling.FireAtForDelay(state, delay));
-            return GameCalendar.Label(s, y);
-        }
-        return Texts.Get("content.preview.whenItFires");
+        return Publisher.FormatEvent(ev.Title, ev.Text, summary.Lines(ev.Effects)) + "\n";
     }
 
     private static string Crisis(CrisisTemplate crisis, GameConfig config, EffectNames names, Summariser summary)
@@ -173,19 +170,23 @@ public static class ContentPreview
     {
         public List<string> Problems { get; } = [];
 
-        public void Append(StringBuilder sb, IReadOnlyList<Effect> effects)
+        public IReadOnlyList<string> Lines(IReadOnlyList<Effect> effects)
         {
-            if (effects.Count == 0) return;
-            IReadOnlyList<string> lines;
+            if (effects.Count == 0) return [];
             try
             {
-                lines = EffectSummary.Lines(effects, names, display);
+                return EffectSummary.Lines(effects, names, display);
             }
             catch (Exception ex)
             {
                 if (Problems.Count == 0) Problems.Add(Texts.Get("content.preview.summaryFailed", ("error", ex.Message)));
-                lines = effects.Select(e => Texts.Get("content.preview.rawEffect", ("effect", EffectParser.Format([e])))).ToList();
+                return effects.Select(e => Texts.Get("content.preview.rawEffect", ("effect", EffectParser.Format([e])))).ToList();
             }
+        }
+
+        public void Append(StringBuilder sb, IReadOnlyList<Effect> effects)
+        {
+            var lines = Lines(effects);
             if (lines.Count == 0) return;
             sb.AppendLine();
             foreach (var line in lines) sb.AppendLine(line);

@@ -697,6 +697,8 @@ content:
     hidden: "Hidden: opinion {opinion}, salience {salience}."
     ministerial: "Ministerial: the minister can start it with `/ministry project`."
     requires: Needs a province with {condition}.
+    fires: "Fires at the start of {when}."
+    whenQueued: "the turn it is queued for with `/gm event queue`"
     noWarningsReady: No warnings. It is Ready.
     noWarnings: "No warnings: `/content ready` will accept it."
     warning: "- ⚠️ {warning}"
@@ -718,7 +720,6 @@ content:
     projectFinishes: "-# When it finishes, in #news:"
     projectFinished: "## {title} is finished"
     withBonus: "-# With the bonus, on top:"
-    whenItFires: (the turn it fires)
     crisisTitle: "## Crisis: {title}"
     crisisMeta: Ministry of {ministry} · {province} · {issue}
     crisisDue: Due at the next resolution
@@ -823,8 +824,8 @@ effects:
     salience: "Salience: {issue}"
     favour: Anzarian Favour
     threat: Foreign Threat
-    line: "{arrow} {name}"
-    lineWithAmount: "{arrow} {name} {amount}"
+    line: "[{arrow}] {name}"
+    lineWithAmount: "[{arrow}] {name} {amount}"
 
 wording:
   opinion:
@@ -902,8 +903,10 @@ news:
   event:
     post: |-
       ## {title}
-      {when}
-      {text}
+      {story}
+    story: "*{text}*"
+    effectsHeader: "**-- EFFECTS --**"
+    effectLine: "- {line}"
   action:
     noStance: no stance
     offProgramme: " (off-programme)"

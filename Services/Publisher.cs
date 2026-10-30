@@ -69,14 +69,20 @@ public class Publisher
         if (report.FiredEvents.Count == 0) return;
         var names = Names(_data, _constants.Config);
         foreach (var fired in report.FiredEvents)
-            await PostAsync(ChannelRole.News, EventPost(fired, GameCalendar.Label(report.ToSeason, report.ToYear), names), source);
+            await PostAsync(ChannelRole.News, EventPost(fired, names), source);
     }
 
-    public string EventPost(FiredEventReport fired, string when, EffectNames names)
+    public string EventPost(FiredEventReport fired, EffectNames names) =>
+        FormatEvent(fired.Title, fired.Text, EffectSummary.Lines(fired.Effects, names, _constants.Current.Display));
+
+    public static string FormatEvent(string title, string text, IReadOnlyList<string> effectLines)
     {
-        var lines = EffectSummary.Lines(fired.Effects, names, _constants.Current.Display);
-        var post = Texts.Get("news.event.post", ("title", fired.Title), ("when", when), ("text", fired.Text));
-        return lines.Count == 0 ? post : post + "\n\n" + string.Join("\n", lines);
+        var story = string.Join("\n\n", text.Split("\n\n", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(paragraph => Texts.Get("news.event.story", ("text", paragraph))));
+        var post = Texts.Get("news.event.post", ("title", title), ("story", story));
+        if (effectLines.Count == 0) return post;
+        return post + "\n\n" + Texts.Get("news.event.effectsHeader") + "\n"
+               + string.Join("\n", effectLines.Select(line => Texts.Get("news.event.effectLine", ("line", line))));
     }
 
     private IEnumerable<string> ActionLines(ResolutionReport report)
