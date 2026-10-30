@@ -312,7 +312,6 @@ public class SetupChecklistService
         if (item.Role == ChannelRole.CabinetRole)
         {
             if (role.Position >= me.Hierarchy) problems.Add("it sits above the bot's role, so the bot can't give it out");
-            if (role.IsHoisted) problems.Add("it is shown separately in the member list; it shouldn't be");
             if (role.Colors.PrimaryColor.RawValue != 0) problems.Add("it has a colour, which hides party colours");
         }
         return problems;

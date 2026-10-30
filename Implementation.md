@@ -196,7 +196,7 @@ role. `UserJoined` re-runs the sync for the rejoining player's party and the cab
 `CabinetSyncService.SyncAsync()` works the same way for the one Cabinet role: holders are the
 sitting cabinet's Chancellor and ministers (spec section 5, Cabinet role). It runs after every
 cabinet change (approval, imposition, appointment, resignation, retirement), on startup and from
-the checklist. It only manages membership: the role is uncoloured and not hoisted, and #cabinet's
+the checklist. It only manages membership: the role is uncoloured (hoisting it is the GM's choice), and #cabinet's
 overwrites (the Cabinet role, the GM role and the bot) are set by the GM; the checklist warns when they are wrong.
 Both need the Server Members intent added to `GatewayIntents` in `Bot.cs`.
 
