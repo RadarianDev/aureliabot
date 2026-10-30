@@ -1517,3 +1517,52 @@ condemn:
     actionUsed: "You have spent this season's opposition action. The next comes with {season}, after the resolution {when}."
     already: "You have already condemned **{crisis}**."
     side: "A condemnation stands For or Against the crisis's issue."
+
+treasury:
+  refusal:
+    notStarted: "The game has not started yet."
+    notTreasury: "Only the Treasury minister handles the budget and the reserve, or the Chancellor while the Treasury is vacant."
+    closed: "The budget is allocated only during Winter. The next allocation opens with {winter}."
+    closedSoon: "The budget is allocated only during Winter. The next allocation opens with {winter}, at the resolution {when}."
+    noBudget: "The budget for {year} has not been set yet; it is computed at the start of Winter."
+    notNumber: "{ministry}: `{value}` is not a number of crowns."
+    negative: "{ministry}: an allocation can't be negative."
+    overBudget: "The allocation totals {total}, more than the available Budget of {budget}."
+  modal:
+    title: "The budget for {year}"
+    fallbackTitle: "The budget"
+    label: "{ministry} · Budget {budget}"
+  preview:
+    heading: "**Allocation for {year}** · available Budget {budget}"
+    line: "- {ministry}: {amount} ({share})"
+    navyLine: "- Navy contribution: {amount} ({share}, last year {last})"
+    reserve: "- To the reserve: {amount}"
+    pleased: "Raising the contribution, the Anzarian nobles will be pleased."
+    insulted: "Cutting the contribution, the Anzarian nobles will be insulted."
+    indifferent: "Keeping the contribution as it was, the Anzarian nobles will be indifferent."
+    confirm: "Confirm to submit it. It takes effect at the Winter resolution {when}, and you can resubmit until then."
+    button: "Submit allocation"
+  submitted: "The allocation for {year} is recorded. It takes effect at the Winter resolution {when}; until then you can resubmit it with `/treasury allocate`."
+  resubmitted: "The allocation for {year} is replaced. It takes effect at the Winter resolution {when}; until then you can resubmit it with `/treasury allocate`."
+  grant:
+    done: "{amount} granted from the reserve to the {ministry}. Its purse now holds {balance}, and the reserve {reserve}. The grant shows in the ledger to the minister and the Chancellor now, and to everyone after the next resolution."
+    refusal:
+      navy: "The Navy contribution is paid out once a year; the reserve can't be granted to it."
+      amount: "Grant a positive amount of crowns."
+      tooMuch: "You can't grant {amount}: the reserve holds only {reserve}."
+  ledger:
+    grantTo: "Grant to the {ministry}"
+    grantFrom: "Grant from the reserve"
+
+fiscal:
+  alert:
+    noTreasury: "No Treasury minister to allocate the budget for {year} ({budget}). The Chancellor can allocate it with `/treasury allocate` during Winter; otherwise last year's split repeats."
+    noTreasuryNobody: "No Treasury minister to allocate the budget for {year} ({budget}), and no Chancellor either: unless someone is appointed during Winter, last year's split repeats."
+  private:
+    budget: "The budget for {year} is set at {budget}. Divide it between the ministries and the Navy contribution with `/treasury allocate` during Winter; if you don't, last year's split repeats."
+  news:
+    opening: "**The budget for {year}** takes effect: {budget}. {purses}; {navy} to the Anzarian fleet, and {reserve} to the reserve."
+    purse: "{ministry} {amount}"
+    repeated: "The Treasury put forward no new budget, so last year's division stands."
+    pleased: "The Anzarian nobles are pleased by the larger contribution to their fleet."
+    insulted: "The Anzarian nobles take the smaller contribution to their fleet as an insult."
