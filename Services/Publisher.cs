@@ -264,12 +264,40 @@ public class Publisher
             .AddField(Texts.Get("dashboard.calendarField"), calendar)
             .AddField(Texts.Get("dashboard.assemblyField", ("seats", state.Seats)), seatLines.Count == 0 ? Texts.Get("dashboard.noParties") : Display.Truncate(string.Join("\n", seatLines), 1024))
             .AddField(Texts.Get("dashboard.issuesField"), openIssues.Count == 0 ? Texts.Get("dashboard.noIssues") : Display.Truncate(string.Join("\n", openIssues.Select(i => i.Title)), 1024))
+            .AddField(Texts.Get("dashboard.economyField"), EconomyField(state))
+            .AddField(Texts.Get("dashboard.realmField"), RealmField(state))
             .AddField(Texts.Get("dashboard.crisesField"), _data.GetCrises(CrisisStatus.Live) is { Count: > 0 } crises
                 ? Display.Truncate(string.Join("\n", crises.Select(c => Texts.Get("dashboard.crisisLine", ("crisis", c.Title), ("ministry", c.Ministry.DisplayName())))), 1024)
                 : Texts.Get("dashboard.noCrises"))
             .WithFooter(Texts.Get("dashboard.footer"))
             .WithCurrentTimestamp()
             .Build();
+    }
+
+    private string EconomyField(GameState state)
+    {
+        var lines = new List<string> { Texts.Get("dashboard.economy", ("economy", Display.Number(state.Economy)),
+            ("rate", (state.TaxRate * 100).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)), ("reserve", Display.Crowns(state.Reserve))) };
+        if (_data.GetFiscalYear(state.Year) is { } fiscal)
+            lines.Add(Texts.Get("dashboard.budget", ("year", state.Year), ("budget", Display.Crowns(fiscal.Budget))));
+        var balances = _data.GetPurseBalances();
+        lines.Add(string.Join(" · ", GameEnumExtensions.CabinetMinistries.Select(m =>
+            Texts.Get("dashboard.purse", ("ministry", m.DisplayName()), ("balance", Display.Crowns(balances.GetValueOrDefault(m)))))));
+        return Display.Truncate(string.Join("\n", lines), 1024);
+    }
+
+    private string RealmField(GameState state)
+    {
+        var config = _constants.Config;
+        var conditions = _data.GetProvinceConditions();
+        var lines = new List<string> { Texts.Get("dashboard.favour", ("favour", Wording.Favour(state.Favour))) };
+        foreach (var province in _data.GetProvinces())
+        {
+            var names = conditions.GetValueOrDefault(province.Id, []).Select(c => config.Condition(c)?.Name ?? c);
+            lines.Add(Texts.Get("dashboard.province", ("province", province.Name), ("discontent", Wording.Discontent(province.Discontent)),
+                ("conditions", string.Join(", ", names))));
+        }
+        return Display.Truncate(string.Join("\n", lines), 1024);
     }
 
     public async Task UpdateDashboardAsync()

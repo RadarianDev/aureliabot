@@ -119,7 +119,40 @@ info:
     bill: "Bill · {name}"
     issue: "Issue · {name}"
     province: "Province · {name}"
+    ministry: "Ministry · {name}"
+    budget: "The budget"
   notFound: "Nothing called `{thing}` was found. Pick something from the list."
+  budget:
+    none: "There is no budget for {year} yet."
+    heading: "## The Budget of {year}"
+    summary: "Economy {economy} · tax rate {rate}% · available Budget {budget}"
+    pursesHeading: "**Purses**"
+    purseLine: "- {ministry}: allocated {allocated} · spent {spent} · balance {balance}"
+    navyLine: "- Navy contribution to Anzaria: {amount}"
+    reserveLine: "- Reserve: {balance} (granted out {grants}, interest {interest})"
+    spendingHeading: "**Spending this year**"
+    kindLine: "- {kind}: {amount}"
+    kind:
+      upkeep: Upkeep
+      purchase: Purchases
+      crackdown: Crackdowns
+      crisis: Crises
+      project: Projects
+      graft: Graft
+      effect: Laws and events
+      adjustment: Royal adjustments
+      other: Other
+  ministry:
+    heading: "## Ministry of {ministry}"
+    minister: "Minister: {minister}"
+    vacantChancellor: "Minister: *vacant*; the Chancellor, {chancellor}, answers for it."
+    vacant: "Minister: *vacant*."
+    purse: "Purse {year}: allocated {allocated} · granted {granted} · spent {spent} · balance {balance}"
+    ledgerLine: "{season}   {amount}   {label}"
+    units: "Units: {units}"
+    unit: "{name} · d{sides} · {province}"
+    crises: "Open crises: {crises}"
+    questions: "Open questions: {count}"
   live:
     heading: "## {season}"
     headingPreElection: "## {season} · Pre-election"
@@ -248,7 +281,7 @@ help:
     Each faction votes all its seats one way, with the buttons on the post in #assembly, `/vote`, or from `/me`. A bill passes when more seats vote for it than against; a tie fails. Voting Yes on a bill takes its side of the issue as your stance, No the other side. Cabinet and no-confidence votes stay open until the end of the next turn. Any faction outside the cabinet can table a motion of no confidence with `/noconfidence`; it goes to a vote once its backers hold a sixth of the seats.
   ministries: |-
     ## Ministries
-    The King appoints a Chancellor, who names four ministers with `/chancellor nominate`: Treasury, War, Interior, and Commerce and Labor. The Assembly then approves the cabinet. The Chancellor alone puts government bills before the Assembly, one a turn, with `/bill propose`. A crisis goes to the minister of its ministry (the Chancellor if the ministry is empty), who picks an answer with `/crisis respond` before the next resolution: leaning with the people of its province gains popularity, against them costs it, and an answer the purse cannot pay goes wrong. Ministers also answer questions; `/ministry status` shows a ministry's purse and business, and `/ministry resign` steps down.
+    The King appoints a Chancellor, who names four ministers with `/chancellor nominate`: Treasury, War, Interior, and Commerce and Labor. The Assembly then approves the cabinet. The Chancellor alone puts government bills before the Assembly, one a turn, with `/bill propose`. A crisis goes to the minister of its ministry (the Chancellor if the ministry is empty), who picks an answer with `/crisis respond` before the next resolution: leaning with the people of its province gains popularity, against them costs it, and an answer the purse cannot pay goes wrong. The Treasury divides the yearly budget each Winter with `/treasury allocate` and grants from the reserve with `/treasury grant`; War and Interior raise, train and station their units with `/war` and `/interior`, and Interior can order a crackdown; a project's minister starts ministerial projects with `/ministry project` and sets their spending with `/ministry fund`. Ministers also answer questions; `/ministry status` shows a ministry's purse and business, and `/ministry resign` steps down.
   elections: |-
     ## Elections
     Seats are counted province by province, by population. A party's strength is its factions' combined popularity, weighed by how well its programme fits the local mood. Every faction in a standing party also wins a safe borough seat in its home province.
@@ -1039,6 +1072,13 @@ dashboard:
   issuesField: Open issues
   noIssues: None yet.
   crisesField: Open crises
+  economyField: Economy and budget
+  economy: "Economy {economy} · tax rate {rate}% · reserve {reserve}"
+  budget: "Budget {year}: {budget}"
+  purse: "{ministry} {balance}"
+  realmField: The realm
+  favour: "Anzarian Favour: *{favour}*"
+  province: "{province}: *{discontent}* · {conditions}"
   crisisLine: "{crisis} · {ministry}"
   noCrises: None.
   footer: Updated after every resolution

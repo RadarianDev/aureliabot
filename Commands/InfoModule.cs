@@ -25,6 +25,9 @@ public class InfoAutocomplete : AutocompleteHandler
         foreach (var crisis in data.GetCrises().Where(c => c.Status != CrisisStatus.Cancelled)
                      .OrderByDescending(c => c.Status == CrisisStatus.Live).ThenByDescending(c => c.Id))
             entries.Add((Texts.Get("info.crisis.kind", ("name", crisis.Title)), $"crisis:{crisis.Id}"));
+        foreach (var ministry in GameEnumExtensions.CabinetMinistries)
+            entries.Add((Texts.Get("info.kind.ministry", ("name", ministry.DisplayName())), $"ministry:{ministry}"));
+        entries.Add((Texts.Get("info.kind.budget"), "budget:"));
 
         var results = entries
             .Where(e => e.Label.Contains(typed, StringComparison.OrdinalIgnoreCase))
@@ -41,7 +44,7 @@ public class InfoAutocomplete : AutocompleteHandler
     }
 }
 
-public class InfoModule : InteractionModuleBase<SocketInteractionContext>
+public partial class InfoModule : InteractionModuleBase<SocketInteractionContext>
 {
     private readonly DatabaseService _data;
     private readonly ConstantsStore _constants;
@@ -52,15 +55,16 @@ public class InfoModule : InteractionModuleBase<SocketInteractionContext>
         _constants = constants;
     }
 
-    [SlashCommand("info", "Show any game object: a faction, party, issue or province")]
+    [SlashCommand("info", "Show anything in the game: factions, parties, issues, bills, crises, provinces, ministries, the budget")]
     public async Task InfoAsync(
-        [Summary("thing", "What to show; leave empty for what is live"), Autocomplete(typeof(InfoAutocomplete))] string? thing = null)
+        [Summary("thing", "What to show; leave empty for what is live"), Autocomplete(typeof(InfoAutocomplete))] string? thing = null,
+        [Summary("year", "For the budget: an earlier year")] int? year = null)
     {
-        var text = thing is null ? Live() : Describe(thing.Trim());
+        var text = thing is null ? Live() : Describe(thing.Trim(), year);
         await RespondAsync(Display.Truncate(text), ephemeral: true, allowedMentions: AllowedMentions.None);
     }
 
-    private string Describe(string thing)
+    private string Describe(string thing, int? year)
     {
         var separator = thing.IndexOf(':');
         var kind = separator > 0 ? thing[..separator] : "";
@@ -74,6 +78,8 @@ public class InfoModule : InteractionModuleBase<SocketInteractionContext>
             "province" => ProvinceInfo(id),
             "bill" => BillInfo(id),
             "crisis" when long.TryParse(id, out var crisisId) => CrisisInfo(crisisId),
+            "ministry" when Enum.TryParse<Ministry>(id, out var ministry) && ministry.HoldsCrises() => MinistryInfo(ministry),
+            "budget" => BudgetInfo(year),
             _ => _data.GetAllParties().FirstOrDefault(p => p.Name.Equals(thing, StringComparison.OrdinalIgnoreCase)) is { } party
                 ? PartyInfo(party.Id)
                 : _data.GetIssue(thing) is not null ? IssueInfo(thing)
