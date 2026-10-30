@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.Data.Sqlite;
 
 public record Issue(
@@ -106,5 +107,101 @@ public partial class DatabaseService
             list.Add((r.GetString(0), (Stance)r.GetInt32(1), Enum.Parse<StanceSource>(r.GetString(2)), r.GetInt64(3) != 0,
                 Enum.Parse<Season>(r.GetString(4)), r.GetInt32(5)));
         return list;
+    }
+}
+
+public record Bill(
+    string Id,
+    string TemplateId,
+    string IssueId,
+    string Title,
+    string Motion,
+    Lean Lean,
+    string PassText,
+    string PassEffects,
+    BillStatus Status,
+    long? CooldownUntil)
+{
+    public IReadOnlyList<Effect> ParsedPassEffects => EffectParser.Parse(PassEffects);
+}
+
+public partial class DatabaseService
+{
+    private const string SelectBillColumns =
+        "id, template_id, issue_id, title, motion, lean, pass_text, pass_effects, status, cooldown_until";
+
+    private static Bill ReadBill(SqliteDataReader r) => new(
+        r.GetString(0),
+        r.GetString(1),
+        r.GetString(2),
+        r.GetString(3),
+        r.GetString(4),
+        (Lean)r.GetInt32(5),
+        r.GetString(6),
+        r.GetString(7),
+        Enum.Parse<BillStatus>(r.GetString(8)),
+        r.IsDBNull(9) ? null : r.GetInt64(9));
+
+    public Bill? GetBill(string billId)
+    {
+        using var conn = Open();
+        return QueryBillsTx(conn, null, "id = $id", ("$id", billId)).FirstOrDefault();
+    }
+
+    public List<Bill> GetBills(string? issueId = null)
+    {
+        using var conn = Open();
+        return issueId is null
+            ? QueryBillsTx(conn, null, "1 = 1")
+            : QueryBillsTx(conn, null, "issue_id = $issue", ("$issue", issueId));
+    }
+
+    private static List<Bill> QueryBillsTx(SqliteConnection conn, SqliteTransaction? tx, string where, params (string Name, object? Value)[] parameters)
+    {
+        using var cmd = conn.CreateCommand();
+        cmd.Transaction = tx;
+        cmd.CommandText = $"SELECT {SelectBillColumns} FROM bills WHERE {where} ORDER BY available_resolution, title;";
+        foreach (var (name, value) in parameters)
+            cmd.Parameters.AddWithValue(name, value ?? DBNull.Value);
+        var list = new List<Bill>();
+        using var r = cmd.ExecuteReader();
+        while (r.Read())
+            list.Add(ReadBill(r));
+        return list;
+    }
+
+    public bool UpdateIssueLive(string issueId, string title, string forText, string againstText, double opinion, double salience)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"
+            UPDATE issues SET title = $title, for_text = $for, against_text = $against, opinion = $opinion, salience = $salience
+            WHERE id = $id;";
+        cmd.Parameters.AddWithValue("$id", issueId);
+        cmd.Parameters.AddWithValue("$title", title);
+        cmd.Parameters.AddWithValue("$for", forText);
+        cmd.Parameters.AddWithValue("$against", againstText);
+        cmd.Parameters.AddWithValue("$opinion", Math.Clamp(opinion, -1, 1));
+        cmd.Parameters.AddWithValue("$salience", salience);
+        var updated = cmd.ExecuteNonQuery() > 0;
+        if (updated) LogTx(conn, null, LogKinds.GmOverride, "content edit live", $"Edited live issue {issueId}.");
+        return updated;
+    }
+
+    public bool UpdateBillLive(string billId, string title, string motion, string passText, IReadOnlyList<Effect> passEffects)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"
+            UPDATE bills SET title = $title, motion = $motion, pass_text = $passText, pass_effects = $passEffects
+            WHERE id = $id AND status IN ('Available', 'Cooldown');";
+        cmd.Parameters.AddWithValue("$id", billId);
+        cmd.Parameters.AddWithValue("$title", title);
+        cmd.Parameters.AddWithValue("$motion", motion);
+        cmd.Parameters.AddWithValue("$passText", passText);
+        cmd.Parameters.AddWithValue("$passEffects", EffectParser.Format(passEffects));
+        var updated = cmd.ExecuteNonQuery() > 0;
+        if (updated) LogTx(conn, null, LogKinds.GmOverride, "content edit live", $"Edited live bill {billId}.");
+        return updated;
     }
 }

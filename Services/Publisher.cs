@@ -33,6 +33,37 @@ public class Publisher
         await UpdateDashboardAsync();
     }
 
+    public static EffectNames Names(DatabaseService data, GameConfig config)
+    {
+        var issues = data.GetAllIssues().ToDictionary(i => i.Id, i => i.Title);
+        var templateTitles = new Dictionary<string, string>();
+        foreach (var row in data.GetTemplates())
+        {
+            try
+            {
+                if (TemplateCodec.Parse(row.Yaml, row.Id).Template is { } template)
+                    templateTitles[row.Id] = template.Title;
+            }
+            catch (Exception)
+            {
+                templateTitles[row.Id] = row.Id;
+            }
+        }
+
+        string Template(string id) => templateTitles.GetValueOrDefault(id, id);
+        string Issue(string id) => issues.TryGetValue(id, out var title) ? title : Template(id);
+
+        return new EffectNames(
+            Province: id => config.Province(id)?.Name ?? id,
+            Issue: Issue,
+            Condition: id => config.Condition(id)?.Name ?? id,
+            Faction: id => ulong.TryParse(id, out var userId) ? Display.Faction(data, userId) : id,
+            IssueTemplate: Template,
+            BillTemplate: Template,
+            ProjectTemplate: Template,
+            CrisisTemplate: Template);
+    }
+
     public const string DashboardMessageKey = "dashboard_message_id";
 
     public Embed BuildDashboard()
