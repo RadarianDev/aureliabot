@@ -18,7 +18,8 @@ public class Bot
         _client = new DiscordSocketClient(new DiscordSocketConfig
         {
             LogLevel = LogSeverity.Info,
-            GatewayIntents = GatewayIntents.AllUnprivileged
+            GatewayIntents = GatewayIntents.AllUnprivileged | GatewayIntents.GuildMembers | GatewayIntents.MessageContent,
+            AlwaysDownloadUsers = true
         });
 
         _interactions = new InteractionService(_client.Rest);
@@ -28,9 +29,19 @@ public class Bot
             .AddSingleton(_client)
             .AddSingleton(_interactions)
             .AddSingleton<DatabaseService>()
+            .AddSingleton<ConstantsStore>()
+            .AddSingleton<AlertService>()
+            .AddSingleton<SnapshotService>()
+            .AddSingleton<Publisher>()
+            .AddSingleton<TurnTrackerService>()
+            .AddSingleton<PartySyncService>()
+            .AddSingleton<CabinetSyncService>()
+            .AddSingleton<FactionChannelService>()
+            .AddSingleton<ResolutionService>()
             .BuildServiceProvider();
 
         _data = _services.GetRequiredService<DatabaseService>();
+        _services.GetRequiredService<ConstantsStore>();
     }
 
     public async Task RunAsync()

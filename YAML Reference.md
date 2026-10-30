@@ -33,8 +33,7 @@ effects: { economy: -2, discontent.north_arpal: 1, open.labour: true, bill.ten_h
 | `purse.{ministry}` | number | Changes that ministry's current balance at once, not its yearly allocation, and never below 0. `War`, `Interior`, `CommerceLabor` or `Treasury`; never `Navy`. Shows in the ministry's ledger under the bill or event's name. |
 | `discontent.{province}` | number | Province discontent, 0–10. |
 | `condition.{province}.{condition}` | `1` or `-1` | Gives or removes a condition. |
-| `opinion.{issue}` | number | Temporary opinion shift, −1 to 1; drifts back to the baseline. |
-| `baseline.{issue}` | number | Lasting opinion shift. |
+| `opinion.{issue}` | number | Opinion shift, −1 to 1. Lasting: opinion never drifts. |
 | `salience.{issue}` | number | How much the issue matters, 0–5. |
 | `popularity.{faction}` | number | A faction's popularity, 0–100. |
 | `open.{issueTemplate}` | `true` | Opens a live issue from a Ready template. |
@@ -63,7 +62,6 @@ title: The Condition of Labour
 for: Protect the workers and their children.
 against: Leave industry free to compete.
 opinion: 0.2
-baseline: 0.2
 salience: 3
 ```
 
@@ -73,8 +71,7 @@ salience: 3
 | `title` | yes | Shown everywhere, and matched in party programmes. |
 | `for` | yes | The case for, shown to players. |
 | `against` | yes | The case against. |
-| `opinion` | yes | Starting base opinion, −1 (against) to 1 (for). Hidden. |
-| `baseline` | yes | Where opinion drifts back to. Hidden. |
+| `opinion` | yes | Starting base opinion, −1 (against) to 1 (for). Hidden. Only effects and crisis outcomes move it. |
 | `salience` | yes | Starting salience, 0–5. Hidden. |
 
 Province conditions add their `biases` (below) on top of `opinion`.
@@ -249,7 +246,7 @@ attack: { factor: 3, backfire: 2 }
 poll: { opinionNoise: 0.15, salienceNoise: 1 }
 strongStancePenalty: 0.5
 programme: { flipPenalty: 1 }
-opinion: { drift: 0.10, crisisShift: 0.05 }
+opinion: { crisisShift: 0.05 }
 salience: { min: 0, max: 5, campaignRaise: 1, crisisRaise: 1, decay: 1, rejectDrop: 2 }
 rejectedCooldownSeasons: 4
 law: { sponsorFactor: 4 }
@@ -313,7 +310,6 @@ startingForces:
 
 | Field | Meaning |
 | --- | --- |
-| `opinion.drift` | Share of the gap to the baseline closed each season. |
 | `opinion.crisisShift` | Opinion move from a crisis answer. |
 | `salience.min`, `.max` | Salience range. |
 | `salience.campaignRaise` | Raise from a campaign, once per issue per season. |

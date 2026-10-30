@@ -93,7 +93,7 @@ These are the main tables. Ids are short strings (slugs) for anything defined in
 | ProgrammeStance | partyId, issueId, stance. Only non-Silent stances are stored; a missing row means Silent |
 | Province | id, name, population, discontent |
 | ProvinceCondition | provinceId, conditionId, since |
-| Issue | id, templateId, title, forText, againstText, opinion, baseline, salience, salienceRaisedResolution, status (Open, Closed) |
+| Issue | id, templateId, title, forText, againstText, opinion, salience, salienceRaisedResolution, status (Open, Closed) |
 | Event | id, templateId, title, text, effects, status (Queued, Fired, Cancelled), queuedAt, fireAtResolution, firedResolution |
 | Crisis | id, templateId, eventId, title, ministry, provinceId, issueId, answers, complication, default, postedAt, dueResolution, status, chosenAnswer, responseText |
 | Answer (inside Crisis) | number (its position in the list, from 1), label, lean (For, Against, Neutral), price, text, effects |
@@ -135,10 +135,10 @@ A faction has no name of its own. It is shown as the player's mention, followed 
 - purse.{ministry}, for every ministry except Navy
 - discontent.{province}
 - condition.{province}.{condition}: +1 gives the province the condition, −1 removes it
-- opinion.{issue}, baseline.{issue}, salience.{issue}
+- opinion.{issue}, salience.{issue}
 - popularity.{faction}
 
-`opinion.{issue}` is a temporary shift that drifts back towards the baseline. `baseline.{issue}` moves public opinion for good. `favour` and `favourBaseline` work the same way for Favour.
+`opinion.{issue}` moves public opinion on the issue, and it stays where it is put: opinion has no drift, so only effects and crisis outcomes move it. `favour` is a temporary shift that drifts back towards `favourBaseline`, and `favourBaseline` moves Favour for good.
 
 Five more keys are actions, not number changes, and take no value (in YAML, the value `true`):
 
@@ -173,7 +173,7 @@ attack: { factor: 3, backfire: 2 }
 poll: { opinionNoise: 0.15, salienceNoise: 1 }
 strongStancePenalty: 0.5
 programme: { flipPenalty: 1 }
-opinion: { drift: 0.10, crisisShift: 0.05 }
+opinion: { crisisShift: 0.05 }
 salience: { min: 0, max: 5, campaignRaise: 1, crisisRaise: 1, decay: 1, rejectDrop: 2 }
 rejectedCooldownSeasons: 4
 law: { sponsorFactor: 4 }
@@ -249,7 +249,6 @@ title: The Condition of Labour
 for: Protect the workers and their children.
 against: Leave industry free to compete.
 opinion: 0.2
-baseline: 0.2
 salience: 3
 ```
 
@@ -500,7 +499,7 @@ Iracterie is now *Boom*
 
 All constants named here come from `constants.yaml`. Every value is clamped to its range after each change.
 
-Opinion has three layers. The stored `opinion_i` is the **base opinion**, the gross mood before any province is considered; events, crises and drift move it. Each province turns it into a **provincial opinion** through its conditions, and the **national opinion**, the net mood, combines the provinces. Players never meet the base opinion directly: polls, campaigns, attacks, crises and elections all use a provincial or the national opinion.
+Opinion has three layers. The stored `opinion_i` is the **base opinion**, the gross mood before any province is considered. Only effects and crisis outcomes move it; it never drifts. Each province turns it into a **provincial opinion** through its conditions, and the **national opinion**, the net mood, combines the provinces. Players never meet the base opinion directly: polls, campaigns, attacks, crises and elections all use a provincial or the national opinion.
 
 **Provincial opinion**
 
@@ -606,7 +605,6 @@ The responsible minister is whoever holds the ministry at the deadline, or the C
 
 **Every season**
 
-- Opinion drifts: `opinion += opinion.drift × (baseline − opinion)`.
 - Any issue whose salience was not raised this season loses 1 salience.
 - Discontent in each province moves `discontent.drift` toward its resting value: `discontent.rest` plus the `discontentRest` of each of the province's conditions.
 - Favour moves `favour.drift` toward `favourBaseline`.
@@ -883,7 +881,7 @@ Whenever effects reach players, the post shows a **summary of effects**, one lin
 
 - A number going up or down starts with the **up** or **down** emoji (`display.upEmoji`, `display.downEmoji` in `constants.yaml`), followed by the value's readable name, for example "Discontent in North Arpal".
 - Public numbers (section 9) also show the amount: economy, purses, the reserve, faction popularity, the Assembly size, and the tax rate as a percentage.
-- The people's mood and Threat show only the direction, never the amount. These are opinion, baseline, salience, discontent, Favour and its baseline, and Threat. A baseline change reads the same as an opinion change, and the same holds for Favour, so the summary never reveals whether a shift will last.
+- The people's mood and Threat show only the direction, never the amount. These are opinion, salience, discontent, Favour and its baseline, and Threat. A change to the Favour baseline reads the same as a change to Favour, so the summary never reveals whether a shift will last.
 - Actions use plain lines with no emoji: "New issue: The Condition of Labour", "New bill: The Ten Hours Bill", "Project begun: The Royal Railway", "Issue closed: Free Trade", "Crisis: The Carden Dock Strike", "North Arpal is now *Lawless*", "North Arpal is no longer *Epidemic*".
 - An effect of 0 is left out. Something with no effects has no summary.
 
@@ -910,7 +908,7 @@ At 08:00 (or when the GM triggers it), the bot first **snapshots** the database 
 5. **Standing work:**
    - apply pending raises, training and stationing, then roll crackdowns;
    - pay each project's spending, add its progress after graft, and apply any that finish, with their bonus if they are on time.
-6. **Seasonal changes:** opinion drift, salience decay, discontent drift, Favour drift, then popularity drift.
+6. **Seasonal changes:** salience decay, discontent drift, Favour drift, then popularity drift.
 7. **Fiscal steps,** only at the start of Winter or Spring (section 5).
 8. **Election,** only at the end of a pre-election: cancel open votes and drop pending join applications (section 5), then run section 8.
 9. **Advance** the season, and the year after Winter. Lift cooldowns that have expired, returning those bills to Available. Increment `resolutionNumber` and schedule the next resolution.

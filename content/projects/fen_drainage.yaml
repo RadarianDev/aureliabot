@@ -8,4 +8,4 @@ effects: { condition.here.marshland: -1, discontent.here: -2, economy: 1 }
 bonus:
   by: { season: Summer, year: 1851 }
   text: The fens are dry before the fever season, and for the first time in memory the summer passes without a death.
-  effects: { discontent.here: -1, baseline.public_health: 0.1 }
+  effects: { discontent.here: -1, opinion.public_health: 0.1 }

@@ -8,9 +8,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="DiscordBotOne\**;DiscordBotTwo\**" />
-    <EmbeddedResource Remove="DiscordBotOne\**;DiscordBotTwo\**" />
-    <None Remove="DiscordBotOne\**;DiscordBotTwo\**" />
+    <Compile Remove="DiscordBotOne\**;DiscordBotTwo\**;AureliaBot.Tests\**" />
+    <EmbeddedResource Remove="DiscordBotOne\**;DiscordBotTwo\**;AureliaBot.Tests\**" />
+    <None Remove="DiscordBotOne\**;DiscordBotTwo\**;AureliaBot.Tests\**" />
   </ItemGroup>
 
   <ItemGroup>
@@ -22,12 +22,18 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.7" />
     <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="10.0.7" />
     <PackageReference Include="SkiaSharp" Version="3.119.2" />
+    <PackageReference Include="YamlDotNet" Version="16.3.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="AureliaBot.Tests" />
   </ItemGroup>
 
   <ItemGroup>
     <None Update="appsettings.json" CopyToOutputDirectory="PreserveNewest" />
     <None Update="appsettings.Local.json" CopyToOutputDirectory="PreserveNewest" Condition="Exists('appsettings.Local.json')" />
     <None Update="assets\**" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="config\**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

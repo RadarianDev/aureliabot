@@ -78,7 +78,7 @@ Game/
   Wording.cs                       pure: opinion, salience, discontent and Favour numbers -> words
                                    (spec section 9)
   Formulas.cs                      pure static: provincial opinion, stance score, salience factor, campaign,
-                                   attack, crisis, law, drift (opinion, discontent, Favour, popularity),
+                                   attack, crisis, law, drift (discontent, Favour, popularity),
                                    programme flips, crackdown, fiscal (with the unrest drag) and navy maths
   ElectionCalculator.cs            pure: spec section 8, input records in, ElectionResult out
   SeededRandomSource.cs            IRandomSource over System.Random(seed)
@@ -317,7 +317,7 @@ pre-election, events queued with no delay fire at the start and delayed ones tha
 a second start is refused), event schedules (a date converted to the right turn, Spring 1850
 firing at the start, a past date refused on Ready, a changed schedule moving the queued event), `Wording` thresholds, and `EffectSummary`
 (public numbers such as purses with amounts, mood values including discontent direction only,
-opinion and baseline indistinguishable, action lines, zero effects dropped). The YAML codec: every
+Favour and its baseline indistinguishable, action lines, zero effects dropped). The YAML codec: every
 starting file in `content/` imports cleanly, each kind is recognised from its fields, a bad file
 reports its line and blocks only itself, re-importing an id replaces it and returns a Ready template
 to Draft, `edit` with a new id saves a copy, and an export imports back unchanged. Bills: `bill.*`
