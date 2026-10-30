@@ -1,26 +1,135 @@
 public class ResolutionService
 {
+    private static readonly TimeSpan PollInterval = TimeSpan.FromMinutes(1);
+
     private readonly DatabaseService _data;
     private readonly ConstantsStore _constants;
+    private readonly SnapshotService _snapshots;
+    private readonly Publisher _publisher;
+    private readonly TurnTrackerService _turnTracker;
+    private readonly AlertService _alerts;
     private readonly SemaphoreSlim _gate = new(1, 1);
 
-    public ResolutionService(DatabaseService data, ConstantsStore constants)
+    public ResolutionService(
+        DatabaseService data,
+        ConstantsStore constants,
+        SnapshotService snapshots,
+        Publisher publisher,
+        TurnTrackerService turnTracker,
+        AlertService alerts)
     {
         _data = data;
         _constants = constants;
+        _snapshots = snapshots;
+        _publisher = publisher;
+        _turnTracker = turnTracker;
+        _alerts = alerts;
     }
 
-    public async Task<ResolutionReport> ResolveNowAsync()
+    public async Task RunAsync(CancellationToken cancellationToken)
+    {
+        using var timer = new PeriodicTimer(PollInterval);
+        do
+        {
+            try
+            {
+                await TickAsync(DateTimeOffset.UtcNow);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Resolution] Poller tick failed: {ex}");
+            }
+        } while (await timer.WaitForNextTickAsync(cancellationToken));
+    }
+
+    private async Task TickAsync(DateTimeOffset now)
+    {
+        var state = _data.GetGameState();
+        if (!state.Started || state.Paused || state.NextResolutionAt is not { } next) return;
+
+        var constants = _constants.Current;
+        var length = GameCalendar.SeasonLengthDays(state, constants);
+        var campaignDays = GameCalendar.CampaignDays(next, constants, length);
+
+        if (now >= next)
+        {
+            if (now - next > PollInterval * 2)
+                await _alerts.PostAsync(
+                    $"The resolution due <t:{next.ToUnixTimeSeconds()}:F> was missed while the bot was offline. Running it once now.");
+            await ResolveAsync(campaignDay: false);
+        }
+        else if (state.CampaignDaysRun < campaignDays.Count && now >= campaignDays[state.CampaignDaysRun])
+        {
+            await ResolveAsync(campaignDay: true);
+        }
+    }
+
+    public Task<ResolutionReport?> ResolveNowAsync() => ResolveAsync(campaignDay: false);
+
+    public async Task<T> ExclusiveAsync<T>(Func<Task<T>> work)
     {
         await _gate.WaitAsync();
         try
         {
-            var seed = _data.GetGameState().RngSeed ?? SeededRandomSource.NewSeed();
-            return _data.Resolve(_constants.Current, new SeededRandomSource(seed), seed, DateTimeOffset.UtcNow);
+            return await work();
         }
         finally
         {
             _gate.Release();
         }
+    }
+
+    private async Task<ResolutionReport?> ResolveAsync(bool campaignDay)
+    {
+        await _gate.WaitAsync();
+        try
+        {
+            var constants = _constants.Current;
+            var state = _data.GetGameState();
+            var seed = state.RngSeed ?? SeededRandomSource.NewSeed();
+            _data.SaveGameState(state with { RngSeed = seed });
+            _snapshots.Backup();
+
+            ResolutionReport report;
+            try
+            {
+                var random = new SeededRandomSource(seed);
+                report = campaignDay
+                    ? _data.ResolveCampaignDay(constants, random, seed, DateTimeOffset.UtcNow)
+                    : _data.Resolve(constants, random, seed, DateTimeOffset.UtcNow);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Resolution] Resolution failed and was rolled back: {ex}");
+                _data.SaveGameState(_data.GetGameState() with { Paused = true });
+                _turnTracker.RequestCurrent();
+                await _alerts.PostAsync(
+                    $"⚠️ The resolution of {state.Label} failed and was rolled back; nothing was posted. " +
+                    $"The schedule is paused. Seed {seed}.\n```\n{ex.Message}\n```");
+                return null;
+            }
+
+            await PublishAsync(report);
+            return report;
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    private async Task PublishAsync(ResolutionReport report)
+    {
+        try
+        {
+            await _publisher.PublishAsync(report);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Resolution] Publishing failed: {ex}");
+            await _alerts.PostAsync($"⚠️ Resolution {report.ResolutionNumber} committed, but publishing failed half way: {ex.Message}");
+        }
+        _turnTracker.RequestCurrent();
+        await _alerts.PostAllAsync(report.Alerts);
     }
 }

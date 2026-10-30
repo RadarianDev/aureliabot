@@ -38,6 +38,7 @@ public class Bot
             .AddSingleton<CabinetSyncService>()
             .AddSingleton<FactionChannelService>()
             .AddSingleton<ResolutionService>()
+            .AddSingleton<Confirmations>()
             .BuildServiceProvider();
 
         _data = _services.GetRequiredService<DatabaseService>();
@@ -81,6 +82,8 @@ public class Bot
         await Task.Delay(Timeout.Infinite);
     }
 
+    private int _backgroundStarted;
+
     private async Task ReadyAsync()
     {
         if (_config.GuildId != 0)
@@ -89,16 +92,41 @@ public class Bot
             await _interactions.RegisterCommandsGloballyAsync();
 
         Console.WriteLine($"Bot is ready! Logged in as {_client.CurrentUser.Username}");
+
+        if (Interlocked.Exchange(ref _backgroundStarted, 1) == 0)
+            StartBackgroundWork();
     }
 
-    private const string ChannelWhitelistCommandName = "whitelist";
+    private void StartBackgroundWork()
+    {
+        var turnTracker = _services.GetRequiredService<TurnTrackerService>();
+        var resolution = _services.GetRequiredService<ResolutionService>();
+
+        _ = Task.Run(async () =>
+        {
+            try { await turnTracker.RunAsync(CancellationToken.None); }
+            catch (Exception ex) { Console.WriteLine($"[TurnTracker] Loop stopped: {ex}"); }
+        });
+        turnTracker.RequestCurrent();
+
+        _ = Task.Run(async () =>
+        {
+            try { await resolution.RunAsync(CancellationToken.None); }
+            catch (Exception ex) { Console.WriteLine($"[Resolution] Poller stopped: {ex}"); }
+        });
+    }
+
+    private static readonly HashSet<string> WhitelistExemptCommands = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "whitelist", "gm", "content",
+    };
 
     private async Task HandleInteractionAsync(SocketInteraction interaction)
     {
         if (interaction.Type == InteractionType.ApplicationCommand
             && interaction is SocketSlashCommand slashCommand
             && interaction.Channel is SocketGuildChannel guildChannel
-            && !string.Equals(slashCommand.Data.Name, ChannelWhitelistCommandName, StringComparison.OrdinalIgnoreCase)
+            && !WhitelistExemptCommands.Contains(slashCommand.Data.Name)
             && !_data.IsChannelAllowed(guildChannel.Guild.Id, guildChannel.Id))
         {
             await interaction.RespondAsync(
@@ -110,6 +138,9 @@ public class Bot
         var ctx = new SocketInteractionContext(_client, interaction);
         var result = await _interactions.ExecuteCommandAsync(ctx, _services);
 
+        if (result.IsSuccess && interaction is SocketSlashCommand executed)
+            LogCommand(executed);
+
         if (!result.IsSuccess && interaction.Type != InteractionType.ApplicationCommandAutocomplete)
         {
             Console.WriteLine($"[CommandFailure] /{interaction}: {result.Error} — {result.ErrorReason}");
@@ -117,6 +148,37 @@ public class Bot
             catch (Exception ex) { Console.WriteLine($"[CommandFailure] fallback response also failed: {ex.Message}"); }
         }
     }
+
+    private void LogCommand(SocketSlashCommand command)
+    {
+        try
+        {
+            var path = new List<string> { command.Data.Name };
+            IEnumerable<SocketSlashCommandDataOption> options = command.Data.Options;
+            while (options.FirstOrDefault() is { Type: ApplicationCommandOptionType.SubCommand or ApplicationCommandOptionType.SubCommandGroup } sub)
+            {
+                path.Add(sub.Name);
+                options = sub.Options;
+            }
+            var arguments = options.Select(o => $"{o.Name}:{FormatOption(o.Value)}");
+            var payload = "/" + string.Join(" ", path.Concat(arguments));
+            _data.Log(LogKinds.Command, string.Join(" ", path), payload, command.User.Id);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[CommandLog] Could not log /{command.Data.Name}: {ex.Message}");
+        }
+    }
+
+    private static string FormatOption(object? value) => value switch
+    {
+        IUser user => user.Id.ToString(),
+        IChannel channel => channel.Id.ToString(),
+        IRole role => role.Id.ToString(),
+        IAttachment attachment => attachment.Filename,
+        IFormattable formattable => formattable.ToString(null, System.Globalization.CultureInfo.InvariantCulture),
+        _ => value?.ToString() ?? "",
+    };
 
     private Task LogAsync(LogMessage log)
     {
