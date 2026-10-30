@@ -68,7 +68,7 @@ public partial class GmModule
 
         if (isPublic && lines.Count > 0)
             await _publisher.PostAsync(ChannelRole.News, Publisher.FormatEffectPost(Texts.Get("gm.decreeHeading"), [], null, lines), "gm apply");
-        await _publisher.PublishStartedAsync(result.Report, "gm apply");
+        await _publisher.PublishStartedAsync(result.Report, "gm apply", isPublic);
         await _publisher.UpdateDashboardAsync();
 
         var reply = isPublic

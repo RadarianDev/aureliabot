@@ -197,6 +197,39 @@ public class ForcesTests : AssemblyTestBase
         Assert.DoesNotContain(crackdown.Effects, e => e.Key.StartsWith("condition."));
     }
 
+
+    [Fact]
+    public void Crackdown_IsCalledOffAndRefunded_WhenItsGendarmerieLeave()
+    {
+        SetDiscontent("aurenten", 4);
+        var corps = Db.GetUnits(UnitType.Gendarmerie).Where(u => u.ProvinceId == "aurenten").ToList();
+        var balance = Db.GetPurseBalance(Ministry.Interior);
+        Db.OrderCrackdown(InteriorMinister, "aurenten", Config);
+        foreach (var unit in corps)
+            Db.OrderStation(UnitType.Gendarmerie, InteriorMinister, unit.Id, "iracterie", Config);
+
+        var report = ApplyOrders(1, 1, 1, 1);
+
+        Assert.Empty(report.Crackdowns);
+        Assert.Equal(4, Discontent("aurenten"), 6);
+        Assert.Equal(balance, Db.GetPurseBalance(Ministry.Interior));
+        Assert.Contains(report.PrivateMessages[InteriorMinister], m => m.Contains("called off"));
+    }
+
+    [Fact]
+    public void Crackdown_Failure_CostsTheMinisterWhoOrderedIt()
+    {
+        SetDiscontent("aurenten", 4.5);
+        Db.OrderCrackdown(InteriorMinister, "aurenten", Config);
+        SeatCabinet(Chancellor, (Ministry.War, WarMinister), (Ministry.Interior, Chancellor));
+        var ordering = Db.GetFaction(InteriorMinister)!.Popularity;
+        var holder = Db.GetFaction(Chancellor)!.Popularity;
+
+        ApplyOrders(1, 8);
+
+        Assert.Equal(ordering - C.Crackdown.FailurePopularity, Db.GetFaction(InteriorMinister)!.Popularity, 6);
+        Assert.Equal(holder, Db.GetFaction(Chancellor)!.Popularity, 6);
+    }
     [Fact]
     public void Crackdown_RollsEveryCorpsInTheProvince_AfterStationing()
     {

@@ -13,6 +13,11 @@ public partial class InfoModule
             .Where(e => FiscalYearOf(e) == year && e.PublicFromResolution <= state.ResolutionNumber)
             .ToList();
 
+    private decimal ClosingBalance(LedgerAccount account, int year, GameState state) =>
+        _data.GetLedger(account)
+            .Where(e => FiscalYearOf(e) <= year && e.PublicFromResolution <= state.ResolutionNumber)
+            .Sum(e => e.Amount);
+
     private string BudgetInfo(int? requestedYear)
     {
         var state = _data.GetGameState();
@@ -23,23 +28,30 @@ public partial class InfoModule
         sb.AppendLine(Texts.Get("info.budget.heading", ("year", year)));
         sb.AppendLine(Texts.Get("info.budget.summary", ("economy", Display.Number(fiscal.Economy)),
             ("rate", (fiscal.TaxRate * 100).ToString("0.#", CultureInfo.InvariantCulture)), ("budget", Display.Crowns(fiscal.Budget))));
+        if (year > state.Year)
+        {
+            sb.AppendLine(Texts.Get("info.budget.notYetOpen"));
+            return sb.ToString();
+        }
 
+        var current = year == state.Year;
         var allocation = _data.GetAllocation(year);
         var balances = _data.GetPurseBalances();
         sb.AppendLine();
         sb.AppendLine(Texts.Get("info.budget.pursesHeading"));
         foreach (var ministry in GameEnumExtensions.CabinetMinistries)
         {
-            var entries = PublicLedger((LedgerAccount)(int)ministry, year, state);
+            var account = (LedgerAccount)(int)ministry;
+            var entries = PublicLedger(account, year, state);
             sb.AppendLine(Texts.Get("info.budget.purseLine", ("ministry", ministry.DisplayName()),
                 ("allocated", Display.Crowns(allocation.GetValueOrDefault(ministry))),
                 ("spent", Display.Crowns(-entries.Where(e => e.Amount < 0 && e.Kind != LedgerKind.CarryOver).Sum(e => e.Amount))),
-                ("balance", Display.Crowns(balances.GetValueOrDefault(ministry)))));
+                ("balance", Display.Crowns(current ? balances.GetValueOrDefault(ministry) : ClosingBalance(account, year, state)))));
         }
         sb.AppendLine(Texts.Get("info.budget.navyLine", ("amount", Display.Crowns(allocation.GetValueOrDefault(Ministry.Navy)))));
 
         var reserve = PublicLedger(LedgerAccount.Reserve, year, state);
-        sb.AppendLine(Texts.Get("info.budget.reserveLine", ("balance", Display.Crowns(state.Reserve)),
+        sb.AppendLine(Texts.Get("info.budget.reserveLine", ("balance", Display.Crowns(current ? state.Reserve : ClosingBalance(LedgerAccount.Reserve, year, state))),
             ("grants", Display.Crowns(-reserve.Where(e => e.Kind == LedgerKind.Grant && e.Amount < 0).Sum(e => e.Amount))),
             ("interest", Display.Crowns(reserve.Where(e => e.Kind == LedgerKind.Interest).Sum(e => e.Amount)))));
 

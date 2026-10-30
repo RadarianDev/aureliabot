@@ -356,6 +356,9 @@ public partial class DatabaseService
         if (count > 0 && weakest.Count == 0) return Texts.Get("forces.effect.noneToRemove", ("province", provinceId));
         foreach (var unit in weakest)
         {
+            foreach (var order in GetPendingOrdersTx(conn, tx).Where(o => o.UnitId == unit.Id && o.Cost > 0))
+                PostLedgerTx(conn, tx, (LedgerAccount)(int)MinistryOf(type), order.Cost, LedgerKind.Purchase,
+                    Texts.Get("forces.ledger.refund", ("name", unit.Name)), "order", order.Id.ToString());
             Exec(conn, tx, "DELETE FROM pending_orders WHERE unit_id = $id;", ("$id", unit.Id));
             Exec(conn, tx, "DELETE FROM units WHERE id = $id;", ("$id", unit.Id));
         }
@@ -415,13 +418,21 @@ public partial class DatabaseService
         foreach (var order in orders.Where(o => o.Kind == OrderKind.Crackdown && o.ProvinceId is not null))
         {
             if (GetProvincesTx(conn, tx).FirstOrDefault(p => p.Id == order.ProvinceId) is not { } province) continue;
+            var name = ProvinceName(province.Id);
+            if (!GetUnitsTx(conn, tx, UnitType.Gendarmerie).Any(u => u.ProvinceId == province.Id))
+            {
+                PostLedgerTx(conn, tx, LedgerAccount.Interior, order.Cost, LedgerKind.Crackdown,
+                    Texts.Get("crackdown.refund", ("province", name)), "order", order.Id.ToString());
+                Tell(order, Texts.Get("forces.private.crackdownCalledOff", ("province", name), ("cost", Display.Crowns(order.Cost))));
+                continue;
+            }
+
             var total = GetUnitsTx(conn, tx, UnitType.Gendarmerie)
                 .Where(u => u.ProvinceId == province.Id)
                 .Sum(u => random.RollDie(u.Sides));
             var dieSides = CrackdownDieSides(province.Discontent);
             var dieRoll = random.RollDie(dieSides);
             var success = total >= dieRoll;
-            var name = ProvinceName(province.Id);
 
             var effects = new List<Effect>();
             if (success)
@@ -441,7 +452,7 @@ public partial class DatabaseService
                 var discontent = Math.Clamp(province.Discontent + c.Crackdown.Backlash, c.Discontent.Min, c.Discontent.Max);
                 SetDiscontentTx(conn, tx, province.Id, discontent);
                 effects.Add(new Effect($"discontent.{province.Id}", discontent - province.Discontent));
-                var minister = ResponsibleMinisterTx(conn, tx, Ministry.Interior);
+                var minister = order.OrderedBy ?? ResponsibleMinisterTx(conn, tx, Ministry.Interior);
                 if (minister is { } faction && GetFactionTx(conn, tx, faction) is { } before
                     && AddPopularityTx(conn, tx, faction, -c.Crackdown.FailurePopularity, c.Popularity) is { } after)
                     effects.Add(new Effect($"popularity.{faction}", after - before.Popularity));

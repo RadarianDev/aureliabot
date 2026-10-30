@@ -125,6 +125,7 @@ info:
   notFound: "Nothing called `{thing}` was found. Pick something from the list."
   budget:
     none: "There is no budget for {year} yet."
+    notYetOpen: "This year has not begun: its division between the purses is settled at the Winter resolution."
     heading: "## The Budget of {year}"
     summary: "Economy {economy} · tax rate {rate}% · available Budget {budget}"
     pursesHeading: "**Purses**"
@@ -1686,6 +1687,7 @@ forces:
   ledger:
     raise: "Raising {name}"
     train: "Training {name} to d{sides}"
+    refund: "Refund: orders for {name}, removed"
   order:
     raise: "Raise **{name}** in {province} ({cost})"
     train: "Train **{name}** to d{sides} ({cost})"
@@ -1715,6 +1717,7 @@ forces:
     stationed: "- **{name}** is now stationed in {province}."
     crackdownSucceeded: "- The crackdown in {province} succeeded: the gendarmerie rolled {total} against {roll} on a d{sides}."
     crackdownFailed: "- The crackdown in {province} failed: the gendarmerie rolled {total} against {roll} on a d{sides}."
+    crackdownCalledOff: "- The crackdown in {province} was called off: no gendarmerie were left there. {cost} is refunded to the Interior purse."
   effect:
     noneToRemove: "no units of that kind in {province}"
   refusal:
@@ -1733,6 +1736,7 @@ forces:
 crackdown:
   autocomplete: "{province} · {count} corps · {sides} sides"
   ledger: "Crackdown in {province}"
+  refund: "Refund: crackdown in {province} called off"
   done: "A crackdown in {province} will be rolled at the next resolution, {when}. If the gendarmerie prevail, discontent falls by {reduction} and *Lawless* is lifted; if they fail, discontent rises by {backlash} and the Interior minister loses {popularity} popularity. The result is public."
   refusal:
     noGendarmerie: "A crackdown needs at least one gendarmerie corps stationed in {province}."

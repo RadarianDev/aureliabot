@@ -653,7 +653,7 @@ Divisions and gendarmerie are the same kind of unit with different constants. A 
 - **Pace:** `pace = price / term`.
 - **Each resolution,** an Active or Stalled project pays its `spending` from its purse, or as much of it as the purse holds, and never more than it needs to finish. A payment `x` adds `min(x, pace) + (1 − project.graft) × max(0, x − pace)` to its progress: money above the pace is partly lost to graft.
 - **Stalled:** a season in which it pays nothing, because the purse is empty or spending is 0. Its minister is told privately.
-- **Finishing:** once progress reaches the price, its effects apply and the faction holding its ministry gains `project.popularity`. If it finishes by its bonus deadline, the bonus text and effects apply too. A `by` deadline counts the resolution that ends that turn, and `within: n` counts the n resolutions after it started.
+- **Finishing:** once progress reaches the price, its effects apply and the faction holding its ministry (the Chancellor while it is vacant) gains `project.popularity`. If it finishes by its bonus deadline, the bonus text and effects apply too. A `by` deadline counts the resolution that ends that turn, and `within: n` counts the n resolutions after it started.
 - A project started by an effect begins at the next resolution, so a bill passing at the end of Autumn first pays at the end of Winter.
 - **Vacant ministry:** the Chancellor sets the spending. With no Chancellor either, it carries on at its last spending.
 

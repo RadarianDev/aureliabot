@@ -82,10 +82,10 @@ public class Publisher
         await UpdateDashboardAsync();
     }
 
-    public async Task PublishStartedAsync(ResolutionReport report, string source)
+    public async Task PublishStartedAsync(ResolutionReport report, string source, bool announceProjects)
     {
         await _crises.PublishAsync(report, source);
-        await _projects.PublishAsync(report, source);
+        if (announceProjects) await _projects.PublishAsync(report, source);
     }
 
     public async Task PostEventsAsync(ResolutionReport report, string source)
