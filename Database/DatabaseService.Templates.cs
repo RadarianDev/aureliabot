@@ -133,6 +133,7 @@ public partial class DatabaseService
             AllowHere = allowHere,
             AllowCrisis = allowCrisis,
             EventTemplates = Ids(TemplateKind.Event),
+            Variables = config.Variables.Select(v => v.Id).ToHashSet(),
         };
     }
 }

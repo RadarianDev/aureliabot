@@ -69,6 +69,152 @@ public static partial class TemplateCodec
 
         public void Error(YamlNode node, string message) => ErrorAtLine((int)node.Start.Line, message);
 
+        public List<Effect> ReadEffects(YamlNode node, string field, EffectParseOptions options, EachScope? scope)
+        {
+            switch (node)
+            {
+                case YamlScalarNode { Value: null or "" }:
+                    return [];
+                case YamlSequenceNode sequence:
+                    return sequence.Children.SelectMany(child => ReadEffects(child, field, options, scope)).ToList();
+                case YamlMappingNode mapping:
+                    var keys = mapping.Children.Keys.OfType<YamlScalarNode>().Select(k => k.Value).ToHashSet();
+                    if (keys.Contains(IfBlock.Word)) return ReadIf(mapping, field, options, scope);
+                    if (keys.Contains(RandomBlock.Word)) return ReadRandom(mapping, field, options, scope);
+                    if (keys.Contains(EachBlock.Word)) return ReadEach(mapping, field, options, scope);
+                    return ReadPlain(mapping, field, options, scope);
+                default:
+                    Error(node, Texts.Get("templates.effectsMap", ("field", field)));
+                    return [];
+            }
+        }
+
+        private List<Effect> ReadPlain(YamlMappingNode mapping, string field, EffectParseOptions options, EachScope? scope)
+        {
+            var effects = new List<Effect>();
+            foreach (var (key, value) in mapping.Children)
+            {
+                if (key is not YamlScalarNode { Value: { Length: > 0 } keyText })
+                {
+                    Error(key, Texts.Get("templates.effectKeyPlain", ("field", field)));
+                    continue;
+                }
+                if (value is not YamlScalarNode scalar)
+                {
+                    Error(value, Texts.Get("templates.effectSingleValue", ("field", field), ("key", keyText)));
+                    continue;
+                }
+                if (EffectParser.ParsePlain(keyText, EffectValue(scalar.Value), options, scope, out var effect) is { } error)
+                    Error(key, Texts.Get("templates.effectError", ("field", field), ("error", Texts.Get("effects.errors.forKey", ("key", keyText), ("error", error)))));
+                else
+                    effects.Add(effect!);
+            }
+            return effects;
+        }
+
+        private static string? EffectValue(string? raw)
+        {
+            var value = raw?.Trim();
+            if (string.IsNullOrEmpty(value) || value.Equals("true", StringComparison.OrdinalIgnoreCase)) return value;
+            if (value[0] == '=')
+            {
+                var rest = value[1..].Trim();
+                return "=" + (EffectParser.TryParseNumber(rest, out _) || rest.StartsWith('{') ? rest : $"{{{rest}}}");
+            }
+            return EffectParser.TryParseNumber(value, out _) || value.StartsWith('{') ? value : $"{{{value}}}";
+        }
+
+        private Dictionary<string, (YamlScalarNode Key, YamlNode Value)> BlockFields(YamlMappingNode mapping, string field, string block, params string[] allowed)
+        {
+            var fields = new Dictionary<string, (YamlScalarNode, YamlNode)>(StringComparer.Ordinal);
+            foreach (var (key, value) in mapping.Children)
+            {
+                if (key is YamlScalarNode { Value: { } name } scalar && allowed.Contains(name)) fields[name] = (scalar, value);
+                else Error(key, Texts.Get("templates.blockField", ("field", field), ("block", block),
+                    ("key", (key as YamlScalarNode)?.Value ?? ""), ("allowed", string.Join(", ", allowed))));
+            }
+            return fields;
+        }
+
+        private Formula? ReadFormula(Dictionary<string, (YamlScalarNode Key, YamlNode Value)> fields, string name, string field)
+        {
+            if (!fields.TryGetValue(name, out var entry)) return null;
+            if (entry.Value is not YamlScalarNode { Value: { Length: > 0 } text })
+            {
+                Error(entry.Value, Texts.Get("templates.blockFormula", ("field", field), ("key", name)));
+                return null;
+            }
+            var formula = Formula.TryParse(text, out var error);
+            if (formula is null) Error(entry.Value, Texts.Get("templates.effectError", ("field", field), ("error", error)));
+            return formula;
+        }
+
+        private List<Effect> ReadBranch(Dictionary<string, (YamlScalarNode Key, YamlNode Value)> fields, string name, string field,
+            EffectParseOptions options, EachScope? scope) =>
+            fields.TryGetValue(name, out var entry) ? ReadEffects(entry.Value, $"{field}.{name}", options, scope) : [];
+
+        private List<Effect> ReadIf(YamlMappingNode mapping, string field, EffectParseOptions options, EachScope? scope)
+        {
+            var fields = BlockFields(mapping, field, IfBlock.Word, IfBlock.Word, "then", "else");
+            var condition = ReadFormula(fields, IfBlock.Word, field);
+            var then = ReadBranch(fields, "then", field, options, scope);
+            var otherwise = ReadBranch(fields, "else", field, options, scope);
+            return condition is null ? [] : [Effect.Of(new IfBlock(condition, then, otherwise))];
+        }
+
+        private List<Effect> ReadRandom(YamlMappingNode mapping, string field, EffectParseOptions options, EachScope? scope)
+        {
+            var fields = BlockFields(mapping, field, RandomBlock.Word, RandomBlock.Word);
+            if (fields[RandomBlock.Word].Value is not YamlSequenceNode outcomes || outcomes.Children.Count == 0)
+            {
+                Error(mapping, Texts.Get("templates.randomList", ("field", field)));
+                return [];
+            }
+            var list = new List<RandomOutcome>();
+            foreach (var outcome in outcomes.Children)
+            {
+                if (outcome is YamlMappingNode map && map.Children.Keys.OfType<YamlScalarNode>().Any(k => k.Value is "weight" or "effects"))
+                {
+                    var parts = BlockFields(map, field, RandomBlock.Word, "weight", "effects");
+                    var weight = 1.0;
+                    if (parts.TryGetValue("weight", out var w)
+                        && (w.Value is not YamlScalarNode { Value: { } text } || !EffectParser.TryParseNumber(text, out weight) || weight <= 0))
+                    {
+                        Error(w.Value, Texts.Get("templates.randomWeight", ("field", field)));
+                        weight = 1;
+                    }
+                    list.Add(new RandomOutcome(weight, ReadBranch(parts, "effects", field, options, scope)));
+                }
+                else
+                {
+                    list.Add(new RandomOutcome(1, ReadEffects(outcome, field, options, scope)));
+                }
+            }
+            return [Effect.Of(new RandomBlock(list))];
+        }
+
+        private List<Effect> ReadEach(YamlMappingNode mapping, string field, EffectParseOptions options, EachScope? scope)
+        {
+            var fields = BlockFields(mapping, field, EachBlock.Word, EachBlock.Word, "where", "by", "top", "bottom", "do");
+            if (fields[EachBlock.Word].Value is not YamlScalarNode { Value: { } scopeText } || !EachBlock.TryScope(scopeText, out var inner))
+            {
+                Error(mapping, Texts.Get("templates.eachScope", ("field", field)));
+                return [];
+            }
+            var where = ReadFormula(fields, "where", field);
+            var by = ReadFormula(fields, "by", field);
+            int? top = null;
+            var lowest = fields.ContainsKey("bottom");
+            if (fields.TryGetValue(lowest ? "bottom" : "top", out var count))
+            {
+                if (count.Value is YamlScalarNode { Value: { } n } && int.TryParse(n, out var parsed) && parsed >= 1) top = parsed;
+                else Error(count.Value, Texts.Get("templates.eachTop", ("field", field)));
+                if (by is null) Error(count.Key, Texts.Get("templates.eachTopNeedsBy", ("field", field)));
+            }
+            var body = ReadBranch(fields, "do", field, options, inner);
+            return [Effect.Of(new EachBlock(inner, where, by, top, lowest, body))];
+        }
+
         public Template? Read(string yaml)
         {
             var stream = new YamlStream();
@@ -156,7 +302,7 @@ public static partial class TemplateCodec
             if (requires is not null && context is not null && !context.Conditions.Contains(requires))
                 Error(map.KeyNode("requires")!, Texts.Get("templates.unknownCondition", ("condition", requires)));
 
-            if (province is null && !ministerial && effects.Concat(bonus?.Effects ?? []).Any(e => e.Target == EffectParser.Here))
+            if (province is null && !ministerial && EffectTree.Plain(effects.Concat(bonus?.Effects ?? [])).Any(e => e.Parts.Skip(1).Contains(EffectParser.Here)))
                 Error(map.KeyNode("effects") ?? map.KeyNode("bonus") ?? (YamlNode)root, Texts.Get("templates.hereNeedsProvince"));
 
             return new ProjectTemplate(id, title, purse, province, price, term, effects, bonus, ministerial, requires);
@@ -455,32 +601,12 @@ public static partial class TemplateCodec
             public IReadOnlyList<Effect> Effects(string field, bool allowHere, bool allowCrisis)
             {
                 if (!_entries.TryGetValue(field, out var entry)) return [];
-                if (entry.Value is YamlScalarNode { Value: null or "" }) return [];
-                if (entry.Value is not YamlMappingNode mapping)
+                var effects = _reader.ReadEffects(entry.Value, Name(field), new EffectParseOptions(allowHere, allowCrisis), null);
+                if (_reader.Context is { } full)
                 {
-                    _reader.Error(entry.Value, Texts.Get("templates.effectsMap", ("field", Name(field))));
-                    return [];
-                }
-
-                var context = _reader.Context is { } full ? full with { AllowHere = allowHere, AllowCrisis = allowCrisis } : null;
-                var effects = new List<Effect>();
-                foreach (var (key, value) in mapping.Children)
-                {
-                    if (key is not YamlScalarNode { Value: { Length: > 0 } keyText })
-                    {
-                        _reader.Error(key, Texts.Get("templates.effectKeyPlain", ("field", Name(field))));
-                        continue;
-                    }
-                    if (value is not YamlScalarNode scalar)
-                    {
-                        _reader.Error(value, Texts.Get("templates.effectSingleValue", ("field", Name(field)), ("key", keyText)));
-                        continue;
-                    }
-                    var raw = string.IsNullOrWhiteSpace(scalar.Value) ? null : scalar.Value;
-                    var parsed = EffectParser.FromPairs([(keyText, raw)], context, allowHere, allowCrisis);
-                    foreach (var error in parsed.Errors)
-                        _reader.Error(key, Texts.Get("templates.effectError", ("field", Name(field)), ("error", error)));
-                    effects.AddRange(parsed.Effects);
+                    var context = full with { AllowHere = allowHere, AllowCrisis = allowCrisis };
+                    foreach (var error in EffectParser.Check(effects, context))
+                        _reader.Error(entry.Key, Texts.Get("templates.effectError", ("field", Name(field)), ("error", error)));
                 }
                 return effects;
             }
@@ -578,8 +704,13 @@ public static partial class TemplateCodec
 
     private static string Money(decimal value) => value.ToString(CultureInfo.InvariantCulture);
 
-    private static string EffectEntry(Effect effect) =>
-        $"{effect.Key}: {(effect.Value is { } value ? Number(value) : "true")}";
+    private static string EffectEntry(Effect effect)
+    {
+        var value = EffectParser.FormatValue(effect);
+        if (value.Length == 0) return $"{effect.Key}: true";
+        if (effect.Formula is { } formula) return $"{effect.Key}: {Quote((effect.SetTo ? "=" : "") + formula.Source)}";
+        return $"{effect.Key}: {(effect.SetTo ? Quote(value) : value)}";
+    }
 
     private sealed class Writer
     {
@@ -612,9 +743,20 @@ public static partial class TemplateCodec
         public void Effects(string prefix, IReadOnlyList<Effect> effects)
         {
             if (effects.Count == 0) return;
-            var head = $"{prefix}effects: {{ ";
-            var continuation = new string(' ', head.Length);
-            var current = head;
+            if (!effects.Any(e => e.Block is not null))
+            {
+                FlowEffects($"{prefix}effects: ", effects);
+                return;
+            }
+            Line($"{prefix}effects:");
+            EffectList(new string(' ', prefix.Length + 2), effects);
+        }
+
+        private void FlowEffects(string head, IReadOnlyList<Effect> effects)
+        {
+            var start = head + "{ ";
+            var continuation = new string(' ', start.Length);
+            var current = start;
             var atStart = true;
             for (var i = 0; i < effects.Count; i++)
             {
@@ -629,6 +771,68 @@ public static partial class TemplateCodec
                 atStart = false;
             }
             Line(current);
+        }
+
+        private void EffectList(string indent, IReadOnlyList<Effect> effects)
+        {
+            var plain = new List<Effect>();
+            void FlushPlain()
+            {
+                if (plain.Count == 0) return;
+                FlowEffects($"{indent}- ", plain.ToList());
+                plain.Clear();
+            }
+
+            foreach (var effect in effects)
+            {
+                if (effect.Block is null)
+                {
+                    plain.Add(effect);
+                    continue;
+                }
+                FlushPlain();
+                var inner = indent + "  ";
+                switch (effect.Block)
+                {
+                    case IfBlock b:
+                        Line($"{indent}- {IfBlock.Word}: {Quote(b.Condition.Source)}");
+                        Branch(inner, "then", b.Then);
+                        if (b.Else.Count > 0) Branch(inner, "else", b.Else);
+                        break;
+                    case RandomBlock r:
+                        Line($"{indent}- {RandomBlock.Word}:");
+                        foreach (var outcome in r.Outcomes)
+                        {
+                            Line($"{inner}  - weight: {Number(outcome.Weight)}");
+                            Branch(inner + "    ", "effects", outcome.Effects);
+                        }
+                        break;
+                    case EachBlock x:
+                        Line($"{indent}- {EachBlock.Word}: {EachBlock.ScopeWord(x.Scope)}");
+                        if (x.Where is { } where) Line($"{inner}where: {Quote(where.Source)}");
+                        if (x.By is { } by) Line($"{inner}by: {Quote(by.Source)}");
+                        if (x.Top is { } top) Line($"{inner}{(x.Lowest ? "bottom" : "top")}: {top.ToString(CultureInfo.InvariantCulture)}");
+                        Branch(inner, "do", x.Do);
+                        break;
+                }
+            }
+            FlushPlain();
+        }
+
+        private void Branch(string indent, string name, IReadOnlyList<Effect> effects)
+        {
+            if (effects.Count == 0)
+            {
+                Line($"{indent}{name}: {{}}");
+                return;
+            }
+            if (!effects.Any(e => e.Block is not null))
+            {
+                FlowEffects($"{indent}{name}: ", effects);
+                return;
+            }
+            Line($"{indent}{name}:");
+            EffectList(indent + "  ", effects);
         }
 
         public override string ToString() => _sb.ToString();

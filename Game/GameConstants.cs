@@ -238,17 +238,34 @@ public sealed record ConditionDefinition
     public double BiasOn(string issueId) => Biases.TryGetValue(issueId, out var bias) ? bias : 0;
 }
 
+public sealed record VariableDefinition
+{
+    public string Id { get; init; } = "";
+    public double Start { get; init; }
+    public double? Min { get; init; }
+    public double? Max { get; init; }
+    public string Description { get; init; } = "";
+
+    public double Clamp(double value) => Math.Clamp(value, Min ?? double.MinValue, Max ?? double.MaxValue);
+}
+
 public sealed class GameConfig
 {
     public GameConstants Constants { get; }
     public IReadOnlyList<ProvinceDefinition> Provinces { get; }
     public IReadOnlyList<ConditionDefinition> Conditions { get; }
+    public IReadOnlyList<VariableDefinition> Variables { get; }
 
     private readonly Dictionary<string, ProvinceDefinition> _provincesById;
     private readonly Dictionary<string, ConditionDefinition> _conditionsById;
+    private readonly Dictionary<string, VariableDefinition> _variablesById;
 
-    public GameConfig(GameConstants constants, IReadOnlyList<ProvinceDefinition> provinces, IReadOnlyList<ConditionDefinition> conditions)
+    public GameConfig(
+        GameConstants constants, IReadOnlyList<ProvinceDefinition> provinces, IReadOnlyList<ConditionDefinition> conditions,
+        IReadOnlyList<VariableDefinition>? variables = null)
     {
+        Variables = variables ?? [];
+        _variablesById = Variables.ToDictionary(v => v.Id);
         Constants = constants;
         Provinces = provinces;
         Conditions = conditions;
@@ -259,6 +276,8 @@ public sealed class GameConfig
     public ProvinceDefinition? Province(string id) => _provincesById.GetValueOrDefault(id);
 
     public ConditionDefinition? Condition(string id) => _conditionsById.GetValueOrDefault(id);
+
+    public VariableDefinition? Variable(string id) => _variablesById.GetValueOrDefault(id);
 }
 
 public sealed class ConfigException(string message) : Exception(message);
@@ -268,6 +287,7 @@ public sealed class ConstantsStore
     public const string ConstantsFile = "constants.yaml";
     public const string ProvincesFile = "provinces.yaml";
     public const string ConditionsFile = "conditions.yaml";
+    public const string VariablesFile = "variables.yaml";
 
     private readonly string _directory;
     private GameConfig _current;
@@ -314,9 +334,14 @@ public sealed class ConstantsStore
         var conditions = Read<Dictionary<string, ConditionDefinition>>(deserializer, directory, ConditionsFile)
             .Select(kv => kv.Value with { Id = kv.Key })
             .ToList();
+        var variables = File.Exists(Path.Combine(directory, VariablesFile))
+            ? (Read<Dictionary<string, VariableDefinition>?>(deserializer, directory, VariablesFile, allowEmpty: true) ?? [])
+                .Select(kv => kv.Value with { Id = kv.Key })
+                .ToList()
+            : [];
         var texts = TextCatalog.Load(directory);
 
-        var config = new GameConfig(constants, provinces, conditions);
+        var config = new GameConfig(constants, provinces, conditions, variables);
         var errors = Validate(config);
         if (errors.Count > 0)
             throw new ConfigException("Config is invalid:\n" + string.Join("\n", errors.Select(e => $"- {e}")));
@@ -324,14 +349,14 @@ public sealed class ConstantsStore
         return config;
     }
 
-    private static T Read<T>(IDeserializer deserializer, string directory, string file)
+    private static T Read<T>(IDeserializer deserializer, string directory, string file, bool allowEmpty = false)
     {
         var path = Path.Combine(directory, file);
         if (!File.Exists(path)) throw new ConfigException($"{file} is missing from {directory}.");
         try
         {
-            return deserializer.Deserialize<T>(File.ReadAllText(path))
-                ?? throw new ConfigException($"{file} is empty.");
+            var value = deserializer.Deserialize<T>(File.ReadAllText(path));
+            return value is not null || allowEmpty ? value! : throw new ConfigException($"{file} is empty.");
         }
         catch (YamlException ex)
         {
@@ -391,6 +416,16 @@ public sealed class ConstantsStore
         foreach (var condition in config.Conditions)
             if (string.IsNullOrWhiteSpace(condition.Name))
                 errors.Add($"Condition '{condition.Id}' has no name.");
+
+        foreach (var variable in config.Variables)
+        {
+            if (!System.Text.RegularExpressions.Regex.IsMatch(variable.Id, "^[A-Za-z_][A-Za-z0-9_]*$"))
+                errors.Add($"Variable '{variable.Id}' must be letters, digits and underscores.");
+            if (variable is { Min: { } min, Max: { } max } && min > max)
+                errors.Add($"Variable '{variable.Id}' has min above max.");
+            else if (variable.Clamp(variable.Start) != variable.Start)
+                errors.Add($"Variable '{variable.Id}' starts outside its min and max.");
+        }
 
         return errors;
     }

@@ -165,7 +165,7 @@ public static class ContentPreview
             if (effects.Count == 0) return [];
             try
             {
-                return EffectSummary.Lines(effects, names, display);
+                return EffectSummary.Lines(effects, names, display, preview: true);
             }
             catch (Exception ex)
             {

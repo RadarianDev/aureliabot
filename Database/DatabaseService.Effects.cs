@@ -27,22 +27,107 @@ public partial class DatabaseService
     private static EffectApplication ApplyEffectsTx(
         SqliteConnection conn, SqliteTransaction tx, IReadOnlyList<Effect> effects, GameConfig config, EffectSource source, ResolutionReport? report)
     {
-        var store = new TxEffectStore(conn, tx, config, source, report);
+        var store = new TxEffectStore(conn, tx, config, source, report, EffectRandom(report, source));
         var applied = new List<Effect>();
         var warnings = new List<string>();
-
-        foreach (var effect in effects)
-        {
-            var warning = effect.Kind is not { } kind
-                ? Texts.Get("data.effect.unknownKey", ("key", effect.Key))
-                : ApplyOne(kind, effect, store, applied);
-            if (warning is not null)
-                warnings.Add(Texts.Get("data.effect.warning", ("source", source.Label), ("key", effect.Key), ("warning", warning)));
-        }
+        RunEffects(effects, store, applied, warnings, source, 0);
 
         if (report is not null)
             report.Alerts.AddRange(warnings);
         return new EffectApplication(applied, warnings);
+    }
+
+    private const int MaxEffectDepth = 16;
+    private const int MaxEffectsRun = 5000;
+
+    private static void RunEffects(
+        IReadOnlyList<Effect> effects, TxEffectStore store, List<Effect> applied, List<string> warnings, EffectSource source, int depth)
+    {
+        var scope = new StoreFormulaScope(store);
+        foreach (var effect in effects)
+        {
+            if (++store.Steps > MaxEffectsRun || depth > MaxEffectDepth)
+            {
+                if (!store.Exhausted) warnings.Add(Texts.Get("data.effect.tooMany", ("source", source.Label)));
+                store.Exhausted = true;
+                return;
+            }
+            try
+            {
+                switch (effect.Block)
+                {
+                    case IfBlock b:
+                        RunEffects(b.Condition.IsTrue(scope) ? b.Then : b.Else, store, applied, warnings, source, depth + 1);
+                        continue;
+                    case RandomBlock r:
+                        RunEffects(PickOutcome(r, store.Random), store, applied, warnings, source, depth + 1);
+                        continue;
+                    case EachBlock x:
+                        foreach (var id in EachTargets(x, store, scope))
+                            RunEffects(EffectTree.Bind(x.Do, EachBlock.It, id), store, applied, warnings, source, depth + 1);
+                        continue;
+                }
+
+                var warning = effect.Kind is not { } kind
+                    ? Texts.Get("data.effect.unknownKey", ("key", effect.Key))
+                    : Concrete(effect, kind, store, scope, out var concrete) ?? ApplyOne(kind, concrete!, store, applied);
+                if (warning is not null)
+                    warnings.Add(Texts.Get("data.effect.warning", ("source", source.Label), ("key", effect.Key), ("warning", warning)));
+            }
+            catch (FormulaException ex)
+            {
+                warnings.Add(Texts.Get("data.effect.warning", ("source", source.Label), ("key", effect.Key), ("warning", ex.Message)));
+            }
+        }
+    }
+
+    private static string? Concrete(Effect effect, EffectKind kind, IEffectStore store, IFormulaScope scope, out Effect? concrete)
+    {
+        concrete = null;
+        var value = effect.Formula is { } formula ? Math.Round(formula.Evaluate(scope), 6) : effect.Value;
+        if (effect.SetTo)
+        {
+            if (kind.CurrentValue(effect, store) is not { } current) return Texts.Get("data.effect.cannotSet");
+            value = (value ?? 0) - current;
+        }
+        concrete = new Effect(effect.Key, value);
+        return null;
+    }
+
+    private static IReadOnlyList<Effect> PickOutcome(RandomBlock block, IRandomSource random)
+    {
+        var roll = random.NextDouble() * block.Outcomes.Sum(o => o.Weight);
+        foreach (var outcome in block.Outcomes)
+        {
+            if (roll < outcome.Weight) return outcome.Effects;
+            roll -= outcome.Weight;
+        }
+        return block.Outcomes[^1].Effects;
+    }
+
+    private static List<string> EachTargets(EachBlock block, IEffectStore store, IFormulaScope scope)
+    {
+        IEnumerable<string> ids = block.Scope switch
+        {
+            EachScope.Province => store.Provinces.Select(p => p.Id),
+            EachScope.Faction => store.ActiveFactions.Select(f => f.UserId.ToString()),
+            EachScope.Party => store.ActiveFactions.Where(f => f.PartyId is not null).Select(f => f.PartyId!.Value.ToString()).Distinct(),
+            _ => store.OpenIssues.Select(i => i.Id),
+        };
+        var chosen = ids.Where(id => block.Where?.Bind(EachBlock.It, id).IsTrue(scope) ?? true).ToList();
+        if (block.By is not { } by) return chosen;
+        var scored = chosen.Select(id => (Id: id, Score: by.Bind(EachBlock.It, id).Evaluate(scope))).ToList();
+        var ordered = block.Lowest ? scored.OrderBy(s => s.Score) : scored.OrderByDescending(s => s.Score);
+        return ordered.ThenBy(s => s.Id, StringComparer.Ordinal).Take(block.Top ?? int.MaxValue).Select(s => s.Id).ToList();
+    }
+
+    private static IRandomSource EffectRandom(ResolutionReport? report, EffectSource source)
+    {
+        if (report is not { Seed: not 0 } seeded) return new SeededRandomSource(SeededRandomSource.NewSeed());
+        var hash = 2166136261u;
+        foreach (var c in $"{seeded.Seed}|{seeded.ResolutionNumber}|{source.SourceType}|{source.SourceId}|{source.Label}")
+            hash = (hash ^ c) * 16777619u;
+        return new SeededRandomSource((int)hash);
     }
 
     private static string? ApplyOne(EffectKind kind, Effect effect, TxEffectStore store, List<Effect> applied)
@@ -56,8 +141,23 @@ public partial class DatabaseService
     }
 
     private sealed class TxEffectStore(
-        SqliteConnection conn, SqliteTransaction tx, GameConfig config, EffectSource source, ResolutionReport? report) : IEffectStore
+        SqliteConnection conn, SqliteTransaction tx, GameConfig config, EffectSource source, ResolutionReport? report, IRandomSource random) : IEffectStore
     {
+        public int Steps { get; set; }
+
+        public bool Exhausted { get; set; }
+
+        public IRandomSource Random => random;
+
+        public double Variable(string name) => GetVariableTx(conn, tx, config, name);
+
+        public void SetVariable(string name, double value) => SetVariableTx(conn, tx, name, value);
+
+        public bool HasCondition(string provinceId, string conditionId) =>
+            GetProvinceConditionsTx(conn, tx).GetValueOrDefault(provinceId, []).Contains(conditionId);
+
+        public IReadOnlyList<Issue> OpenIssues => QueryIssuesTx(conn, tx, "status = 'Open'");
+
         public GameState State => GetGameStateTx(conn, tx);
 
         public GameConfig Config => config;
@@ -228,6 +328,6 @@ public partial class DatabaseService
         using var conn = Open();
         using var tx = conn.BeginTransaction();
         var effect = new Effect(key, 0);
-        return effect.Kind?.CurrentValue(effect, new TxEffectStore(conn, tx, config, new EffectSource("", "", ""), null));
+        return effect.Kind?.CurrentValue(effect, new TxEffectStore(conn, tx, config, new EffectSource("", "", ""), null, new SeededRandomSource(0)));
     }
 }

@@ -5,6 +5,11 @@ public interface IEffectStore
     GameState State { get; }
     GameConfig Config { get; }
     EffectSource Source { get; }
+    IRandomSource Random { get; }
+
+    double Variable(string name);
+    void SetVariable(string name, double value);
+    bool HasCondition(string provinceId, string conditionId);
 
     void SetState(string column, double value);
 
@@ -16,6 +21,7 @@ public interface IEffectStore
     bool SetCondition(string provinceId, string conditionId, bool present);
 
     Issue? Issue(string issueId);
+    IReadOnlyList<Issue> OpenIssues { get; }
     void SetIssueOpinion(string issueId, double value);
     void SetIssueSalience(string issueId, double value, bool raised);
 
@@ -111,6 +117,7 @@ public static class EffectKinds
         new UnitsEffect("gendarmerie", UnitType.Gendarmerie),
         new ProgressProjectEffect(),
         new HaltProjectEffect(),
+        new VariableEffect(),
     ];
 
     private static readonly Dictionary<string, EffectKind> ByPrefix = All.ToDictionary(k => k.Prefix, StringComparer.Ordinal);

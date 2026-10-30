@@ -38,6 +38,15 @@ public partial class GmModule
             ("issue", i.Title), ("base", Fixed(i.Opinion)), ("national", Fixed(snapshot.National(i.Id))), ("salience", Fixed(i.Salience)))));
         if (issues.Count == 0) lines.Add(Texts.Get("gm.peek.noIssues"));
 
+        var variables = _data.GetVariables(config);
+        if (variables.Count > 0)
+        {
+            lines.Add("");
+            lines.Add(Texts.Get("gm.peek.variablesHeading"));
+            lines.AddRange(variables.Select(v => Texts.Get("gm.peek.variableLine",
+                ("name", v.Definition.Id), ("value", EffectParser.FormatNumber(v.Value)), ("description", v.Definition.Description))));
+        }
+
         lines.Add("");
         lines.Add(Texts.Get("gm.peek.provincesHeading"));
         var conditions = _data.GetProvinceConditions();

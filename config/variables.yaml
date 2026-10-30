@@ -1,0 +1,5 @@
+plague:
+  start: 0
+  min: 0
+  max: 10
+  description: An example variable; rename or delete it. How far a plague has spread.

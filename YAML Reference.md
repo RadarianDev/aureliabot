@@ -59,12 +59,97 @@ effects: { economy: -2, discontent.north_arpal: 1, open.labour: true, bill.ten_h
 | `bill.{billTemplate}` | `true` | Makes a bill available to propose. Its issue must be open. |
 | `project.{projectTemplate}` | `true` | Starts a project. |
 | `crisis.{crisisTemplate}` | `true` | Posts a live crisis. **Events only.** |
+| `var.{variable}` | number | Changes one of your own variables (see `config/variables.yaml`). Players never see it in the summary. |
 
 In a project's effects, `here` stands for the project's province: `discontent.here: -1`.
 
 Every key is validated on import, and an unknown one is rejected. Values are clamped to their range
 after each change. In modals and `/gm apply`, effects are written as text instead:
 `discontent.north_arpal -2, economy -1, open.public_health`.
+
+### Advanced effects
+
+Everything below works in every `effects` field, in `/gm apply` and in modals. Posts only ever list what
+actually happened; `/content preview` shows every branch, so check your logic there.
+
+**Formulas.** Any number can be a formula, written as a string. **Setting** a value instead of changing it:
+start with `=`.
+
+```yaml
+effects:
+  economy: "-0.5 * var.plague"          # change by a computed amount
+  favour: "=max(favour, 40)"            # set outright
+  var.coup_stage: "=3"
+```
+
+Formulas use `+ - * / %`, brackets, comparisons (`< <= > >= == !=`, giving 1 or 0), `and`, `or`, `not`,
+`true`, `false`, and the functions `min`, `max`, `abs`, `round(x)` or `round(x, digits)`, `floor`, `ceil`,
+`clamp(x, low, high)`, `roll(sides)` or `roll(dice, sides)`, and `chance(p)` (1 with probability `p`,
+else 0). They can read:
+
+| Reference | Value |
+| --- | --- |
+| any numeric effect key | its current value: `economy`, `favour`, `threat`, `reserve`, `purse.War`, `discontent.north_arpal`, `opinion.labour`, `salience.labour`, `division.north_arpal`, … |
+| `popularity.{faction}`, `popularity.chancellor`, `popularity.government`, … | popularity; for a group, its average |
+| `var.{variable}` | one of your variables |
+| `condition.{province}.{condition}` | 1 if the province has it, else 0 |
+| `vacant.chancellor`, `vacant.{ministry}` | 1 if the office is empty |
+| `faction.{faction}.{field}` | `popularity`, `seats`, `independent`, `government`, `opposition`, `office` (1 if in the cabinet) |
+| `party.{party}.{field}` | `seats`, `members`, `popularity` (average), `government` |
+| `issue.{issue}.open` | 1 if the issue is open |
+| `year`, `season`, `resolution`, `term`, `preElection` | the calendar; `season` is 1–4, and `spring`, `summer`, `autumn`, `winter` stand for 1–4 |
+
+**Conditions.** `if` takes a formula; `then` and `else` take effects. To mix plain effects and blocks,
+make `effects` a list:
+
+```yaml
+effects:
+  - { var.plague: 1 }
+  - if: "var.plague >= 3 and favour < 30"
+    then: { crisis.quarantine: true, discontent.all: 1 }
+    else: { discontent.marsh_hollow: 0.5 }
+```
+
+**Random outcomes.** Each outcome has a `weight` (default 1) and `effects`:
+
+```yaml
+effects:
+  - random:
+      - weight: 3
+        effects: { threat: 5 }
+      - weight: 1
+        effects: { event.palace_coup: true }
+```
+
+**Many targets at once.** `each` goes through every `province`, `faction` (active), `party` (with active
+members) or `issue` (open). Inside it, `it` stands for the current one, in keys and formulas. `where`
+filters; `by` with `top: n` or `bottom: n` picks the highest or lowest scores.
+
+```yaml
+effects:
+  - each: province
+    where: "condition.it.striking"
+    do: { discontent.it: 1 }
+  - each: faction
+    by: "popularity.it"
+    top: 1
+    do: { popularity.it: -3 }
+```
+
+Blocks nest freely. An `it` always means the innermost `each`.
+
+**As text** (modals and `/gm apply`), blocks use braces for formulas and brackets for lists:
+
+```
+var.plague 1, economy {-0.5 * var.plague}, favour ={max(favour, 40)}
+if {var.plague >= 3} [crisis.quarantine, discontent.all 1] else [discontent.marsh_hollow 0.5]
+random [3: threat 5 | 1: event.palace_coup]
+each province where {condition.it.striking} [discontent.it 1]
+each faction by {popularity.it} top 1 [popularity.it -3]
+```
+
+**Randomness during a resolution** comes from the resolution's seed, so an undone resolution replays the
+same rolls. A formula that fails at play time (dividing by zero, say) skips that effect and warns the GM.
 
 ## Content
 
@@ -441,4 +526,28 @@ lawless:
 **Standing** conditions describe a province and are set in `provinces.yaml`: urban, industrial, farmland,
 frontier, anzarian_border, crossroads, rugged, forested, marshland, remote, coastal. **Event**
 conditions come and go through effects: lawless, epidemic, striking, famine, booming.
+
+### `config/variables.yaml`: your own variables
+
+Optional. Keyed by variable name (letters, digits and underscores). Effects change them with
+`var.{name}`, formulas read them as `var.{name}`, `/gm peek` lists them and `/gm set var.{name}` sets one.
+They are secret: no post ever shows them. A name not declared here is rejected on import, which catches
+typos.
+
+```yaml
+plague:
+  start: 0
+  min: 0
+  max: 10
+  description: How far the plague has spread.
+coup_stage:
+  start: 0
+  description: 0 quiet, 1 rumours, 2 plotting, 3 the coup.
+```
+
+| Field | Required | Meaning |
+| --- | --- | --- |
+| `start` | no | Its value until something changes it (default 0). |
+| `min` / `max` | no | Clamps every change. |
+| `description` | no | A note for you, shown in `/gm peek`. |
 

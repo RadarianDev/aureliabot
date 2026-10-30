@@ -566,6 +566,8 @@ gm:
     issuesHeading: "**Open issues** (base opinion · national opinion · salience)"
     issueLine: "{issue}: {base} · {national} · {salience}"
     noIssues: "No open issues."
+    variablesHeading: "**Variables**"
+    variableLine: "`var.{name}`: {value} · {description}"
     provincesHeading: "**Provinces** (discontent · conditions)"
     provinceLine: "{province}: {discontent} · {conditions}"
     noConditions: "no conditions"
@@ -868,10 +870,47 @@ templates:
   effectKeyPlain: "{field}: each effect key must be a plain word, such as `economy`."
   effectSingleValue: "{field}: `{key}` takes a single value."
   effectError: "{field}: {error}"
+  blockField: "{field}: `{key}` doesn't belong in a `{block}` block, which takes {allowed}."
+  blockFormula: "{field}: `{key}` needs a formula, such as `\"var.plague >= 3\"`."
+  randomList: "{field}: `random` takes a list of outcomes, each with a `weight` and `effects`."
+  randomWeight: "{field}: a `weight` must be a positive number."
+  eachScope: "{field}: `each` takes `province`, `faction`, `party` or `issue`."
+  eachTop: "{field}: `top` and `bottom` take a whole number from 1."
+  eachTopNeedsBy: "{field}: `top` and `bottom` need `by`, the score to rank by."
 
+
+formula:
+  errors:
+    invalid: "`{formula}` is not a formula: {error}"
+    inFormula: "in `{formula}`: {error}"
+    notANumber: "`{formula}` did not give a number."
+    character: "`{character}` can't be used in a formula."
+    empty: the formula is empty.
+    expected: "expected `{expected}` but found `{found}`."
+    end: the end
+    unexpected: "`{token}` is out of place."
+    unfinished: the formula ends too soon.
+    unknownFunction: "`{name}` is not a function; use one of {functions}."
+    arguments: "`{name}` was given the wrong number of values."
+    divideByZero: a formula divided by zero.
+    roll: "`roll` takes up to 1000 dice of up to 100000 sides."
+    unknownVariable: "`var.{name}` is not declared in `config/variables.yaml`."
+    unknownOffice: "`{office}` is not an office: use `chancellor` or a ministry such as `War`."
+    unknownField: "`{field}` can't be read; use one of {fields}."
+    unknownParty: "`{id}` is not a party id."
+    unknownReference: "`{reference}` is not something a formula can read."
+    unreadable: "`{reference}` has no value right now."
 effects:
   errors:
-    tooManyTokens: "`{raw}`: write one key and at most one value, such as `economy -2`."
+    unexpected: "can't read the effects from `{text}`."
+    expected: "expected `{expected}` at `{text}`."
+    randomWeight: "`{weight}` is not a weight: give each outcome a positive number, as in `random [3: threat 5 | 1: favour -2]`."
+    randomEmpty: a `random` block needs at least one outcome.
+    eachScope: "`{scope}` is not something to go through: use `province`, `faction`, `party` or `issue`."
+    eachTop: "`{count}` is not a count: give a whole number from 1."
+    eachTopNeedsBy: "`top` and `bottom` need `by`, the score to rank by."
+    setCondition: "a condition is on or off: use `1` or `-1`, not `=`."
+    variableShape: "write it as `var.<name>`, with the name from `config/variables.yaml`."
     forKey: "`{key}`: {error}"
     invalidKey: is not a valid effect key.
     actionShape: write it as `{prefix}.<id>`.
@@ -903,6 +942,24 @@ effects:
     unitsShape: "write it as `{prefix}.<province>`."
     unitsWhole: "give a whole number of units."
     eventDelay: "`{value}` is not a delay: give a whole number of turns, or nothing for the start of the next turn."
+  preview:
+    if: "If `{condition}`:"
+    else: "Otherwise:"
+    random: "One of these, by chance:"
+    chance: "{chance}%:"
+    nothing: nothing happens
+    each: "For each {scope}"
+    where: " where `{condition}`"
+    by: ", ranked by `{score}`"
+    top: ", the {count} highest by `{score}`"
+    bottom: ", the {count} lowest by `{score}`"
+    scopeProvince: province
+    scopeFaction: faction
+    scopeParty: party
+    scopeIssue: open issue
+    formula: "`{key}` by `{value}`"
+    setTo: "`{key}` set to `{value}`"
+    variable: "`var.{name}` {amount} (secret)"
   summary:
     open: "New issue: {issue}"
     close: "Issue closed: {issue}"
@@ -1177,6 +1234,8 @@ data:
     pollDelivered: Poll delivered.
   effect:
     warning: "{source}: `{key}`: {warning}"
+    tooMany: "{source}: the effects ran too deep or too long and were stopped; check for a block that repeats without end."
+    cannotSet: "this value can't be set with `=`; change it by an amount instead."
     noPopularityTarget: "nobody holds that role or matches `{target}` right now"
     noProvince: no province {id}
     noCondition: no condition {id}

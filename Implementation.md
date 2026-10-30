@@ -250,6 +250,16 @@ before each one, so a resolution step that has applied effects must re-read `Gam
 An effect that can't apply (a template not Ready, a bill whose issue isn't open) is skipped with a GM
 alert rather than failing the resolution.
 
+On top of the kinds sit **blocks and formulas** (YAML Reference, "Advanced effects"). An `Effect` may carry a
+`Formula` amount, a `SetTo` flag, or an `EffectBlock` (`IfBlock`, `RandomBlock`, `EachBlock`) holding
+nested effect lists. `ApplyEffectsTx` walks the tree, evaluates formulas through `FormulaReferences`
+against the store, and turns every leaf into a plain `Effect` with a number before handing it to its kind,
+so kinds never see formulas or blocks and `Applied` (what posts show) stays flat. Validation binds `it`
+and `here` to a stand-in id before checking. Random choices use a generator seeded from the resolution
+seed and the effect source, so an undone resolution replays them. A new formula reference goes in
+`FormulaReferences`; a new block type needs the model in `Game/Effects.cs`, the text grammar, the YAML
+reader and writer in `TemplateCodec`, `RunEffects`, and a preview line in `EffectSummary`.
+
 ### 4.6.1 Templates as built
 
 All five template kinds live in one `templates` table (id, kind, status, the source YAML, times

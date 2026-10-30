@@ -510,6 +510,12 @@ public partial class DatabaseService
                 resolution_number INTEGER NOT NULL,
                 PRIMARY KEY (faction_id, resolution_number)
             );");
+
+        Exec(connection, @"
+            CREATE TABLE IF NOT EXISTS variables (
+                name TEXT PRIMARY KEY,
+                value REAL NOT NULL
+            );");
     }
 
     private static void Exec(SqliteConnection conn, string sql)
