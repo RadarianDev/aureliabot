@@ -26,7 +26,11 @@ public partial class DatabaseService
 
         state = GetGameStateTx(conn, tx);
         if (state.IsPreElection)
-            DropPendingJoinRequestsTx(conn, tx);
+        {
+            CancelAtElectionTx(conn, tx, report);
+            if (state.Started)
+                RunElectionTx(conn, tx, state, config, report);
+        }
 
         AdvanceSeasonTx(conn, tx, state, config, report, now);
 

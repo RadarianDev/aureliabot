@@ -978,6 +978,8 @@ sync:
     noGuild: The bot is not connected to a server.
 
 data:
+  election:
+    readingCancelled: "The election cancelled it before the vote."
   attack:
     self: you cannot attack yourself
     targetInactive: the target is not an active faction

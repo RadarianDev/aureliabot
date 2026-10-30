@@ -51,6 +51,10 @@ public sealed record ActionReport(
 
 public sealed record CrackdownReport(string ProvinceId, bool Success, int GendarmerieTotal, int DieSides, int DieRoll);
 
+public sealed record ElectionPartySnapshot(long Id, string Name, string Colour, ulong? EmojiId);
+
+public sealed record ElectionReport(int TermNumber, ElectionResult Result, IReadOnlyList<ElectionPartySnapshot> Parties);
+
 public sealed record ResolutionReport
 {
     public long ResolutionNumber { get; init; }
@@ -62,6 +66,7 @@ public sealed record ResolutionReport
     public bool CampaignDay { get; init; }
     public bool SnapElectionCalled { get; set; }
     public bool PreElectionOpened { get; set; }
+    public ElectionReport? Election { get; set; }
 
     public List<string> News { get; } = [];
     public List<FiredEventReport> FiredEvents { get; } = [];
