@@ -489,6 +489,18 @@ gm:
     rewardedNotPosted: |-
       Rewarded {faction}: popularity {from} → {to}{capped}.
       ⚠️ No #news channel is set, so the commendation was not posted.
+  peek:
+    header: "## Hidden state · {label}"
+    kingdom: "**Kingdom:** Favour {favour} (baseline {baseline}) · Threat {threat} · Economy {economy} · Tax rate {tax} · Reserve {reserve}"
+    issuesHeading: "**Open issues** (base opinion · national opinion · salience)"
+    issueLine: "{issue}: {base} · {national} · {salience}"
+    noIssues: "No open issues."
+    provincesHeading: "**Provinces** (discontent · conditions)"
+    provinceLine: "{province}: {discontent} · {conditions}"
+    noConditions: "no conditions"
+    electionHeader: "## Election preview (current state, nothing saved)"
+    chartTitle: "Preview: the Assembly"
+    renderFailed: "⚠️ Could not draw the images: {error}"
 
 setup:
   ok: "✅ {text}"
@@ -906,6 +918,39 @@ news:
   turnTracker:
     preElection: "{name} · Pre-election"
     paused: "{name} · Paused"
+
+election:
+  header: |-
+    ## The nation has voted
+    The returns are in for the Assembly of term {term}.
+  partiesHeading: "**Seats and votes**"
+  partyLine: "{party}: **{seats}** seats · {share}% of the vote"
+  factionsHeading: "**The members returned**"
+  factionLine: "{faction} · {seats}"
+  provincesHeading: "**The provinces**"
+  provinceLine: "{province}: {seats}"
+  provinceSeat: "{party} {seats}"
+  provinceEmpty: "no seats returned"
+  nobody: "None."
+  unknownParty: "Party #{id}"
+  chartTitle: "The Assembly of term {term}"
+  mapTitle: "The provinces"
+  legendLine: "{party} · `{colour}` · {count}: {provinces}"
+  legendUnclaimed: "Original fill: {provinces}"
+  legendEmpty: "No province returned a winner."
+  proclamation: |-
+    ## By His Majesty's Command
+    The people of Aurelia have spoken. His Majesty King Arthas II summons the newly elected Assembly, {seats} members strong, to sit for term {term}.
+    Let the members take their benches, and let the Crown be advised.
+  alert:
+    noNews: "No #news channel is set, so the results of the election for term {term} were not posted."
+    renderFailed: "The election images for term {term} could not be drawn: {error}"
+    postFailed: "Posting the election results for term {term} failed: {error}"
+
+map:
+  noElection: "There has been no election yet."
+  title: "The provinces after the election of term {term}"
+  renderFailed: "The map could not be drawn."
 
 dashboard:
   title: The Kingdom of Aurelia · {label}
