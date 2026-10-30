@@ -53,4 +53,12 @@ public static class Formulas
 
     public static double RestingDiscontent(DiscontentConstants discontent, IEnumerable<ConditionDefinition> conditions) =>
         discontent.Rest + conditions.Sum(c => c.DiscontentRest);
+
+    public static double CrisisGain(GameConstants constants, Lean answerLean, double provincialOpinion, double salience) =>
+        throw new NotImplementedException();
+
+    public static double CrisisDefaultLoss(GameConstants constants, double salience) => throw new NotImplementedException();
+
+    public static double CondemnationChange(GameConstants constants, Lean side, Lean? ministerLean, double provincialOpinion) =>
+        throw new NotImplementedException();
 }

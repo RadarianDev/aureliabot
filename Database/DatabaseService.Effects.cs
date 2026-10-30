@@ -52,7 +52,7 @@ public partial class DatabaseService
                 "close" => CloseIssueTx(conn, tx, state, target!),
                 "bill" => MakeBillAvailableTx(conn, tx, state, target!),
                 "project" => Texts.Get("data.effect.projectNotBuilt"),
-                "crisis" => Texts.Get("data.effect.crisisNotBuilt"),
+                "crisis" => PostCrisisTx(conn, tx, state, config, target!, source, report),
                 _ => Texts.Get("data.effect.unknownKey", ("key", effect.Key)),
             };
 

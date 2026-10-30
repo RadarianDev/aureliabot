@@ -10,10 +10,11 @@ public class Publisher
     private readonly ElectionPublisher _elections;
     private readonly AssemblyPublisher _assembly;
     private readonly GovernmentPublisher _government;
+    private readonly CrisisPublisher _crises;
 
     public Publisher(
         DiscordSocketClient client, DatabaseService data, ConstantsStore constants, FactionChannelService factionChannels,
-        ElectionPublisher elections, AssemblyPublisher assembly, GovernmentPublisher government)
+        ElectionPublisher elections, AssemblyPublisher assembly, GovernmentPublisher government, CrisisPublisher crises)
     {
         _client = client;
         _data = data;
@@ -22,6 +23,7 @@ public class Publisher
         _elections = elections;
         _assembly = assembly;
         _government = government;
+        _crises = crises;
     }
 
     public async Task PublishAsync(ResolutionReport report)
@@ -49,6 +51,7 @@ public class Publisher
                 await _elections.PublishAsync(election, source);
 
             await PostEventsAsync(report, source);
+            await _crises.PublishAsync(report, source);
             await _government.PublishAsync(report, source);
             await _assembly.PublishAsync(report, source);
 

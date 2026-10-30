@@ -1103,7 +1103,6 @@ data:
     billInPlay: bill {id} is already in play
     billPassed: bill {id} has already passed
     projectNotBuilt: projects start once stage 7 is built; the project was not started
-    crisisNotBuilt: crises are posted once stage 6 is built; the crisis was not posted
     unknownKey: unknown effect key {key}
   start:
     alreadyStarted: The game has already started.
