@@ -21,7 +21,7 @@
 - Only parties stand in elections. A faction outside a party is an **independent**.
 ## The World
 - Aurelia has ten **provinces**, each with a population, **discontent** and **conditions**.
-- A **condition** is a public fact about a province, such as *Lawless*, *Epidemic*, *Strike* or *Coastal*. Conditions push local opinion, discontent and the economy; by how much is hidden.
+- A **condition** is a public fact about a province, such as *Lawless*, *Epidemic*, *Striking* or *Coastal*. Conditions push local opinion, discontent and the economy; by how much is hidden.
 - National **variables**:
 	- **Economy:** Aurelian production. It grows every year, but restless provinces slow it down, each counting by its population. The **budget** is the economy times a tax rate set by law, paid out once a year.
 	- **Anzarian Favour:** how the Anzarian nobles feel about the union, from *content* to *defiant*. Too low risks revolt.

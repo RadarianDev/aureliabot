@@ -217,7 +217,7 @@ lawless:
 Every field except `name` is optional and defaults to 0. Crime is not a separate value: it is the `lawless` condition. The catalogue has two kinds of condition, which the bot treats alike:
 
 - **Standing** conditions describe a province's character and are set in `provinces.yaml`: urban, industrial, farmland, frontier, anzarian_border, crossroads, rugged, forested, marshland, remote and coastal.
-- **Event** conditions come and go with events and crises: lawless, epidemic, strike, famine and boom.
+- **Event** conditions come and go with events and crises: lawless, epidemic, striking, famine and booming.
 
 Provinces and conditions reach players through `/info north_arpal`. Discontent is in words, and condition numbers never appear:
 
@@ -231,7 +231,7 @@ Frontier: A border with a foreign power, watched from both sides.
 Crossroads: Roads and rivers carry the kingdom's trade through here.
 Rugged: Hills and uplands, hard to farm and harder to travel.
 Coastal: A harbour province, open to the sea.
-Strike: Picket lines stand at the gates, and nothing moves.
+Striking: Picket lines stand at the gates, and nothing moves.
 
 Stationed: 2nd Arpal Division · d12, Carden Gendarmerie · d8
 Last election: Liberal Union 9, Country Party 6, Crown and Union 4
@@ -309,7 +309,7 @@ id: carden_strike
 title: Strike at the Carden Docks
 text: The dockers walk out over wages, and the harbour falls silent.
 effects: { discontent.north_arpal: 1, salience.labour: 1,
-           condition.north_arpal.strike: 1, crisis.dock_strike_carden: true }
+           condition.north_arpal.striking: 1, crisis.dock_strike_carden: true }
 schedule: { season: Autumn, year: 1851 }
 ```
 
@@ -322,7 +322,7 @@ The dockers walk out over wages, and the harbour falls silent.
 
 <:stat_raise:1565442139855392808> Discontent in North Arpal
 <:stat_raise:1565442139855392808> Salience: The Condition of Labour
-North Arpal is now *Strike*
+North Arpal is now *Striking*
 Crisis: The Carden Dock Strike
 ```
 
@@ -347,7 +347,7 @@ answers:
     label: Meet the strikers' demands
     price: 3
     text: The docks reopen within the week, and the owners are furious.
-    effects: { discontent.north_arpal: -2, economy: -1, condition.north_arpal.strike: -1 }
+    effects: { discontent.north_arpal: -2, economy: -1, condition.north_arpal.striking: -1 }
   - lean: Neutral
     label: Commission a royal inquiry
     price: 4
@@ -356,7 +356,7 @@ answers:
   - lean: Against
     label: Declare the strike unlawful
     text: The strike collapses, and so does trust in Carden.
-    effects: { discontent.north_arpal: 2, condition.north_arpal.strike: -1 }
+    effects: { discontent.north_arpal: 2, condition.north_arpal.striking: -1 }
 complication:
   text: The money runs out mid-negotiation, and the strike spreads.
   effects: { discontent.north_arpal: 1, discontent.iracterie: 1 }
@@ -400,7 +400,7 @@ The docks reopen within the week, and the owners are furious.
 
 <:stat_lower:1565442180057927860> Discontent in North Arpal
 <:stat_lower:1565442180057927860> Economy −1
-North Arpal is no longer *Strike*
+North Arpal is no longer *Striking*
 
 Condemnation: @rival (Baroness Edel) stood with the minister, and gains nothing.
 ```
@@ -446,7 +446,7 @@ effects: { economy: 5, discontent.here: -2, discontent.soralenten: -1 }
 bonus:
   by: { season: Spring, year: 1853 }
   text: The first train reaches the coast ahead of the guarantee, and the shareholders cheer the Crown.
-  effects: { economy: 2, condition.iracterie.boom: 1 }
+  effects: { economy: 2, condition.iracterie.booming: 1 }
 ```
 
 | Field | Meaning |
@@ -492,7 +492,7 @@ The first train reaches the coast ahead of the guarantee, and the shareholders c
 <:stat_lower:1565442180057927860> Discontent in Provencie Gares
 <:stat_lower:1565442180057927860> Discontent in Soralenten
 <:stat_raise:1565442139855392808> Economy +2
-Iracterie is now *Boom*
+Iracterie is now *Booming*
 ```
 
 ## 5. Formulas
@@ -878,6 +878,19 @@ Posting a template creates a **live copy**, so later edits to the template never
 **Effect summaries**
 
 Whenever effects reach players, the post shows a **summary of effects**, one line per effect in the order the GM wrote them. This covers fired events, crisis outcomes (the chosen answer, a complication or a default), passed laws and finished projects.
+
+Every post that carries effects has the same shape (the example posts in section 4 predate it):
+
+```
+## Heading
+Any plain lines, such as the vote count or the minister who chose
+*The story, in italics*
+
+**-- EFFECTS --**
+- [<:stat_raise:1565442139855392808>] Discontent in North Arpal
+- [<:stat_lower:1565442180057927860>] Economy −2
+- North Arpal is now *Striking*
+```
 
 - A number going up or down starts with the **up** or **down** emoji (`display.upEmoji`, `display.downEmoji` in `constants.yaml`), followed by the value's readable name, for example "Discontent in North Arpal".
 - Public numbers (section 9) also show the amount: economy, purses, the reserve, faction popularity, the Assembly size, and the tax rate as a percentage.

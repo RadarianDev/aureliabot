@@ -40,7 +40,7 @@ public class TemplateCodecTests : IDisposable
             label: Meet the strikers' demands
             price: 3
             text: The docks reopen within the week, and the owners are furious.
-            effects: { discontent.north_arpal: -2, economy: -1, condition.north_arpal.strike: -1 }
+            effects: { discontent.north_arpal: -2, economy: -1, condition.north_arpal.striking: -1 }
           - lean: Neutral
             label: Commission a royal inquiry
             price: 4
@@ -49,7 +49,7 @@ public class TemplateCodecTests : IDisposable
           - lean: Against
             label: Declare the strike unlawful
             text: The strike collapses, and so does trust in Carden.
-            effects: { discontent.north_arpal: 2, condition.north_arpal.strike: -1 }
+            effects: { discontent.north_arpal: 2, condition.north_arpal.striking: -1 }
         complication:
           text: The money runs out mid-negotiation, and the strike spreads.
           effects: { discontent.north_arpal: 1, discontent.iracterie: 1 }

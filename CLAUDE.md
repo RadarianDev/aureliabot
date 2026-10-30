@@ -30,6 +30,11 @@ reloaded with the rest of `config/`, so wording changes need no rebuild. `TextsT
 a key the file lacks, or the file has a key no code uses. Exempt: console logs, `LogEntry` payloads,
 exception messages meant for developers, and slash command and option descriptions (Discord reads
 those attributes at registration).
+
+**Every post that carries effects** (events, laws, crisis outcomes, finished projects, public
+`/gm apply`, and their `/content preview`) is built with `Publisher.FormatEffectPost(heading,
+preamble, story, effectLines)`: a heading, plain preamble lines, the story in italics, then
+**-- EFFECTS --** and one bullet per `EffectSummary` line. Never assemble such a post by hand.
 Document large mechanics and features in dedicated `.md` files rather than in code comments.
 Existing mechanic docs:
 - [Human Rules.md](Human%20Rules.md): the player-facing rules, written by the GM. They win over

@@ -57,8 +57,8 @@ epidemic:
   description: Fever spreads through the crowded quarters.
   biases: { public_health: 0.4, labour: 0.1 }
   discontentRest: 1
-strike:
-  name: Strike
+striking:
+  name: Striking
   description: Picket lines stand at the gates, and nothing moves.
   biases: { labour: 0.4 }
   discontentRest: 1
@@ -69,8 +69,8 @@ famine:
   biases: { free_trade: 0.5, poor_relief: -0.3 }
   discontentRest: 2
   growth: -0.003
-boom:
-  name: Boom
+booming:
+  name: Booming
   description: New money, new chimneys, and work for anyone who wants it.
   biases: { railways: 0.1 }
   discontentRest: -1

@@ -126,7 +126,7 @@ effects: { economy: 5, discontent.here: -2, discontent.soralenten: -1 }
 bonus:
   by: { season: Spring, year: 1853 }
   text: The first train reaches the coast ahead of the guarantee, and the shareholders cheer the Crown.
-  effects: { economy: 2, condition.iracterie.boom: 1 }
+  effects: { economy: 2, condition.iracterie.booming: 1 }
 ```
 
 | Field | Required | Meaning |
@@ -157,7 +157,7 @@ id: carden_strike
 title: Strike at the Carden Docks
 text: The dockers walk out over wages, and the harbour falls silent.
 effects: { discontent.north_arpal: 1, salience.labour: 1,
-           condition.north_arpal.strike: 1, crisis.dock_strike_carden: true }
+           condition.north_arpal.striking: 1, crisis.dock_strike_carden: true }
 schedule: { season: Autumn, year: 1851 }
 ```
 
@@ -194,7 +194,7 @@ answers:
     label: Meet the strikers' demands
     price: 3
     text: The docks reopen within the week, and the owners are furious.
-    effects: { discontent.north_arpal: -2, economy: -1, condition.north_arpal.strike: -1 }
+    effects: { discontent.north_arpal: -2, economy: -1, condition.north_arpal.striking: -1 }
   - lean: Neutral
     label: Commission a royal inquiry
     price: 4
@@ -203,7 +203,7 @@ answers:
   - lean: Against
     label: Declare the strike unlawful
     text: The strike collapses, and so does trust in Carden.
-    effects: { discontent.north_arpal: 2, condition.north_arpal.strike: -1 }
+    effects: { discontent.north_arpal: 2, condition.north_arpal.striking: -1 }
 complication:
   text: The money runs out mid-negotiation, and the strike spreads.
   effects: { discontent.north_arpal: 1, discontent.iracterie: 1 }
@@ -427,5 +427,5 @@ lawless:
 
 **Standing** conditions describe a province and are set in `provinces.yaml`: urban, industrial, farmland,
 frontier, anzarian_border, crossroads, rugged, forested, marshland, remote, coastal. **Event**
-conditions come and go through effects: lawless, epidemic, strike, famine, boom.
+conditions come and go through effects: lawless, epidemic, striking, famine, booming.
 

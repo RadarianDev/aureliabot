@@ -8,4 +8,4 @@ effects: { economy: 5, discontent.here: -2, discontent.soralenten: -1 }
 bonus:
   by: { season: Spring, year: 1853 }
   text: The first train reaches the coast ahead of the guarantee, and the shareholders cheer the Crown.
-  effects: { economy: 2, condition.iracterie.boom: 1 }
+  effects: { economy: 2, condition.iracterie.booming: 1 }

@@ -14,7 +14,7 @@ public class EffectSummaryTests
     private static readonly EffectNames Names = new(
         Province: id => id switch { "north_arpal" => "North Arpal", "iracterie" => "Iracterie", _ => id },
         Issue: id => id switch { "labour" => "The Condition of Labour", "free_trade" => "Free Trade", _ => id },
-        Condition: id => id switch { "strike" => "Strike", "lawless" => "Lawless", _ => id },
+        Condition: id => id switch { "striking" => "Striking", "lawless" => "Lawless", _ => id },
         Faction: id => $"<@{id}>",
         IssueTemplate: id => id == "public_health" ? "Public Health" : id,
         BillTemplate: id => id == "ten_hours" ? "The Ten Hours Bill" : id,
@@ -71,8 +71,8 @@ public class EffectSummaryTests
     [Fact]
     public void Conditions_given_and_removed()
     {
-        Assert.Equal("North Arpal is now *Strike*", Single("condition.north_arpal.strike", 1));
-        Assert.Equal("North Arpal is no longer *Strike*", Single("condition.north_arpal.strike", -1));
+        Assert.Equal("North Arpal is now *Striking*", Single("condition.north_arpal.striking", 1));
+        Assert.Equal("North Arpal is no longer *Striking*", Single("condition.north_arpal.striking", -1));
     }
 
     [Fact]
@@ -89,13 +89,13 @@ public class EffectSummaryTests
             ("discontent.north_arpal", 1),
             ("salience.labour", 1),
             ("economy", 0),
-            ("condition.north_arpal.strike", 1),
+            ("condition.north_arpal.striking", 1),
             ("crisis.dock_strike_carden", null));
         Assert.Equal(
         [
             UpLine + " Discontent in North Arpal",
             UpLine + " Salience: The Condition of Labour",
-            "North Arpal is now *Strike*",
+            "North Arpal is now *Striking*",
             "Crisis: The Carden Dock Strike",
         ], lines);
     }

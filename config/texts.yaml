@@ -253,7 +253,7 @@ gm:
   warning: "⚠️ {warning}"
   royalAdjustment: "Royal adjustment"
   royalDecree: "By royal decree"
-  decreeHeading: "## By His Majesty's Command"
+  decreeHeading: "By His Majesty's Command"
   channel:
     set:
       needsRole: "{kind} needs the `role` option."
@@ -711,14 +711,14 @@ content:
     billMeta: "{issue} · {lean}"
     motion: "> {motion}"
     billPasses: "-# When it passes, in #news:"
-    billLaw: "## {title} becomes law"
+    billLaw: "{title} becomes law"
     anyProvince: A province of the minister's choosing
     projectBegun: "## Project begun: {title}"
     projectMeta: "{where} · Ministry of {ministry} · {price} over {term} seasons"
     bonusWithin: Bonus if finished within {within} seasons
     bonusBy: Bonus if finished by the end of {season} {year}
     projectFinishes: "-# When it finishes, in #news:"
-    projectFinished: "## {title} is finished"
+    projectFinished: "{title} is finished"
     withBonus: "-# With the bonus, on top:"
     crisisTitle: "## Crisis: {title}"
     crisisMeta: Ministry of {ministry} · {province} · {issue}
@@ -900,10 +900,8 @@ news:
     closes: The season closes {when}.
   campaignLog:
     header: "## The campaign, {season}"
-  event:
-    post: |-
-      ## {title}
-      {story}
+  effectPost:
+    heading: "## {heading}"
     story: "*{text}*"
     effectsHeader: "**-- EFFECTS --**"
     effectLine: "- {line}"

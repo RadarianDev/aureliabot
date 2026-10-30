@@ -6,7 +6,7 @@ public class EffectParserTests
 {
     private static EffectContext Context(bool allowHere = false, bool allowCrisis = false) => new(
         new HashSet<string> { "north_arpal", "iracterie" },
-        new HashSet<string> { "strike", "lawless" },
+        new HashSet<string> { "striking", "lawless" },
         new HashSet<string> { "labour" },
         new HashSet<string> { "labour", "public_health" },
         new HashSet<string> { "ten_hours_bill" },
@@ -34,7 +34,7 @@ public class EffectParserTests
     [Theory]
     [InlineData("baseline.labour 0.1")]
     [InlineData("purse.Navy 2")]
-    [InlineData("condition.north_arpal.strike 2")]
+    [InlineData("condition.north_arpal.striking 2")]
     [InlineData("discontent.here 1")]
     [InlineData("crisis.dock_strike_carden")]
     [InlineData("economy")]

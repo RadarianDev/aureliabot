@@ -113,10 +113,10 @@ public class OpeningContentTests : IDisposable
         ImportAndReadyStartingContent();
         Db.StartGame(Config, DateTimeOffset.UtcNow);
 
-        Db.ApplyEffects([new Effect("condition.north_arpal.strike", 1)], Config, new EffectSource("t", "t", "1"));
-        Assert.Contains("strike", Db.GetProvinceConditions()["north_arpal"]);
+        Db.ApplyEffects([new Effect("condition.north_arpal.striking", 1)], Config, new EffectSource("t", "t", "1"));
+        Assert.Contains("striking", Db.GetProvinceConditions()["north_arpal"]);
 
-        Db.ApplyEffects([new Effect("condition.north_arpal.strike", -1)], Config, new EffectSource("t", "t", "2"));
-        Assert.DoesNotContain("strike", Db.GetProvinceConditions()["north_arpal"]);
+        Db.ApplyEffects([new Effect("condition.north_arpal.striking", -1)], Config, new EffectSource("t", "t", "2"));
+        Assert.DoesNotContain("striking", Db.GetProvinceConditions()["north_arpal"]);
     }
 }

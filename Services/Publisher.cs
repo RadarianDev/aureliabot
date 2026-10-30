@@ -75,14 +75,23 @@ public class Publisher
     public string EventPost(FiredEventReport fired, EffectNames names) =>
         FormatEvent(fired.Title, fired.Text, EffectSummary.Lines(fired.Effects, names, _constants.Current.Display));
 
-    public static string FormatEvent(string title, string text, IReadOnlyList<string> effectLines)
+    public static string FormatEvent(string title, string text, IReadOnlyList<string> effectLines) =>
+        FormatEffectPost(title, [], text, effectLines);
+
+    public static string FormatEffectPost(string? heading, IEnumerable<string> preamble, string? story, IReadOnlyList<string> effectLines)
     {
-        var story = string.Join("\n\n", text.Split("\n\n", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Select(paragraph => Texts.Get("news.event.story", ("text", paragraph))));
-        var post = Texts.Get("news.event.post", ("title", title), ("story", story));
+        var top = new List<string>();
+        if (!string.IsNullOrWhiteSpace(heading)) top.Add(Texts.Get("news.effectPost.heading", ("heading", heading)));
+        top.AddRange(preamble.Where(line => !string.IsNullOrWhiteSpace(line)));
+        if (!string.IsNullOrWhiteSpace(story))
+            top.Add(string.Join("\n\n", story.Split("\n\n", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(paragraph => Texts.Get("news.effectPost.story", ("text", paragraph)))));
+
+        var post = string.Join("\n", top);
         if (effectLines.Count == 0) return post;
-        return post + "\n\n" + Texts.Get("news.event.effectsHeader") + "\n"
-               + string.Join("\n", effectLines.Select(line => Texts.Get("news.event.effectLine", ("line", line))));
+        var effects = Texts.Get("news.effectPost.effectsHeader") + "\n"
+                      + string.Join("\n", effectLines.Select(line => Texts.Get("news.effectPost.effectLine", ("line", line))));
+        return post.Length == 0 ? effects : post + "\n\n" + effects;
     }
 
     private IEnumerable<string> ActionLines(ResolutionReport report)

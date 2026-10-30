@@ -90,9 +90,8 @@ public static class ContentPreview
         sb.AppendLine(Texts.Get("content.preview.motion", ("motion", bill.Motion)));
         sb.AppendLine();
         sb.AppendLine(Texts.Get("content.preview.billPasses"));
-        sb.AppendLine(Texts.Get("content.preview.billLaw", ("title", bill.Title)));
-        sb.AppendLine(bill.PassText);
-        summary.Append(sb, bill.PassEffects);
+        sb.AppendLine(Publisher.FormatEffectPost(Texts.Get("content.preview.billLaw", ("title", bill.Title)), [], bill.PassText,
+            summary.Lines(bill.PassEffects)));
         return sb.ToString();
     }
 
@@ -109,14 +108,13 @@ public static class ContentPreview
                 : Texts.Get("content.preview.bonusBy", ("season", bonus.BySeason), ("year", bonus.ByYear)));
         sb.AppendLine();
         sb.AppendLine(Texts.Get("content.preview.projectFinishes"));
-        sb.AppendLine(Texts.Get("content.preview.projectFinished", ("title", project.Title)));
-        summary.Append(sb, project.Effects);
+        sb.AppendLine(Publisher.FormatEffectPost(Texts.Get("content.preview.projectFinished", ("title", project.Title)), [], null,
+            summary.Lines(project.Effects)));
         if (project.Bonus is { } earned)
         {
             sb.AppendLine();
             sb.AppendLine(Texts.Get("content.preview.withBonus"));
-            if (earned.Text.Length > 0) sb.AppendLine(earned.Text);
-            summary.Append(sb, earned.Effects);
+            sb.AppendLine(Publisher.FormatEffectPost(null, [], earned.Text, summary.Lines(earned.Effects)));
         }
         return sb.ToString();
     }
@@ -144,25 +142,17 @@ public static class ContentPreview
         {
             sb.AppendLine();
             sb.AppendLine(Texts.Get("content.preview.outcome", ("number", ++number)));
-            sb.AppendLine(answer.Text);
-            summary.Append(sb, answer.Effects);
+            sb.AppendLine(Publisher.FormatEffectPost(null, [], answer.Text, summary.Lines(answer.Effects)));
         }
         sb.AppendLine();
         sb.AppendLine(Texts.Get("content.preview.cantPay"));
-        if (crisis.Complication is { } complication)
-        {
-            sb.AppendLine(complication.Text);
-            summary.Append(sb, complication.Effects);
-        }
-        else
-        {
-            sb.AppendLine(Texts.Get("content.preview.moneyRunsOut"));
-            summary.Append(sb, [new Effect($"discontent.{crisis.Province}", 1)]);
-        }
+        sb.AppendLine(crisis.Complication is { } complication
+            ? Publisher.FormatEffectPost(null, [], complication.Text, summary.Lines(complication.Effects))
+            : Publisher.FormatEffectPost(null, [], Texts.Get("content.preview.moneyRunsOut"),
+                summary.Lines([new Effect($"discontent.{crisis.Province}", 1)])));
         sb.AppendLine();
         sb.AppendLine(Texts.Get("content.preview.noAnswer"));
-        sb.AppendLine(crisis.Default.Text);
-        summary.Append(sb, crisis.Default.Effects);
+        sb.AppendLine(Publisher.FormatEffectPost(null, [], crisis.Default.Text, summary.Lines(crisis.Default.Effects)));
         return sb.ToString();
     }
 
@@ -182,14 +172,6 @@ public static class ContentPreview
                 if (Problems.Count == 0) Problems.Add(Texts.Get("content.preview.summaryFailed", ("error", ex.Message)));
                 return effects.Select(e => Texts.Get("content.preview.rawEffect", ("effect", EffectParser.Format([e])))).ToList();
             }
-        }
-
-        public void Append(StringBuilder sb, IReadOnlyList<Effect> effects)
-        {
-            var lines = Lines(effects);
-            if (lines.Count == 0) return;
-            sb.AppendLine();
-            foreach (var line in lines) sb.AppendLine(line);
         }
     }
 }
