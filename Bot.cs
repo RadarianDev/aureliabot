@@ -58,6 +58,8 @@ public class Bot
         _client.Log += LogAsync;
         _interactions.Log += LogAsync;
         _client.Ready += ReadyAsync;
+        _client.UserJoined += UserJoinedAsync;
+        _client.UserLeft += UserLeftAsync;
         _client.InteractionCreated += interaction =>
         {
             _ = Task.Run(async () =>
@@ -114,6 +116,48 @@ public class Bot
             try { await resolution.RunAsync(CancellationToken.None); }
             catch (Exception ex) { Console.WriteLine($"[Resolution] Poller stopped: {ex}"); }
         });
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await _services.GetRequiredService<PartySyncService>().SyncAllAsync();
+                await _services.GetRequiredService<CabinetSyncService>().SyncAsync();
+                await _services.GetRequiredService<Publisher>().UpdateDashboardAsync();
+            }
+            catch (Exception ex) { Console.WriteLine($"[Startup] Sync failed: {ex}"); }
+        });
+    }
+
+    private Task UserJoinedAsync(SocketGuildUser user)
+    {
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                if (_data.GetFaction(user.Id) is not { IsActive: true }) return;
+                await _services.GetRequiredService<PartySyncService>().SyncMemberAsync(user.Id);
+                await _services.GetRequiredService<CabinetSyncService>().SyncAsync();
+            }
+            catch (Exception ex) { Console.WriteLine($"[UserJoined] Sync for {user.Id} failed: {ex}"); }
+        });
+        return Task.CompletedTask;
+    }
+
+    private Task UserLeftAsync(SocketGuild guild, SocketUser user)
+    {
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                if (_data.GetFaction(user.Id) is not { IsActive: true } faction) return;
+                await _services.GetRequiredService<AlertService>().PostAsync(
+                    $"{Display.Faction(faction)} ({user.Username}) left the server while their faction is active. " +
+                    "Consider `/gm faction retire`.");
+            }
+            catch (Exception ex) { Console.WriteLine($"[UserLeft] Alert for {user.Id} failed: {ex}"); }
+        });
+        return Task.CompletedTask;
     }
 
     private static readonly HashSet<string> WhitelistExemptCommands = new(StringComparer.OrdinalIgnoreCase)

@@ -30,6 +30,69 @@ public class Publisher
         news.AddRange(report.News);
 
         await PostAsync(ChannelRole.News, string.Join("\n", news), $"resolution {report.ResolutionNumber}");
+        await UpdateDashboardAsync();
+    }
+
+    public const string DashboardMessageKey = "dashboard_message_id";
+
+    public Embed BuildDashboard()
+    {
+        var state = _data.GetGameState();
+        var parties = _data.GetAllParties();
+        var factions = _data.GetActiveFactions();
+
+        var calendar = $"{state.Label}{(state.IsPreElection ? " · **Pre-election**" : "")}{(state.Paused ? " · Paused" : "")}\n" +
+                       $"Next resolution: {Display.NextResolution(state)}\n" +
+                       $"Next election: end of {GameCalendar.Label(state.PreElectionSeason, state.PreElectionYear)}";
+
+        var seatLines = parties
+            .Select(p => (Party: p, Members: factions.Where(f => f.PartyId == p.Id).ToList()))
+            .OrderByDescending(x => x.Members.Sum(m => m.Seats))
+            .ThenBy(x => x.Party.Id)
+            .Select(x => $"{Display.Party(x.Party)}: {x.Members.Sum(m => m.Seats)} seats · {x.Members.Count} members")
+            .ToList();
+        var independents = factions.Where(f => f.IsIndependent).ToList();
+        if (independents.Count > 0)
+            seatLines.Add($"Independents: {independents.Sum(f => f.Seats)} seats · {independents.Count} factions");
+
+        var openIssues = _data.GetOpenIssues();
+
+        return new EmbedBuilder()
+            .WithTitle($"The Kingdom of Aurelia · {state.Label}")
+            .WithColor(new Color(0xB8, 0x86, 0x0B))
+            .AddField("Calendar", calendar)
+            .AddField($"The Assembly · {state.Seats} seats", seatLines.Count == 0 ? "No parties yet." : Display.Truncate(string.Join("\n", seatLines), 1024))
+            .AddField("Open issues", openIssues.Count == 0 ? "None yet." : Display.Truncate(string.Join("\n", openIssues.Select(i => i.Title)), 1024))
+            .WithFooter("Updated after every resolution")
+            .WithCurrentTimestamp()
+            .Build();
+    }
+
+    public async Task UpdateDashboardAsync()
+    {
+        try
+        {
+            if (_data.GetChannel(ChannelRole.Dashboard) is not { } channelId || _client.GetChannel(channelId) is not ITextChannel channel)
+                return;
+            var embed = BuildDashboard();
+
+            if (ulong.TryParse(_data.GetSetting(DashboardMessageKey), out var messageId)
+                && await channel.GetMessageAsync(messageId) is IUserMessage existing
+                && existing.Author.Id == _client.CurrentUser.Id)
+            {
+                await existing.ModifyAsync(p => { p.Embed = embed; p.Content = ""; });
+                if (!existing.IsPinned) await existing.PinAsync();
+                return;
+            }
+
+            var message = await channel.SendMessageAsync(embed: embed);
+            _data.SetSetting(DashboardMessageKey, message.Id.ToString());
+            await message.PinAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Publisher] Dashboard update failed: {ex.Message}");
+        }
     }
 
     public async Task<IUserMessage?> PostAsync(ChannelRole role, string text, string source, Embed? embed = null, MessageComponent? components = null)

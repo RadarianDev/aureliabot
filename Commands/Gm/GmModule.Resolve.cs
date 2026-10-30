@@ -108,6 +108,7 @@ public partial class GmModule
             if (result is null) return "There is no snapshot to restore.";
 
             _turnTracker.RequestCurrent();
+            await _publisher.UpdateDashboardAsync();
             var state = _data.GetGameState();
             var lines = new List<string>
             {
