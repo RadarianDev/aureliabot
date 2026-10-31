@@ -19,6 +19,7 @@
 - Each party otherwise governs itself by its own constitution, written by its members. How it decides is roleplay.
 - A faction can leave at any time and keeps its seats. A party left with one faction dissolves.
 - Only parties stand in elections. A faction outside a party is an **independent**.
+- Each party also has a **foreign affairs** channel for talks with outsiders. Any member can let someone in with `/party foreign add`, take them out with `/party foreign remove`, and see who is in with `/party foreign list`. Guests can read and write there but nowhere else in the party, and they lose access if the party dissolves.
 ## The World
 - Aurelia has ten **provinces**, each with a population, **discontent** and **conditions**.
 - A **condition** is a public fact about a province, such as *Lawless*, *Epidemic*, *Striking* or *Coastal*. Conditions push local opinion, discontent and the economy; by how much is hidden.
