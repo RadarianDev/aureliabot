@@ -51,7 +51,7 @@ public class ServerCleanupService
         var partyCategories = new[] { ChannelRole.PartyCategory, ChannelRole.ArchiveCategory }
             .Where(registered.ContainsKey).Select(r => registered[r]).ToHashSet();
         ulong? factionCategory = registered.TryGetValue(ChannelRole.FactionCategory, out var factionCategoryId) ? factionCategoryId : null;
-        var partyChatIds = parties.Where(p => p.ChannelId is not null).Select(p => p.ChannelId!.Value).ToHashSet();
+        var partyChatIds = parties.SelectMany(p => new[] { p.ChannelId, p.ForeignChannelId }).OfType<ulong>().ToHashSet();
         var factionChatIds = factions.Where(f => f.PrivateChannelId is not null).Select(f => f.PrivateChannelId!.Value).ToHashSet();
 
         var chats = new List<CleanupChannel>();
@@ -68,12 +68,15 @@ public class ServerCleanupService
 
         var partyRoleIds = parties.Where(p => p.RoleId is not null).Select(p => p.RoleId!.Value).ToHashSet();
         var partyNames = parties.Select(p => p.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var partyChatNames = chats.Where(c => c.Kind == CleanupChannelKind.PartyChat).Select(c => c.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var partyChatNames = chats.Where(c => c.Kind == CleanupChannelKind.PartyChat)
+            .SelectMany(c => new[] { c.Name, PartySyncService.ChannelStem(c.Name) })
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         bool IsPartyRole(GuildRoleInfo role) =>
             partyRoleIds.Contains(role.Id)
             || partyNames.Contains(role.Name)
-            || PartySyncService.ChannelSlug(role.Name) is { Length: > 0 } slug && partyChatNames.Contains(slug);
+            || new[] { PartySyncService.ChannelSlug(role.Name), PartySyncService.Abbreviation(role.Name) }
+                .Any(name => name.Length > 0 && partyChatNames.Contains(name));
 
         var deletable = new List<CleanupRole>();
         var refused = new List<RefusedRole>();

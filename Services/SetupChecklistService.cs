@@ -374,7 +374,8 @@ public class SetupChecklistService
         var lines = new List<CheckLine>();
         var parties = _data.GetAllParties();
         var broken = parties.Where(p => p.RoleId is not { } r || guild.GetRole(r) is null
-                                        || p.ChannelId is not { } c || guild.GetTextChannel(c) is null)
+                                        || p.ChannelId is not { } c || guild.GetTextChannel(c) is null
+                                        || p.ForeignChannelId is not { } f || guild.GetTextChannel(f) is null)
             .Select(p => p.Name).ToList();
         lines.Add(broken.Count == 0
             ? new(CheckStatus.Ok, Texts.Get("setup.game.partiesOk", ("count", parties.Count)))

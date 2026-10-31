@@ -12,7 +12,8 @@ public record Party(
     int? CreatedYear,
     ulong? RoleId,
     ulong? ChannelId,
-    string? ProgrammeMessageUrl);
+    string? ProgrammeMessageUrl,
+    ulong? ForeignChannelId);
 
 public record JoinRequest(long Id, ulong FactionId, long PartyId, DateTimeOffset RequestedAt, JoinRequestStatus Status, ulong? MessageId);
 
@@ -35,7 +36,7 @@ public sealed record ProgrammeRecordResult(IReadOnlyList<string> FlippedIssueIds
 public partial class DatabaseService
 {
     private const string SelectPartyColumns =
-        "id, name, colour, emoji_id, created_season, created_year, role_id, channel_id, programme_message_url";
+        "id, name, colour, emoji_id, created_season, created_year, role_id, channel_id, programme_message_url, foreign_channel_id";
 
     private static Party ReadParty(SqliteDataReader r) => new(
         r.GetInt64(0),
@@ -46,7 +47,8 @@ public partial class DatabaseService
         r.IsDBNull(5) ? null : r.GetInt32(5),
         r.IsDBNull(6) ? null : ulong.Parse(r.GetString(6)),
         r.IsDBNull(7) ? null : ulong.Parse(r.GetString(7)),
-        r.IsDBNull(8) ? null : r.GetString(8));
+        r.IsDBNull(8) ? null : r.GetString(8),
+        r.IsDBNull(9) ? null : ulong.Parse(r.GetString(9)));
 
     private const string SelectJoinRequestColumns = "id, faction_id, party_id, requested_at, status, message_id";
 
@@ -157,13 +159,14 @@ public partial class DatabaseService
         return cmd.ExecuteNonQuery() > 0;
     }
 
-    public void SetPartyDiscordIds(long partyId, ulong? roleId, ulong? channelId)
+    public void SetPartyDiscordIds(long partyId, ulong? roleId, ulong? channelId, ulong? foreignChannelId)
     {
         using var conn = Open();
-        Exec(conn, null, "UPDATE parties SET role_id = $role, channel_id = $channel WHERE id = $id;",
+        Exec(conn, null, "UPDATE parties SET role_id = $role, channel_id = $channel, foreign_channel_id = $foreign WHERE id = $id;",
             ("$id", partyId),
             ("$role", roleId?.ToString()),
-            ("$channel", channelId?.ToString()));
+            ("$channel", channelId?.ToString()),
+            ("$foreign", foreignChannelId?.ToString()));
     }
 
     public MoveResult? MoveFaction(ulong userId, long? partyId, string source)

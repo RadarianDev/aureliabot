@@ -45,6 +45,7 @@ A faction is a player, keyed on their Discord user id. It has no name of its own
 | `emoji_id` | Optional custom emoji |
 | `created_season`, `created_year` | When it was founded |
 | `role_id`, `channel_id` | Its Discord role and private chat |
+| `foreign_channel_id` | Its foreign affairs channel |
 | `programme_message_url` | The message its current programme was recorded from |
 
 A party doesn't store a member list: a party's members are the **active** factions pointing at it.
@@ -65,9 +66,9 @@ A party doesn't store a member list: a party's members are the **active** factio
 - **Dissolution:** a party left with fewer than two active members, through leaving, retiring or a GM
   move, is deleted in the same transaction (`DissolveIfUnderTwoTx`). Its last member becomes independent
   and keeps its seats. The result carries the last member, so `PartySyncService.HandleDissolutionAsync`
-  can archive the chat, delete the role, announce it in #news and alert the GM.
+  can archive both channels, delete the role, announce it in #news and alert the GM.
 - **Deletion:** `/gm party delete` (behind a Confirm) makes every member independent, deletes the party
-  with its programme and join applications, deletes the role and archives the chat.
+  with its programme and join applications, deletes the role and archives both channels.
 
 ## Programmes
 
@@ -97,15 +98,37 @@ The database is the truth; `PartySyncService` makes Discord match it and is idem
 every membership change, on startup and from the Repair button on the `/gm setup` checklist.
 
 - **Role:** named after the party, in its colour, hoisted. Held by exactly its active members.
+- **Channel names** (`PartySyncService.ChatNames`): the chat is the lowercased initials of the name's
+  words (`Liberal Union` is `lu`, `Party of the People's Will` is `potpw`). Words split at whitespace,
+  dashes, slashes and underscores; each contributes its first letter or digit, so apostrophes and other
+  punctuation inside a word are ignored and a word without any letter is skipped. A name with one such
+  word uses `ChannelSlug` of the whole name instead (`Whigs` is `whigs`), and a name with none falls back
+  to `party`. Letters with diacritics are kept, as Discord allows them. Parties are named in id order,
+  and a name already taken gets `-2`, `-3`, ... (`lu-2`), so the older party keeps the plain name and a
+  re-sync never swaps them; deleting the older party passes the plain name on at the next sync. The
+  foreign affairs channel is the chat name plus `-` and `sync.party.foreignChannelSuffix`
+  (`lu-foreign-affairs`). The sync renames existing channels to match.
 - **Chat:** a text channel under the Parties category, visible only to the party role, the GM role and
   the bot; members can pin.
-- **Archive:** a deleted or dissolved party's chat moves to the Archive category, read-only for the GM
+- **Foreign affairs channel:** a second text channel under the Parties category with the same
+  overwrites as the chat. Any active member lets an outsider in with `/party foreign add user` (a
+  per-user overwrite: view, send, read history, attach, embed, react) and out with `/party foreign
+  remove user`; both post a line in the channel. `/party foreign list` lists the user overwrites other
+  than the bot. Bots and the party's own active members are refused (`PartySyncService.GuestRefusal`).
+  The sync only rewrites the overwrites it manages (@everyone, the bot, the party role, the GM role), so
+  guests survive syncs and renames. These commands only touch Discord, so they are not resubmittable
+  after `/gm undo`.
+- **Archive:** a deleted or dissolved party's chat and foreign affairs channel move to the Archive
+  category with their overwrites replaced (so guests lose access), read-only for the GM
   role, and its role is deleted.
 - **Cabinet role:** `CabinetSyncService` gives it to exactly the sitting cabinet's Chancellor and
   ministers.
 - Rejoining the server re-syncs the player's party role and the Cabinet role; leaving it with an active
   faction alerts the GM. Any Discord refusal (usually the bot's role sitting too low) alerts the GM.
-- **Cleanup:** `/gm cleanup` (`ServerCleanupService`) deletes every party role, party chat and faction
+- **Cleanup:** `/gm cleanup` (`ServerCleanupService`) deletes every party role, party chat, foreign
+  affairs channel and faction
   chat after testing, including orphans from earlier databases: every channel in the Parties, Archive
-  and Factions categories, and roles named like a party or a party chat. It clears the stored ids but
+  and Factions categories, and roles named like a party or a party chat. A role matches a chat when its
+  slug (old full-name chats) or its initials equal the chat name, or the chat name without its numeric
+  suffix or `-foreign-affairs` (`ChannelStem`). It clears the stored ids but
   keeps the parties and factions, so the sync recreates their roles and chats on Repair or restart.

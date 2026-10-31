@@ -61,6 +61,7 @@ public class ResubmitService
     private static readonly IReadOnlySet<string> NotPlayerActions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
     {
         "info", "me", "help", "map", "ministry status",
+        "party foreign add", "party foreign remove", "party foreign list",
     };
 
     private static readonly IReadOnlySet<string> GmGroups = new HashSet<string>(StringComparer.OrdinalIgnoreCase)

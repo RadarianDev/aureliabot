@@ -14,8 +14,10 @@ public partial class DatabaseService
         var parties = ExecCount(conn, tx, @"
             UPDATE parties SET
                 role_id = CASE WHEN role_id IN (SELECT value FROM json_each($roles)) THEN NULL ELSE role_id END,
-                channel_id = CASE WHEN channel_id IN (SELECT value FROM json_each($channels)) THEN NULL ELSE channel_id END
-            WHERE role_id IN (SELECT value FROM json_each($roles)) OR channel_id IN (SELECT value FROM json_each($channels));",
+                channel_id = CASE WHEN channel_id IN (SELECT value FROM json_each($channels)) THEN NULL ELSE channel_id END,
+                foreign_channel_id = CASE WHEN foreign_channel_id IN (SELECT value FROM json_each($channels)) THEN NULL ELSE foreign_channel_id END
+            WHERE role_id IN (SELECT value FROM json_each($roles)) OR channel_id IN (SELECT value FROM json_each($channels))
+                OR foreign_channel_id IN (SELECT value FROM json_each($channels));",
             ("$roles", roles),
             ("$channels", channels));
         var factions = ExecCount(conn, tx,

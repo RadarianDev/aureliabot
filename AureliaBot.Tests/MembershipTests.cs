@@ -175,7 +175,7 @@ public class MembershipTests : IDisposable
     public void DeletingAParty_MakesItsMembersIndependent()
     {
         var partyId = Found("Liberal Union", Alice, Bob, Carol);
-        Db.SetPartyDiscordIds(partyId, 555, 666);
+        Db.SetPartyDiscordIds(partyId, 555, 666, null);
         Db.SetFactionSeats(Carol, 4);
 
         var deleted = Db.DeleteParty(partyId, "test");

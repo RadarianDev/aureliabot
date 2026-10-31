@@ -43,14 +43,4 @@ public class PartyColourTests
     {
         Assert.False(PartySyncService.AreSimilarColours(a, b), $"{a} and {b}: {PartySyncService.ColourDistance(a, b)}");
     }
-
-    [Theory]
-    [InlineData("Liberal Union", "liberal-union")]
-    [InlineData("  The People's Party! ", "the-people-s-party")]
-    [InlineData("Ústřední Strana", "ústřední-strana")]
-    [InlineData("!!!", "party")]
-    public void ChannelName_IsSlugified(string name, string expected)
-    {
-        Assert.Equal(expected, PartySyncService.ChannelName(name));
-    }
 }

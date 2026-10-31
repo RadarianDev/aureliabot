@@ -2,9 +2,21 @@ using System.Text;
 using Discord;
 using Discord.WebSocket;
 
+public enum ForeignGuestRefusal { NotInParty, Bot, OwnMember }
+
+public enum ForeignGuestOutcome { Added, AlreadyGuest, Removed, NotGuest, NoChannel, Failed }
+
+public sealed record ForeignGuestResult(ForeignGuestOutcome Outcome, ITextChannel? Channel = null, string? Error = null);
+
 public class PartySyncService
 {
     public const double SimilarColourThreshold = 20;
+
+    private const int ChannelStemLimit = 80;
+
+    public const ChannelPermission GuestPermissions =
+        ChannelPermission.ViewChannel | ChannelPermission.SendMessages | ChannelPermission.ReadMessageHistory
+        | ChannelPermission.AttachFiles | ChannelPermission.EmbedLinks | ChannelPermission.AddReactions;
 
     private const ChannelPermission MemberPermissions =
         ChannelPermission.ViewChannel | ChannelPermission.SendMessages | ChannelPermission.ReadMessageHistory | ChannelPermission.PinMessages;
@@ -153,9 +165,75 @@ public class PartySyncService
 
     public static string ChannelName(string partyName)
     {
-        var name = ChannelSlug(partyName);
+        var name = Abbreviation(partyName);
+        if (name.Length > ChannelStemLimit) name = name[..ChannelStemLimit].Trim('-');
         return name.Length == 0 ? Texts.Get("sync.party.channelNameFallback") : name;
     }
+
+    public static IReadOnlyDictionary<long, string> ChatNames(IEnumerable<Party> parties)
+    {
+        var names = new Dictionary<long, string>();
+        var taken = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var party in parties.OrderBy(p => p.Id))
+        {
+            var stem = ChannelName(party.Name);
+            var name = stem;
+            for (var n = 2; !taken.Add(name); n++)
+                name = $"{stem}-{n}";
+            names[party.Id] = name;
+        }
+        return names;
+    }
+
+    public static string ForeignChannelName(string chatName) => $"{chatName}-{Texts.Get("sync.party.foreignChannelSuffix")}";
+
+    public static string ChannelStem(string channelName)
+    {
+        var foreignSuffix = "-" + Texts.Get("sync.party.foreignChannelSuffix");
+        var name = channelName.EndsWith(foreignSuffix, StringComparison.OrdinalIgnoreCase) ? channelName[..^foreignSuffix.Length] : channelName;
+        var dash = name.LastIndexOf('-');
+        return dash > 0 && dash < name.Length - 1 && name[(dash + 1)..].All(char.IsAsciiDigit) ? name[..dash] : name;
+    }
+
+    public static string Abbreviation(string partyName)
+    {
+        var initials = new StringBuilder();
+        var words = 0;
+        var inWord = false;
+        var initialTaken = false;
+        foreach (var c in partyName.ToLowerInvariant())
+        {
+            if (IsWordBreak(c))
+            {
+                inWord = false;
+                continue;
+            }
+            if (!inWord)
+            {
+                inWord = true;
+                initialTaken = false;
+            }
+            if (initialTaken || !char.IsLetterOrDigit(c)) continue;
+            initials.Append(c);
+            initialTaken = true;
+            words++;
+        }
+        return words == 1 ? ChannelSlug(partyName) : initials.ToString();
+    }
+
+    private static bool IsWordBreak(char c) =>
+        char.IsWhiteSpace(c) || c == '/' || c == '_' || char.GetUnicodeCategory(c) == System.Globalization.UnicodeCategory.DashPunctuation;
+
+    public static ForeignGuestRefusal? GuestRefusal(Faction? actor, bool targetIsBot, Faction? target)
+    {
+        if (actor is not { IsActive: true, PartyId: { } partyId }) return ForeignGuestRefusal.NotInParty;
+        if (targetIsBot) return ForeignGuestRefusal.Bot;
+        if (target is { IsActive: true } && target.PartyId == partyId) return ForeignGuestRefusal.OwnMember;
+        return null;
+    }
+
+    public static IReadOnlyList<ulong> Guests(IEnumerable<Overwrite> overwrites, ulong botId) =>
+        overwrites.Where(o => o.TargetType == PermissionTarget.User && o.TargetId != botId).Select(o => o.TargetId).ToList();
 
     public static string ChannelSlug(string partyName)
     {
@@ -210,12 +288,24 @@ public class PartySyncService
         var role = await EnsureRoleAsync(guild, party, problems);
         if (role is not null)
             await SyncRoleMembersAsync(guild, party, role, problems);
-        var channel = await EnsureChannelAsync(guild, party, role, problems);
+        var chatName = ChatNames(_data.GetAllParties()).TryGetValue(party.Id, out var assigned) ? assigned : ChannelName(party.Name);
+        var categoryId = await PartyCategoryAsync(guild, problems);
+        var overwrites = ChatOverwrites(guild, role);
+
+        var channel = await EnsureChannelAsync(guild, party.ChannelId, chatName, categoryId, overwrites, problems,
+            Texts.Get("sync.party.noCategory", ("party", party.Name)),
+            Texts.Get("sync.party.createChat", ("party", party.Name)),
+            id => Texts.Get("sync.party.updateChat", ("channel", id), ("party", party.Name)));
+        var foreign = await EnsureChannelAsync(guild, party.ForeignChannelId, ForeignChannelName(chatName), categoryId, overwrites, problems,
+            Texts.Get("sync.party.noCategoryForeign", ("party", party.Name)),
+            Texts.Get("sync.party.createForeign", ("party", party.Name)),
+            id => Texts.Get("sync.party.updateForeign", ("channel", id), ("party", party.Name)));
 
         var roleId = role?.Id ?? party.RoleId;
         var channelId = channel?.Id ?? party.ChannelId;
-        if (roleId != party.RoleId || channelId != party.ChannelId)
-            _data.SetPartyDiscordIds(party.Id, roleId, channelId);
+        var foreignId = foreign?.Id ?? party.ForeignChannelId;
+        if (roleId != party.RoleId || channelId != party.ChannelId || foreignId != party.ForeignChannelId)
+            _data.SetPartyDiscordIds(party.Id, roleId, channelId, foreignId);
     }
 
     private async Task<IRole?> EnsureRoleAsync(SocketGuild guild, Party party, List<string> problems)
@@ -254,29 +344,30 @@ public class PartySyncService
             await TryAsync(problems, Texts.Get("sync.party.takeRole", ("user", user.Username), ("party", party.Name)), () => user.RemoveRoleAsync(role));
     }
 
-    private async Task<ITextChannel?> EnsureChannelAsync(SocketGuild guild, Party party, IRole? role, List<string> problems)
+    private async Task<ulong?> PartyCategoryAsync(SocketGuild guild, List<string> problems)
     {
         var categoryId = _data.GetChannel(ChannelRole.PartyCategory);
-        if (categoryId is not null && guild.GetCategoryChannel(categoryId.Value) is null)
-        {
-            problems.Add(Texts.Get("sync.party.categoryGone", ("category", categoryId)));
-            await _alerts.PostAsync(problems[^1]);
-            categoryId = null;
-        }
+        if (categoryId is null || guild.GetCategoryChannel(categoryId.Value) is not null) return categoryId;
+        problems.Add(Texts.Get("sync.party.categoryGone", ("category", categoryId)));
+        await _alerts.PostAsync(problems[^1]);
+        return null;
+    }
 
-        var overwrites = ChatOverwrites(guild, role);
-        var name = ChannelName(party.Name);
-        ITextChannel? channel = party.ChannelId is { } id ? guild.GetTextChannel(id) : null;
+    private async Task<ITextChannel?> EnsureChannelAsync(
+        SocketGuild guild, ulong? storedId, string name, ulong? categoryId, List<Overwrite> overwrites, List<string> problems,
+        string noCategory, string create, Func<ulong, string> update)
+    {
+        ITextChannel? channel = storedId is { } id ? guild.GetTextChannel(id) : null;
 
         if (channel is null)
         {
             if (categoryId is null)
             {
-                problems.Add(Texts.Get("sync.party.noCategory", ("party", party.Name)));
+                problems.Add(noCategory);
                 await _alerts.PostAsync(problems[^1]);
                 return null;
             }
-            return await TryAsync(problems, Texts.Get("sync.party.createChat", ("party", party.Name)),
+            return await TryAsync(problems, create,
                 async () => (ITextChannel)await guild.CreateTextChannelAsync(name, p =>
                 {
                     p.CategoryId = categoryId.Value;
@@ -293,7 +384,7 @@ public class PartySyncService
         if (needsName || needsCategory || needsOverwrites)
         {
             var kept = channel.PermissionOverwrites.Where(e => overwrites.All(o => o.TargetId != e.TargetId));
-            await TryAsync(problems, Texts.Get("sync.party.updateChat", ("channel", channel.Id), ("party", party.Name)),
+            await TryAsync(problems, update(channel.Id),
                 () => channel.ModifyAsync(p =>
                 {
                     if (needsName) p.Name = name;
@@ -351,13 +442,18 @@ public class PartySyncService
         if (deleted.RoleId is { } roleId && guild.GetRole(roleId) is { } role)
             await TryAsync(problems, Texts.Get("sync.party.deleteRole", ("party", deleted.Name)), () => role.DeleteAsync());
 
-        if (deleted.ChannelId is not { } channelId || guild.GetTextChannel(channelId) is not { } channel) return;
+        var channels = new[] { deleted.ChannelId, deleted.ForeignChannelId }
+            .Select(id => id is { } channelId ? guild.GetTextChannel(channelId) : null)
+            .OfType<SocketTextChannel>()
+            .ToList();
+        if (channels.Count == 0) return;
 
         var archiveId = _data.GetChannel(ChannelRole.ArchiveCategory);
         if (archiveId is not null && guild.GetCategoryChannel(archiveId.Value) is null) archiveId = null;
         if (archiveId is null)
         {
-            problems.Add(Texts.Get("sync.party.noArchive", ("channel", channel.Id), ("party", deleted.Name)));
+            problems.Add(Texts.Get("sync.party.noArchive",
+                ("channels", string.Join(", ", channels.Select(c => $"<#{c.Id}>"))), ("party", deleted.Name)));
             await _alerts.PostAsync(problems[^1]);
         }
 
@@ -370,13 +466,79 @@ public class PartySyncService
             overwrites.Add(new(gmRole.Id, PermissionTarget.Role,
                 new OverwritePermissions((ulong)ArchiveReadPermissions, (ulong)ArchiveDeniedPermissions)));
 
-        await TryAsync(problems, Texts.Get("sync.party.archiveChat", ("channel", channel.Id), ("party", deleted.Name)),
-            () => channel.ModifyAsync(p =>
-            {
-                if (archiveId is not null) p.CategoryId = archiveId.Value;
-                p.PermissionOverwrites = overwrites;
-            }));
+        foreach (var channel in channels)
+            await TryAsync(problems, Texts.Get("sync.party.archiveChat", ("channel", channel.Id), ("party", deleted.Name)),
+                () => channel.ModifyAsync(p =>
+                {
+                    if (archiveId is not null) p.CategoryId = archiveId.Value;
+                    p.PermissionOverwrites = overwrites;
+                }));
     }
+
+    public async Task<ForeignGuestResult> AddForeignGuestAsync(long partyId, IUser guest) =>
+        await WithForeignChannelAsync(partyId, Texts.Get("sync.party.addGuest", ("user", guest.Username)), async channel =>
+        {
+            if (channel.GetPermissionOverwrite(guest) is { } existing && existing.AllowValue == (ulong)GuestPermissions)
+                return ForeignGuestOutcome.AlreadyGuest;
+            await channel.AddPermissionOverwriteAsync(guest, new OverwritePermissions((ulong)GuestPermissions, 0));
+            return ForeignGuestOutcome.Added;
+        });
+
+    public async Task<ForeignGuestResult> RemoveForeignGuestAsync(long partyId, IUser guest) =>
+        await WithForeignChannelAsync(partyId, Texts.Get("sync.party.removeGuest", ("user", guest.Username)), async channel =>
+        {
+            if (channel.GetPermissionOverwrite(guest) is null) return ForeignGuestOutcome.NotGuest;
+            await channel.RemovePermissionOverwriteAsync(guest);
+            return ForeignGuestOutcome.Removed;
+        });
+
+    public async Task<ITextChannel?> ForeignChannelAsync(long partyId)
+    {
+        await _lock.WaitAsync();
+        try
+        {
+            return await FindOrCreateForeignChannelAsync(partyId);
+        }
+        finally
+        {
+            _lock.Release();
+        }
+    }
+
+    private async Task<ITextChannel?> FindOrCreateForeignChannelAsync(long partyId)
+    {
+        var problems = new List<string>();
+        if (await GuildAsync(problems) is not { } guild) return null;
+        if (ForeignChannel(guild, partyId) is { } found) return found;
+        await SyncPartyAsync(guild, partyId, problems);
+        return ForeignChannel(guild, partyId);
+    }
+
+    private async Task<ForeignGuestResult> WithForeignChannelAsync(long partyId, string what, Func<ITextChannel, Task<ForeignGuestOutcome>> action)
+    {
+        await _lock.WaitAsync();
+        try
+        {
+            if (await FindOrCreateForeignChannelAsync(partyId) is not { } channel) return new ForeignGuestResult(ForeignGuestOutcome.NoChannel);
+
+            try
+            {
+                return new ForeignGuestResult(await action(channel), channel);
+            }
+            catch (Exception ex)
+            {
+                await _alerts.PostAsync(Texts.Get("sync.discordRefused", ("what", what), ("error", ex.Message)));
+                return new ForeignGuestResult(ForeignGuestOutcome.Failed, channel, ex.Message);
+            }
+        }
+        finally
+        {
+            _lock.Release();
+        }
+    }
+
+    private SocketTextChannel? ForeignChannel(SocketGuild guild, long partyId) =>
+        _data.GetParty(partyId)?.ForeignChannelId is { } id ? guild.GetTextChannel(id) : null;
 
     private async Task PostNewsAsync(string text, string source, List<string> problems)
     {

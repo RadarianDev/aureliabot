@@ -56,6 +56,7 @@ public partial class DatabaseService
         AddColumnIfMissing(connection, "parties", "role_id", "TEXT");
         AddColumnIfMissing(connection, "parties", "channel_id", "TEXT");
         AddColumnIfMissing(connection, "parties", "programme_message_url", "TEXT");
+        AddColumnIfMissing(connection, "parties", "foreign_channel_id", "TEXT");
 
         Exec(connection, @"
             CREATE TABLE IF NOT EXISTS factions (

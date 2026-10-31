@@ -3,7 +3,7 @@ using Discord.Interactions;
 using Discord.WebSocket;
 
 [Group("party", "Join or leave a party")]
-public class PartyModule : InteractionModuleBase<SocketInteractionContext>
+public partial class PartyModule : InteractionModuleBase<SocketInteractionContext>
 {
     private readonly DatabaseService _data;
     private readonly PartySyncService _partySync;

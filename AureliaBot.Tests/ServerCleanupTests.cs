@@ -32,8 +32,8 @@ public class ServerCleanupTests : IDisposable
         [ChannelRole.CabinetRole] = CabinetRole,
     };
 
-    private static Party Party(long id, string name, ulong? roleId = null, ulong? channelId = null) =>
-        new(id, name, "#C0392B", null, null, null, roleId, channelId, null);
+    private static Party Party(long id, string name, ulong? roleId = null, ulong? channelId = null, ulong? foreignId = null) =>
+        new(id, name, "#C0392B", null, null, null, roleId, channelId, null, foreignId);
 
     private static Faction Faction(ulong userId, ulong? channelId) =>
         new(userId, "Someone", 10, 0, null, "aurenten", channelId, FactionStatus.Active);
@@ -97,6 +97,41 @@ public class ServerCleanupTests : IDisposable
     }
 
     [Fact]
+    public void ForeignAffairsChannels_AreSelected_ByStoredId_OrCategory()
+    {
+        var plan = Plan(
+            [new(200, "lu", PartyCategory), new(201, "lu-foreign-affairs", null), new(202, "cl-foreign-affairs", ArchiveCategory)],
+            [],
+            [Party(1, "Liberal Union", channelId: 200, foreignId: 201)]);
+
+        Assert.Equal([200UL, 201UL, 202UL], plan.Channels.Where(c => c.Kind == CleanupChannelKind.PartyChat).Select(c => c.Id).ToList());
+    }
+
+    [Fact]
+    public void OrphanRoles_AreFoundByAbbreviatedChatNames_OldOrNew()
+    {
+        var plan = Plan(
+            [
+                new(100, "lu", PartyCategory),
+                new(101, "cl-2", ArchiveCategory),
+                new(102, "potpw-foreign-affairs", PartyCategory),
+                new(103, "old-test-party", ArchiveCategory),
+                new(104, "whigs", PartyCategory),
+            ],
+            [
+                Role(300, "Liberal Union"),
+                Role(301, "Crown League"),
+                Role(302, "Party of the People's Will"),
+                Role(303, "Old Test Party"),
+                Role(304, "Whigs"),
+                Role(305, "Landed Gentry"),
+                Role(306, "Moderators"),
+            ]);
+
+        Assert.Equal([300UL, 301UL, 302UL, 303UL, 304UL], plan.Roles.Select(r => r.Id).OrderBy(id => id).ToList());
+    }
+
+    [Fact]
     public void ProtectedRoles_AreRefused_WithTheirReason()
     {
         var plan = Plan([],
@@ -144,7 +179,7 @@ public class ServerCleanupTests : IDisposable
         Db.CreateFaction(1002, "Bob", "aurenten", 10);
         Db.CreateFaction(1003, "Carol", "aurenten", 10);
         var first = Db.CreateParty("Liberal Union", "#C0392B", null, [1001, 1002]).PartyId!.Value;
-        Db.SetPartyDiscordIds(first, 300, 100);
+        Db.SetPartyDiscordIds(first, 300, 100, null);
         Db.SetFactionPrivateChannel(1001, 201);
         Db.SetFactionPrivateChannel(1002, 202);
 
@@ -166,11 +201,27 @@ public class ServerCleanupTests : IDisposable
         Db.CreateFaction(1001, "Alice", "aurenten", 10);
         Db.CreateFaction(1002, "Bob", "aurenten", 10);
         var party = Db.CreateParty("Liberal Union", "#C0392B", null, [1001, 1002]).PartyId!.Value;
-        Db.SetPartyDiscordIds(party, 300, 100);
+        Db.SetPartyDiscordIds(party, 300, 100, 101);
 
         Db.ClearDiscordIds([], [100]);
 
         Assert.Equal(300UL, Db.GetParty(party)!.RoleId);
         Assert.Null(Db.GetParty(party)!.ChannelId);
+        Assert.Equal(101UL, Db.GetParty(party)!.ForeignChannelId);
+    }
+
+    [Fact]
+    public void ClearDiscordIds_ClearsTheForeignAffairsChannel()
+    {
+        Db.CreateFaction(1001, "Alice", "aurenten", 10);
+        Db.CreateFaction(1002, "Bob", "aurenten", 10);
+        var party = Db.CreateParty("Liberal Union", "#C0392B", null, [1001, 1002]).PartyId!.Value;
+        Db.SetPartyDiscordIds(party, 300, 100, 101);
+
+        var cleared = Db.ClearDiscordIds([], [101]);
+
+        Assert.Equal(new ClearedDiscordIds(1, 0), cleared);
+        Assert.Equal(100UL, Db.GetParty(party)!.ChannelId);
+        Assert.Null(Db.GetParty(party)!.ForeignChannelId);
     }
 }

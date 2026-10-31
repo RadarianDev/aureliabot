@@ -277,6 +277,7 @@ help:
     The GM founds parties at the request of two or more factions. Only parties stand in elections.
     - `/party apply` joins a party, only during the pre-election, with the agreement of a majority of its members.
     - `/party leave` makes you independent; you keep your seats. A party left with one faction dissolves.
+    - Each party has a chat and a foreign affairs channel. Any member can let outsiders into the foreign affairs channel with `/party foreign add`, take them out with `/party foreign remove`, and see who is in with `/party foreign list`.
     - A party writes its programme as a message and sends the GM its link. Outside the pre-election, flipping a stance between For and Against costs every member {flipPenalty} popularity.
   campaigning: |-
     ## Campaigning
@@ -674,8 +675,8 @@ setup:
     membersWarning: "Server Members intent: the member list isn't loaded yet; check the intent in the Developer Portal if this stays."
     messageContent: "Message Content intent: requested at login (Discord refuses the connection if it's off)"
   game:
-    partiesOk: "Parties: {count}, each with its role and chat"
-    partiesBroken: "Parties missing a role or chat: {parties}. Press *Repair*."
+    partiesOk: "Parties: {count}, each with its role, chat and foreign affairs channel"
+    partiesBroken: "Parties missing a role, chat or foreign affairs channel: {parties}. Press *Repair*."
     factionsOk: "Factions: {count}, each with its private channel"
     factionsNoChannel: "{count} faction(s) without a private channel. Press *Repair*."
     started: "Game started: {label}"
@@ -1204,9 +1205,15 @@ sync:
     noCategory: No party category is set, so the chat of party '{party}' could not be created.
     createChat: create the chat for party '{party}'
     updateChat: update the chat <#{channel}> of party '{party}'
+    noCategoryForeign: No party category is set, so the foreign affairs channel of party '{party}' could not be created.
+    createForeign: create the foreign affairs channel for party '{party}'
+    updateForeign: update the foreign affairs channel <#{channel}> of party '{party}'
+    foreignChannelSuffix: foreign-affairs
+    addGuest: give {user} access to a foreign affairs channel
+    removeGuest: take {user}'s access to a foreign affairs channel
     deleteRole: delete the role of party '{party}'
-    noArchive: No archive category is set, so the chat <#{channel}> of party '{party}' was locked where it is.
-    archiveChat: archive the chat <#{channel}> of party '{party}'
+    noArchive: "No archive category is set, so the channels {channels} of party '{party}' were locked where they are."
+    archiveChat: archive the channel <#{channel}> of party '{party}'
     noNews: "No #news channel is set, so an announcement was not posted."
     newsFailed: "Could not post to #news: {error}"
     noGuild: The bot is not connected to a server.
@@ -1972,3 +1979,20 @@ cleanup:
     cabinetRole: "the Cabinet role"
     managed: "managed by an integration"
     aboveBot: "at or above the bot's top role"
+
+foreignAffairs:
+  added: "{user} can now see and write in {channel}."
+  alreadyGuest: "{user} already has access to {channel}."
+  removed: "{user} no longer has access to {channel}."
+  notGuest: "{user} is not a guest in {channel}."
+  noChannel: "Your party has no foreign affairs channel yet. Ask the GM to press *Repair* on the setup checklist."
+  failed: "Discord refused the change: {error}"
+  refused:
+    bot: "Bots cannot be invited to a foreign affairs channel."
+    ownMember: "{user} is in your party and already sees the channel through the party role."
+  posted:
+    added: "{by} invited {user} to this channel."
+    removed: "{by} removed {user} from this channel."
+  list:
+    empty: "Nobody outside the party has access to {channel}."
+    guests: "**Guests in {channel} ({count}):** {guests}"
