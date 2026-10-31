@@ -311,7 +311,8 @@ public partial class GmModule
 
         private static string DiscordSummary(Party party) =>
             (party.RoleId is { } role ? Texts.Get("gm.party.summary.role", ("role", role)) : Texts.Get("gm.party.summary.noRole"))
-            + (party.ChannelId is { } channel ? Texts.Get("gm.party.summary.chat", ("channel", channel)) : Texts.Get("gm.party.summary.noChat"));
+            + (party.ChannelId is { } channel ? Texts.Get("gm.party.summary.chat", ("channel", channel)) : Texts.Get("gm.party.summary.noChat"))
+            + (party.ForeignChannelId is { } foreign ? Texts.Get("gm.party.summary.foreign", ("channel", foreign)) : Texts.Get("gm.party.summary.noForeign"));
 
         private static string WarningText(string? warning) =>
             warning is null ? "" : "\n" + Texts.Get("gm.warning", ("warning", warning));

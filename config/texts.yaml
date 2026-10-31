@@ -408,6 +408,8 @@ gm:
       noRole: " No role yet."
       chat: " Chat <#{channel}>."
       noChat: " No chat yet."
+      foreign: " Foreign affairs <#{channel}>."
+      noForeign: " No foreign affairs channel yet."
     create:
       badEmoji: "`{emoji}` is not a custom emoji; pick one from this server's emoji list."
       news: "**A new party takes the field.** {founders} have joined their fortunes together as the {party}, and will stand as one at the coming election."
