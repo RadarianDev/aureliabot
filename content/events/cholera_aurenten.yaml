@@ -1,0 +1,7 @@
+id: cholera_aurenten
+title: The Blue Death in Aurenten
+text: >-
+  Cholera has broken out in the river quarters of Aurenten. Dr Septimus Quarles blames the Broad Lane
+  pump; the aldermen blame bad air. The pump stays in use.
+effects: { discontent.aurenten: 1, salience.social_reform: 1,
+           condition.aurenten.epidemic: 1, crisis.blue_death: true }

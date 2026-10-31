@@ -121,10 +121,10 @@ public static partial class BattleRolls
         return new BattleResult(attack, defence, attackersWin, rout, losses);
     }
 
-    public static RiotResult Riot(IEnumerable<Unit> gendarmerie, double discontent, IRandomSource random)
+    public static RiotResult Riot(IEnumerable<Unit> gendarmerie, double discontent, CrackdownConstants crackdown, IRandomSource random)
     {
         var rolls = gendarmerie.Select(u => new UnitRoll(u, random.RollDie(u.Sides))).ToList();
-        var sides = DatabaseService.CrackdownDieSides(discontent);
+        var sides = DatabaseService.CrackdownDieSides(crackdown, discontent);
         return new RiotResult(rolls, sides, random.RollDie(sides));
     }
 

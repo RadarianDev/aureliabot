@@ -1,0 +1,9 @@
+id: weavers_riots
+title: The Weavers' Riots
+text: >-
+  Cheap foreign cloth is undercutting the handloom weavers of Iracterie, and they riot. Looms are broken
+  in three mills, and the weavers swear a union oath on the moor. The millowners ask the Assembly for a
+  duty on foreign cloth, and for a law against the union.
+effects: { discontent.iracterie: 1, salience.free_trade: 1, salience.social_reform: 1,
+           bill.tariff_act: true, bill.combination_act: true }
+schedule: { season: Spring, year: 1852 }

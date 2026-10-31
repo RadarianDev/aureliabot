@@ -1,0 +1,10 @@
+id: great_stink
+title: The Great Stink
+text: >-
+  A hot, still summer turns the river below the Assembly foul. Members debate behind curtains soaked in
+  lime, and the cry for sewers grows louder.
+effects:
+  - if: "not issue.public_works.open"
+    then: { open.public_works: true }
+  - { salience.public_works: 1, discontent.aurenten: 1, bill.public_health_act: true }
+schedule: { season: Summer, year: 1851 }

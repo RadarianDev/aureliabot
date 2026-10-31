@@ -226,7 +226,7 @@ and waits when two renames already happened in the last 10 minutes.
 
 ### 4.6 Effects
 
-`EffectParser` handles both `discontent.north_arpal -2, economy -1, open.public_health` (modal text)
+`EffectParser` handles both `discontent.north_arpal -2, economy -1, open.public_works` (modal text)
 and YAML maps, returns `IReadOnlyList<Effect>`, and rejects unknown keys and unknown ids. The
 `open.*`, `close.*`, `bill.*`, `project.*` and `crisis.*` action keys take no value, `here` resolves to
 the project's province inside project effects, and `condition.*` accepts only +1 or −1. Applying
@@ -267,7 +267,7 @@ posted); `TemplateCodec.Parse` turns the YAML into the records in `Game/Template
 returns the stored YAML, so an export always imports back unchanged. Import checks only what config
 and live state can answer (provinces, conditions, ministries, factions); references to other templates
 are checked by `/content ready`, so a batch can import a bill before its issue. A live copy takes its
-template's id (`labour` the template, `labour` the issue), except events, crises and projects, which
+template's id (`social_reform` the template, `social_reform` the issue), except events, crises and projects, which
 can be posted more than once and get integer ids. An event template with a `schedule` is queued when it
 is marked Ready; replacing it returns it to Draft and cancels its queued copy until it is Ready again.
 
@@ -446,7 +446,8 @@ too.
   `/info` for projects, ministries and the budget, with the ledger behind them.
 
 Tests: Favour reacting only to a change in the Navy share, the unrest drag (weighted by population,
-only discontent above `discontent.rest` counts, the spec's whole-nation-at-7 example costing 2%), unpaid upkeep emptying the purse and
+only discontent above `discontent.rest` counts, the spec's whole-nation-at-7 example costing 4%,
+averaged over the seasons since the last Budget), condition growth weighted by population, unpaid upkeep emptying the purse and
 costing every unit of that branch one training step but never below base sides, retraining a lost
 step at that step's cost, project progress (spending at the pace, graft on the excess, never paying
 more than needed to finish, a partial payment from a short purse, the spec's fen drainage example

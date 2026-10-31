@@ -1,0 +1,32 @@
+id: blue_death
+title: The Blue Death
+ministry: Interior
+province: aurenten
+issue: social_reform
+answers:
+  - lean: For
+    label: Close the pump and quarantine the quarter
+    price: 25
+    text: >-
+      Dr Quarles has the pump handle removed, and the quarter is sealed. The cases fall within a
+      fortnight, though trade in the quarter suffers.
+    effects: { condition.aurenten.epidemic: -1, discontent.aurenten: -1, economy: -10 }
+  - lean: Neutral
+    label: Proclaim a day of prayer and fumigation
+    price: 20
+    text: >-
+      The churches are full and the streets are fumigated with burning tar. The people are calmed, but
+      the cholera carries on.
+    effects: { discontent.aurenten: -1 }
+  - lean: Against
+    label: Blame bad air and keep the pump open
+    text: >-
+      The Interior declares the outbreak a matter of bad air and orders the windows shut. The pump stays
+      open, and the fever spreads.
+    effects: { event.cholera_spreads: 2 }
+complication:
+  text: The money runs out before the quarter is sealed, and a carter takes the fever up the Iracterie road.
+  effects: { event.cholera_spreads: 1 }
+default:
+  text: No order comes from the Interior, and the fever spreads.
+  effects: { discontent.aurenten: 1, event.cholera_spreads: 1 }

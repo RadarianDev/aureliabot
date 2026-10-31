@@ -46,7 +46,7 @@ public class GameFilesTests : IDisposable
         Assert.Equal(fileCount, result.Imported.Count(o => o.Imported));
         Assert.Empty(result.NotReady);
         Assert.Empty(Db.GetTemplates(status: TemplateStatus.Draft));
-        Assert.Single(Db.GetQueuedEvents());
+        Assert.Single(Db.GetQueuedEvents(), e => e.TemplateId == "opening_1850");
     }
 
     [Fact]
@@ -63,16 +63,16 @@ public class GameFilesTests : IDisposable
     public async Task AnEditedFile_IsReimportedAndReadiedAgain_OthersAreLeftAlone()
     {
         await _files.LoadContentAsync();
-        var path = Path.Combine(_root, "content", "issues", "labour.yaml");
+        var path = Path.Combine(_root, "content", "issues", "social_reform.yaml");
         File.WriteAllText(path, File.ReadAllText(path).Replace("salience: 3", "salience: 4"));
 
         var result = await _files.LoadContentAsync();
 
         var outcome = Assert.Single(result.Imported);
-        Assert.Equal("labour", outcome.Id);
-        Assert.Contains("labour", result.MadeReady);
-        Assert.Equal(TemplateStatus.Ready, Db.GetTemplate("labour")!.Status);
-        Assert.Contains("salience: 4", Db.GetTemplate("labour")!.Yaml);
+        Assert.Equal("social_reform", outcome.Id);
+        Assert.Contains("social_reform", result.MadeReady);
+        Assert.Equal(TemplateStatus.Ready, Db.GetTemplate("social_reform")!.Status);
+        Assert.Contains("salience: 4", Db.GetTemplate("social_reform")!.Yaml);
     }
 
     [Fact]
@@ -83,6 +83,6 @@ public class GameFilesTests : IDisposable
         var result = await _files.LoadContentAsync();
 
         Assert.Single(result.Imported, o => !o.Imported);
-        Assert.Equal(TemplateStatus.Ready, Db.GetTemplate("labour")!.Status);
+        Assert.Equal(TemplateStatus.Ready, Db.GetTemplate("social_reform")!.Status);
     }
 }

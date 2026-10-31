@@ -189,10 +189,10 @@ reserve: { start: 100, interest: 0.03 }
 defaultAllocation: { War: 0.25, Interior: 0.15, CommerceLabor: 0.30, Treasury: 0.10, Navy: 0.20 }
 favour: { start: 60, baseline: 60, drift: 1, navyFactor: 75, alertBelow: 30 }
 threat: { start: 25, alerts: [60, 85] }
-discontent: { min: 0, max: 10, start: 3, rest: 3, drift: 0.5, alertAt: 7, growthDrag: 0.005 }
+discontent: { min: 0, max: 10, start: 3, rest: 3, drift: 0.25, alertAt: 6, growthDrag: 0.01 }
 division: { raise: 40, upkeep: 5, baseSides: 12, sidesStep: 2, maxSides: 18, trainCosts: [20, 30, 40] }
 gendarmerie: { raise: 20, upkeep: 2.5, baseSides: 8, sidesStep: 2, maxSides: 12, trainCosts: [10, 20] }
-crackdown: { cost: 10, reduction: 2, backlash: 1, failurePopularity: 2 }
+crackdown: { cost: 10, reduction: 2, backlash: 1, failurePopularity: 2, dieBase: 4, diePerDiscontent: 1 }
 project: { popularity: 2, graft: 0.5 }   # graft: share of spending above the pace that is lost
 startingForces:
   divisions: { aurenten: 2, iracterie: 1, north_arpal: 1, agrinenten: 1, ocidanten: 1 }   # province: count
@@ -209,9 +209,9 @@ Unit upkeep (`division.upkeep`, `gendarmerie.upkeep`) is per unit per year, paid
 lawless:
   name: Lawless
   description: Gangs rule the back streets, and the watch looks away.
-  biases: { army: 0.1, poor_relief: 0.2 }   # opinion bias per issue id; missing issues are 0
+  biases: { rearmament: 0.1, social_reform: -0.2 }   # opinion bias per issue id; missing issues are 0
   discontentRest: 1                 # added to the province's resting discontent
-  growth: -0.002                    # added to the national yearly growth, per province with it
+  growth: -0.02                     # added to the province's yearly growth, weighted by its share of the population
 ```
 
 Every field except `name` is optional and defaults to 0. Crime is not a separate value: it is the `lawless` condition. The catalogue has two kinds of condition, which the bot treats alike:
@@ -239,25 +239,25 @@ Last election: Liberal Union 9, Country Party 6, Crown and Union 4
 
 **Content** is not config: it lives in `content/` as templates, and the GM imports it with `/content import` (section 6). Content templates are issues, bills, projects, events and crises.
 
-**Starting content** in `content/`: the eight opening issues in `content/issues/`, their nine bills in `content/bills/`, six projects in `content/projects/`, and the opening event in `content/events/opening_1850.yaml`. The GM imports them before the game opens and marks them Ready. The opening event is scheduled for Spring 1850, so marking it Ready queues it, and `/gm start` fires it when the founding pre-election opens. It opens the issues and makes their bills available.
+**Starting content** in `content/`: six broad issues in `content/issues/`, their bills in `content/bills/`, six projects in `content/projects/`, and the events and crises in `content/events/` and `content/crises/`. The GM imports them before the game opens and marks them Ready. The opening event, `opening_1850.yaml`, is scheduled for Spring 1850, so marking it Ready queues it, and `/gm start` fires it when the founding pre-election opens. It opens four issues (Free Trade, Electoral Reform, Social Reform, Anzarian Integration) and makes one or two bills on each available. The rest of the bills arrive during the first term, through a storyline of scheduled events that also opens the last two issues (Rearmament and Public Works): the Railway Projectors (Autumn 1850), the Admirals' Ball (Winter 1850), the Foreign Travellers in North Arpal (Spring 1851), the Great Stink (Summer 1851), the Monster Petition (Autumn 1851) and the Weavers' Riots (Spring 1852). A few bills come only from crisis answers (the Free Ports Act, from the Saltmouth Smugglers). Some events are follow-ups that bills and crisis answers queue (`event.{id}`). The rest wait for the GM to queue them with `/gm event queue`, and most of those post a crisis; any of them that touches a later issue opens it first if it is not open yet.
 
 **issues/\*.yaml:** the import and export format for issue templates, one file per issue. An issue is a broad question that parties take stances on. It has no law of its own: the laws are its bills.
 
 ```yaml
-id: labour
-title: The Condition of Labour
-for: Protect the workers and their children.
-against: Leave industry free to compete.
-opinion: 0.2
+id: social_reform
+title: Social Reform
+for: The Crown must protect the worker, the child and the pauper.
+against: Thrift and self-help, low rates, and masters and men left to their own bargains.
+opinion: 0.1
 salience: 3
 ```
 
-`/info labour`. Opinion and salience never appear:
+`/info social_reform`. Opinion and salience never appear:
 
 ```
-## The Condition of Labour
-For: Protect the workers and their children.
-Against: Leave industry free to compete.
+## Social Reform
+For: The Crown must protect the worker, the child and the pauper.
+Against: Thrift and self-help, low rates, and masters and men left to their own bargains.
 Status: Open
 
 Bills
@@ -273,7 +273,7 @@ Crown and Union: no stance
 ```yaml
 id: ten_hours_bill
 title: The Ten Hours Bill
-issue: labour
+issue: social_reform
 lean: For
 motion: Limit factory work to ten hours a day, ban the employment of children under twelve, and send Crown inspectors into every mill and pit.
 pass:
@@ -308,7 +308,7 @@ kingdom is ruined.
 id: carden_strike
 title: Strike at the Carden Docks
 text: The dockers walk out over wages, and the harbour falls silent.
-effects: { discontent.north_arpal: 1, salience.labour: 1,
+effects: { discontent.north_arpal: 1, salience.social_reform: 1,
            condition.north_arpal.striking: 1, crisis.dock_strike_carden: true }
 schedule: { season: Autumn, year: 1851 }
 ```
@@ -321,7 +321,7 @@ Autumn 1851
 The dockers walk out over wages, and the harbour falls silent.
 
 <:stat_raise:1565442139855392808> Discontent in North Arpal
-<:stat_raise:1565442139855392808> Salience: The Condition of Labour
+<:stat_raise:1565442139855392808> Salience: Social Reform
 North Arpal is now *Striking*
 Crisis: The Carden Dock Strike
 ```
@@ -341,7 +341,7 @@ id: dock_strike_carden
 title: The Carden Dock Strike
 ministry: CommerceLabor
 province: north_arpal
-issue: labour
+issue: social_reform
 answers:
   - lean: For
     label: Meet the strikers' demands
@@ -374,7 +374,7 @@ When the event posts it, in #news (`/info` shows the same):
 
 ```
 ## Crisis: The Carden Dock Strike
-Ministry of Commerce and Labor · North Arpal · The Condition of Labour
+Ministry of Commerce and Labor · North Arpal · Social Reform
 Due at the next resolution, Winter 1851 <t:…:R>
 
 1. Meet the strikers' demands · For · 30 cr
@@ -386,7 +386,7 @@ A condemnation, in #news at once:
 
 ```
 @rival (Baroness Edel) condemns the handling of The Carden Dock Strike, and stands For
-The Condition of Labour.
+Social Reform.
 ```
 
 After the resolution, a clean outcome:
@@ -614,9 +614,9 @@ The responsible minister is whoever holds the ministry at the deadline, or the C
 
 1. **Start of Winter:** `economy ×= 1 + growth`, where
 
-   `growth = economy.growth + Σ condition growth − growthDrag × Σ_p share_p × max(0, discontent_p − discontent.rest)`
+   `growth = economy.growth + Σ_p share_p × Σ condition growth_p − growthDrag × unrest`
 
-   The middle term is the `growth` of every condition on every province. The last is the **unrest drag**: `share_p` is province p's share of the population, so unrest costs in proportion to the people it touches. At 0.005, the whole nation at discontent 7 costs 2% a year, against the base 1% growth. Then `Budget = economy × taxRate`; this is the **available** Budget.
+   `share_p` is province p's share of the population, so conditions and unrest cost in proportion to the people they touch. The middle term weights the `growth` of each province's conditions by that share: Famine (−0.03) in Aurenten, about 16% of the people, costs about 0.5% a year. The last term is the **unrest drag**. Each season, after discontent drifts, the bot records `Σ_p share_p × max(0, discontent_p − discontent.rest)`. `unrest` is the average of the seasons recorded since the last Budget, so a riot in Spring still costs at Winter, and the record starts afresh after each Budget. Before any season is recorded (at game start), the current value is used. At 0.01, Aurenten held at 2 above rest for the year costs about 0.3%, and the whole nation at discontent 7 costs 4%, against the base 1% growth. Then `Budget = economy × taxRate`; this is the **available** Budget.
 2. **During Winter:** the Treasury allocates the available Budget across five purses: War, Interior, CommerceLabor, Treasury and Navy. Anything unallocated goes to the reserve.
 3. **Start of Spring:**
    - leftover balances from last year's purses move to the reserve;
@@ -638,7 +638,7 @@ Divisions and gendarmerie are the same kind of unit with different constants. A 
 - **Train:** sides rise by `sidesStep`, up to `maxSides`. The cost is the `trainCosts` entry for the unit's current step, so retraining a unit that lost a step costs that step again.
 - **Station** moves a unit to another province, for free.
 - **Battle** (a GM command): every die on each side is rolled, ad-hoc dice add their bonus, and the side totals are compared. The higher total wins, and a tie goes to the defender. The loser loses its lowest-rolling unit, or its two lowest if the winner's total is at least double. The bot proposes the losses, and the GM confirms them. Losses only apply to real units, never to ad-hoc dice.
-- **Riot** (a GM command): the gendarmerie in a province roll their total against one die with `max(2, round(2 × discontent))` sides. A province with no gendarmerie rolls 0. The bot reports the result, and the GM decides the consequences.
+- **Riot** (a GM command): the gendarmerie in a province roll their total against one die with `max(2, round(crackdown.dieBase + crackdown.diePerDiscontent × discontent))` sides: d7 at discontent 3, d11 at 7. A province with no gendarmerie rolls 0. The bot reports the result, and the GM decides the consequences.
 
 **Crackdown** (Interior), a gamble on order in one province:
 
@@ -646,6 +646,7 @@ Divisions and gendarmerie are the same kind of unit with different constants. A 
 - The gendarmerie roll as in a riot, against the same discontent die.
 - **Success** (the gendarmerie total is at least the die): discontent falls by `crackdown.reduction`, and the `lawless` condition is removed if present.
 - **Failure:** discontent rises by `crackdown.backlash`, the Interior minister's faction loses `crackdown.failurePopularity`, and the GM is alerted to write the follow-up.
+- **Balance:** with a reduction of 2 against a backlash of 1, a crackdown lowers discontent on average whenever it succeeds more than a third of the time. One untrained corps (d8) does so up to discontent 9 (d13), so a crackdown stays worth the gamble in an unruly province, and training or a second corps makes it reliable.
 - The result is public, in the resolution's news.
 
 **Projects**
@@ -758,7 +759,7 @@ The message looks like this:
 
 ```
 ## Liberal Union
-The Condition of Labour: *Strongly For*
+Social Reform: *Strongly For*
 Free Trade: *Against*
 The Franchise: *For*
 ```
@@ -768,7 +769,7 @@ The Franchise: *For*
   - **Formatting** is ignored: list bullets (`-`, `*`, `•`, `1.`, `1)`), blockquotes (`>`), subtext (`-#`), Markdown markers (`**`, `__`, `*`, `_`, `~~`, `` ` ``, `||`), backslash escapes, quotes, trailing punctuation, Discord custom emoji, mentions and timestamps, unicode emoji and extra spaces.
   - **Separators** between issue and opinion: `:`, ` - `, ` -- `, `–`, `—`, `=`, `->`, `-->`, `=>`, `→`, `|` or a tab. Further text after another separator is commentary (`Free Trade: For - it brings prosperity`).
   - **No separator** is needed when the opinion starts or ends the line and the rest names an issue (`Strongly support free trade`, `No stance on Poor Relief`, `Free Trade strongly for`); a leading *on*, *of*, *to*, *towards*, *regarding* or *about* before the issue is dropped.
-  - **The issue** is matched against the title or id of an open issue, ignoring capitalisation, punctuation, a leading *The*, and underscores against spaces. Failing that, whole words contained in exactly one open issue's title or id match it (`Labour` is *The Condition of Labour*), from 4 letters up.
+  - **The issue** is matched against the title or id of an open issue, ignoring capitalisation, punctuation, a leading *The*, and underscores against spaces. Failing that, whole words contained in exactly one open issue's title or id match it (`Labour` is *Social Reform*), from 4 letters up.
   - **The opinion** is one of *Strongly For*, *For*, *Against*, *Strongly Against* or *Silent*, or an alias from `config/programme.yaml` (YAML Reference), ignoring capitalisation and punctuation. The defaults include *support*, *in favour of*, *pro*, *yes*, *aye*, *+*, *+1* for For; *oppose*, *opposed to*, *anti*, *no*, *nay*, *reject*, *-*, *-1* for Against; *++*, *+2* and *--*, *-2* for the strong stances; and a strength word (*strongly*, *very*, *firmly*, *fiercely*, *staunchly*, *wholly*, *fully*, ...) before or after For or Against makes it strong. Filler such as *we are*, *the party stands* and *it* around the opinion is allowed (`Free Trade: we are firmly against it`).
   - **Silent** (also *non-aligned*, *neutral*, *no stance*, *abstain*, *undecided*, *none*, *n/a*, *0*, ...) records no stance, exactly as leaving the issue out, but still counts as giving the issue for the duplicate check.
 - **Missing issues have no stance.** Any open issue the message doesn't mention is recorded as Silent (no stance), so the message is always the party's complete programme and replaces the previous one.
@@ -885,7 +886,7 @@ Posting a template creates a **live copy**, so later edits to the template never
 
 - Ids, factions, parties, provinces, conditions, issues, bills, projects, events, crises, answers, votes and ministries autocomplete in every command.
 
-**Effects as text**, so they fit in a modal field: `discontent.north_arpal -2, economy -1, opinion.labour +0.05, crisis.dock_strike_carden`. The bot validates every key against the effect keys in section 3 and rejects anything unknown.
+**Effects as text**, so they fit in a modal field: `discontent.north_arpal -2, economy -1, opinion.social_reform +0.05, crisis.dock_strike_carden`. The bot validates every key against the effect keys in section 3 and rejects anything unknown.
 
 **Effect summaries**
 
@@ -907,7 +908,7 @@ Any plain lines, such as the vote count or the minister who chose
 - A number going up or down starts with the **up** or **down** emoji (`display.upEmoji`, `display.downEmoji` in `constants.yaml`), followed by the value's readable name, for example "Discontent in North Arpal".
 - Public numbers (section 9) also show the amount: economy, purses, the reserve, faction popularity, the Assembly size, and the tax rate as a percentage.
 - The people's mood and Threat show only the direction, never the amount. These are opinion, salience, discontent, Favour and its baseline, and Threat. A change to the Favour baseline reads the same as a change to Favour, so the summary never reveals whether a shift will last.
-- Actions use plain lines with no emoji: "New issue: The Condition of Labour", "New bill: The Ten Hours Bill", "Project begun: The Royal Railway", "Issue closed: Free Trade", "Crisis: The Carden Dock Strike", "North Arpal is now *Lawless*", "North Arpal is no longer *Epidemic*".
+- Actions use plain lines with no emoji: "New issue: Social Reform", "New bill: The Ten Hours Bill", "Project begun: The Royal Railway", "Issue closed: Free Trade", "Crisis: The Carden Dock Strike", "North Arpal is now *Lawless*", "North Arpal is no longer *Epidemic*".
 - An effect of 0 is left out. Something with no effects has no summary.
 
 Section 4 shows example posts next to each content format: a fired event, a passed law and the crisis outcomes.
@@ -1040,7 +1041,7 @@ After the election the next term begins. The outgoing cabinet stays as caretaker
 - **Favour:** 70 or more is *content*, 50–69 *calm*, 30–49 *restless*, 10–29 *resentful*, and below 10 *defiant*.
 - **Discontent:** below 2 is *quiet*, 2–4 *grumbling*, 4–6 *restless*, 6–8 *unruly*, and 8 or more *rioting*.
 
-A poll reads, for example: "In North Arpal, the Condition of Labour is *a burning question*, and the people are *strongly for* it."
+A poll reads, for example: "In North Arpal, Social Reform is *a burning question*, and the people are *strongly for* it."
 
 **Voice.** Everything the bot posts publicly is written in the world's voice. The resolution summary reads as the news of the season. GM acts (appointing a Chancellor, imposing a cabinet, summoning the Assembly after an election, `/gm proclaim`) are posted as royal proclamations, under the heading "By His Majesty's Command". Campaign days are dispatches from the hustings. GM alerts and private errors stay plain.
 
@@ -1062,7 +1063,7 @@ A poll reads, for example: "In North Arpal, the Condition of Labour is *a burnin
 
 **Alerts** are posted to #gm after each resolution, and only when a threshold is newly crossed or an event happens:
 
-- Discontent in a province reaches 7.
+- Discontent in a province reaches 6.
 - Favour falls below 30, or reaches 0.
 - Threat reaches 60, or 85.
 - The War or Interior purse cannot cover its yearly upkeep, and its units lose training.

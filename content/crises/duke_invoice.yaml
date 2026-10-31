@@ -1,0 +1,30 @@
+id: duke_invoice
+title: The Duke's Invoice
+ministry: Treasury
+province: agrinenten
+issue: integration
+answers:
+  - lean: Against
+    label: Pay it in full, with interest
+    price: 20
+    text: >-
+      The Treasury pays in full. The Duke is gracious, and in the capital the Clarion prints the bill
+      beside the price of bread.
+    effects: { favour: 5, discontent.aurenten: 1 }
+  - lean: Neutral
+    label: Send an auditor to examine the accounts
+    price: 10
+    text: >-
+      A Treasury auditor spends a fortnight at Corvasse, and the Duke agrees to settle for half.
+    effects: { favour: 2 }
+  - lean: For
+    label: Return it unpaid, as the law requires
+    text: >-
+      The invoice is returned unpaid, with a note that the Crown is bound by the laws of the Assembly.
+      The Duke does not reply.
+    effects: { favour: -4 }
+default:
+  text: >-
+    The invoice lies unanswered on a Treasury desk. The Duke sends a second, with the interest
+    compounded, and a sharper letter.
+  effects: { favour: -3 }

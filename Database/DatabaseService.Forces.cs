@@ -43,8 +43,8 @@ public partial class DatabaseService
 
     public static Ministry MinistryOf(UnitType type) => type == UnitType.Division ? Ministry.War : Ministry.Interior;
 
-    public static int CrackdownDieSides(double discontent) =>
-        Math.Max(2, (int)Math.Round(2 * discontent, MidpointRounding.AwayFromZero));
+    public static int CrackdownDieSides(CrackdownConstants crackdown, double discontent) =>
+        Math.Max(2, (int)Math.Round(crackdown.DieBase + crackdown.DiePerDiscontent * discontent, MidpointRounding.AwayFromZero));
 
     public List<Unit> GetUnits(UnitType? type = null)
     {
@@ -449,7 +449,7 @@ public partial class DatabaseService
             var total = GetUnitsTx(conn, tx, UnitType.Gendarmerie)
                 .Where(u => u.ProvinceId == province.Id)
                 .Sum(u => random.RollDie(u.Sides));
-            var dieSides = CrackdownDieSides(province.Discontent);
+            var dieSides = CrackdownDieSides(c.Crackdown, province.Discontent);
             var dieRoll = random.RollDie(dieSides);
             var success = total >= dieRoll;
 

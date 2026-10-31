@@ -1,0 +1,7 @@
+id: sacsmoor_workhouse
+title: Scandal at the Sacsmoor Workhouse
+text: >-
+  An inquest at the Sacsmoor Union Workhouse in Provencie Sacs finds that the master, Mr Obadiah Fench,
+  has been selling the paupers' oatmeal to a brewery and feeding them on thin gruel. Mr Fench tells the
+  coroner he was keeping down the rates.
+effects: { discontent.provencie_sacs: 1, salience.social_reform: 1, crisis.gruel_inquest: true }

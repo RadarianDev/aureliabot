@@ -1,9 +1,11 @@
 id: charter_confirmation
 title: The Confirmation of the Charters
-issue: anzarian_union
+issue: integration
 lean: Against
 motion: Confirm the ancient privileges of the Anzarian nobility for as long as the union lasts.
 pass:
-  text: The Anzarian lords ride home with their charters sealed, and toast the King. In the capital, the crowds call it a betrayal.
+  text: >-
+    The Anzarian lords ride home with their charters sealed, and toast the King. The Duke of Corvasse
+    calls it a wise day for the union. In the capital the crowds call it a betrayal.
   effects: { favour: 15, favourBaseline: 10, discontent.aurenten: 2, discontent.provencie_gares: 1,
-             close.anzarian_union: true }
+             close.integration: true }

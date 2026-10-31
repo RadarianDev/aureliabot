@@ -1,0 +1,31 @@
+id: gruel_inquest
+title: The Sacsmoor Workhouse Inquest
+ministry: Interior
+province: provencie_sacs
+issue: social_reform
+answers:
+  - lean: Against
+    label: Commend the master's thrift
+    text: >-
+      The Interior censures the sale of the oatmeal but commends Mr Fench's economy. The ratepayers of
+      Provencie Sacs approve. The paupers do not.
+    effects: { discontent.provencie_sacs: 1, purse.Interior: 5 }
+  - lean: Neutral
+    label: Appoint a royal commission
+    price: 20
+    text: >-
+      A royal commission inspects the workhouses of Provencie Sacs for four months, and recommends a
+      fixed ration. The paupers are grateful that someone has come.
+    effects: { discontent.provencie_sacs: -1 }
+  - lean: For
+    label: Dismiss the master and double the ration
+    price: 15
+    text: >-
+      Mr Fench is dismissed and the oatmeal ration is doubled. The ratepayers petition the Interior
+      against the cost.
+    effects: { discontent.provencie_sacs: -2 }
+default:
+  text: >-
+    Nobody in the capital answers. Mr Fench keeps his post, and the paupers of Provencie Sacs riot over
+    the rations.
+  effects: { discontent.provencie_sacs: 2, discontent.aurenten: 1 }

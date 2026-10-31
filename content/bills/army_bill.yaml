@@ -1,10 +1,12 @@
 id: army_bill
 title: The Army Bill
-issue: army
+issue: rearmament
 lean: For
 motion: Introduce three years' general conscription for every able man of twenty.
 pass:
-  text: The first levies muster in the spring. The frontier forts fill, and the harvest is brought in by women and old men.
+  text: >-
+    The first levies muster in the spring, and General Sir Hannibal Strake reviews them in person. The
+    frontier forts fill, and the harvest is brought in by women and old men.
   effects: { threat: -15, economy: -20, purse.War: -40,
              discontent.agrinenten: 2, discontent.ocidanten: 2, discontent.provencie_sacs: 2,
              discontent.iracterie: 1 }

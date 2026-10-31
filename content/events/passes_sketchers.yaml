@@ -1,0 +1,11 @@
+id: passes_sketchers
+title: Foreign Travellers in North Arpal
+text: >-
+  Innkeepers in the North Arpal passes report foreign gentlemen on walking tours. They sketch the
+  bridges, ask about the roads, and pay in gold. General Sir Hannibal Strake asks the Assembly for more
+  men; the farmers ask it for fewer.
+effects:
+  - if: "not issue.rearmament.open"
+    then: { open.rearmament: true }
+  - { threat: 5, bill.army_bill: true, bill.militia_act: true }
+schedule: { season: Spring, year: 1851 }

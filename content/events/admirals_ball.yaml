@@ -1,0 +1,11 @@
+id: admirals_ball
+title: The Admirals' Ball
+text: >-
+  The Anzarian admirals give a ball aboard their flagship, and members of the Assembly are among the
+  guests. The Duke of Corvasse speaks warmly of the union, and asks only that the King confirm the
+  charters his forefathers granted.
+effects:
+  - { favour: 3 }
+  - if: "issue.integration.open"
+    then: { bill.charter_confirmation: true }
+schedule: { season: Winter, year: 1850 }

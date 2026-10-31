@@ -129,6 +129,12 @@ public partial class DatabaseService
             );");
 
         Exec(connection, @"
+            CREATE TABLE IF NOT EXISTS unrest_samples (
+                resolution_number INTEGER PRIMARY KEY,
+                unrest REAL NOT NULL
+            );");
+
+        Exec(connection, @"
             CREATE TABLE IF NOT EXISTS province_conditions (
                 province_id TEXT NOT NULL REFERENCES provinces(id) ON DELETE CASCADE,
                 condition_id TEXT NOT NULL,

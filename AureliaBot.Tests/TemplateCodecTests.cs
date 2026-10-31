@@ -62,8 +62,8 @@ public class TemplateCodecTests : IDisposable
     public void StartingContent_IsPresent()
     {
         var names = StartingFiles().Select(f => f.Name).ToList();
-        Assert.Equal(8, names.Count(n => n.StartsWith("issues/")));
-        Assert.Equal(9, names.Count(n => n.StartsWith("bills/")));
+        Assert.Equal(6, names.Count(n => n.StartsWith("issues/")));
+        Assert.Equal(16, names.Count(n => n.StartsWith("bills/")));
         Assert.Equal(6, names.Count(n => n.StartsWith("projects/")));
         Assert.Contains("events/opening_1850.yaml", names);
     }
@@ -164,14 +164,14 @@ public class TemplateCodecTests : IDisposable
     public void BadFile_ReportsItsLine_AndBlocksOnlyItself()
     {
         var bad = new ImportFile("issues/bad.yaml", "id: bad\ntitle: Bad\nfor: F\nagainst: A\nopinion: 0\nsalience: 9\n");
-        var outcomes = ContentRules.Import(Db, ImportContext, [Starting("issues/labour.yaml"), bad, Starting("bills/ten_hours_bill.yaml")]);
+        var outcomes = ContentRules.Import(Db, ImportContext, [Starting("issues/social_reform.yaml"), bad, Starting("bills/ten_hours_bill.yaml")]);
 
         Assert.True(outcomes[0].Imported);
         Assert.False(outcomes[1].Imported);
         Assert.True(outcomes[2].Imported);
         Assert.Equal(6, Assert.Single(outcomes[1].Errors).Line);
         Assert.Null(Db.GetTemplate("bad"));
-        Assert.NotNull(Db.GetTemplate("labour"));
+        Assert.NotNull(Db.GetTemplate("social_reform"));
         Assert.NotNull(Db.GetTemplate("ten_hours_bill"));
         Assert.Contains("issues/bad.yaml, line 6", ContentRules.FormatImport(outcomes));
     }
@@ -262,16 +262,16 @@ public class TemplateCodecTests : IDisposable
     [Fact]
     public void ReimportingAnId_ReplacesIt_AndReturnsReadyToDraft()
     {
-        var first = ContentRules.ImportOne(Db, ImportContext, Starting("issues/labour.yaml"));
+        var first = ContentRules.ImportOne(Db, ImportContext, Starting("issues/social_reform.yaml"));
         Assert.False(first.Replaced);
-        Db.SetTemplateStatus("labour", TemplateStatus.Ready);
+        Db.SetTemplateStatus("social_reform", TemplateStatus.Ready);
 
-        var changed = Starting("issues/labour.yaml") with { Yaml = Starting("issues/labour.yaml").Yaml.Replace("salience: 3", "salience: 4") };
+        var changed = Starting("issues/social_reform.yaml") with { Yaml = Starting("issues/social_reform.yaml").Yaml.Replace("salience: 3", "salience: 4") };
         var second = ContentRules.ImportOne(Db, ImportContext, changed);
 
         Assert.True(second.Replaced);
         Assert.Equal(TemplateStatus.Ready, second.PreviousStatus);
-        var row = Db.GetTemplate("labour")!;
+        var row = Db.GetTemplate("social_reform")!;
         Assert.Equal(TemplateStatus.Draft, row.Status);
         Assert.Contains("salience: 4", row.Yaml);
         Assert.Contains("returned to Draft", ContentRules.Describe(second));
@@ -280,15 +280,15 @@ public class TemplateCodecTests : IDisposable
     [Fact]
     public void Edit_WithANewId_SavesACopy()
     {
-        ContentRules.ImportOne(Db, ImportContext, Starting("issues/labour.yaml"));
-        Db.SetTemplateStatus("labour", TemplateStatus.Ready);
-        var yaml = Db.GetTemplate("labour")!.Yaml.Replace("id: labour", "id: labour_two");
+        ContentRules.ImportOne(Db, ImportContext, Starting("issues/social_reform.yaml"));
+        Db.SetTemplateStatus("social_reform", TemplateStatus.Ready);
+        var yaml = Db.GetTemplate("social_reform")!.Yaml.Replace("id: social_reform", "id: social_reform_two");
 
-        var edit = ContentRules.SaveEdit(Db, ImportContext, "labour", yaml);
+        var edit = ContentRules.SaveEdit(Db, ImportContext, "social_reform", yaml);
 
         Assert.True(edit.Copy);
-        Assert.Equal(TemplateStatus.Ready, Db.GetTemplate("labour")!.Status);
-        Assert.Equal(TemplateStatus.Draft, Db.GetTemplate("labour_two")!.Status);
+        Assert.Equal(TemplateStatus.Ready, Db.GetTemplate("social_reform")!.Status);
+        Assert.Equal(TemplateStatus.Draft, Db.GetTemplate("social_reform_two")!.Status);
     }
 
     [Fact]
@@ -299,7 +299,7 @@ public class TemplateCodecTests : IDisposable
 
         var files = ContentRules.ReadArchive(ContentRules.Export(Db.GetTemplates()));
         Assert.Equal(before.Count, files.Count);
-        Assert.Contains(files, f => f.Name == "issues/labour.yaml");
+        Assert.Contains(files, f => f.Name == "issues/social_reform.yaml");
         Assert.Contains(files, f => f.Name == "events/opening_1850.yaml");
 
         var outcomes = ContentRules.Import(Db, ImportContext, files);

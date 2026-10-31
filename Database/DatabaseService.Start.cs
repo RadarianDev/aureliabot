@@ -15,6 +15,7 @@ public partial class DatabaseService
         var state = GetGameStateTx(conn, tx);
         if (state.Started) return new StartResult(Texts.Get("data.start.alreadyStarted"), null);
 
+        Exec(conn, tx, "DELETE FROM unrest_samples;");
         Exec(conn, tx, "DELETE FROM province_conditions;");
         Exec(conn, tx, "DELETE FROM provinces;");
         foreach (var province in config.Provinces)

@@ -1,0 +1,34 @@
+id: anzarian_musters
+title: The Anzarian Musters
+ministry: War
+province: agrinenten
+issue: rearmament
+answers:
+  - lean: For
+    label: March the army to the border
+    price: 30
+    text: >-
+      Two battalions march into Agrinenten. The retainers disperse, the Duke of Corvasse protests to the
+      War Office at length, and the farmers along the road complain of the cost of feeding soldiers.
+    effects: { favour: -5, threat: -3, discontent.agrinenten: 1 }
+  - lean: Neutral
+    label: Write to the Duke in the King's name
+    price: 25
+    text: >-
+      A royal envoy carries a letter and gifts to the Duke. He receives them courteously, and stands his
+      men down, for now.
+    effects: { favour: 3 }
+  - lean: Against
+    label: Quietly restore the Duke's hunting rights
+    text: >-
+      By a quiet order, the Duke's old rights over his estates and their poachers are restored. The
+      retainers go home, and in the capital the order is called a surrender.
+    effects: { favour: 8, discontent.agrinenten: 1, discontent.aurenten: 1 }
+complication:
+  text: The War Office cannot pay the carters, and the column halts halfway, in full view of the retainers.
+  effects: { favour: -2, discontent.agrinenten: 1 }
+default:
+  text: >-
+    No word comes from the capital. The retainers grow bolder, and the Duke rides through the border
+    towns at their head.
+  effects: { favour: -5, threat: 5, discontent.agrinenten: 1 }

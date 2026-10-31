@@ -8,6 +8,7 @@ public class BattleTests : AssemblyTestBase
     private static readonly Unit Lancers = new(2, UnitType.Division, "Lancers", 6, "aurenten");
     private static readonly Unit Militia = new(3, UnitType.Gendarmerie, "City Militia", 6, "iracterie");
     private static readonly IReadOnlyList<Unit> Units = [Guards, Lancers, Militia];
+    private static readonly CrackdownConstants Crackdown = new() { DieBase = 4, DiePerDiscontent = 1 };
 
     private static BattleSide Side(string text) => BattleRolls.ParseSide(text, Units).Side!;
 
@@ -112,7 +113,7 @@ public class BattleTests : AssemblyTestBase
     [Fact]
     public void ARiot_RollsTheGendarmerieAgainstTheDiscontentDie()
     {
-        var result = BattleRolls.Riot([Militia, Militia with { Id = 4 }], 4.5, new ScriptedRandomSource(3, 4, 7));
+        var result = BattleRolls.Riot([Militia, Militia with { Id = 4 }], 4.5, Crackdown, new ScriptedRandomSource(3, 4, 7));
 
         Assert.Equal(7, result.Total);
         Assert.Equal(9, result.DieSides);
@@ -123,10 +124,10 @@ public class BattleTests : AssemblyTestBase
     [Fact]
     public void ARiot_WithoutGendarmerie_RollsZero()
     {
-        var result = BattleRolls.Riot([], 0.4, new ScriptedRandomSource(1));
+        var result = BattleRolls.Riot([], 0.4, Crackdown, new ScriptedRandomSource(1));
 
         Assert.Equal(0, result.Total);
-        Assert.Equal(2, result.DieSides);
+        Assert.Equal(4, result.DieSides);
         Assert.False(result.Held);
     }
 

@@ -23,7 +23,7 @@ Field names are camelCase. Ids are lowercase slugs (`north_arpal`, `ten_hours_bi
 Bills, projects, events and crisis answers all carry an `effects` map: a key and a change.
 
 ```yaml
-effects: { economy: -20, discontent.north_arpal: 1, open.labour: true, bill.ten_hours_bill: true }
+effects: { economy: -20, discontent.north_arpal: 1, open.social_reform: true, bill.ten_hours_bill: true }
 ```
 
 | Key | Value | Meaning |
@@ -65,7 +65,7 @@ In a project's effects, `here` stands for the project's province: `discontent.he
 
 Every key is validated on import, and an unknown one is rejected. Values are clamped to their range
 after each change. In modals and `/gm apply`, effects are written as text instead:
-`discontent.north_arpal -2, economy -1, open.public_health`.
+`discontent.north_arpal -2, economy -1, open.public_works`.
 
 ### Advanced effects
 
@@ -89,7 +89,7 @@ else 0). They can read:
 
 | Reference | Value |
 | --- | --- |
-| any numeric effect key | its current value: `economy`, `favour`, `threat`, `reserve`, `purse.War`, `discontent.north_arpal`, `opinion.labour`, `salience.labour`, `division.north_arpal`, … |
+| any numeric effect key | its current value: `economy`, `favour`, `threat`, `reserve`, `purse.War`, `discontent.north_arpal`, `opinion.social_reform`, `salience.social_reform`, `division.north_arpal`, … |
 | `popularity.{faction}`, `popularity.chancellor`, `popularity.government`, … | popularity; for a group, its average |
 | `var.{variable}` | one of your variables |
 | `condition.{province}.{condition}` | 1 if the province has it, else 0 |
@@ -160,11 +160,11 @@ own; its laws are bills. It enters play through an `open.{id}` effect, and leave
 `close.{id}` effect, which a bill can carry.
 
 ```yaml
-id: labour
-title: The Condition of Labour
-for: Protect the workers and their children.
-against: Leave industry free to compete.
-opinion: 0.2
+id: social_reform
+title: Social Reform
+for: The Crown must protect the worker, the child and the pauper.
+against: Thrift and self-help, low rates, and masters and men left to their own bargains.
+opinion: 0.1
 salience: 3
 ```
 
@@ -187,7 +187,7 @@ rival bills. It becomes available to propose through a `bill.{id}` effect.
 ```yaml
 id: ten_hours_bill
 title: The Ten Hours Bill
-issue: labour
+issue: social_reform
 lean: For
 motion: Limit factory work to ten hours a day, ban the employment of children under twelve, and send Crown inspectors into every mill and pit.
 pass:
@@ -254,7 +254,7 @@ One file per event. Events fire at the start of a turn, and bring issues and cri
 id: carden_strike
 title: Strike at the Carden Docks
 text: The dockers walk out over wages, and the harbour falls silent.
-effects: { discontent.north_arpal: 1, salience.labour: 1,
+effects: { discontent.north_arpal: 1, salience.social_reform: 1,
            condition.north_arpal.striking: 1, crisis.dock_strike_carden: true }
 schedule: { season: Autumn, year: 1851 }
 ```
@@ -286,7 +286,7 @@ id: dock_strike_carden
 title: The Carden Dock Strike
 ministry: CommerceLabor
 province: north_arpal
-issue: labour
+issue: social_reform
 answers:
   - lean: For
     label: Meet the strikers' demands
@@ -365,10 +365,10 @@ reserve: { start: 100, interest: 0.03 }
 defaultAllocation: { War: 0.25, Interior: 0.15, CommerceLabor: 0.30, Treasury: 0.10, Navy: 0.20 }
 favour: { start: 60, baseline: 60, drift: 1, navyFactor: 75, alertBelow: 30 }
 threat: { start: 25, alerts: [60, 85] }
-discontent: { min: 0, max: 10, start: 3, rest: 3, drift: 0.5, alertAt: 7, growthDrag: 0.005 }
+discontent: { min: 0, max: 10, start: 3, rest: 3, drift: 0.25, alertAt: 6, growthDrag: 0.01 }
 division: { raise: 40, upkeep: 5, baseSides: 12, sidesStep: 2, maxSides: 18, trainCosts: [20, 30, 40] }
 gendarmerie: { raise: 20, upkeep: 2.5, baseSides: 8, sidesStep: 2, maxSides: 12, trainCosts: [10, 20] }
-crackdown: { cost: 10, reduction: 2, backlash: 1, failurePopularity: 2 }
+crackdown: { cost: 10, reduction: 2, backlash: 1, failurePopularity: 2, dieBase: 4, diePerDiscontent: 1 }
 project: { popularity: 2, graft: 0.5 }
 startingForces:
   divisions: { aurenten: 2, iracterie: 1, north_arpal: 1, agrinenten: 1, ocidanten: 1 }
@@ -465,7 +465,7 @@ startingForces:
 | `discontent.min`, `.max`, `.start` | Range and starting value. |
 | `discontent.rest`, `.drift` | Resting value and the move toward it each season. |
 | `discontent.alertAt` | GM alert threshold. |
-| `discontent.growthDrag` | Growth lost per point of discontent above rest. |
+| `discontent.growthDrag` | Growth lost per point of discontent above rest, averaged over the seasons since the last budget. |
 | `project.popularity` | Popularity a project's minister gains when it finishes. |
 | `project.graft` | Share of spending above a project's pace that is lost. |
 
@@ -478,6 +478,7 @@ startingForces:
 | `crackdown.reduction` | Discontent removed on success. |
 | `crackdown.backlash` | Discontent added on failure. |
 | `crackdown.failurePopularity` | Popularity the Interior minister loses on failure. |
+| `crackdown.dieBase`, `.diePerDiscontent` | The riot and crackdown die: `dieBase + diePerDiscontent × discontent` sides, rounded, at least 2. |
 | `startingForces.divisions` | Divisions per province at the start. |
 | `startingForces.gendarmerie` | One corps in each listed province. |
 
@@ -510,9 +511,9 @@ Keyed by condition id. The name and description are public; the numbers are hidd
 lawless:
   name: Lawless
   description: Gangs rule the back streets, and the watch looks away.
-  biases: { army: 0.1, poor_relief: 0.2 }
+  biases: { rearmament: 0.1, social_reform: -0.2 }
   discontentRest: 1
-  growth: -0.002
+  growth: -0.02
 ```
 
 | Field | Required | Meaning |
@@ -521,7 +522,7 @@ lawless:
 | `description` | no | One public line. |
 | `biases` | no | Opinion shift in the province, per issue id. Missing issues get 0. |
 | `discontentRest` | no | Added to the province's resting discontent. |
-| `growth` | no | Added to the national yearly growth, per province with it. |
+| `growth` | no | Added to the yearly growth, weighted by the province's share of the population. |
 
 **Standing** conditions describe a province and are set in `provinces.yaml`: urban, industrial, farmland,
 frontier, anzarian_border, crossroads, rugged, forested, marshland, remote, coastal. **Event**

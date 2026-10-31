@@ -1,0 +1,11 @@
+id: seditious_meetings_act
+title: The Seditious Meetings Act
+issue: electoral_reform
+lean: Against
+motion: Forbid any public meeting of more than fifty persons without a magistrate's licence, and empower the gendarmes to disperse it.
+pass:
+  text: >-
+    The Act is posted on every church door. Mrs Pellow's Franchise Union meets in parlours of
+    forty-nine, and the Anzarian lords write to thank the Assembly.
+  effects: { favour: 5, purse.Interior: -20, gendarmerie.aurenten: 1,
+             discontent.aurenten: 1, discontent.iracterie: 1 }

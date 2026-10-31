@@ -1,0 +1,9 @@
+id: manor_yards
+title: Musters in the Manor Yards
+text: >-
+  The Clarion's correspondent in Agrinenten reports that the Anzarian retainers now drill openly in
+  columns, under the old ducal colours. The Duke of Corvasse has been seen inspecting them on horseback.
+effects:
+  - if: "not issue.rearmament.open"
+    then: { open.rearmament: true }
+  - { favour: -3, salience.rearmament: 1, crisis.anzarian_musters: true }

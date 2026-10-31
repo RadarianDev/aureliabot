@@ -1,0 +1,6 @@
+id: saltmouth_brandy
+title: Smuggling on the Ocidanten Coast
+text: >-
+  Smuggling has spread along the Ocidanten coast. Foreign brandy, lace and tea come ashore by night
+  around Saltmouth, and half the villages are in on it.
+effects: { economy: 5, salience.free_trade: 1, crisis.saltmouth_smugglers: true }

@@ -1,0 +1,7 @@
+id: carden_strike
+title: Strike at the Carden Docks
+text: >-
+  The Carden dockers walk out over wages, and the harbour falls silent. The owners say the men are well
+  paid; the men say otherwise. Ships lie three deep in the roads.
+effects: { discontent.north_arpal: 1, salience.social_reform: 1,
+           condition.north_arpal.striking: 1, crisis.carden_dock_strike: true }

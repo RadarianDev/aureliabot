@@ -1,0 +1,10 @@
+id: brannock_sheep
+title: Shots on Brannock Fell
+text: >-
+  Warned of a foreign column crossing the hills at dusk, the Soralenten militia opens fire. At dawn the
+  column turns out to be a flock of sheep belonging to a Mr Davey, ninety of them dead. Mr Davey wants
+  compensation, and the militia's colonel stands by his orders.
+effects:
+  - if: "not issue.rearmament.open"
+    then: { open.rearmament: true }
+  - { discontent.soralenten: 1, salience.rearmament: 1, crisis.brannock_fell: true }

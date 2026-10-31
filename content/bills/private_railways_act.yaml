@@ -1,0 +1,11 @@
+id: private_railways_act
+title: The Private Railways Act
+issue: public_works
+lean: Against
+motion: Let any railway company with a hundred subscribers buy land along its line by compulsory purchase, without a penny from the Crown.
+pass:
+  text: >-
+    Railway companies are floated by the dozen, and their surveyors walk through orchards and churchyards
+    with the law in their pockets. The squires of the western shires take them to court, and lose.
+  effects: { economy: 40, condition.iracterie.booming: 1,
+             discontent.agrinenten: 1, discontent.provencie_sacs: 1, event.railway_mania: 3 }

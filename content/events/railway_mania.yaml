@@ -1,0 +1,7 @@
+id: railway_mania
+title: Railway Mania
+text: >-
+  Clerks, curates and widows across Aurenten are buying railway shares, in companies sound and unsound
+  alike. Dozens of new lines are floated in a month, some without a mile of track. The Clarion warns of
+  a bubble.
+effects: { economy: 15, salience.public_works: 1, crisis.railway_panic: true }

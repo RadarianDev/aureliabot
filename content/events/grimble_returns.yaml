@@ -1,0 +1,6 @@
+id: grimble_returns
+title: Mr Grimble Comes Home
+text: >-
+  Mr Thaddeus Grimble, who sailed for Mugi to build his mills beyond the reach of the Ten Hours Act, is
+  back after five weeks. Mugi, he reports, has factory laws of its own. He reopens his mills in Iracterie.
+effects: { economy: 5 }

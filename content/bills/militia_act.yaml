@@ -1,0 +1,11 @@
+id: militia_act
+title: The Militia Act
+issue: rearmament
+lean: Against
+motion: Stand down two regular divisions, and raise in their place a county militia that drills one month a year.
+pass:
+  text: >-
+    Two divisions are stood down and their men go home for the harvest. The county militias drill on
+    village greens in borrowed coats, and across the border someone counts the regiments again.
+  effects: { purse.War: 40, threat: 10, division.aurenten: -1, division.provencie_gares: -1,
+             discontent.agrinenten: -1, discontent.provencie_sacs: -1, discontent.ocidanten: -1 }

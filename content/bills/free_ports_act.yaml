@@ -1,0 +1,14 @@
+id: free_ports_act
+title: The Free Ports Act
+issue: free_trade
+lean: For
+motion: Make Saltmouth and Carden free ports, where foreign goods land without duty.
+pass:
+  text: >-
+    The customs houses at Saltmouth and Carden close their ledgers. The smugglers find honest work on the
+    quays, and the farmers inland complain that foreign butter is now cheaper than their own.
+  effects:
+    - { economy: 30, reserve: -20, discontent.ocidanten: -1, discontent.north_arpal: -1,
+        discontent.provencie_sacs: 1 }
+    - if: "condition.ocidanten.lawless"
+      then: { condition.ocidanten.lawless: -1 }

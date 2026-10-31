@@ -1,0 +1,6 @@
+id: cholera_spreads
+title: The Fever Reaches Iracterie
+text: >-
+  The cholera follows the coal barges up the canal into Iracterie, where whole pit villages share a
+  single well. The mills close for a week.
+effects: { condition.iracterie.epidemic: 1, discontent.iracterie: 1, salience.social_reform: 1, economy: -20 }

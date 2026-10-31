@@ -6,6 +6,6 @@ price: 40
 term: 4
 effects: { condition.here.marshland: -1, discontent.here: -2, economy: 10 }
 bonus:
-  by: { season: Summer, year: 1851 }
+  by: { season: Summer, year: 1853 }
   text: The fens are dry before the fever season, and for the first time in memory the summer passes without a death.
-  effects: { discontent.here: -1, opinion.public_health: 0.1 }
+  effects: { discontent.here: -1, opinion.public_works: 0.1 }

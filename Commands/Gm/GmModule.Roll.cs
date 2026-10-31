@@ -93,7 +93,7 @@ public partial class GmModule
             }
 
             var gendarmerie = _data.GetUnits(UnitType.Gendarmerie).Where(u => u.ProvinceId == target.Id).ToList();
-            var result = BattleRolls.Riot(gendarmerie, target.Discontent, new SeededRandomSource(SeededRandomSource.NewSeed()));
+            var result = BattleRolls.Riot(gendarmerie, target.Discontent, config.Constants.Crackdown, new SeededRandomSource(SeededRandomSource.NewSeed()));
             var lines = new List<string>
             {
                 Texts.Get("roll.riot.heading", ("province", definition.Name), ("discontent", Display.Number(target.Discontent)), ("sides", result.DieSides)),

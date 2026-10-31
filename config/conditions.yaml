@@ -1,46 +1,46 @@
 urban:
   name: Urban
   description: Crowded towns, where news travels fast and bread is bought, not grown.
-  biases: { labour: 0.2, free_trade: 0.3, franchise: 0.2, public_health: 0.3,
-            poor_relief: -0.2, anzarian_union: 0.1 }
+  biases: { social_reform: 0.3, free_trade: 0.3, electoral_reform: 0.2, public_works: 0.3,
+            integration: 0.1 }
 industrial:
   name: Industrial
   description: Pits, foundries and mills, and the men and children who work them.
-  biases: { labour: 0.4, railways: 0.2, poor_relief: -0.1 }
+  biases: { social_reform: 0.4, public_works: 0.2 }
 farmland:
   name: Farmland
   description: Wheat and pasture, held by landlords and worked by tenants.
-  biases: { free_trade: -0.5, army: -0.2, franchise: -0.1, labour: -0.1 }
+  biases: { free_trade: -0.5, rearmament: -0.2, electoral_reform: -0.1, social_reform: -0.1 }
 frontier:
   name: Frontier
   description: A border with a foreign power, watched from both sides.
-  biases: { army: 0.3, free_trade: -0.1 }
+  biases: { rearmament: 0.3, free_trade: -0.1 }
 anzarian_border:
   name: Anzarian Border
   description: Anzarian lords, kin and markets lie just across the line.
-  biases: { anzarian_union: -0.4, army: 0.1, railways: 0.1 }
+  biases: { integration: -0.4, rearmament: 0.1, public_works: 0.1 }
 crossroads:
   name: Crossroads
   description: Roads and rivers carry the kingdom's trade through here.
-  biases: { railways: 0.3, free_trade: 0.3 }
+  biases: { public_works: 0.3, free_trade: 0.3 }
 rugged:
   name: Rugged
   description: Hills and uplands, hard to farm and harder to travel.
-  biases: { railways: 0.1, free_trade: 0.1, poor_relief: -0.1 }
+  biases: { public_works: 0.1, free_trade: 0.1, social_reform: 0.1 }
 forested:
   name: Forested
   description: Timber country, felling oak for ships and sleepers.
-  biases: { free_trade: 0.2, railways: 0.1 }
+  biases: { free_trade: 0.2, public_works: 0.1 }
 marshland:
   name: Marshland
   description: Fens and lowlands, where the fever returns every summer.
-  biases: { public_health: 0.4 }
+  biases: { public_works: 0.4 }
   discontentRest: 0.5
-  growth: -0.001
+  growth: -0.01
 remote:
   name: Remote
   description: Far from the capital, and feeling it.
-  biases: { railways: 0.3, franchise: 0.2, anzarian_union: 0.1 }
+  biases: { public_works: 0.3, electoral_reform: 0.2, integration: 0.1 }
   discontentRest: 0.5
 coastal:
   name: Coastal
@@ -49,29 +49,29 @@ coastal:
 lawless:
   name: Lawless
   description: Gangs rule the back streets, and the watch looks away.
-  biases: { army: 0.1, poor_relief: 0.2 }
+  biases: { rearmament: 0.1, social_reform: -0.2 }
   discontentRest: 1
-  growth: -0.002
+  growth: -0.02
 epidemic:
   name: Epidemic
   description: Fever spreads through the crowded quarters.
-  biases: { public_health: 0.4, labour: 0.1 }
+  biases: { social_reform: 0.3, public_works: 0.3 }
   discontentRest: 1
 striking:
   name: Striking
   description: Picket lines stand at the gates, and nothing moves.
-  biases: { labour: 0.4 }
+  biases: { social_reform: 0.4 }
   discontentRest: 1
-  growth: -0.002
+  growth: -0.02
 famine:
   name: Famine
   description: The harvest failed, and the price of bread has doubled.
-  biases: { free_trade: 0.5, poor_relief: -0.3 }
+  biases: { free_trade: 0.5, social_reform: 0.3 }
   discontentRest: 2
-  growth: -0.003
+  growth: -0.03
 booming:
   name: Booming
   description: New money, new chimneys, and work for anyone who wants it.
-  biases: { railways: 0.1 }
+  biases: { public_works: 0.1 }
   discontentRest: -1
-  growth: 0.003
+  growth: 0.03

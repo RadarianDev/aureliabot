@@ -96,6 +96,7 @@ public partial class DatabaseService
             var rest = Math.Clamp(Formulas.RestingDiscontent(c.Discontent, definitions), c.Discontent.Min, c.Discontent.Max);
             SetDiscontentTx(conn, tx, province.Id, Formulas.StepToward(province.Discontent, rest, c.Discontent.Drift));
         }
+        SampleUnrestTx(conn, tx, state, config);
 
         SetStateTx(conn, tx, "favour", Math.Clamp(Formulas.StepToward(state.Favour, state.FavourBaseline, c.Favour.Drift), 0, 100));
 

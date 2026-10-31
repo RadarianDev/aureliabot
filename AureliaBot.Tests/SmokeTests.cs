@@ -49,7 +49,7 @@ public class SmokeTests : IDisposable
         Assert.Equal(10, config.Provinces.Count);
         Assert.Equal(0.20, config.Constants.DefaultAllocation[Ministry.Navy]);
         Assert.Equal(2, config.Constants.StartingForces.Divisions["aurenten"]);
-        Assert.Equal(0.2, config.Condition("lawless")!.BiasOn("poor_relief"));
+        Assert.Equal(-0.2, config.Condition("lawless")!.BiasOn("social_reform"));
         Assert.Equal(3, config.Constants.Division.TrainCosts.Count);
         Assert.Equal(new TimeOnly(8, 0), config.Constants.ResolutionTimeOfDay);
         Assert.Empty(ConstantsStore.Validate(config));

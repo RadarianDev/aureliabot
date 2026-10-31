@@ -1,0 +1,31 @@
+id: railway_panic
+title: The Railway Panic
+ministry: Treasury
+province: aurenten
+issue: public_works
+answers:
+  - lean: For
+    label: Stand behind the sound lines from the reserve
+    price: 10
+    text: >-
+      The Treasury guarantees every line with track and trains to show for its money. The panic stops,
+      at a cost to the reserve.
+    effects: { reserve: -30, economy: 10 }
+  - lean: Neutral
+    label: Publish a list of sound companies
+    price: 15
+    text: >-
+      The Treasury publishes a list of the companies that have laid track. It is a short list. Shares in
+      the rest collapse, and several of their directors leave for Mugi.
+    effects: { economy: -10 }
+  - lean: Against
+    label: Let the market correct itself
+    text: >-
+      The Treasury declines to rescue anyone. The bubble bursts within the week, and many families in
+      Aurenten lose their savings.
+    effects: { economy: -40, discontent.aurenten: 1 }
+default:
+  text: >-
+    The Treasury says nothing, the bubble bursts by itself, and the directors of the worst companies leave
+    for Mugi with the deposits.
+  effects: { economy: -50, discontent.aurenten: 1 }

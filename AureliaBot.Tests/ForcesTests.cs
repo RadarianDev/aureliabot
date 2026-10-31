@@ -166,7 +166,7 @@ public class ForcesTests : AssemblyTestBase
         var crackdown = Assert.Single(report.Crackdowns);
         Assert.True(crackdown.Success);
         Assert.Equal(6, crackdown.GendarmerieTotal);
-        Assert.Equal(10, crackdown.DieSides);
+        Assert.Equal(9, crackdown.DieSides);
         Assert.Equal(4, crackdown.DieRoll);
         Assert.Equal(5 - C.Crackdown.Reduction, Discontent("aurenten"), 6);
         Assert.DoesNotContain("lawless", Db.GetProvinceConditions().GetValueOrDefault("aurenten", []));
@@ -242,7 +242,7 @@ public class ForcesTests : AssemblyTestBase
 
         var crackdown = Assert.Single(report.Crackdowns);
         Assert.Equal(5, crackdown.GendarmerieTotal);
-        Assert.Equal(6, crackdown.DieSides);
+        Assert.Equal(7, crackdown.DieSides);
         Assert.True(crackdown.Success);
     }
 

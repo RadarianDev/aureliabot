@@ -1,0 +1,30 @@
+id: brannock_fell
+title: The Brannock Fell Affair
+ministry: War
+province: soralenten
+issue: rearmament
+answers:
+  - lean: For
+    label: Replace the militia with regulars
+    price: 30
+    text: >-
+      A regular battalion takes over the hill forts of Soralenten. The border is better watched than it
+      has been for years, and someone across it notices.
+    effects: { threat: -3, discontent.soralenten: -1 }
+  - lean: Neutral
+    label: Court-martial the colonel and pay for the sheep
+    price: 15
+    text: >-
+      The colonel is court-martialled and acquitted. Mr Davey is paid for his sheep, and the matter is
+      closed.
+    effects: { discontent.soralenten: -1 }
+  - lean: Against
+    label: Disband the militia and send them home
+    text: >-
+      The militia is disbanded and sent home to the farms. The forts on Brannock Fell stand empty.
+    effects: { threat: 3, purse.War: 5 }
+default:
+  text: >-
+    The capital says nothing, the colonel keeps his command, and Soralenten takes the silence as an
+    insult.
+  effects: { discontent.soralenten: 1 }

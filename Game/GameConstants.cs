@@ -158,6 +158,8 @@ public sealed record CrackdownConstants
     public double Reduction { get; init; }
     public double Backlash { get; init; }
     public double FailurePopularity { get; init; }
+    public double DieBase { get; init; }
+    public double DiePerDiscontent { get; init; }
 }
 
 public sealed record ProjectConstants

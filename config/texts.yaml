@@ -524,7 +524,7 @@ gm:
     changedWithSchedule: "`{field}` changed from {from} to {to}. Next resolution: {next}."
     button: "Set"
     confirm: "Set `{field}` from **{from}** to **{to}**? Nothing is posted."
-    unknownKey: "`{key}` is not a value `/gm set` knows. Use a game value from the list, or an effect key such as `purse.War`, `discontent.north_arpal`, `opinion.labour`, `salience.labour` or `popularity.<user id>`."
+    unknownKey: "`{key}` is not a value `/gm set` knows. Use a game value from the list, or an effect key such as `purse.War`, `discontent.north_arpal`, `opinion.social_reform`, `salience.social_reform` or `popularity.<user id>`."
     noCurrentValue: "`{key}` has no current value (is the game started and the issue open?)."
     unknownValue: "?"
     effectChanged: "`{key}` changed from {from} to {to}."
@@ -838,7 +838,7 @@ templates:
   yamlSyntax: "YAML syntax: {message}"
   emptyFile: The file is empty.
   onePerFile: Write one template per file.
-  notAMap: "The file must be a map of fields, such as `id: labour`."
+  notAMap: "The file must be a map of fields, such as `id: social_reform`."
   unknownKind: "Can't tell what kind of template this is: a crisis has `answers`, a bill `lean`, a project `price`, an event `text` and an issue `for`."
   noIssueTemplate: "`issue`: no issue template `{issue}`."
   unknownCondition: "`requires`: unknown condition `{condition}`."
@@ -871,7 +871,7 @@ templates:
   ministry: "{field} must be `War`, `Interior`, `CommerceLabor` or `Treasury`, not `{value}`."
   season: "{field} must be `Spring`, `Summer`, `Autumn` or `Winter`, not `{value}`."
   childMap: "{field} must be a map with {allowed}."
-  effectsMap: "{field} must be a map such as `{ economy: -2, open.labour: true }`."
+  effectsMap: "{field} must be a map such as `{ economy: -2, open.social_reform: true }`."
   effectKeyPlain: "{field}: each effect key must be a plain word, such as `economy`."
   effectSingleValue: "{field}: `{key}` takes a single value."
   effectError: "{field}: {error}"

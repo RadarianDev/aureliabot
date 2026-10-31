@@ -57,7 +57,7 @@ public partial class InfoModule : InteractionModuleBase<SocketInteractionContext
         _constants = constants;
     }
 
-    [SlashCommand("info", "Show anything in the game: factions, parties, issues, bills, projects, crises, provinces, ministries, the budget")]
+    [SlashCommand("info", "Show anything: factions, parties, issues, bills, projects, crises, provinces, ministries, budget")]
     public async Task InfoAsync(
         [Summary("thing", "What to show; leave empty for what is live"), Autocomplete(typeof(InfoAutocomplete))] string? thing = null,
         [Summary("year", "For the budget: an earlier year")] int? year = null)

@@ -1,0 +1,14 @@
+id: combination_act
+title: The Combination Act
+issue: social_reform
+lean: Against
+motion: Outlaw every union of workmen, and make it a crime to strike at, or picket, a mill, pit or dock.
+pass:
+  text: >-
+    The union lodges are shut and their funds seized. Mr Thaddeus Grimble toasts the Act at the
+    Millowners' dinner. In the pit villages the men still meet, at night, out on the moors.
+  effects:
+    - { economy: 30, discontent.iracterie: 2, discontent.north_arpal: 2, discontent.aurenten: 1 }
+    - each: province
+      where: "condition.it.striking"
+      do: { condition.it.striking: -1 }

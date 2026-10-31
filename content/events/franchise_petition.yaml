@@ -1,0 +1,9 @@
+id: franchise_petition
+title: The Monster Petition
+text: >-
+  Mrs Agatha Pellow's Franchise Union brings its petition for the vote to the Assembly, said to carry
+  two million signatures, on three carts at the head of a great procession. Behind it come two bills:
+  one to give the householders the vote, and one to forbid such processions for good.
+effects: { salience.electoral_reform: 1, crisis.monster_petition: true,
+           bill.reform_bill: true, bill.seditious_meetings_act: true }
+schedule: { season: Autumn, year: 1851 }

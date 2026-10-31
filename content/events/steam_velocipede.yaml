@@ -1,0 +1,10 @@
+id: steam_velocipede
+title: Mr Grimble's Steam Carriage
+text: >-
+  Before a large crowd in Iracterie, Mr Thaddeus Grimble demonstrates a steam carriage for the common
+  road. It runs a quarter of a mile before its boiler bursts. Nobody is hurt, and investors are already
+  asking about the next model.
+effects:
+  - if: "not issue.public_works.open"
+    then: { open.public_works: true }
+  - { economy: 5, salience.public_works: 1 }

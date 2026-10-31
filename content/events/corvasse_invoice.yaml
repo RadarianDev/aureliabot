@@ -1,0 +1,10 @@
+id: corvasse_invoice
+title: A Letter from the Duke of Corvasse
+text: >-
+  The Duke of Corvasse, who entertained His Majesty for three days last autumn, sends the Treasury his
+  account for the visit. Under the old charters, he notes, such debts were always paid by the Crown,
+  with interest.
+effects:
+  - if: "issue.integration.open"
+    then: { crisis.duke_invoice: true }
+    else: { favour: -2 }

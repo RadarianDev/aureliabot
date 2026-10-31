@@ -137,14 +137,50 @@ public class FiscalTests : IDisposable
         Sql($"UPDATE provinces SET discontent = {rest - 2};");
         Assert.Equal(calm, Db.GrowthRate(Config), 12);
 
+        var drag = Config.Constants.Discontent.GrowthDrag;
         Sql("UPDATE provinces SET discontent = 7;");
-        Assert.Equal(0.02, calm - Db.GrowthRate(Config), 12);
+        Assert.Equal(drag * (7 - rest), calm - Db.GrowthRate(Config), 12);
 
         Sql($"UPDATE provinces SET discontent = {rest};");
         Sql("UPDATE provinces SET discontent = 7 WHERE id = 'aurenten';");
+        Assert.Equal(drag * (7 - rest) * AurentenShare(), calm - Db.GrowthRate(Config), 12);
+    }
+
+    [Fact]
+    public void TheUnrestDrag_AveragesTheSeasonsSinceTheLastBudget()
+    {
+        Start();
+        var discontent = Config.Constants.Discontent;
+        Sql($"UPDATE provinces SET discontent = {discontent.Rest};");
+        Sql("UPDATE provinces SET discontent = 7 WHERE id = 'aurenten';");
+        Resolve();
+
         var provinces = Db.GetProvinces();
-        var share = provinces.Single(p => p.Id == "aurenten").Population / provinces.Sum(p => p.Population);
-        Assert.Equal(0.02 * share, calm - Db.GrowthRate(Config), 12);
+        var unrest = provinces.Sum(p => p.Population / provinces.Sum(q => q.Population) * Math.Max(0, p.Discontent - discontent.Rest));
+        Assert.Equal(7 - discontent.Drift, provinces.Single(p => p.Id == "aurenten").Discontent, 12);
+        var averaged = Db.GrowthRate(Config);
+        Sql("DELETE FROM unrest_samples;");
+        Sql($"UPDATE provinces SET discontent = {discontent.Rest};");
+        var calm = Db.GrowthRate(Config);
+
+        Assert.Equal(discontent.GrowthDrag * unrest, calm - averaged, 12);
+    }
+
+    [Fact]
+    public void ConditionGrowth_IsWeightedByPopulation()
+    {
+        Start();
+        Sql($"UPDATE provinces SET discontent = {Config.Constants.Discontent.Rest};");
+        var before = Db.GrowthRate(Config);
+        Sql("INSERT INTO province_conditions (province_id, condition_id, since_season, since_year) VALUES ('aurenten', 'famine', 'Spring', 1850);");
+
+        Assert.Equal(Config.Condition("famine")!.Growth * AurentenShare(), Db.GrowthRate(Config) - before, 12);
+    }
+
+    private double AurentenShare()
+    {
+        var provinces = Db.GetProvinces();
+        return provinces.Single(p => p.Id == "aurenten").Population / provinces.Sum(p => p.Population);
     }
 
     [Fact]

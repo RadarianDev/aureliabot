@@ -263,11 +263,31 @@ public partial class DatabaseService
         var c = config.Constants;
         var provinces = GetProvincesTx(conn, tx);
         var conditions = GetProvinceConditionsTx(conn, tx);
-        var conditionGrowth = conditions.Values.SelectMany(ids => ids).Sum(id => config.Condition(id)?.Growth ?? 0);
         var totalPopulation = provinces.Sum(p => p.Population);
-        var drag = totalPopulation <= 0 ? 0 : provinces.Sum(p =>
-            p.Population / totalPopulation * Math.Max(0, p.Discontent - c.Discontent.Rest));
+        var conditionGrowth = totalPopulation <= 0 ? 0 : provinces.Sum(p =>
+            p.Population / totalPopulation * conditions.GetValueOrDefault(p.Id, []).Sum(id => config.Condition(id)?.Growth ?? 0));
+        var drag = AverageUnrestTx(conn, tx) ?? UnrestTx(conn, tx, config);
         return c.Economy.Growth + conditionGrowth - c.Discontent.GrowthDrag * drag;
+    }
+
+    private static double UnrestTx(SqliteConnection conn, SqliteTransaction? tx, GameConfig config)
+    {
+        var provinces = GetProvincesTx(conn, tx);
+        var totalPopulation = provinces.Sum(p => p.Population);
+        return totalPopulation <= 0 ? 0 : provinces.Sum(p =>
+            p.Population / totalPopulation * Math.Max(0, p.Discontent - config.Constants.Discontent.Rest));
+    }
+
+    private static void SampleUnrestTx(SqliteConnection conn, SqliteTransaction tx, GameState state, GameConfig config) =>
+        Exec(conn, tx, "INSERT OR REPLACE INTO unrest_samples (resolution_number, unrest) VALUES ($resolution, $unrest);",
+            ("$resolution", state.ResolutionNumber), ("$unrest", UnrestTx(conn, tx, config)));
+
+    private static double? AverageUnrestTx(SqliteConnection conn, SqliteTransaction? tx)
+    {
+        using var cmd = conn.CreateCommand();
+        cmd.Transaction = tx;
+        cmd.CommandText = "SELECT AVG(unrest) FROM unrest_samples;";
+        return cmd.ExecuteScalar() is double average ? average : null;
     }
 
     private static decimal ComputeBudgetTx(SqliteConnection conn, SqliteTransaction tx, GameConfig config, int fiscalYear)
@@ -275,6 +295,7 @@ public partial class DatabaseService
         var state = GetGameStateTx(conn, tx);
         var economy = state.Economy * (1 + GrowthRateTx(conn, tx, config));
         SetStateTx(conn, tx, "economy", economy);
+        Exec(conn, tx, "DELETE FROM unrest_samples;");
         var budget = Math.Round((decimal)(economy * state.TaxRate), 2, MidpointRounding.AwayFromZero);
         Exec(conn, tx, @"
             INSERT INTO fiscal_years (year, economy, tax_rate, budget, computed_resolution) VALUES ($year, $economy, $tax, $budget, $resolution)

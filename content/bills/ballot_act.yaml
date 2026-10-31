@@ -1,0 +1,11 @@
+id: ballot_act
+title: The Ballot Act
+issue: electoral_reform
+lean: For
+motion: Have every vote cast in secret, on a printed ballot in a closed booth, instead of aloud at the hustings.
+pass:
+  text: >-
+    The hustings are pulled down, and voters go behind a curtain. The landlords of the western shires can
+    no longer tell how their tenants vote, and the price of a vote in Aurenten falls to nothing.
+  effects: { favour: -3, purse.Interior: -10,
+             discontent.aurenten: -1, discontent.provencie_sacs: -1, discontent.agrinenten: -1 }

@@ -1,9 +1,12 @@
 id: new_poor_law
 title: The New Poor Law
-issue: poor_relief
-lean: For
+issue: social_reform
+lean: Against
 motion: Abolish parish relief, and send the able-bodied poor to national workhouses.
 pass:
-  text: The workhouse gates open and families are parted at the door. The gangs recruit from those who would not go in.
+  text: >-
+    The workhouse gates open and families are parted at the door. The Boards of Guardians report the cost
+    of relief halved. The gangs recruit from those who would not go in.
   effects: { economy: 30, purse.Interior: 40, condition.aurenten.lawless: 1,
-             discontent.aurenten: 2, discontent.iracterie: 2, discontent.provencie_sacs: 1 }
+             discontent.aurenten: 2, discontent.iracterie: 2, discontent.provencie_sacs: 1,
+             event.sacsmoor_workhouse: 3 }

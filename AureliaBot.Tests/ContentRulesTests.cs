@@ -27,14 +27,15 @@ public class ContentRulesTests : IDisposable
     [Fact]
     public void Bill_IsNotReady_UntilItsIssueIs()
     {
-        Import("issues/labour.yaml", "bills/ten_hours_bill.yaml");
+        Import("issues/social_reform.yaml", "bills/ten_hours_bill.yaml", "events/grimble_returns.yaml");
+        Assert.True(ContentRules.MakeReady(Db, Config, "grimble_returns").Ok);
 
         var refused = ContentRules.MakeReady(Db, Config, "ten_hours_bill");
         Assert.False(refused.Ok);
-        Assert.Contains("Its issue template `labour` (issue) is Draft", refused.Message);
+        Assert.Contains("Its issue template `social_reform` (issue) is Draft", refused.Message);
         Assert.Equal(TemplateStatus.Draft, Db.GetTemplate("ten_hours_bill")!.Status);
 
-        Assert.True(ContentRules.MakeReady(Db, Config, "labour").Ok);
+        Assert.True(ContentRules.MakeReady(Db, Config, "social_reform").Ok);
         Assert.True(ContentRules.MakeReady(Db, Config, "ten_hours_bill").Ok);
         Assert.Equal(TemplateStatus.Ready, Db.GetTemplate("ten_hours_bill")!.Status);
     }
@@ -45,20 +46,21 @@ public class ContentRulesTests : IDisposable
         Import("bills/ten_hours_bill.yaml");
         var refused = ContentRules.MakeReady(Db, Config, "ten_hours_bill");
         Assert.False(refused.Ok);
-        Assert.Contains("no issue template `labour`", refused.Message);
+        Assert.Contains("no issue template `social_reform`", refused.Message);
     }
 
     [Fact]
     public void Event_ReferencingADraftBill_IsRefused()
     {
-        Import("issues/labour.yaml", "bills/ten_hours_bill.yaml");
-        ImportYaml("events/e.yaml", "id: e\ntitle: T\ntext: S\neffects: { open.labour: true, bill.ten_hours_bill: true }\n");
-        Assert.True(ContentRules.MakeReady(Db, Config, "labour").Ok);
+        Import("issues/social_reform.yaml", "bills/ten_hours_bill.yaml", "events/grimble_returns.yaml");
+        Assert.True(ContentRules.MakeReady(Db, Config, "grimble_returns").Ok);
+        ImportYaml("events/e.yaml", "id: e\ntitle: T\ntext: S\neffects: { open.social_reform: true, bill.ten_hours_bill: true }\n");
+        Assert.True(ContentRules.MakeReady(Db, Config, "social_reform").Ok);
 
         var refused = ContentRules.MakeReady(Db, Config, "e");
         Assert.False(refused.Ok);
         Assert.Contains("`ten_hours_bill` (bill) is Draft", refused.Message);
-        Assert.DoesNotContain("`labour`", refused.Message);
+        Assert.DoesNotContain("`social_reform`", refused.Message);
 
         Assert.True(ContentRules.MakeReady(Db, Config, "ten_hours_bill").Ok);
         Assert.True(ContentRules.MakeReady(Db, Config, "e").Ok);
@@ -67,12 +69,12 @@ public class ContentRulesTests : IDisposable
     [Fact]
     public void ReadinessProblems_ListEveryMissingOrUnreadyReference()
     {
-        Import("issues/labour.yaml");
+        Import("issues/social_reform.yaml");
         var ev = new EventTemplate("e", "T", "S",
-            [new Effect("open.labour", null), new Effect("project.nowhere", null), new Effect("open.labour", null)], null);
+            [new Effect("open.social_reform", null), new Effect("project.nowhere", null), new Effect("open.social_reform", null)], null);
         var problems = ContentRules.ReadinessProblems(ev, Db.GetTemplate);
         Assert.Equal(2, problems.Count);
-        Assert.Contains(problems, p => p.Contains("`labour`") && p.Contains("Draft"));
+        Assert.Contains(problems, p => p.Contains("`social_reform`") && p.Contains("Draft"));
         Assert.Contains(problems, p => p.Contains("`nowhere` does not exist"));
     }
 
@@ -80,16 +82,16 @@ public class ContentRulesTests : IDisposable
     public void StartingContent_CanAllBeMadeReady_AndTheOpeningEventIsQueuedForGmStart()
     {
         ContentRules.Import(Db, ContentRules.ImportContext(Db, Config), TemplateCodecTests.StartingFiles());
-        foreach (var kind in new[] { TemplateKind.Issue, TemplateKind.Project, TemplateKind.Bill, TemplateKind.Event })
-            foreach (var row in Db.GetTemplates(kind))
-            {
-                var result = ContentRules.MakeReady(Db, Config, row.Id);
-                Assert.True(result.Ok, result.Message);
-            }
+        for (var pass = 0; pass < 6 && Db.GetTemplates(status: TemplateStatus.Draft).Count > 0; pass++)
+            foreach (var row in Db.GetTemplates(status: TemplateStatus.Draft))
+                ContentRules.MakeReady(Db, Config, row.Id);
 
-        var queued = Assert.Single(Db.GetQueuedEvents());
+        foreach (var row in Db.GetTemplates(status: TemplateStatus.Draft))
+            Assert.Fail($"{row.Id}: {ContentRules.MakeReady(Db, Config, row.Id).Message}");
+
+        Assert.All(Db.GetQueuedEvents(), e => Assert.True(e.FromSchedule));
+        var queued = Assert.Single(Db.GetQueuedEvents(), e => e.FireAtResolution == 0);
         Assert.Equal("opening_1850", queued.TemplateId);
-        Assert.True(queued.FromSchedule);
         Assert.Equal(0, queued.FireAtResolution);
         Assert.Equal("at /gm start", ContentRules.DescribeFireAt(Db.GetGameState(), 0));
     }
@@ -170,14 +172,14 @@ public class ContentRulesTests : IDisposable
     [Fact]
     public void Remove_DeletesAnUnpostedDraft_AndArchivesTheRest()
     {
-        Import("issues/labour.yaml", "issues/army.yaml");
-        Db.SetTemplateStatus("army", TemplateStatus.Ready);
+        Import("issues/social_reform.yaml", "issues/rearmament.yaml");
+        Db.SetTemplateStatus("rearmament", TemplateStatus.Ready);
 
-        Assert.True(ContentRules.Remove(Db, "labour").Ok);
-        Assert.Null(Db.GetTemplate("labour"));
+        Assert.True(ContentRules.Remove(Db, "social_reform").Ok);
+        Assert.Null(Db.GetTemplate("social_reform"));
 
-        Assert.True(ContentRules.Remove(Db, "army").Ok);
-        Assert.Equal(TemplateStatus.Archived, Db.GetTemplate("army")!.Status);
+        Assert.True(ContentRules.Remove(Db, "rearmament").Ok);
+        Assert.Equal(TemplateStatus.Archived, Db.GetTemplate("rearmament")!.Status);
     }
 
     [Fact]

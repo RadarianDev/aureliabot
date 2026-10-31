@@ -1,0 +1,29 @@
+id: saltmouth_smugglers
+title: The Saltmouth Smugglers
+ministry: Interior
+province: ocidanten
+issue: free_trade
+answers:
+  - lean: For
+    label: Cut the duty on brandy
+    text: >-
+      The duty on brandy is halved, and smuggling collapses overnight. The farmers of the western plains
+      complain of foreign goods.
+    effects: { reserve: -15, discontent.provencie_sacs: 1, bill.free_ports_act: true }
+  - lean: Neutral
+    label: Hire more customs men
+    price: 20
+    text: >-
+      Twenty new customs men take up posts along the coast. Some of them are soon taking bribes, but the
+      trade slows.
+    effects: { economy: -5 }
+  - lean: Against
+    label: Send the gendarmes and the revenue cutters
+    price: 15
+    text: >-
+      Revenue cutters patrol the coast and the gendarmes raid the villages. Forty casks are seized, and
+      Ocidanten does not forgive it.
+    effects: { discontent.ocidanten: 2, economy: -5 }
+default:
+  text: Nobody acts, and smuggling becomes the leading trade of the Ocidanten coast.
+  effects: { condition.ocidanten.lawless: 1 }

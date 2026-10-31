@@ -1,0 +1,28 @@
+id: monster_petition
+title: The Monster Petition
+ministry: Interior
+province: aurenten
+issue: electoral_reform
+answers:
+  - lean: For
+    label: Receive it on the Assembly steps
+    text: >-
+      The Interior receives the petition on the Assembly steps, and Mrs Pellow addresses the crowd. It
+      goes home satisfied. The Anzarian lords are not.
+    effects: { discontent.aurenten: -1, discontent.iracterie: -1, favour: -2 }
+  - lean: Neutral
+    label: Have every signature counted
+    price: 15
+    text: >-
+      Forty clerks count the signatures for six weeks and find nearly two million genuine names. Both
+      sides claim victory.
+  - lean: Against
+    label: Disperse the procession
+    price: 10
+    text: >-
+      The gendarmes break up the procession at the river bridge and tip the carts into the water. Mrs
+      Pellow vows to begin again.
+    effects: { discontent.aurenten: 2, discontent.iracterie: 1 }
+default:
+  text: Nobody receives the petition, and the carts stand in Assembly Square for a month.
+  effects: { discontent.aurenten: 1 }

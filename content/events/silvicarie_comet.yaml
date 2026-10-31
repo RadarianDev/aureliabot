@@ -1,0 +1,6 @@
+id: silvicarie_comet
+title: A Comet over Silvicarie
+text: >-
+  A comet hangs over the southern bay for nine nights. The fishermen of Silvicarie take it for an ill
+  omen and stay ashore until it fades.
+effects: { economy: -5 }
