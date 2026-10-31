@@ -19,3 +19,5 @@ obj/
 
 # Resolution snapshots
 snapshots/
+# Deployment builds
+out/

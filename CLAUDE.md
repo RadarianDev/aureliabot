@@ -50,6 +50,8 @@ Existing mechanic docs:
 - [Parties.md](Parties.md): factions, parties, membership and seats, as currently implemented.
 - [YAML Reference.md](YAML%20Reference.md): every config and content YAML format with all its fields,
   collected from the spec. Keep it in step when a format changes.
+- [Deployment.md](Deployment.md): running the bot 24/7 on a Linux server, with `deploy/` (service file, deploy
+  and backup scripts).
 
 `SQLitePCLRaw.bundle_e_sqlite3` is pinned to 2.1.12 in the csproj on purpose. It overrides the
 2.1.11 that `Microsoft.Data.Sqlite` pulls in transitively, whose bundled SQLite is vulnerable to
@@ -138,4 +140,5 @@ constructor against a temp SQLite file.
 - `ProvinceMapGenerator` colours the province map from three aligned PNGs in `assets/map/` (base,
   province index, text overlay), keyed by each province's index colour. The assets, method and art
   rules are in the "Province map" part of the spec's Election section.
-- Linux hosting additionally needs the `SkiaSharp.NativeAssets.Linux` package.
+- `SkiaSharp.NativeAssets.Linux.NoDependencies` supplies the native library on Linux; the renderers draw no text,
+  so no fonts are needed.

@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using Discord;
 using Discord.WebSocket;
 using Discord.Interactions;
@@ -97,10 +98,36 @@ public class Bot
         await _client.LoginAsync(TokenType.Bot, _config.Token);
         await _client.StartAsync();
 
-        await Task.Delay(Timeout.Infinite);
+        using var terminate = PosixSignalRegistration.Create(PosixSignal.SIGTERM, Stop);
+        using var interrupt = PosixSignalRegistration.Create(PosixSignal.SIGINT, Stop);
+        try { await Task.Delay(Timeout.Infinite, _stopping.Token); }
+        catch (OperationCanceledException) { }
+        await ShutdownAsync();
     }
 
     private int _backgroundStarted;
+    private readonly CancellationTokenSource _stopping = new();
+
+    private void Stop(PosixSignalContext context)
+    {
+        context.Cancel = true;
+        _stopping.Cancel();
+    }
+
+    private async Task ShutdownAsync()
+    {
+        Console.WriteLine("[Shutdown] Stopping: waiting for any resolution in progress.");
+        var settled = _services.GetRequiredService<ResolutionService>().ExclusiveAsync(() => Task.FromResult(true));
+        if (await Task.WhenAny(settled, Task.Delay(TimeSpan.FromMinutes(2))) != settled)
+            Console.WriteLine("[Shutdown] A resolution was still running after two minutes; stopping anyway.");
+        try
+        {
+            await _client.StopAsync();
+            await _client.LogoutAsync();
+        }
+        catch (Exception ex) { Console.WriteLine($"[Shutdown] Disconnect failed: {ex.Message}"); }
+        Console.WriteLine("[Shutdown] Stopped.");
+    }
 
     private async Task ReadyAsync()
     {
@@ -122,8 +149,8 @@ public class Bot
 
         _ = Task.Run(async () =>
         {
-            try { await turnTracker.RunAsync(CancellationToken.None); }
-            catch (Exception ex) { Console.WriteLine($"[TurnTracker] Loop stopped: {ex}"); }
+            try { await turnTracker.RunAsync(_stopping.Token); }
+            catch (Exception ex) when (!_stopping.IsCancellationRequested) { Console.WriteLine($"[TurnTracker] Loop stopped: {ex}"); }
         });
         turnTracker.RequestCurrent();
         _services.GetRequiredService<SetupChecklistService>().RequestRefresh();
@@ -141,14 +168,14 @@ public class Bot
 
         _ = Task.Run(async () =>
         {
-            try { await resolution.RunAsync(CancellationToken.None); }
-            catch (Exception ex) { Console.WriteLine($"[Resolution] Poller stopped: {ex}"); }
+            try { await resolution.RunAsync(_stopping.Token); }
+            catch (Exception ex) when (!_stopping.IsCancellationRequested) { Console.WriteLine($"[Resolution] Poller stopped: {ex}"); }
         });
 
         _ = Task.Run(async () =>
         {
-            try { await _services.GetRequiredService<ReminderService>().RunAsync(CancellationToken.None); }
-            catch (Exception ex) { Console.WriteLine($"[Reminders] Loop stopped: {ex}"); }
+            try { await _services.GetRequiredService<ReminderService>().RunAsync(_stopping.Token); }
+            catch (Exception ex) when (!_stopping.IsCancellationRequested) { Console.WriteLine($"[Reminders] Loop stopped: {ex}"); }
         });
 
         _ = Task.Run(async () =>

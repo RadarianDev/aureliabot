@@ -1,0 +1,22 @@
+[Unit]
+Description=AureliaBot, the Aurelian Assembly Discord bot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=aureliabot
+Group=aureliabot
+WorkingDirectory=/opt/aureliabot
+ExecStart=/opt/aureliabot/AureliaBot
+EnvironmentFile=/etc/aureliabot.env
+Environment=Database__Path=/var/lib/aureliabot/aurelia.db
+Environment=Game__Root=/opt/aureliabot
+Environment=DOTNET_CLI_TELEMETRY_OPTOUT=1
+Restart=always
+RestartSec=10
+KillSignal=SIGTERM
+TimeoutStopSec=150
+
+[Install]
+WantedBy=multi-user.target

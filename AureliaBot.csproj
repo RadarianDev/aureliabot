@@ -22,6 +22,7 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.7" />
     <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="10.0.7" />
     <PackageReference Include="SkiaSharp" Version="3.119.2" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="3.119.2" />
     <PackageReference Include="YamlDotNet" Version="16.3.0" />
   </ItemGroup>
 
@@ -34,6 +35,7 @@
     <None Update="appsettings.Local.json" CopyToOutputDirectory="PreserveNewest" Condition="Exists('appsettings.Local.json')" />
     <None Update="assets\**" CopyToOutputDirectory="PreserveNewest" />
     <None Update="config\**" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="content\**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>
