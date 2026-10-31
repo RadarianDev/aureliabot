@@ -1,8 +1,29 @@
 # Deploying AureliaBot
 
-How to run the bot around the clock on a small Linux server, and keep it updated from this repo.
+## On a Windows machine that stays on
 
-## What you need
+The simple way: copy the repo, build it, and run the build.
+
+```powershell
+dotnet build -c Release
+.\bin\Release\net10.0\AureliaBot.exe
+```
+
+- **Settings:** put the token in `appsettings.Local.json` next to `AureliaBot.csproj` (it is copied into the
+  build). The bot finds the repo's `config/` and `content/` by walking up from the build folder, so edits there
+  apply live. The database (`aurelia.db`) and `snapshots/` are created in the folder you start it from.
+- **To update:** stop the bot (Ctrl+C waits for a resolution in progress), copy or pull the new repo, build, start.
+- **Keep it awake:** turn off sleep in Windows power settings, and set active hours so Windows Update doesn't
+  restart the VM at resolution time. A resolution missed while the bot was off runs once when it starts again.
+- **One running copy per token:** don't run the bot on your PC with the same token while the VM runs it, or every
+  resolution runs twice. Use a second bot application for testing.
+- **Backups:** copy `aurelia.db` somewhere safe now and then, while the bot is stopped.
+
+The rest of this file covers a Linux server with a service, for if you ever move it.
+
+## On a Linux server
+
+### What you need
 
 - **A Linux server that stays on.** A 1 GB VPS is plenty (Ubuntu 24.04 or Debian 12; Hetzner, OVH, DigitalOcean
   and the like cost a few euros a month). Your own PC works too, but only while it is on and online.
@@ -10,7 +31,7 @@ How to run the bot around the clock on a small Linux server, and keep it updated
 - **No .NET on the server.** `deploy.ps1` publishes a self-contained build.
 - **`sqlite3`** on the server, only for backups: `apt install sqlite3`.
 
-## Discord settings
+### Discord settings
 
 - In the [developer portal](https://discord.com/developers/applications), under *Bot*, turn on the
   **Server Members** and **Message Content** intents.
@@ -19,7 +40,7 @@ How to run the bot around the clock on a small Linux server, and keep it updated
   server only.
 - `Discord:GuildId` in `appsettings.json` registers commands to your server instantly. Leave it set.
 
-## First install
+### First install
 
 On the server, as root:
 
@@ -45,7 +66,7 @@ Then deploy, from the repo on this machine:
 
 It builds, uploads, replaces `/opt/aureliabot`, and starts the service. Run it again after every change.
 
-## Where things live
+### Where things live
 
 | Path | What |
 | --- | --- |
@@ -58,7 +79,7 @@ It builds, uploads, replaces `/opt/aureliabot`, and starts the service. Run it a
 Settings come from `appsettings.json`, then environment variables (`Discord__Token`, `Discord__GuildId`,
 `Database__Path`, `Game__Root`), which the service file and `/etc/aureliabot.env` set.
 
-## Everyday use
+### Everyday use
 
 ```sh
 systemctl status aureliabot          # is it running?
@@ -74,7 +95,7 @@ systemctl restart aureliabot
 - **Deploying mid-game is safe:** the database is kept, and the service stops cleanly. Avoid deploying in the
   minute a resolution is due.
 
-## Backups
+### Backups
 
 Snapshots live on the same disk as the game, so also take a daily copy, ideally off the server.
 
@@ -92,7 +113,7 @@ scp -r root@your-server:/var/lib/aureliabot/backups ./backups
 To restore: `systemctl stop aureliabot`, copy a backup over `/var/lib/aureliabot/aurelia.db`,
 `chown aureliabot:aureliabot` it, and start the service.
 
-## Moving your test game to the server
+### Moving your test game to the server
 
 To keep the game you have been running on your PC, stop the bot there and copy the database across before the
 first start on the server:
