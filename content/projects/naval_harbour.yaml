@@ -3,9 +3,9 @@ title: Naval harbour
 ministerial: true
 purse: CommerceLabor
 requires: coastal
-price: 5
+price: 50
 term: 3
-effects: { economy: 1, favour: 2 }
+effects: { economy: 10, favour: 2 }
 bonus:
   within: 2
   text: The harbour is finished early, and the Anzarian admirals take note.

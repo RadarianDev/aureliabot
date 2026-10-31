@@ -5,6 +5,7 @@ namespace AureliaBot.Tests;
 
 public class FiscalTests : IDisposable
 {
+    private static double Navy => Config.Constants.DefaultAllocation[Ministry.Navy];
     private const ulong Chancellor = 1;
     private const ulong Treasurer = 2;
     private const ulong WarMinister = 3;
@@ -79,7 +80,7 @@ public class FiscalTests : IDisposable
 
         var share = (double)(amounts[Ministry.Navy] / budget);
         var state = Db.GetGameState();
-        Assert.Equal(60 + (share - 0.15) * Config.Constants.Favour.NavyFactor, state.Favour, 9);
+        Assert.Equal(60 + (share - Navy) * Config.Constants.Favour.NavyFactor, state.Favour, 9);
         Assert.Equal(share, state.LastNavyShare, 12);
     }
 
@@ -94,7 +95,8 @@ public class FiscalTests : IDisposable
         Db.SubmitAllocation(Treasurer, amounts);
         Resolve();
 
-        Assert.Equal(60 - 0.15 * Config.Constants.Favour.NavyFactor, Db.GetGameState().Favour, 9);
+        Assert.Equal(60 - Navy * Config.Constants.Favour.NavyFactor, Db.GetGameState().Favour, 9);
+        Assert.Equal(60 - Navy * Config.Constants.Favour.NavyFactor, Db.GetGameState().FavourBaseline, 9);
         Assert.Equal(0, Db.GetGameState().LastNavyShare);
     }
 
@@ -103,14 +105,14 @@ public class FiscalTests : IDisposable
     {
         Start();
         ToWinter();
-        var amounts = Split(NextBudget(), 0.3, 0.2, 0.25, 0.1, 0.15);
+        var amounts = Split(NextBudget(), 0.25, 0.15, 0.3, 0.1, 0.2);
 
         Assert.Equal(NavyReaction.Indifferent, Db.PreviewAllocation(Treasurer, amounts).Reaction);
         Db.SubmitAllocation(Treasurer, amounts);
         var report = Resolve();
 
         Assert.Equal(60, Db.GetGameState().Favour);
-        Assert.Equal(0.15, Db.GetGameState().LastNavyShare);
+        Assert.Equal(Navy, Db.GetGameState().LastNavyShare);
         Assert.DoesNotContain(report.News, line => line.Contains("Anzarian nobles"));
     }
 
@@ -121,7 +123,7 @@ public class FiscalTests : IDisposable
         ToWinter();
         Resolve();
         Assert.Equal(60, Db.GetGameState().Favour);
-        Assert.Equal(0.15, Db.GetGameState().LastNavyShare);
+        Assert.Equal(Navy, Db.GetGameState().LastNavyShare);
     }
 
     [Fact]
@@ -170,7 +172,7 @@ public class FiscalTests : IDisposable
         Sql($"UPDATE units SET sides = {division.BaseSides + 2 * division.SidesStep} WHERE type = 'Division' AND id <> {divisions[0].Id};");
         var gendarmerieBefore = Db.GetUnits(UnitType.Gendarmerie).Select(u => u.Sides).ToList();
         ToWinter();
-        var amounts = Split(NextBudget(), 0, 0.2, 0.25, 0.1, 0.15);
+        var amounts = Split(NextBudget(), 0, 0.15, 0.3, 0.1, 0.2);
         amounts[Ministry.War] = 1;
         Db.SubmitAllocation(Treasurer, amounts);
 
@@ -281,9 +283,9 @@ public class FiscalTests : IDisposable
         var allocation = Db.GetAllocation(1850);
         foreach (var (ministry, share) in Config.Constants.DefaultAllocation)
             Assert.Equal((double)(budget * (decimal)share), (double)allocation[ministry], 0.01);
-        Assert.Equal(Math.Round(budget * 0.15m, 2, MidpointRounding.AwayFromZero), allocation[Ministry.Navy]);
+        Assert.Equal(Math.Round(budget * (decimal)Navy, 2, MidpointRounding.AwayFromZero), allocation[Ministry.Navy]);
         Assert.True(allocation.Values.Sum() <= budget);
-        Assert.Equal(0.15, Db.GetGameState().LastNavyShare);
+        Assert.Equal(Navy, Db.GetGameState().LastNavyShare);
         Assert.Equal(Config.Constants.Favour.Start, Db.GetGameState().Favour);
     }
 

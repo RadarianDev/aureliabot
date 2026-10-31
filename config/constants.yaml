@@ -22,16 +22,16 @@ opposition: { actionsPerSeason: 1, privateBillsPerYear: 1,
 assembly: { noConfidenceShare: 0.1666, noConfidenceGatherResolutions: 2, noConfidenceCooldownSeasons: 4 }
 election: { baseExponent: 0.85, homeMultiplier: 1.5, programmeWeight: 0.5,
             multiplierMin: 0.5, multiplierMax: 1.5, crowding: true }
-economy: { start: 100, growth: 0.01 }
+economy: { start: 1000, growth: 0.01 }
 taxRate: 0.20
-reserve: { start: 10, interest: 0.03 }
-defaultAllocation: { War: 0.30, Interior: 0.20, CommerceLabor: 0.25, Treasury: 0.10, Navy: 0.15 }
-favour: { start: 60, baseline: 60, drift: 1, navyFactor: 20, alertBelow: 30 }
+reserve: { start: 100, interest: 0.03 }
+defaultAllocation: { War: 0.25, Interior: 0.15, CommerceLabor: 0.30, Treasury: 0.10, Navy: 0.20 }
+favour: { start: 60, baseline: 60, drift: 1, navyFactor: 75, alertBelow: 30 }
 threat: { start: 25, alerts: [60, 85] }
 discontent: { min: 0, max: 10, start: 3, rest: 3, drift: 0.5, alertAt: 7, growthDrag: 0.005 }
-division: { raise: 4, upkeep: 0.5, baseSides: 12, sidesStep: 2, maxSides: 18, trainCosts: [2, 3, 4] }
-gendarmerie: { raise: 2, upkeep: 0.25, baseSides: 8, sidesStep: 2, maxSides: 12, trainCosts: [1, 2] }
-crackdown: { cost: 1, reduction: 2, backlash: 1, failurePopularity: 2 }
+division: { raise: 40, upkeep: 5, baseSides: 12, sidesStep: 2, maxSides: 18, trainCosts: [20, 30, 40] }
+gendarmerie: { raise: 20, upkeep: 2.5, baseSides: 8, sidesStep: 2, maxSides: 12, trainCosts: [10, 20] }
+crackdown: { cost: 10, reduction: 2, backlash: 1, failurePopularity: 2 }
 project: { popularity: 2, graft: 0.5 }
 startingForces:
   divisions: { aurenten: 2, iracterie: 1, north_arpal: 1, provencie_gares: 1, ocidanten: 1 }

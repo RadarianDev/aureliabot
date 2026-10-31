@@ -5,6 +5,6 @@ lean: For
 motion: Abolish the ancient privileges of the Anzarian nobility, and bring Anzaria under the laws and taxes of the Assembly.
 pass:
   text: The Anzarian charters are struck from the statute book. The lords leave the capital without a word, and their retainers are seen drilling in the manor yards.
-  effects: { favour: -25, favourBaseline: -20, threat: 10, purse.Treasury: 5,
+  effects: { favour: -25, favourBaseline: -20, threat: 10, purse.Treasury: 50,
              discontent.agrinenten: 2, discontent.soralenten: 2, discontent.aurenten: -1,
              close.anzarian_union: true }

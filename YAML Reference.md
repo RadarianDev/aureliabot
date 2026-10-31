@@ -23,12 +23,12 @@ Field names are camelCase. Ids are lowercase slugs (`north_arpal`, `ten_hours_bi
 Bills, projects, events and crisis answers all carry an `effects` map: a key and a change.
 
 ```yaml
-effects: { economy: -2, discontent.north_arpal: 1, open.labour: true, bill.ten_hours_bill: true }
+effects: { economy: -20, discontent.north_arpal: 1, open.labour: true, bill.ten_hours_bill: true }
 ```
 
 | Key | Value | Meaning |
 | --- | --- | --- |
-| `economy` | number | National economy (starts at 100). |
+| `economy` | number | National economy (starts at 1000; the budget is economy × tax rate). |
 | `taxRate` | number | Tax rate, as a fraction (`0.05` is five points). |
 | `favour` | number | Anzarian Favour, 0–100. Drifts back to its baseline. |
 | `favourBaseline` | number | Where Favour drifts to; a lasting change. |
@@ -192,7 +192,7 @@ lean: For
 motion: Limit factory work to ten hours a day, ban the employment of children under twelve, and send Crown inspectors into every mill and pit.
 pass:
   text: Crown inspectors walk into the mills and pits, the children walk out, and the owners swear the kingdom is ruined.
-  effects: { economy: -5, purse.CommerceLabor: -2,
+  effects: { economy: -50, purse.CommerceLabor: -20,
              discontent.iracterie: -3, discontent.aurenten: -2, discontent.north_arpal: -1 }
 ```
 
@@ -218,13 +218,13 @@ id: royal_railway
 title: The Royal Railway
 purse: CommerceLabor
 province: provencie_gares
-price: 9
+price: 90
 term: 6
-effects: { economy: 5, discontent.here: -2, discontent.soralenten: -1 }
+effects: { economy: 50, discontent.here: -2, discontent.soralenten: -1 }
 bonus:
   by: { season: Spring, year: 1853 }
   text: The first train reaches the coast ahead of the guarantee, and the shareholders cheer the Crown.
-  effects: { economy: 2, condition.iracterie.booming: 1 }
+  effects: { economy: 20, condition.iracterie.booming: 1 }
 ```
 
 | Field | Required | Meaning |
@@ -234,7 +234,7 @@ bonus:
 | `purse` | no | `War`, `Interior`, `CommerceLabor` or `Treasury`: who pays and runs it. Defaults to `CommerceLabor`. |
 | `province` | no | Where it is built; `here` in its effects stands for it. Leave it out for a ministerial project, where the minister chooses. |
 | `price` | yes | Total cost. |
-| `term` | yes | Seasons it should take. The pace, `price / term`, is the most a season can usefully absorb. |
+| `term` | yes | Seasons it should take. The pace, `price / term`, is the most a season can usefully absorb. | At the default split Commerce and Labor gets about 60 a year, enough for one project at a pace of 15 a season.
 | `effects` | no | Applied once when finished, and permanent. |
 | `bonus.by` | no | `{ season, year }`: the bonus applies if it finishes by the end of that turn. |
 | `bonus.within` | no | Instead of `by`: the bonus applies if it finishes within this many seasons of starting. |
@@ -290,12 +290,12 @@ issue: labour
 answers:
   - lean: For
     label: Meet the strikers' demands
-    price: 3
+    price: 30
     text: The docks reopen within the week, and the owners are furious.
-    effects: { discontent.north_arpal: -2, economy: -1, condition.north_arpal.striking: -1 }
+    effects: { discontent.north_arpal: -2, economy: -10, condition.north_arpal.striking: -1 }
   - lean: Neutral
     label: Commission a royal inquiry
-    price: 4
+    price: 40
     text: Learned gentlemen take evidence, and the dockers wait.
     effects: { discontent.north_arpal: -1 }
   - lean: Against
@@ -307,7 +307,7 @@ complication:
   effects: { discontent.north_arpal: 1, discontent.iracterie: 1 }
 default:
   text: The strike drags on unanswered, and ships divert to Mugi.
-  effects: { economy: -2, discontent.north_arpal: 2 }
+  effects: { economy: -20, discontent.north_arpal: 2 }
 ```
 
 | Field | Required | Meaning |
@@ -320,7 +320,7 @@ default:
 | `answers` | yes | At least two, numbered by their order from 1. |
 | `answers[].lean` | yes | `For`, `Against` or `Neutral` on the issue. Several answers may share one. |
 | `answers[].label` | yes | What the minister picks. |
-| `answers[].price` | no | Paid from the ministry's purse. Defaults to 0. |
+| `answers[].price` | no | Paid from the ministry's purse. Defaults to 0. At the default split a year brings about War 50, Interior 30, Commerce and Labor 60 and Treasury 20, less upkeep, so 10–30 is a hard choice and 40 or more usually needs a grant. Keep Treasury crises at 20 or less. |
 | `answers[].text` | yes | Posted when the answer is chosen. |
 | `answers[].effects` | no | Applied when chosen. |
 | `complication.text` / `.effects` | no | Added on top of the answer when the purse can't pay its price. Without one, the standard complication applies: discontent +1 in the crisis's province. |
@@ -359,16 +359,16 @@ opposition: { actionsPerSeason: 1, privateBillsPerYear: 1,
 assembly: { noConfidenceShare: 0.1667, noConfidenceGatherResolutions: 2, noConfidenceCooldownSeasons: 4 }
 election: { baseExponent: 0.85, homeMultiplier: 1.5, programmeWeight: 0.5,
             multiplierMin: 0.5, multiplierMax: 1.5, crowding: true }
-economy: { start: 100, growth: 0.01 }
+economy: { start: 1000, growth: 0.01 }
 taxRate: 0.20
-reserve: { start: 10, interest: 0.03 }
-defaultAllocation: { War: 0.30, Interior: 0.20, CommerceLabor: 0.25, Treasury: 0.10, Navy: 0.15 }
-favour: { start: 60, baseline: 60, drift: 1, navyFactor: 20, alertBelow: 30 }
+reserve: { start: 100, interest: 0.03 }
+defaultAllocation: { War: 0.25, Interior: 0.15, CommerceLabor: 0.30, Treasury: 0.10, Navy: 0.20 }
+favour: { start: 60, baseline: 60, drift: 1, navyFactor: 75, alertBelow: 30 }
 threat: { start: 25, alerts: [60, 85] }
 discontent: { min: 0, max: 10, start: 3, rest: 3, drift: 0.5, alertAt: 7, growthDrag: 0.005 }
-division: { raise: 4, upkeep: 0.5, baseSides: 12, sidesStep: 2, maxSides: 18, trainCosts: [2, 3, 4] }
-gendarmerie: { raise: 2, upkeep: 0.25, baseSides: 8, sidesStep: 2, maxSides: 12, trainCosts: [1, 2] }
-crackdown: { cost: 1, reduction: 2, backlash: 1, failurePopularity: 2 }
+division: { raise: 40, upkeep: 5, baseSides: 12, sidesStep: 2, maxSides: 18, trainCosts: [20, 30, 40] }
+gendarmerie: { raise: 20, upkeep: 2.5, baseSides: 8, sidesStep: 2, maxSides: 12, trainCosts: [10, 20] }
+crackdown: { cost: 10, reduction: 2, backlash: 1, failurePopularity: 2 }
 project: { popularity: 2, graft: 0.5 }
 startingForces:
   divisions: { aurenten: 2, iracterie: 1, north_arpal: 1, agrinenten: 1, ocidanten: 1 }
@@ -458,7 +458,7 @@ startingForces:
 | `defaultAllocation` | First-year purse shares; must total 1. |
 | `favour.start`, `.baseline` | Starting Favour and its baseline. |
 | `favour.drift` | Favour's move toward the baseline each season. |
-| `favour.navyFactor` | Favour per unit of change in the Navy share. |
+| `favour.navyFactor` | Favour, and Favour baseline, per unit of change in the Navy share: at 75, moving the Navy from 20% to 15% of the budget costs 3.75 for good. |
 | `favour.alertBelow` | GM alert threshold. |
 | `threat.start` | Starting Foreign Threat. |
 | `threat.alerts` | GM alert thresholds. |

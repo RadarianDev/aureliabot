@@ -183,16 +183,16 @@ opposition: { actionsPerSeason: 1, privateBillsPerYear: 1,
 assembly: { noConfidenceShare: 0.1667, noConfidenceGatherResolutions: 2, noConfidenceCooldownSeasons: 4 }
 election: { baseExponent: 0.85, homeMultiplier: 1.5, programmeWeight: 0.5,
             multiplierMin: 0.5, multiplierMax: 1.5, crowding: true }
-economy: { start: 100, growth: 0.01 }
+economy: { start: 1000, growth: 0.01 }
 taxRate: 0.20
-reserve: { start: 10, interest: 0.03 }
-defaultAllocation: { War: 0.30, Interior: 0.20, CommerceLabor: 0.25, Treasury: 0.10, Navy: 0.15 }
-favour: { start: 60, baseline: 60, drift: 1, navyFactor: 20, alertBelow: 30 }
+reserve: { start: 100, interest: 0.03 }
+defaultAllocation: { War: 0.25, Interior: 0.15, CommerceLabor: 0.30, Treasury: 0.10, Navy: 0.20 }
+favour: { start: 60, baseline: 60, drift: 1, navyFactor: 75, alertBelow: 30 }
 threat: { start: 25, alerts: [60, 85] }
 discontent: { min: 0, max: 10, start: 3, rest: 3, drift: 0.5, alertAt: 7, growthDrag: 0.005 }
-division: { raise: 4, upkeep: 0.5, baseSides: 12, sidesStep: 2, maxSides: 18, trainCosts: [2, 3, 4] }
-gendarmerie: { raise: 2, upkeep: 0.25, baseSides: 8, sidesStep: 2, maxSides: 12, trainCosts: [1, 2] }
-crackdown: { cost: 1, reduction: 2, backlash: 1, failurePopularity: 2 }
+division: { raise: 40, upkeep: 5, baseSides: 12, sidesStep: 2, maxSides: 18, trainCosts: [20, 30, 40] }
+gendarmerie: { raise: 20, upkeep: 2.5, baseSides: 8, sidesStep: 2, maxSides: 12, trainCosts: [10, 20] }
+crackdown: { cost: 10, reduction: 2, backlash: 1, failurePopularity: 2 }
 project: { popularity: 2, graft: 0.5 }   # graft: share of spending above the pace that is lost
 startingForces:
   divisions: { aurenten: 2, iracterie: 1, north_arpal: 1, agrinenten: 1, ocidanten: 1 }   # province: count
@@ -278,7 +278,7 @@ lean: For
 motion: Limit factory work to ten hours a day, ban the employment of children under twelve, and send Crown inspectors into every mill and pit.
 pass:
   text: Crown inspectors walk into the mills and pits, the children walk out, and the owners swear the kingdom is ruined.
-  effects: { economy: -5, purse.CommerceLabor: -2,
+  effects: { economy: -50, purse.CommerceLabor: -20,
              discontent.iracterie: -3, discontent.aurenten: -2, discontent.north_arpal: -1 }
 ```
 
@@ -345,12 +345,12 @@ issue: labour
 answers:
   - lean: For
     label: Meet the strikers' demands
-    price: 3
+    price: 30
     text: The docks reopen within the week, and the owners are furious.
-    effects: { discontent.north_arpal: -2, economy: -1, condition.north_arpal.striking: -1 }
+    effects: { discontent.north_arpal: -2, economy: -10, condition.north_arpal.striking: -1 }
   - lean: Neutral
     label: Commission a royal inquiry
-    price: 4
+    price: 40
     text: Learned gentlemen take evidence, and the dockers wait.
     effects: { discontent.north_arpal: -1 }
   - lean: Against
@@ -362,7 +362,7 @@ complication:
   effects: { discontent.north_arpal: 1, discontent.iracterie: 1 }
 default:
   text: The strike drags on unanswered, and ships divert to Mugi.
-  effects: { economy: -2, discontent.north_arpal: 2 }
+  effects: { economy: -20, discontent.north_arpal: 2 }
 ```
 
 - Answers are numbered by their order in the list, from 1. The minister picks one by its label, and commands refer to it by number.
@@ -377,8 +377,8 @@ When the event posts it, in #news (`/info` shows the same):
 Ministry of Commerce and Labor · North Arpal · The Condition of Labour
 Due at the next resolution, Winter 1851 <t:…:R>
 
-1. Meet the strikers' demands · For · 3 cr
-2. Commission a royal inquiry · Neutral · 4 cr
+1. Meet the strikers' demands · For · 30 cr
+2. Commission a royal inquiry · Neutral · 40 cr
 3. Declare the strike unlawful · Against · free
 ```
 
@@ -440,13 +440,13 @@ id: royal_railway
 title: The Royal Railway
 purse: CommerceLabor
 province: provencie_gares
-price: 9
+price: 90
 term: 6
-effects: { economy: 5, discontent.here: -2, discontent.soralenten: -1 }
+effects: { economy: 50, discontent.here: -2, discontent.soralenten: -1 }
 bonus:
   by: { season: Spring, year: 1853 }
   text: The first train reaches the coast ahead of the guarantee, and the shareholders cheer the Crown.
-  effects: { economy: 2, condition.iracterie.booming: 1 }
+  effects: { economy: 20, condition.iracterie.booming: 1 }
 ```
 
 | Field | Meaning |
@@ -463,22 +463,22 @@ bonus:
 - **Starting:** a `project.{id}` effect starts it, from a bill, an event, a crisis answer or another project; or, if it is ministerial, its minister does.
 - **Spending:** the purse's minister sets its spending per season, which starts at the pace. Spending above the pace is partly lost to **graft**, the contractors and speculators who profit from a rushed job (section 5). Spending less slows it down, and 0 pauses it.
 
-The bonus makes graft a real choice: rushing costs more, but can beat the deadline. The Tovrerie fen drainage (price 4, term 4, so a pace of 1 a season) starts at the earliest in Winter 1850, and its bonus is due by Summer 1851, three seasons later. At the pace it would be one season late. Spending 2 a season gets it done in time, for 5 crowns in all instead of 4.
+The bonus makes graft a real choice: rushing costs more, but can beat the deadline. The Tovrerie fen drainage (price 40, term 4, so a pace of 10 a season) starts at the earliest in Winter 1850, and its bonus is due by Summer 1851, three seasons later. At the pace it would be one season late. Spending 20 a season gets it done in time, for 50 crowns in all instead of 40.
 
 When it starts, in #news:
 
 ```
 ## Project begun: The Royal Railway
-Provencie Gares · Ministry of Commerce and Labor · 9 cr over 6 seasons
+Provencie Gares · Ministry of Commerce and Labor · 90 cr over 6 seasons
 Bonus if finished by the end of Spring 1853
 ```
 
-`/ministry fund royal_railway 3`, the minister's private reply:
+`/ministry fund royal_railway 30`, the minister's private reply:
 
 ```
-The Royal Railway: 3 cr a season from Commerce and Labor, 1.5 cr above the pace.
-Graft takes half of that: 2.25 cr of work a season, finishing in Summer 1852.
-That beats the bonus deadline, Spring 1853. The purse holds 7.2 cr.
+The Royal Railway: 30 cr a season from Commerce and Labor, 15 cr above the pace.
+Graft takes half of that: 22.5 cr of work a season, finishing in Summer 1852.
+That beats the bonus deadline, Spring 1853. The purse holds 72 cr.
 ```
 
 When it finishes in time, in #news:
@@ -623,7 +623,7 @@ The responsible minister is whoever holds the ministry at the deadline, or the C
    - the reserve grows by `reserve.interest`;
    - the new allocation applies. If none was submitted, last year's percentages repeat; the first year uses `defaultAllocation`;
    - yearly upkeep is paid: divisions from the War purse, gendarmerie from the Interior purse. A purse that cannot cover all of its upkeep is emptied, every one of its units loses one training step (`sidesStep` sides, never below `baseSides`), and the GM is alerted.
-4. **The Navy purse** is a contribution, not spending money. It is paid out at once. navyShare is the Navy allocation divided by the available Budget, and Anzaria judges the change: `favour += (navyShare − lastNavyShare) × navyFactor`, then `lastNavyShare = navyShare`. A raise pleases the nobles, a cut insults them, and an unchanged contribution leaves Favour to drift.
+4. **The Navy purse** is a contribution, not spending money. It is paid out at once. navyShare is the Navy allocation divided by the available Budget, and Anzaria judges the change, and remembers it: both `favour` and `favourBaseline` move by `(navyShare − lastNavyShare) × navyFactor`, then `lastNavyShare = navyShare`. A raise pleases the nobles, a cut insults them, and since the baseline moves too, the change lasts instead of drifting away. An unchanged contribution leaves Favour to drift.
 5. **Game start:** the reserve starts at `reserve.start`, `lastNavyShare` starts at the Navy share of `defaultAllocation`, and steps 1, 3 and 4 run once with `defaultAllocation`.
 
 **Reserve:** the Treasury can grant any amount from the reserve to any purse except Navy. There are no loans.
@@ -666,7 +666,7 @@ All commands are slash commands. Long text, such as a roleplay response, is ente
 - **Confirmations restate the outcome.** Every player command replies privately with exactly what will happen, when (the next resolution as `<t:…:R>`), and any public consequence: an off-programme stance, a stance logged by a vote, a pending action replaced, a law that would cost its sponsor popularity because the public is against it.
 - **Confirm buttons** guard anything announced publicly or hard to reverse: an off-programme campaign, `/party leave`, `/ministry resign`, `/war disband`, `/interior disband`, and the GM's `/gm faction retire`, `/gm party delete`, `/gm set`, `/gm undo` and `/content remove`.
 - **Errors say when.** A command refused for timing names when it becomes possible, for example "Bills can be proposed again after the election, from Summer 1854 `<t:…:R>`", and a command refused for role names the role it needs.
-- **Autocomplete offers only valid choices.** `/attack` lists rivals outside the player's party, then only the issues where that rival has a stance, with the stance shown. `/bill propose` lists only Available bills whose issue has no bill before the Assembly (scheduled or open), with each bill's issue and lean. `/opposition question` hides vacant ministries only when the Chancellorship is vacant too. `/crisis respond` lists only the crises the player is responsible for. `/war` and `/interior` show each unit's die and the cost of its next training, for example "1st Guards · d14 · train 3 cr".
+- **Autocomplete offers only valid choices.** `/attack` lists rivals outside the player's party, then only the issues where that rival has a stance, with the stance shown. `/bill propose` lists only Available bills whose issue has no bill before the Assembly (scheduled or open), with each bill's issue and lean. `/opposition question` hides vacant ministries only when the Chancellorship is vacant too. `/crisis respond` lists only the crises the player is responsible for. `/war` and `/interior` show each unit's die and the cost of its next training, for example "1st Guards · d14 · train 30 cr".
 - **Buttons on the bot's own posts** replace commands for the common case: votes, no-confidence co-signing and join answers. Votes also have `/vote`; every other button is repeated in `/me`, so a lost post never blocks anyone.
 
 **Status and help**
@@ -702,17 +702,17 @@ With nothing chosen, `/info` lists what is live: open issues, available bills, a
 ```
 ## Ministry of Commerce and Labor
 Minister: @player (Lord Halvard)
-Purse 1851: allocated 5.0 cr · granted 5.0 · spent 9.5 · balance 0.5 cr
+Purse 1851: allocated 60 cr · granted 50 · spent 95 · balance 15 cr
 
-Spring 1851   +5.0   Allocation
-Spring 1851   −1.5   Project: The Royal Railway
-Summer 1851   −1.5   Project: The Royal Railway
-Summer 1851   −2.0   The Ten Hours Bill (law)
-Autumn 1851   +5.0   Grant from the reserve
-Autumn 1851   −3.0   Crisis: The Carden Dock Strike, meet the strikers' demands
-Autumn 1851   −1.5   Project: The Royal Railway
+Spring 1851   +60   Allocation
+Spring 1851   −15   Project: The Royal Railway
+Summer 1851   −15   Project: The Royal Railway
+Summer 1851   −20   The Ten Hours Bill (law)
+Autumn 1851   +50   Grant from the reserve
+Autumn 1851   −30   Crisis: The Carden Dock Strike, meet the strikers' demands
+Autumn 1851   −15   Project: The Royal Railway
 
-Projects: The Royal Railway, 6.0 of 9 cr, 1.5 cr a season at the pace, finishing Spring 1852
+Projects: The Royal Railway, 60 of 90 cr, 15 cr a season at the pace, finishing Spring 1852
 ```
 
 This season's spending appears after the resolution; until then only the minister and the Chancellor see it, in `/ministry status`.

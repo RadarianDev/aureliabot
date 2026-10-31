@@ -80,7 +80,7 @@
 - The King's acts are announced as *royal proclamations*.
 ### Treasury
 - Divides the yearly budget between the ministries and the **navy contributions** each Winter, for the year that starts in Spring. If it doesn't, last year's split repeats.
-- Raising navy contributions raises Anzarian Favour, cutting them lowers it. Left unchanged, Favour drifts back towards the nobles' mood.
+- Raising navy contributions raises Anzarian Favour, cutting them lowers it, and the nobles remember: the change lasts. Other swings in Favour drift back towards the nobles' mood.
 - Unallocated money, and money unspent at the end of the year, goes to the *reserve*, which earns interest each year and which the Treasury can grant to any ministry.
 ### Forces
 - The army's **divisions** and the Interior's **gendarmerie** work alike. A unit is a die: raising it is bought once, training it gives the die more sides, and stationing it in another province is free.

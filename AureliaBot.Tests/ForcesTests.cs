@@ -10,8 +10,8 @@ public class ForcesTests : AssemblyTestBase
     public ForcesTests()
     {
         SeatCabinet(Chancellor, (Ministry.War, WarMinister), (Ministry.Interior, InteriorMinister));
-        SetPurse(Ministry.War, 10);
-        SetPurse(Ministry.Interior, 5);
+        SetPurse(Ministry.War, 100);
+        SetPurse(Ministry.Interior, 50);
     }
 
     private void SetPurse(Ministry ministry, decimal amount) =>
@@ -37,9 +37,9 @@ public class ForcesTests : AssemblyTestBase
         var result = Db.OrderRaise(UnitType.Division, WarMinister, "1st Guards", "tovrerie", Config);
 
         Assert.Null(result.Refusal);
-        Assert.Equal(6m, Db.GetPurseBalance(Ministry.War));
-        Assert.Equal(6m, result.Balance);
-        Assert.Contains(Db.GetLedger(LedgerAccount.War), e => e.Kind == LedgerKind.Purchase && e.Amount == -4m);
+        Assert.Equal(100m - C.Division.Raise, Db.GetPurseBalance(Ministry.War));
+        Assert.Equal(100m - C.Division.Raise, result.Balance);
+        Assert.Contains(Db.GetLedger(LedgerAccount.War), e => e.Kind == LedgerKind.Purchase && e.Amount == -C.Division.Raise);
         Assert.Equal(before, Db.GetUnits(UnitType.Division).Count);
         Assert.Single(Db.GetPendingOrders(Ministry.War));
         Assert.Empty(Db.GetPendingOrders(Ministry.Interior));
@@ -56,12 +56,12 @@ public class ForcesTests : AssemblyTestBase
     [Fact]
     public void Raise_IsRefused_WhenThePurseCannotPay_OrForAnotherMinister()
     {
-        SetPurse(Ministry.War, 3);
+        SetPurse(Ministry.War, 30);
         Assert.NotNull(Db.OrderRaise(UnitType.Division, WarMinister, "1st Guards", "tovrerie", Config).Refusal);
         Assert.NotNull(Db.OrderRaise(UnitType.Division, InteriorMinister, "1st Guards", "tovrerie", Config).Refusal);
         Assert.NotNull(Db.OrderRaise(UnitType.Gendarmerie, WarMinister, "Tovrerie Watch", "tovrerie", Config).Refusal);
         Assert.Empty(Db.GetPendingOrders());
-        Assert.Equal(3m, Db.GetPurseBalance(Ministry.War));
+        Assert.Equal(30m, Db.GetPurseBalance(Ministry.War));
     }
 
     [Fact]
@@ -79,7 +79,7 @@ public class ForcesTests : AssemblyTestBase
         var result = Db.OrderTrain(UnitType.Division, WarMinister, unit.Id, Config);
 
         Assert.Null(result.Refusal);
-        Assert.Equal(10m - C.Division.TrainCosts[0], Db.GetPurseBalance(Ministry.War));
+        Assert.Equal(100m - C.Division.TrainCosts[0], Db.GetPurseBalance(Ministry.War));
         Assert.Equal(unit.Sides, Db.GetUnit(unit.Id)!.Sides);
         Assert.NotNull(Db.OrderTrain(UnitType.Division, WarMinister, unit.Id, Config).Refusal);
 
@@ -99,7 +99,7 @@ public class ForcesTests : AssemblyTestBase
 
         Assert.NotNull(result.Refusal);
         Assert.Empty(Db.GetPendingOrders());
-        Assert.Equal(10m, Db.GetPurseBalance(Ministry.War));
+        Assert.Equal(100m, Db.GetPurseBalance(Ministry.War));
     }
 
     [Fact]
@@ -110,7 +110,7 @@ public class ForcesTests : AssemblyTestBase
 
         Assert.Null(Db.OrderTrain(UnitType.Division, WarMinister, unit.Id, Config).Refusal);
 
-        Assert.Equal(10m - C.Division.TrainCosts[1], Db.GetPurseBalance(Ministry.War));
+        Assert.Equal(100m - C.Division.TrainCosts[1], Db.GetPurseBalance(Ministry.War));
         ApplyOrders();
         Assert.Equal(C.Division.BaseSides + 2 * C.Division.SidesStep, Db.GetUnit(unit.Id)!.Sides);
     }
@@ -126,7 +126,7 @@ public class ForcesTests : AssemblyTestBase
 
         Assert.True(replaced.Replaced);
         Assert.Single(Db.GetPendingOrders(Ministry.War));
-        Assert.Equal(10m, Db.GetPurseBalance(Ministry.War));
+        Assert.Equal(100m, Db.GetPurseBalance(Ministry.War));
         Assert.Equal(unit.ProvinceId, Db.GetUnit(unit.Id)!.ProvinceId);
 
         ApplyOrders();
@@ -158,7 +158,7 @@ public class ForcesTests : AssemblyTestBase
         var popularity = Db.GetFaction(InteriorMinister)!.Popularity;
 
         Assert.Null(Db.OrderCrackdown(InteriorMinister, "aurenten", Config).Refusal);
-        Assert.Equal(5m - C.Crackdown.Cost, Db.GetPurseBalance(Ministry.Interior));
+        Assert.Equal(50m - C.Crackdown.Cost, Db.GetPurseBalance(Ministry.Interior));
         Assert.Contains(Db.GetLedger(LedgerAccount.Interior), e => e.Kind == LedgerKind.Crackdown);
 
         var report = ApplyOrders(6, 4);
@@ -254,7 +254,7 @@ public class ForcesTests : AssemblyTestBase
         Assert.NotNull(Db.OrderCrackdown(InteriorMinister, "aurenten", Config).Refusal);
         Assert.NotNull(Db.OrderCrackdown(WarMinister, "iracterie", Config).Refusal);
         Assert.Single(Db.GetPendingOrders(Ministry.Interior));
-        Assert.Equal(5m - C.Crackdown.Cost, Db.GetPurseBalance(Ministry.Interior));
+        Assert.Equal(50m - C.Crackdown.Cost, Db.GetPurseBalance(Ministry.Interior));
     }
 
     [Fact]

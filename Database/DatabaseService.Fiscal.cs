@@ -335,7 +335,9 @@ public partial class DatabaseService
         var navyShare = NavyShareOf(budget, amounts[Ministry.Navy], state.LastNavyShare);
         if (navyShare != state.LastNavyShare)
         {
-            SetStateTx(conn, tx, "favour", Math.Clamp(state.Favour + (navyShare - state.LastNavyShare) * c.Favour.NavyFactor, 0, 100));
+            var shift = (navyShare - state.LastNavyShare) * c.Favour.NavyFactor;
+            SetStateTx(conn, tx, "favour", Math.Clamp(state.Favour + shift, 0, 100));
+            SetStateTx(conn, tx, "favour_baseline", Math.Clamp(state.FavourBaseline + shift, 0, 100));
             SetStateTx(conn, tx, "last_navy_share", navyShare);
         }
         return new FiscalOpening(fiscalYear, budget, amounts, Math.Max(0, toReserve), submitted, navyShare, state.LastNavyShare,

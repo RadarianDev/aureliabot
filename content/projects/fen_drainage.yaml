@@ -2,9 +2,9 @@ id: fen_drainage
 title: The Tovrerie Fen Drainage
 purse: Interior
 province: tovrerie
-price: 4
+price: 40
 term: 4
-effects: { condition.here.marshland: -1, discontent.here: -2, economy: 1 }
+effects: { condition.here.marshland: -1, discontent.here: -2, economy: 10 }
 bonus:
   by: { season: Summer, year: 1851 }
   text: The fens are dry before the fever season, and for the first time in memory the summer passes without a death.

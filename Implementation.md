@@ -450,7 +450,7 @@ only discontent above `discontent.rest` counts, the spec's whole-nation-at-7 exa
 costing every unit of that branch one training step but never below base sides, retraining a lost
 step at that step's cost, project progress (spending at the pace, graft on the excess, never paying
 more than needed to finish, a partial payment from a short purse, the spec's fen drainage example
-beating its deadline at 2 a season for 5 crowns), bonus deadlines by turn and within n seasons, the ledger (every purse change has an
+beating its deadline at 20 a season for 50 crowns), bonus deadlines by turn and within n seasons, the ledger (every purse change has an
 entry, the entries sum to the balance, an entry stays private to the minister and the Chancellor
 until the next resolution, a private `/gm apply` shows only as a royal adjustment), crackdown success and failure with a scripted random source.
 
@@ -513,5 +513,5 @@ None block a stage. Everything is decided in the spec, `config/` and `content/`.
 | Programme flip penalty and Favour drift | Stages 2 and 7 |
 | Popularity drift against campaign gains: at 0.05 an idle faction keeps about 81% of its lead over 10 after a year and 44% after a term; a faction campaigning well every turn should still settle well above 10 | Stage 3 |
 | Unrest drag (`discontent.growthDrag`) against base growth | Stage 7 |
-| Project prices and terms against purse sizes (Commerce and Labor gets about 5 a year at the default split, while the starting projects' paces are 1 to 2 a season), and `project.graft` | Stage 7 |
+| Project prices and terms against purse sizes (Commerce and Labor gets about 60 a year at the default split, while the starting projects' paces are 10 to 20 a season), and `project.graft` | Stage 7 |
 | The size of bills' pass effects, especially the Act of Union's Favour hit and the Corn Duties' swing between town and farm | Stage 5 |

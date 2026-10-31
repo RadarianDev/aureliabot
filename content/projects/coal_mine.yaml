@@ -2,6 +2,6 @@ id: coal_mine
 title: Coal mine
 ministerial: true
 purse: CommerceLabor
-price: 4
+price: 40
 term: 2
-effects: { economy: 1 }
+effects: { economy: 10 }

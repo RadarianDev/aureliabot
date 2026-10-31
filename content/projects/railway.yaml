@@ -2,6 +2,6 @@ id: railway
 title: Railway
 ministerial: true
 purse: CommerceLabor
-price: 6
+price: 60
 term: 4
-effects: { economy: 2, discontent.here: -1 }
+effects: { economy: 20, discontent.here: -1 }
