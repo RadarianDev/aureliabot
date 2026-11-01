@@ -66,7 +66,7 @@ public class ElectionPostTests
     }
 
     [Fact]
-    public void WinnersFromRows_BreakTiesBySeatsThenLowerId()
+    public void WinnersFromRows_GoToMostSeats_ThenStrength_ThenLowerId()
     {
         var rows = new List<ProvinceResultRow>
         {
@@ -81,9 +81,9 @@ public class ElectionPostTests
 
         var winners = ElectionPublisher.WinnersFromRows(rows);
 
-        Assert.Equal(1, winners["ocidanten"]);
+        Assert.Equal(2, winners["ocidanten"]);
         Assert.Equal(2, winners["aurenten"]);
-        Assert.Equal(3, winners["tovrerie"]);
+        Assert.Equal(1, winners["tovrerie"]);
     }
 
     [Fact]
@@ -91,7 +91,7 @@ public class ElectionPostTests
     {
         var report = new ElectionReport(2, Result(), Parties);
 
-        var text = ElectionPublisher.ResultsText(report, DatabaseFixture.Config, id => $"<@{id}>");
+        var text = ElectionPublisher.ResultsText(report, DatabaseFixture.Config);
         var proclamation = ElectionPublisher.Proclamation(report);
 
         string Named(long id) => ElectionPublisher.PartyName(Parties.Single(p => p.Id == id));
@@ -100,7 +100,6 @@ public class ElectionPostTests
         Assert.Contains(Texts.Get("election.partyLine", ("party", Named(2)), ("seats", 8), ("share", "40.0")), text);
         Assert.Contains(Texts.Get("election.partyLine", ("party", Named(3)), ("seats", 2), ("share", "15.0")), text);
         Assert.Equal("<:p:555>", Emoji(2));
-        Assert.Contains(Texts.Get("election.factionLine", ("faction", "<@202>"), ("seats", 8)), text);
         Assert.Contains($"{Emoji(1)} 7 · {Emoji(2)} 4", text);
         Assert.Contains($"{Emoji(2)} 4 · {Emoji(3)} 2", text);
         Assert.Contains("By His Majesty's Command", proclamation);

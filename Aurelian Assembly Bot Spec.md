@@ -861,7 +861,7 @@ The GM's commands are split in two groups: `/gm` runs the game, and `/content` (
 | `/gm resolve action [hours]` | Controls the resolution schedule: `now` runs one at once, `delay` pushes the next one back by `hours`, and `pause` and `resume` stop and restart the schedule. |
 | `/gm reload` | Reloads `constants.yaml`. |
 | `/gm undo` | Restores the snapshot taken before the last resolution (section 10). |
-| `/gm peek [election]` | Shows the full hidden state privately, with numbers. With `election`, it runs the election on the current state instead and shows the result privately. |
+| `/gm peek [mode] [province]` | Shows the full hidden state privately, with numbers. `mode:election` runs the election on the current state instead and shows the result privately. `mode:strength` shows each party's strength and programme multiplier in every province; with `province`, the full working there: each member's weighted popularity, the base strength, every issue term of the programme score, the multiplier and the seats. `mode:opinion` shows every open issue's opinion in each province (or only `province`), with the bias of each condition behind it. `mode:actions` shows what every pending campaign, attack and poll would do if the turn ended now, with the working, and each faction's popularity before and after; votes, crises and questions resolve first and can still change it. All modes are ephemeral and `/gm` is hidden from players. |
 
 **Content management (`/content`)**
 
@@ -965,7 +965,7 @@ Every party with at least one active member stands. Independents and retired fac
 6. **Provincial seats:** D'Hondt on strengths, in each province. A tie goes to the party with the higher total popularity, then to the older party.
 7. **Faction seats:** add up each party's seats from every province, split them among its members by popularity using the largest remainder (equally if the members' total popularity is 0), then add each member's safe borough seat.
 8. **Store** each party's strength and seats in each province as ProvinceResult rows for the new term.
-9. **Post** the results with the rest of the resolution (section 7, step 12), never before the transaction commits: seats by party and province, each faction's seats, the national vote share (each party's summed strength divided by the total), a seat chart and the province map. The post closes with a royal proclamation summoning the new Assembly.
+9. **Post** the results with the rest of the resolution (section 7, step 12), never before the transaction commits: seats by party and province, the national vote share (each party's summed strength divided by the total), a seat chart and the province map. The post closes with a royal proclamation summoning the new Assembly.
 
 **Seat chart:** the hemicycle (`ArchGenerator`), with parties ordered by seats, largest first, and each in its party colour.
 
@@ -973,7 +973,7 @@ Every party with at least one active member stands. Independents and retired fac
 
 **Province map**
 
-Each province is coloured after the party with the highest strength there, which is that party's vote in the province. A tie uses the D'Hondt tie-break. A province where no party stands keeps the map's original fill.
+Each province is coloured after the party holding the most seats there, safe boroughs included. A tie goes to the party with the higher strength (its vote in the province), then the D'Hondt tie-break. A province where no party has any strength keeps the map's original fill.
 
 - **Images:** three 849×504 PNGs in `assets/map/`, aligned pixel for pixel and copied to the build output.
   - `base.png` is the land, sea and borders, with no text. Every Aurelian province is filled with one grey, `#808080`, and Anzaria with a darker `#404040`. Anzaria is not in the index, so it never changes colour. The borders' blur and shadows lie outside the provinces.
@@ -999,12 +999,12 @@ Each province is coloured after the party with the highest strength there, which
   2. Each province pixel is multiplied per channel by `partyColour / 128`. The flat fill becomes exactly the party colour, and any shading painted into a province darkens with it instead of turning grey.
   3. The overlay is drawn on top.
 - **Legend:** the embed carries the legend (party, colour emoji, provinces won), so the image needs no spare space for one.
-- **Where it is posted:** with the election results in #news, in `/gm peek election` (from the preview's strengths), and on demand through `/map`, which redraws the latest term's ProvinceResult rows in each party's current colour. A province whose winning party was deleted since the election keeps the original fill.
+- **Where it is posted:** with the election results in #news, in `/gm peek mode:election` (from the preview's strengths), and on demand through `/map`, which redraws the latest term's ProvinceResult rows in each party's current colour. A province whose winning party was deleted since the election keeps the original fill.
 - **Maintaining the art:** the project copies everything under `assets/` to the build output. If the map is redrawn, keep the province fill at `#808080` (other shades inside a province tint proportionally), put text, cities and any effect that should not take the party colour in the overlay, keep all three images at the same size (or regenerate the index to match), and keep them aligned pixel for pixel. The index was made from a 718×335 cut-out of the provinces, placed at offset (100, 137) on the base map. Do not let anti-aliasing or colour-profile conversion touch the index colours, or province lookups will miss.
 
 After the election the next term begins. The outgoing cabinet stays as caretaker until the GM appoints a Chancellor and a new cabinet is approved (section 5).
 
-`/gm peek election` runs this algorithm on the current state and shows the result only to the GM. It is meant for balancing and testing.
+`/gm peek mode:election` runs this algorithm on the current state and shows the result only to the GM. It is meant for balancing and testing.
 
 ## 9. Visibility and channels
 

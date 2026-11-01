@@ -71,7 +71,7 @@
 - A faction counts for more in its **home province**.
 - Inside a party, seats go to factions by popularity.
 - Every faction in a standing party also wins a *safe borough* seat in its home province.
-- Results are posted with a seat chart and a map coloured by the party that won each province.
+- Results are posted with a seat chart and a map coloured by the party that won each province: the one holding the most seats there, safe boroughs included, with the vote breaking a tie.
 ## Cabinet
 - After an election, *His Majesty King Arthas II* (the GM) appoints a **chancellor**, who names a cabinet of four **ministers**: Treasury, War, Interior, and Commerce and Labor. A faction holds at most one post, and the chancellor holds none. The Assembly then votes on the cabinet. If it fails, the chancellor tries again.
 - Until a cabinet is confirmed, the previous one stays in office.

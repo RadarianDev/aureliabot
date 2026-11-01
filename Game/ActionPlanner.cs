@@ -40,6 +40,8 @@ internal sealed record ActionPlan(
     IReadOnlyList<PendingAction> StanceLogs,
     IReadOnlyList<string> SalienceRaises);
 
+internal sealed record ActionPreview(ActionPlan Plan, OpinionSnapshot Snapshot);
+
 internal static class ActionPlanner
 {
     public static CampaignStanceDecision DecideCampaignStance(Stance? programmeStance, Stance? given)

@@ -381,7 +381,7 @@ refused for a closed issue, and a closed issue withdrawing its bills.
 - `ElectionCalculator` with the spec's worked example as the first test (A 15, B 10, C 5), plus
   apportionment, the √n crowding term, tie-breaks, zero popularity.
 - Results posting: seat chart (`ArchGenerator`, parties largest first), province map
-  (`ProvinceMapGenerator`), `ProvinceResult` rows, `/map`, `/gm peek election`.
+  (`ProvinceMapGenerator`), `ProvinceResult` rows, `/map`, `/gm peek mode:election`.
 - Election boundary cancellations.
 
 ### Stage 5: government
@@ -507,7 +507,7 @@ None block a stage. Everything is decided in the spec, `config/` and `content/`.
 
 | Value | Check at |
 | --- | --- |
-| Condition biases and the issues' starting opinion and salience (`config/conditions.yaml`, `content/issues/`): run `/gm peek election` and polls across provinces, and look for provinces that agree on everything | Stage 4 |
+| Condition biases and the issues' starting opinion and salience (`config/conditions.yaml`, `content/issues/`): run `/gm peek mode:election` and polls across provinces, and look for provinces that agree on everything | Stage 4 |
 | Crackdown balance (`crackdown.cost`, `reduction`, `backlash`, `failurePopularity`) | Stage 7 |
 | Wording thresholds for opinion, salience and discontent (spec section 9) | Stage 3 |
 | Upkeep against the default War and Interior shares, so training is lost only when a Treasury underfunds on purpose | Stage 7 |

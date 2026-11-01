@@ -227,6 +227,67 @@ public class ElectionCalculatorTests
     }
 
     [Fact]
+    public void Borough_seats_can_win_a_province_against_a_stronger_party()
+    {
+        var result = ElectionCalculator.Run(Input(8,
+            [new ElectionProvince(Nation, 1)],
+            [Party(A), Party(B)],
+            [
+                new ElectionFaction(11, A, 60, Abroad),
+                new ElectionFaction(21, B, 5, Nation), new ElectionFaction(22, B, 5, Nation),
+                new ElectionFaction(23, B, 5, Nation), new ElectionFaction(24, B, 5, Nation),
+            ],
+            [],
+            Election with { HomeMultiplier = 1 }));
+
+        var province = Assert.Single(result.Provinces);
+        Assert.True(province.Strength[A] > province.Strength[B]);
+        Assert.Equal(4, province.BoroughSeatsByParty[B]);
+        Assert.True(result.PartySeats[B] > province.ContestedSeatsByParty[A]);
+        Assert.Equal(B, province.WinnerPartyId);
+    }
+
+    [Fact]
+    public void Equal_seats_go_to_the_stronger_party_before_the_more_popular()
+    {
+        var result = ElectionCalculator.Run(Input(4,
+            [new ElectionProvince(Nation, 1)],
+            [Party(A), Party(B, ("one", Stance.For))],
+            [new ElectionFaction(11, A, 11, Abroad), new ElectionFaction(21, B, 10, Abroad)],
+            [Issue("one", 1, (Nation, 1))]));
+
+        var province = Assert.Single(result.Provinces);
+        Assert.Equal(1, province.ContestedSeatsByParty[A]);
+        Assert.Equal(1, province.ContestedSeatsByParty[B]);
+        Assert.True(province.Strength[B] > province.Strength[A]);
+        Assert.Equal(B, province.WinnerPartyId);
+    }
+
+    [Theory]
+    [InlineData(1.0)]
+    [InlineData(1.5)]
+    public void Explain_shows_the_working_behind_each_strength(double homeMultiplier)
+    {
+        var input = WorkedExample(homeMultiplier) with { Constants = Election with { Crowding = true, HomeMultiplier = homeMultiplier } };
+        var result = ElectionCalculator.Run(input);
+
+        var working = ElectionCalculator.Explain(input, Nation);
+
+        var province = Assert.Single(result.Provinces);
+        Assert.Equal([A, B, C], working.Select(b => b.PartyId));
+        foreach (var b in working)
+        {
+            Assert.Equal(province.Strength[b.PartyId], b.Strength, 9);
+            Assert.Equal(b.BaseStrength * b.Multiplier, b.Strength, 9);
+            Assert.Equal(b.Members.Sum(m => m.Weighted), b.Weighted, 9);
+            Assert.Equal(b.Issues.Sum(t => t.Contribution), b.ProgrammeScore, 9);
+        }
+        var c = working.Single(b => b.PartyId == C);
+        Assert.Equal(2, c.Issues.Single(t => t.IssueId == "one").Crowd);
+        Assert.Single(working.Single(b => b.PartyId == B).Issues);
+    }
+
+    [Fact]
     public void A_province_where_no_party_has_strength_has_no_winner()
     {
         var result = ElectionCalculator.Run(Input(5,

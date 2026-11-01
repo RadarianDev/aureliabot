@@ -23,6 +23,20 @@ public sealed record ProvinceOutcome(
     IReadOnlyDictionary<long, int> BoroughSeatsByParty,
     long? WinnerPartyId);
 
+public sealed record IssueTerm(string IssueId, Stance Stance, double Opinion, double SalienceShare, double StanceScore, int Crowd, double Contribution);
+
+public sealed record MemberWeight(ulong FactionId, double Popularity, bool AtHome, double Weighted);
+
+public sealed record StrengthBreakdown(
+    long PartyId,
+    IReadOnlyList<MemberWeight> Members,
+    double Weighted,
+    double BaseStrength,
+    IReadOnlyList<IssueTerm> Issues,
+    double ProgrammeScore,
+    double Multiplier,
+    double Strength);
+
 public sealed record ElectionResult(
     IReadOnlyList<ProvinceOutcome> Provinces,
     IReadOnlyDictionary<long, int> PartySeats,
@@ -60,7 +74,7 @@ public static class ElectionCalculator
             }
 
             outcomes.Add(new ProvinceOutcome(province.Id, contestedByProvince[province.Id], strength, seats, borough,
-                Winner(strength, totalPopularity)));
+                Winner(strength, seats, borough, totalPopularity)));
         }
 
         var factionSeats = new Dictionary<ulong, int>();
@@ -99,22 +113,43 @@ public static class ElectionCalculator
         return result;
     }
 
+    public static List<StrengthBreakdown> Explain(ElectionInput input, string provinceId)
+    {
+        var parties = input.Parties.OrderBy(p => p.Id).ToList();
+        return parties
+            .Select(p => Breakdown(input, parties, p, input.Factions.Where(f => f.PartyId == p.Id).ToList(), provinceId))
+            .ToList();
+    }
+
     private static double Strength(ElectionInput input, IReadOnlyList<ElectionParty> parties, ElectionParty party,
+        IReadOnlyList<ElectionFaction> members, string provinceId) =>
+        Breakdown(input, parties, party, members, provinceId).Strength;
+
+    private static StrengthBreakdown Breakdown(ElectionInput input, IReadOnlyList<ElectionParty> parties, ElectionParty party,
         IReadOnlyList<ElectionFaction> members, string provinceId)
     {
         var c = input.Constants;
-        var weighted = members.Sum(f => f.Popularity * (f.HomeProvinceId == provinceId ? c.HomeMultiplier : 1));
+        var weights = members
+            .Select(f => (f, AtHome: f.HomeProvinceId == provinceId))
+            .Select(x => new MemberWeight(x.f.Id, x.f.Popularity, x.AtHome, x.f.Popularity * (x.AtHome ? c.HomeMultiplier : 1)))
+            .ToList();
+        var weighted = weights.Sum(w => w.Weighted);
         var baseStrength = Math.Pow(Math.Max(0, weighted), c.BaseExponent);
-        var multiplier = Math.Clamp(1 + c.ProgrammeWeight * ProgrammeScore(input, parties, party, provinceId), c.MultiplierMin, c.MultiplierMax);
-        return baseStrength * multiplier;
+        var issues = IssueTerms(input, parties, party, provinceId);
+        var score = issues.Sum(t => t.Contribution);
+        var multiplier = Math.Clamp(1 + c.ProgrammeWeight * score, c.MultiplierMin, c.MultiplierMax);
+        return new StrengthBreakdown(party.Id, weights, weighted, baseStrength, issues, score, multiplier, baseStrength * multiplier);
     }
 
-    internal static double ProgrammeScore(ElectionInput input, IReadOnlyList<ElectionParty> parties, ElectionParty party, string provinceId)
-    {
-        var totalSalience = input.Issues.Sum(i => i.Salience);
-        if (totalSalience == 0) return 0;
+    internal static double ProgrammeScore(ElectionInput input, IReadOnlyList<ElectionParty> parties, ElectionParty party, string provinceId) =>
+        IssueTerms(input, parties, party, provinceId).Sum(t => t.Contribution);
 
-        var score = 0.0;
+    private static List<IssueTerm> IssueTerms(ElectionInput input, IReadOnlyList<ElectionParty> parties, ElectionParty party, string provinceId)
+    {
+        var terms = new List<IssueTerm>();
+        var totalSalience = input.Issues.Sum(i => i.Salience);
+        if (totalSalience == 0) return terms;
+
         foreach (var issue in input.Issues)
         {
             var stance = party.Programme.GetValueOrDefault(issue.Id, Stance.Silent);
@@ -125,9 +160,11 @@ public static class ElectionCalculator
                 ? parties.Count(p => p.Programme.GetValueOrDefault(issue.Id, Stance.Silent).Sign() == sign)
                 : 1;
             var opinion = issue.OpinionByProvince.GetValueOrDefault(provinceId, 0);
-            score += issue.Salience / totalSalience * Formulas.StanceScore(stance, opinion, input.StrongStancePenalty) / Math.Sqrt(crowd);
+            var share = issue.Salience / totalSalience;
+            var stanceScore = Formulas.StanceScore(stance, opinion, input.StrongStancePenalty);
+            terms.Add(new IssueTerm(issue.Id, stance, opinion, share, stanceScore, crowd, share * stanceScore / Math.Sqrt(crowd)));
         }
-        return score;
+        return terms;
     }
 
     private static Dictionary<long, int> DHondt(IReadOnlyDictionary<long, double> strength, IReadOnlyDictionary<long, double> popularity, int seats)
@@ -142,8 +179,16 @@ public static class ElectionCalculator
         return won;
     }
 
-    private static long? Winner(IReadOnlyDictionary<long, double> strength, IReadOnlyDictionary<long, double> popularity) =>
-        Best(strength.Where(kv => kv.Value > 0).Select(kv => (kv.Key, kv.Value)), popularity);
+    private static long? Winner(IReadOnlyDictionary<long, double> strength, IReadOnlyDictionary<long, int> contested,
+        IReadOnlyDictionary<long, int> borough, IReadOnlyDictionary<long, double> popularity) =>
+        strength.Values.Any(s => s > 0)
+            ? strength.Keys
+                .OrderByDescending(id => contested[id] + borough[id])
+                .ThenByDescending(id => strength[id])
+                .ThenByDescending(id => popularity[id])
+                .ThenBy(id => id)
+                .First()
+            : null;
 
     private static long? Best(IEnumerable<(long Id, double Value)> candidates, IReadOnlyDictionary<long, double> popularity) =>
         candidates

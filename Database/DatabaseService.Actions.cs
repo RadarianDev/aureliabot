@@ -221,27 +221,8 @@ public partial class DatabaseService
         if (actions.Count == 0) return;
 
         var snapshot = LoadOpinionSnapshotTx(conn, tx, config);
-        var attackTargets = actions
-            .Where(a => a.Kind == ActionKind.Attack)
-            .ToDictionary(a => a.Id, a => a.TargetFactionId is { } target
-                ? CheckAttackTx(conn, tx, a.FactionId, target, a.IssueId)
-                : new AttackTarget(null, Texts.Get("data.attack.noTarget")));
-
-        var start = new ActionStartState(
-            state.ResolutionNumber,
-            constants.Campaign.Crowding,
-            issueId => snapshot.Issue(issueId) is not null,
-            snapshot.National,
-            snapshot.Salience,
-            issueId => snapshot.Issue(issueId)?.SalienceRaisedResolution,
-            action => attackTargets[action.Id]);
-
-        var scoring = new ActionScoring(
-            (stance, opinion, salience, m) => Formulas.CampaignGain(constants, stance, opinion, salience, m),
-            (stance, opinion, salience) => Formulas.Attack(constants, stance, opinion, salience),
-            action => PollLine(config, snapshot, random, action));
-
-        var plan = ActionPlanner.Plan(actions, start, scoring);
+        var plan = ActionPlanner.Plan(actions, ActionStartTx(conn, tx, state, config, snapshot, actions),
+            Scoring(config, action => PollLine(config, snapshot, random, action)));
 
         foreach (var (factionId, delta) in plan.PopularityDeltas)
             AddPopularityTx(conn, tx, factionId, delta, constants.Popularity);
@@ -280,6 +261,45 @@ public partial class DatabaseService
 
         LogTx(conn, tx, LogKinds.Resolution, "actions",
             $"Resolved {plan.Outcomes.Count} actions; salience raised on {string.Join(", ", plan.SalienceRaises)}.");
+    }
+
+    internal ActionPreview PreviewActions(GameConfig config)
+    {
+        using var conn = Open();
+        var state = GetGameStateTx(conn, null);
+        var actions = QueryPendingActionsTx(conn, null,
+            "resolved = 0 AND faction_id IN (SELECT user_id FROM factions WHERE status = 'Active')");
+        var snapshot = LoadOpinionSnapshotTx(conn, null, config);
+        var plan = ActionPlanner.Plan(actions, ActionStartTx(conn, null, state, config, snapshot, actions), Scoring(config, _ => ""));
+        return new ActionPreview(plan, snapshot);
+    }
+
+    private static ActionStartState ActionStartTx(SqliteConnection conn, SqliteTransaction? tx, GameState state, GameConfig config,
+        OpinionSnapshot snapshot, IReadOnlyList<PendingAction> actions)
+    {
+        var attackTargets = actions
+            .Where(a => a.Kind == ActionKind.Attack)
+            .ToDictionary(a => a.Id, a => a.TargetFactionId is { } target
+                ? CheckAttackTx(conn, tx, a.FactionId, target, a.IssueId)
+                : new AttackTarget(null, Texts.Get("data.attack.noTarget")));
+
+        return new ActionStartState(
+            state.ResolutionNumber,
+            config.Constants.Campaign.Crowding,
+            issueId => snapshot.Issue(issueId) is not null,
+            snapshot.National,
+            snapshot.Salience,
+            issueId => snapshot.Issue(issueId)?.SalienceRaisedResolution,
+            action => attackTargets[action.Id]);
+    }
+
+    private static ActionScoring Scoring(GameConfig config, Func<PendingAction, string> poll)
+    {
+        var constants = config.Constants;
+        return new ActionScoring(
+            (stance, opinion, salience, m) => Formulas.CampaignGain(constants, stance, opinion, salience, m),
+            (stance, opinion, salience) => Formulas.Attack(constants, stance, opinion, salience),
+            poll);
     }
 
     private static string PollLine(GameConfig config, OpinionSnapshot snapshot, IRandomSource random, PendingAction action)

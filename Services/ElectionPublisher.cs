@@ -51,7 +51,7 @@ public class ElectionPublisher
         var config = _constants.Config;
         try
         {
-            var text = ResultsText(report, config, id => Display.Faction(_data, id));
+            var text = ResultsText(report, config);
             foreach (var chunk in Publisher.Chunk(text))
                 await SendAsync(channel, channelId, source, chunk);
 
@@ -207,8 +207,9 @@ public class ElectionPublisher
                 g => g.Key,
                 g => g.FirstOrDefault(r => r.Winner) is { } winner
                     ? winner.PartyId
-                    : g.Where(r => r.Strength > 0).OrderByDescending(r => r.Strength).ThenByDescending(r => r.Seats).ThenBy(r => r.PartyId)
-                        .Select(r => (long?)r.PartyId).FirstOrDefault());
+                    : g.Any(r => r.Strength > 0)
+                        ? (long?)g.OrderByDescending(r => r.Seats).ThenByDescending(r => r.Strength).ThenBy(r => r.PartyId).First().PartyId
+                        : null);
 
     public static Dictionary<string, string> MapColours(
         IReadOnlyDictionary<string, long?> provinceWinners,
@@ -292,10 +293,10 @@ public class ElectionPublisher
         return ids.OrderBy(id => order.GetValueOrDefault(id, int.MaxValue)).ThenBy(id => id, StringComparer.Ordinal).ToList();
     }
 
-    public static string ResultsText(ElectionReport report, GameConfig config, Func<ulong, string> factionName) =>
-        Texts.Get("election.header", ("term", report.TermNumber)) + "\n" + ResultsBody(report.Result, report.Parties, config, factionName);
+    public static string ResultsText(ElectionReport report, GameConfig config) =>
+        Texts.Get("election.header", ("term", report.TermNumber)) + "\n" + ResultsBody(report.Result, report.Parties, config);
 
-    public static string ResultsBody(ElectionResult result, IReadOnlyList<ElectionPartySnapshot> parties, GameConfig config, Func<ulong, string> factionName)
+    public static string ResultsBody(ElectionResult result, IReadOnlyList<ElectionPartySnapshot> parties, GameConfig config)
     {
         var byId = parties.ToDictionary(p => p.Id);
         var lines = new List<string> { Texts.Get("election.partiesHeading") };
@@ -311,11 +312,6 @@ public class ElectionPublisher
             ("share", Percent(result.VoteShare.GetValueOrDefault(id))))));
         if (partyIds.Count == 0) lines.Add(Texts.Get("election.nobody"));
 
-        lines.Add("");
-        lines.Add(Texts.Get("election.factionsHeading"));
-        var factions = result.FactionSeats.OrderByDescending(kv => kv.Value).ThenBy(kv => kv.Key).ToList();
-        lines.AddRange(factions.Select(kv => Texts.Get("election.factionLine", ("faction", factionName(kv.Key)), ("seats", kv.Value))));
-        if (factions.Count == 0) lines.Add(Texts.Get("election.nobody"));
 
         lines.Add("");
         lines.Add(Texts.Get("election.provincesHeading"));
@@ -326,7 +322,9 @@ public class ElectionPublisher
             var seats = outcome.ContestedSeatsByParty.Keys.Union(outcome.BoroughSeatsByParty.Keys)
                 .Select(id => (Id: id, Seats: outcome.ContestedSeatsByParty.GetValueOrDefault(id) + outcome.BoroughSeatsByParty.GetValueOrDefault(id)))
                 .Where(x => x.Seats > 0)
-                .OrderByDescending(x => x.Seats)
+                .OrderByDescending(x => x.Id == outcome.WinnerPartyId)
+                .ThenByDescending(x => x.Seats)
+                .ThenByDescending(x => outcome.Strength.GetValueOrDefault(x.Id))
                 .ThenBy(x => x.Id)
                 .Select(x => Texts.Get("election.provinceSeat", ("party", PartyEmoji(byId, x.Id)), ("seats", x.Seats)))
                 .ToList();

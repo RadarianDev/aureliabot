@@ -95,6 +95,34 @@ public class ResolutionFlowTests : IDisposable
     }
 
     [Fact]
+    public void ThePendingActionsPreview_MatchesWhatTheResolutionDoes_AndChangesNothing()
+    {
+        StartWithIssue();
+        foreach (var id in new ulong[] { 1, 2, 3, 4 })
+            Db.CreateFaction(id, $"F{id}", "aurenten", 30);
+        var against = Db.CreateParty("Against", "#cc0000", null, [3, 4]).PartyId!.Value;
+        Db.RecordProgramme(against, new Dictionary<string, Stance> { ["labour"] = Stance.Against }, null, Config.Constants);
+        Db.SubmitAction(1, ActionKind.Campaign, "labour", 2, Stance.For);
+        Db.SubmitAction(3, ActionKind.Campaign, "labour", 2);
+        Db.SubmitAction(2, ActionKind.Attack, "labour", 2, targetFactionId: 3);
+        Db.SubmitAction(2, ActionKind.Poll, "labour", 2);
+        var before = Enumerable.Range(1, 4).ToDictionary(i => (ulong)i, i => Db.GetFaction((ulong)i)!.Popularity);
+
+        var preview = Db.PreviewActions(Config);
+
+        Assert.Equal(4, preview.Plan.Outcomes.Count);
+        Assert.All(preview.Plan.Outcomes, o => Assert.False(o.Fizzled));
+        Assert.True(preview.Plan.Outcomes.Single(o => o.Action.Kind == ActionKind.Attack).Succeeded);
+        Assert.Equal(before, Enumerable.Range(1, 4).ToDictionary(i => (ulong)i, i => Db.GetFaction((ulong)i)!.Popularity));
+
+        Db.ResolveCampaignDay(Config, new ScriptedRandomSource([], Enumerable.Repeat(0.5, 4)), 1, DateTimeOffset.UtcNow);
+
+        foreach (var (id, popularity) in before)
+            Assert.Equal(popularity + preview.Plan.PopularityDeltas.GetValueOrDefault(id), Db.GetFaction(id)!.Popularity, 6);
+        Assert.True(preview.Plan.PopularityDeltas[3] < 0);
+    }
+
+    [Fact]
     public void ACampaignDay_ResolvesActionsWithoutDriftOrAdvancing()
     {
         StartWithIssue();
