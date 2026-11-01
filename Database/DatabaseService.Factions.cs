@@ -168,6 +168,18 @@ public partial class DatabaseService
         return new RetireResult(faction, dissolved, lastMember);
     }
 
+    public Faction? UnretireFaction(ulong userId)
+    {
+        using var conn = Open();
+        using var tx = conn.BeginTransaction();
+        if (GetFactionTx(conn, tx, userId) is not { IsActive: false }) return null;
+        Exec(conn, tx, "UPDATE factions SET status = 'Active', party_id = NULL WHERE user_id = $user;", ("$user", userId.ToString()));
+        LogTx(conn, tx, LogKinds.StateChange, "gm faction unretire", $"Unretired {userId}.", userId);
+        var faction = GetFactionTx(conn, tx, userId);
+        tx.Commit();
+        return faction;
+    }
+
     public bool TryMarkUnregisteredAlert(ulong userId)
     {
         using var conn = Open();

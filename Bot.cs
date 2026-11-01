@@ -40,6 +40,7 @@ public class Bot
             .AddSingleton<FactionChannelService>()
             .AddSingleton<ResolutionService>()
             .AddSingleton<Confirmations>()
+            .AddSingleton<WorkbenchSessions>()
             .AddSingleton<SetupChecklistService>()
             .AddSingleton<GameFilesService>()
             .AddSingleton<ElectionPublisher>()

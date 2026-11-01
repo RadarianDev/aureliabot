@@ -1,0 +1,18 @@
+id: new_crisis
+title: New Crisis
+ministry: Interior
+province: aurenten
+issue: new_issue
+answers:
+  - lean: For
+    label: The first answer
+    price: 20
+    text: What happens after the first answer.
+    effects: { discontent.aurenten: -1 }
+  - lean: Against
+    label: The second answer
+    text: What happens after the second answer.
+    effects: { discontent.aurenten: 1 }
+default:
+  text: What happens when no answer comes in time.
+  effects: { discontent.aurenten: 1 }

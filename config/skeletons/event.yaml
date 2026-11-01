@@ -1,0 +1,4 @@
+id: new_event
+title: New Event
+text: The news story.
+effects: { favour: 1 }

@@ -5,7 +5,7 @@ using Discord.Interactions;
 [Group("content", "Write the game's issues, bills, projects, events and crises (GM only)")]
 [DefaultMemberPermissions(GuildPermission.ManageGuild)]
 [RequireUserPermission(GuildPermission.ManageGuild)]
-public class ContentModule : InteractionModuleBase<SocketInteractionContext>
+public partial class ContentModule : InteractionModuleBase<SocketInteractionContext>
 {
     private const string EditModalPrefix = "content_edit";
     private const long MaxDownloadBytes = 8_000_000;
@@ -16,14 +16,17 @@ public class ContentModule : InteractionModuleBase<SocketInteractionContext>
     private readonly Confirmations _confirmations;
     private readonly Publisher _publisher;
     private readonly CrisisPublisher _crises;
+    private readonly WorkbenchSessions _sessions;
 
-    public ContentModule(DatabaseService data, ConstantsStore constants, Confirmations confirmations, Publisher publisher, CrisisPublisher crises)
+    public ContentModule(DatabaseService data, ConstantsStore constants, Confirmations confirmations, Publisher publisher, CrisisPublisher crises,
+        WorkbenchSessions sessions)
     {
         _data = data;
         _constants = constants;
         _confirmations = confirmations;
         _publisher = publisher;
         _crises = crises;
+        _sessions = sessions;
     }
 
     public const string CrisisEditMode = "crisis";
@@ -49,9 +52,16 @@ public class ContentModule : InteractionModuleBase<SocketInteractionContext>
         [Summary("file10", "Another file")] IAttachment? file10 = null)
     {
         await DeferAsync(ephemeral: true);
+        var (files, skipped) = await DownloadAsync(new[] { file1, file2, file3, file4, file5, file6, file7, file8, file9, file10 }.OfType<IAttachment>());
+        var outcomes = ContentRules.Import(_data, ContentRules.ImportContext(_data, _constants.Config), files);
+        await SendAsync(ContentRules.FormatImport(outcomes, skipped));
+    }
+
+    private static async Task<(List<ImportFile> Files, List<string> Skipped)> DownloadAsync(IEnumerable<IAttachment> attachments)
+    {
         var files = new List<ImportFile>();
         var skipped = new List<string>();
-        foreach (var attachment in new[] { file1, file2, file3, file4, file5, file6, file7, file8, file9, file10 }.OfType<IAttachment>())
+        foreach (var attachment in attachments)
         {
             var name = attachment.Filename;
             var isZip = name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase);
@@ -93,9 +103,7 @@ public class ContentModule : InteractionModuleBase<SocketInteractionContext>
                 skipped.Add(Texts.Get("content.import.badZip", ("name", name)));
             }
         }
-
-        var outcomes = ContentRules.Import(_data, ContentRules.ImportContext(_data, _constants.Config), files);
-        await SendAsync(ContentRules.FormatImport(outcomes, skipped));
+        return (files, skipped);
     }
 
     [SlashCommand("edit", "Edit a template's YAML in a form; with live, edit what is already in play")]
@@ -104,40 +112,31 @@ public class ContentModule : InteractionModuleBase<SocketInteractionContext>
         [Summary("live", "Edit the live copy instead of the template")] bool live = false)
     {
         id = id.Trim();
-        string yaml;
-        var mode = live ? "live" : "template";
-        var modalId = id;
-        if (live)
-        {
-            if (ContentRules.FindLive(_data, id, out var refusal) is not { } target)
-            {
-                await RespondAsync(refusal, ephemeral: true);
-                return;
-            }
-            yaml = TemplateCodec.Serialize(target.Current);
-            if (target is { Kind: TemplateKind.Crisis, RowId: { } crisisId })
-                (mode, modalId) = (CrisisEditMode, crisisId.ToString());
-        }
+        var (modal, refusal) = live ? LiveModal(id) : TemplateModal(id);
+        if (modal is null)
+            await RespondAsync(refusal, ephemeral: true);
         else
-        {
-            if (_data.GetTemplate(id) is not { } row)
-            {
-                await RespondAsync(Texts.Get("content.noTemplate", ("id", id)), ephemeral: true);
-                return;
-            }
-            yaml = row.Yaml;
-        }
+            await RespondWithModalAsync(modal);
+    }
 
+    private (Modal? Modal, string? Refusal) TemplateModal(string id)
+    {
+        if (_data.GetTemplate(id) is not { } row) return (null, Texts.Get("content.noTemplate", ("id", id)));
+        if (row.Yaml.Length > ContentRules.ModalLimit)
+            return (null, Texts.Get("content.edit.tooLong", ("id", id), ("length", row.Yaml.Length), ("limit", ContentRules.ModalLimit)));
+        return (EditModal("template", id, Texts.Get("content.edit.title", ("id", id)), row.Yaml), null);
+    }
+
+    private (Modal? Modal, string? Refusal) LiveModal(string id)
+    {
+        if (ContentRules.FindLive(_data, id, out var refusal) is not { } target) return (null, refusal);
+        var yaml = TemplateCodec.Serialize(target.Current);
+        var (mode, modalId) = target is { Kind: TemplateKind.Crisis, RowId: { } crisisId }
+            ? (CrisisEditMode, crisisId.ToString())
+            : ("live", id);
         if (yaml.Length > ContentRules.ModalLimit)
-        {
-            await RespondAsync(
-                Texts.Get("content.edit.tooLong", ("id", id), ("length", yaml.Length), ("limit", ContentRules.ModalLimit)),
-                ephemeral: true);
-            return;
-        }
-
-        await RespondWithModalAsync(EditModal(mode, modalId,
-            live ? Texts.Get("content.edit.titleLive", ("id", id)) : Texts.Get("content.edit.title", ("id", id)), yaml));
+            return (null, Texts.Get("content.edit.tooLong", ("id", id), ("length", yaml.Length), ("limit", ContentRules.ModalLimit)));
+        return (EditModal(mode, modalId, Texts.Get("content.edit.titleLive", ("id", id)), yaml), null);
     }
 
     [ModalInteraction(EditModalPrefix + ":*:*", ignoreGroupNames: true)]
@@ -237,7 +236,11 @@ public class ContentModule : InteractionModuleBase<SocketInteractionContext>
     [SlashCommand("remove", "Delete a Draft that was never posted; archive anything else")]
     public async Task RemoveAsync([Summary("id", "The template"), Autocomplete(typeof(ContentAutocomplete))] string id)
     {
-        id = id.Trim();
+        await ConfirmRemoveAsync(id.Trim());
+    }
+
+    private async Task ConfirmRemoveAsync(string id)
+    {
         if (_data.GetTemplate(id) is not { } row)
         {
             await RespondAsync(Texts.Get("content.noTemplate", ("id", id)), ephemeral: true);
@@ -272,6 +275,11 @@ public class ContentModule : InteractionModuleBase<SocketInteractionContext>
             await SendAsync(Texts.Get("content.noTemplate", ("id", id.Trim())));
             return;
         }
+        await FollowupExportAsync(rows, rows.Count == 1 && id is not null ? $"{rows[0].Id}.zip" : "content.zip");
+    }
+
+    private async Task FollowupExportAsync(List<TemplateRow> rows, string name)
+    {
         if (rows.Count == 0)
         {
             await SendAsync(Texts.Get("content.export.none"));
@@ -279,7 +287,6 @@ public class ContentModule : InteractionModuleBase<SocketInteractionContext>
         }
 
         using var stream = new MemoryStream(ContentRules.Export(rows));
-        var name = rows.Count == 1 && id is not null ? $"{rows[0].Id}.zip" : "content.zip";
         await FollowupWithFileAsync(stream, name,
             rows.Count == 1
                 ? Texts.Get("content.export.doneOne", ("count", rows.Count))

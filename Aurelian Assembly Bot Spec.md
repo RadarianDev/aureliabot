@@ -665,7 +665,7 @@ All commands are slash commands. Long text, such as a roleplay response, is ente
 **Command conventions**
 
 - **Confirmations restate the outcome.** Every player command replies privately with exactly what will happen, when (the next resolution as `<t:…:R>`), and any public consequence: an off-programme stance, a stance logged by a vote, a pending action replaced, a law that would cost its sponsor popularity because the public is against it.
-- **Confirm buttons** guard anything announced publicly or hard to reverse: an off-programme campaign, `/party leave`, `/ministry resign`, `/war disband`, `/interior disband`, and the GM's `/gm faction retire`, `/gm party delete`, `/gm set`, `/gm undo` and `/content remove`.
+- **Confirm buttons** guard anything announced publicly or hard to reverse: an off-programme campaign, `/party leave`, `/ministry resign`, `/war disband`, `/interior disband`, and the GM's `/gm faction retire`, `/gm faction unretire`, `/gm party delete`, `/gm set`, `/gm undo` and `/content remove`.
 - **Errors say when.** A command refused for timing names when it becomes possible, for example "Bills can be proposed again after the election, from Summer 1854 `<t:…:R>`", and a command refused for role names the role it needs.
 - **Autocomplete offers only valid choices.** `/attack` lists rivals outside the player's party, then only the issues where that rival has a stance, with the stance shown. `/bill propose` lists only Available bills whose issue has no bill before the Assembly (scheduled or open), with each bill's issue and lean. `/opposition question` hides vacant ministries only when the Chancellorship is vacant too. `/crisis respond` lists only the crises the player is responsible for. `/war` and `/interior` show each unit's die and the cost of its next training, for example "1st Guards · d14 · train 30 cr".
 - **Buttons on the bot's own posts** replace commands for the common case: votes, no-confidence co-signing and join answers. Votes also have `/vote`; every other button is repeated in `/me`, so a lost post never blocks anyone.
@@ -845,6 +845,7 @@ The GM's commands are split in two groups: `/gm` runs the game, and `/content` (
 | `/gm faction edit faction [character] [home]` | Edits a faction. Players can't change their character or home province; only the GM can. |
 | `/gm reward faction amount reason` | Rewards excellent roleplay (a propaganda poster, a manifesto, a speech) with popularity, applied at once. Posted to #news as a royal commendation naming the faction and the reason, so players see what earns favour. A negative amount is refused; use `/gm apply` for penalties. |
 | `/gm faction retire faction` | Retires a faction: it leaves its party and any ministry, its pending actions are dropped, and its seats stay vacant until the next election. |
+| `/gm faction unretire faction` | Returns a retired faction to politics, after a Confirm. It becomes Active again as an independent, at the popularity it retired with. Its seats count again if no election has passed since it retired; an election in between left it with none. Its old party, cabinet post or nomination, pending actions and join applications are not restored. Announced in #news as the character returning to politics, and logged. Refused for a faction that is already active. |
 | `/gm channel set role target` | Sets a game channel, a category (faction, party or archive), the GM role or the Cabinet role. Game channels are added to the command whitelist automatically. |
 | `/gm event queue template [delay]` | Queues an event from a Ready template, to fire at the start of the next turn (section 7), or `delay` turns later. Before the game starts, no delay means it fires at `/gm start`, and a delay counts turns from there. Issues and crises enter play this way. |
 | `/gm event cancel event` | Removes a queued event before it fires. |
@@ -883,6 +884,7 @@ Posting a template creates a **live copy**, so later edits to the template never
 | `/content list [kind] [status]` | Lists templates, optionally only issues, bills, projects, events or crises, and only one status. |
 | `/content remove id` | Deletes a Draft that was never posted. Anything else is archived instead: out of use, but kept for the log. |
 | `/content export [id]` | Attaches every template, or just one, as YAML files in a zip, ready to edit and import again. |
+| `/content browse [kind] [status] [id]` | Opens the **content workbench**: a private panel to browse templates, read their YAML with syntax highlighting, see the player-facing preview, and edit, validate, ready, duplicate or remove them without leaving Discord. See [Content Workbench.md](Content%20Workbench.md). |
 
 - Ids, factions, parties, provinces, conditions, issues, bills, projects, events, crises, answers, votes and ministries autocomplete in every command.
 

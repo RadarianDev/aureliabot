@@ -50,6 +50,8 @@ Existing mechanic docs:
 - [Parties.md](Parties.md): factions, parties, membership and seats, as currently implemented.
 - [YAML Reference.md](YAML%20Reference.md): every config and content YAML format with all its fields,
   collected from the spec. Keep it in step when a format changes.
+- [Content Workbench.md](Content%20Workbench.md): the `/content browse` panel for browsing,
+  previewing and editing templates inside Discord.
 - [Deployment.md](Deployment.md): running the bot 24/7 on a Linux server, with `deploy/` (service file, deploy
   and backup scripts).
 

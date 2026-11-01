@@ -1,0 +1,7 @@
+id: new_project
+title: New Project
+purse: CommerceLabor
+province: aurenten
+price: 40
+term: 4
+effects: { economy: 10 }

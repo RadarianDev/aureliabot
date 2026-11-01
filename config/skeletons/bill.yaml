@@ -1,0 +1,8 @@
+id: new_bill
+title: The New Bill
+issue: new_issue
+lean: For
+motion: What the Assembly votes on.
+pass:
+  text: What #news reports when it passes.
+  effects: { favour: 1 }

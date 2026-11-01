@@ -578,3 +578,10 @@ filler: [we, we are, the party, stands, it]
 
 Quote phrases YAML would read as something else: `"yes"`, `"no"`, `"0"`, `"+"`, `"-"`.
 
+
+### `config/skeletons/<kind>.yaml`: starters for new templates
+
+One file per kind (`issue.yaml`, `bill.yaml`, `project.yaml`, `event.yaml`, `crisis.yaml`), in the
+format of that kind above, holding every required field with placeholder values. **New** in
+`/content browse` opens a form pre-filled with it (see [Content Workbench.md](Content%20Workbench.md)).
+They are read when New is used, never imported as content and never reloaded as config.

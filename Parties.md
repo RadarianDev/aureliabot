@@ -34,6 +34,10 @@ A faction is a player, keyed on their Discord user id. It has no name of its own
   Chancellorship it holds, cancels a nomination it is part of, and drops its pending actions and join
   applications. Its seats stay with it, vacant, until the next election. A retired player cannot be
   registered again under the same account.
+- **Unretiring** (`UnretireFaction`, `/gm faction unretire`) sets the faction back to Active, as an independent
+  at the popularity it retired with. Nothing retiring cleared comes back: no party, post, nomination,
+  pending action or join application. Its seats count again only if no election has passed since,
+  because every election resets seats and a retired faction wins none.
 
 ## Parties
 

@@ -146,6 +146,32 @@ public class FactionTests : IDisposable
     }
 
     [Fact]
+    public void UnretireFaction_RefusesUnknownOrActive()
+    {
+        Assert.Null(Db.UnretireFaction(Alice));
+        Register(Alice);
+        Assert.Null(Db.UnretireFaction(Alice));
+    }
+
+    [Fact]
+    public void UnretireFaction_ReturnsAnIndependentWithItsPopularityAndSeats()
+    {
+        Register(Alice, Bob, Carol);
+        Party("Old Party", Alice, Bob, Carol);
+        Db.AddPopularity(Alice, 7, DatabaseFixture.Constants.Popularity);
+        Db.SetFactionSeats(Alice, 3);
+        Db.RetireFaction(Alice);
+
+        var faction = Db.UnretireFaction(Alice)!;
+
+        Assert.True(faction.IsActive);
+        Assert.True(faction.IsIndependent);
+        Assert.Equal(Start + 7, faction.Popularity);
+        Assert.Equal(3, faction.Seats);
+        Assert.Null(Db.UnretireFaction(Alice));
+    }
+
+    [Fact]
     public void RetireFaction_ClearsPartyAndSittingCabinetPosts()
     {
         Register(Alice, Bob, Carol);

@@ -16,6 +16,8 @@ public sealed record EditOutcome(ImportOutcome Outcome, string OriginalId)
 
 public sealed record ContentResult(bool Ok, string Message);
 
+public sealed record ContentProblem(int? Line, string Message);
+
 public sealed record LiveTarget(TemplateKind Kind, string LiveId, Template Current, long? RowId);
 
 public sealed record LiveEditResult(bool Ok, string Message, string? News, long? AmendedCrisisId = null);
@@ -85,9 +87,12 @@ public static class ContentRules
     public static string TimesPosted(int count) =>
         count == 1 ? Texts.Get("content.posted.once") : Texts.Get("content.posted.times", ("count", count));
 
-    public static IReadOnlyList<string> ReadinessProblems(Template template, Func<string, TemplateRow?> find)
+    public static IReadOnlyList<string> ReadinessProblems(Template template, Func<string, TemplateRow?> find) =>
+        ReadinessIssues(template, find).Select(i => i.Message).ToList();
+
+    public static IReadOnlyList<(string Reference, string Message)> ReadinessIssues(Template template, Func<string, TemplateRow?> find)
     {
-        var problems = new List<string>();
+        var problems = new List<(string, string)>();
         foreach (var id in template.References.Distinct())
         {
             if (id == template.Id) continue;
@@ -96,11 +101,42 @@ public static class ContentRules
                 ? Texts.Get("content.readiness.issueRole")
                 : Texts.Get("content.readiness.templateRole");
             if (row is null)
-                problems.Add(Texts.Get("content.readiness.missing", ("role", role), ("id", id)));
+                problems.Add((id, Texts.Get("content.readiness.missing", ("role", role), ("id", id))));
             else if (row.Status != TemplateStatus.Ready)
-                problems.Add(Texts.Get("content.readiness.notReady", ("role", role), ("id", id), ("kind", TemplateCodec.KindName(row.Kind)), ("status", row.Status)));
+                problems.Add((id, Texts.Get("content.readiness.notReady", ("role", role), ("id", id), ("kind", TemplateCodec.KindName(row.Kind)), ("status", row.Status))));
         }
         return problems;
+    }
+
+    public static List<ContentProblem> Problems(DatabaseService data, EffectContext readyContext, GameState state, TemplateRow row)
+    {
+        var parsed = TemplateCodec.Parse(row.Yaml, $"{row.Id}.yaml", readyContext);
+        if (!parsed.IsValid) return parsed.Errors.Select(e => new ContentProblem(e.Line, e.Message)).ToList();
+        var template = parsed.Template!;
+        var problems = ReadinessIssues(template, data.GetTemplate)
+            .Select(i => new ContentProblem(YamlParts.LineOf(row.Yaml, i.Reference), i.Message))
+            .ToList();
+        if (template is EventTemplate { Schedule: { } schedule } && !data.HasScheduledEventFired(row.Id)
+            && ScheduleFireAt(state, schedule).Problem is { } problem)
+            problems.Add(new ContentProblem(YamlParts.LineOf(row.Yaml, "schedule"), problem));
+        return problems;
+    }
+
+    public static string EditStamp(TemplateRow row)
+    {
+        var hash = 2166136261u;
+        foreach (var c in row.Yaml) hash = (hash ^ c) * 16777619u;
+        return $"{row.UpdatedAt.ToUnixTimeSeconds()}-{hash:x8}";
+    }
+
+    public static ImportOutcome SaveNew(DatabaseService data, EffectContext context, string yaml)
+    {
+        var parsed = TemplateCodec.Parse(yaml, "new.yaml", context);
+        var file = parsed.Template is { } named ? $"{named.Id}.yaml" : "new.yaml";
+        if (parsed.Template is { } template && data.GetTemplate(template.Id) is not null)
+            return new ImportOutcome(file, template.Id, template.Kind, false, null,
+                [new TemplateParseError(file, null, Texts.Get("content.import.idTaken", ("id", template.Id)))]);
+        return ImportOne(data, context, new ImportFile(file, yaml));
     }
 
     public static (long? FireAt, string? Problem) ScheduleFireAt(GameState state, EventSchedule schedule)

@@ -3,7 +3,7 @@ using Discord.Interactions;
 
 public partial class GmModule
 {
-    [Group("faction", "Register, edit and retire factions")]
+    [Group("faction", "Register, edit, retire and unretire factions")]
     [RequireUserPermission(GuildPermission.ManageGuild)]
     public class FactionGroup : InteractionModuleBase<SocketInteractionContext>
     {
@@ -199,6 +199,48 @@ public partial class GmModule
             if (result.Faction.Seats > 0)
                 lines.Add(Texts.Get("gm.faction.retire.seatsVacant", ("seats", result.Faction.Seats)));
             return string.Join("\n", lines.Where(l => l.Length > 0));
+        }
+
+        [SlashCommand("unretire", "Return a retired faction to politics")]
+        public async Task UnretireAsync(
+            [Summary("faction", "The faction"), Autocomplete(typeof(RetiredFactionAutocomplete))] string faction)
+        {
+            if (FactionAutocomplete.Find(_data, faction) is not { } target)
+            {
+                await RespondAsync(Texts.Get("gm.faction.notFound"), ephemeral: true);
+                return;
+            }
+            if (target.IsActive)
+            {
+                await RespondAsync(Texts.Get("gm.faction.unretire.alreadyActive", ("faction", Display.Faction(target))), ephemeral: true, allowedMentions: AllowedMentions.None);
+                return;
+            }
+
+            var lines = new List<string>
+            {
+                Texts.Get("gm.faction.unretire.confirm", ("faction", Display.Faction(target))),
+                Texts.Get("gm.faction.unretire.independent", ("popularity", Display.Number(target.Popularity))),
+                target.Seats > 0
+                    ? Texts.Get("gm.faction.unretire.seatsCountAgain", ("seats", target.Seats))
+                    : Texts.Get("gm.faction.unretire.noSeats"),
+                Texts.Get("gm.faction.unretire.nothingRestored"),
+            };
+
+            var userId = target.UserId;
+            var buttons = _confirmations.Create(Context.User.Id, () => UnretireConfirmedAsync(userId), Texts.Get("gm.faction.unretire.button"));
+            await RespondAsync(string.Join("\n", lines), components: buttons, ephemeral: true, allowedMentions: AllowedMentions.None);
+        }
+
+        private async Task<string> UnretireConfirmedAsync(ulong userId)
+        {
+            if (_data.UnretireFaction(userId) is not { } faction)
+                return Texts.Get("gm.faction.unretire.notRetired", ("user", userId));
+
+            await _publisher.PostAsync(
+                ChannelRole.News,
+                Texts.Get("gm.faction.unretire.news", ("character", faction.CharacterName), ("player", MentionUtils.MentionUser(userId))),
+                "gm faction unretire");
+            return Texts.Get("gm.faction.unretire.returned", ("faction", Display.Faction(faction)));
         }
 
         private static async Task<string> TryAsync(string what, Func<Task> sync)
