@@ -969,6 +969,8 @@ Every party with at least one active member stands. Independents and retired fac
 
 **Seat chart:** the hemicycle (`ArchGenerator`), with parties ordered by seats, largest first, and each in its party colour.
 
+**Vote chart:** every counted vote (a bill's reading, a cabinet vote, and a no-confidence motion that went to a vote) posts its result in #assembly with a hemicycle of the whole chamber: Yes seats in green on the left, No seats in red on the right, and grey in the middle for every other seat, whether abstaining, not voting or vacant.
+
 **Province map**
 
 Each province is coloured after the party with the highest strength there, which is that party's vote in the province. A tie uses the D'Hondt tie-break. A province where no party stands keeps the map's original fill.

@@ -120,10 +120,18 @@ public class AssemblyPublisher
         var rests = reading is not null && _data.GetBill(reading.BillId)?.CooldownUntil is { } until
             ? GameCalendar.Add(state.Season, state.Year, (int)(until - state.ResolutionNumber))
             : GameCalendar.Add(state.Season, state.Year, _constants.Current.RejectedCooldownSeasons);
-        await PostAsync(ChannelRole.Assembly, result.Passed
-            ? Texts.Get("assembly.result.passed", ("bill", result.Title), ("yes", result.YesSeats), ("no", result.NoSeats), ("abstain", result.AbstainSeats))
-            : Texts.Get("assembly.result.rejected", ("bill", result.Title), ("yes", result.YesSeats), ("no", result.NoSeats), ("abstain", result.AbstainSeats),
-                ("season", GameCalendar.Label(rests.Season, rests.Year))), source);
+        var chart = VoteChart.Render(_data, result.YesSeats, result.NoSeats);
+        try
+        {
+            await PostAsync(ChannelRole.Assembly, result.Passed
+                ? Texts.Get("assembly.result.passed", ("bill", result.Title), ("yes", result.YesSeats), ("no", result.NoSeats), ("abstain", result.AbstainSeats))
+                : Texts.Get("assembly.result.rejected", ("bill", result.Title), ("yes", result.YesSeats), ("no", result.NoSeats), ("abstain", result.AbstainSeats),
+                    ("season", GameCalendar.Label(rests.Season, rests.Year))), source, chart: chart);
+        }
+        finally
+        {
+            VoteChart.Discard(chart);
+        }
     }
 
     private async Task PublishMotionOutcomeAsync(NoConfidenceReport outcome, string source)
@@ -138,7 +146,17 @@ public class AssemblyPublisher
             NoConfidenceStatus.Passed => Texts.Get("noConfidence.result.passed", ("tabler", tabler), ("yes", outcome.YesSeats), ("no", outcome.NoSeats), ("filled", outcome.FilledSeats)),
             _ => Texts.Get("noConfidence.result.failed", ("tabler", tabler), ("yes", outcome.YesSeats), ("no", outcome.NoSeats), ("filled", outcome.FilledSeats)),
         };
-        await PostAsync(ChannelRole.Assembly, text, source);
+        var chart = outcome.Outcome is NoConfidenceStatus.Lapsed or NoConfidenceStatus.Cancelled
+            ? null
+            : VoteChart.Render(_data, outcome.YesSeats, outcome.NoSeats);
+        try
+        {
+            await PostAsync(ChannelRole.Assembly, text, source, chart: chart);
+        }
+        finally
+        {
+            VoteChart.Discard(chart);
+        }
     }
 
     public string LawPost(LawReport law)
@@ -314,7 +332,7 @@ public class AssemblyPublisher
 
     public Task AlertAsync(string message) => _alerts.PostAsync(message);
 
-    private async Task<IUserMessage?> PostAsync(ChannelRole role, string text, string source, MessageComponent? components = null)
+    private async Task<IUserMessage?> PostAsync(ChannelRole role, string text, string source, MessageComponent? components = null, string? chart = null)
     {
         if (_data.GetChannel(role) is not { } channelId || _client.GetChannel(channelId) is not IMessageChannel channel)
         {
@@ -325,9 +343,12 @@ public class AssemblyPublisher
         IUserMessage? first = null;
         try
         {
-            foreach (var chunk in Publisher.Chunk(text))
+            var chunks = Publisher.Chunk(text).ToList();
+            foreach (var chunk in chunks)
             {
-                var message = await channel.SendMessageAsync(chunk, components: first is null ? components : null, allowedMentions: AllowedMentions.None);
+                var message = chart is not null && chunk == chunks[^1]
+                    ? await channel.SendFileAsync(chart, chunk, components: first is null ? components : null, allowedMentions: AllowedMentions.None)
+                    : await channel.SendMessageAsync(chunk, components: first is null ? components : null, allowedMentions: AllowedMentions.None);
                 _data.LogPost(channelId, message.Id, source);
                 first ??= message;
             }

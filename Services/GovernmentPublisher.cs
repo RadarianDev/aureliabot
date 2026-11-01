@@ -28,10 +28,18 @@ public class GovernmentPublisher
         {
             await RefreshNominationAsync(vote.CabinetId);
             var chancellor = Who(vote.ChancellorId);
-            await PostAsync(ChannelRole.Assembly, vote.Approved
-                ? Texts.Get("cabinet.result.approved", ("chancellor", chancellor), ("yes", vote.YesSeats), ("no", vote.NoSeats), ("abstain", vote.AbstainSeats))
-                : Texts.Get("cabinet.result.rejected", ("chancellor", chancellor), ("yes", vote.YesSeats), ("no", vote.NoSeats), ("abstain", vote.AbstainSeats)),
-                source);
+            var chart = VoteChart.Render(_data, vote.YesSeats, vote.NoSeats);
+            try
+            {
+                await PostAsync(ChannelRole.Assembly, vote.Approved
+                    ? Texts.Get("cabinet.result.approved", ("chancellor", chancellor), ("yes", vote.YesSeats), ("no", vote.NoSeats), ("abstain", vote.AbstainSeats))
+                    : Texts.Get("cabinet.result.rejected", ("chancellor", chancellor), ("yes", vote.YesSeats), ("no", vote.NoSeats), ("abstain", vote.AbstainSeats)),
+                    source, chart: chart);
+            }
+            finally
+            {
+                VoteChart.Discard(chart);
+            }
             if (vote.Approved && _data.GetCabinet(vote.CabinetId) is { } cabinet)
                 await ProclaimAsync(Texts.Get("cabinet.proclaim.approved", ("cabinet", CabinetLines(cabinet))), source);
         }
@@ -190,7 +198,8 @@ public class GovernmentPublisher
     private string Who(ulong? factionId) =>
         factionId is { } id ? Display.Faction(_data, id) : Texts.Get("cabinet.vacant");
 
-    private async Task<IUserMessage?> PostAsync(ChannelRole role, string text, string source, MessageComponent? components = null, MessageReference? reference = null)
+    private async Task<IUserMessage?> PostAsync(ChannelRole role, string text, string source, MessageComponent? components = null,
+        MessageReference? reference = null, string? chart = null)
     {
         if (_data.GetChannel(role) is not { } channelId || _client.GetChannel(channelId) is not IMessageChannel channel)
         {
@@ -200,12 +209,18 @@ public class GovernmentPublisher
         try
         {
             IUserMessage? first = null;
-            foreach (var chunk in Publisher.Chunk(text))
+            var chunks = Publisher.Chunk(text).ToList();
+            foreach (var chunk in chunks)
             {
-                var message = await channel.SendMessageAsync(chunk,
-                    components: first is null ? components : null,
-                    messageReference: first is null ? reference : null,
-                    allowedMentions: AllowedMentions.None);
+                var message = chart is not null && chunk == chunks[^1]
+                    ? await channel.SendFileAsync(chart, chunk,
+                        components: first is null ? components : null,
+                        messageReference: first is null ? reference : null,
+                        allowedMentions: AllowedMentions.None)
+                    : await channel.SendMessageAsync(chunk,
+                        components: first is null ? components : null,
+                        messageReference: first is null ? reference : null,
+                        allowedMentions: AllowedMentions.None);
                 _data.LogPost(channelId, message.Id, source);
                 first ??= message;
             }
