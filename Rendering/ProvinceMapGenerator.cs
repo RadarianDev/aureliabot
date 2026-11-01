@@ -32,7 +32,8 @@ public class ProvinceMapGenerator
 
         using (var canvas = new SKCanvas(map))
         {
-            canvas.DrawBitmap(overlay, 0, 0);
+            using var overlayImage = SKImage.FromBitmap(overlay);
+            canvas.DrawImage(overlayImage, 0, 0, SKSamplingOptions.Default);
         }
 
         using var image = SKImage.FromBitmap(map);

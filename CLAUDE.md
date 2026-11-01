@@ -55,9 +55,10 @@ Existing mechanic docs:
 - [Deployment.md](Deployment.md): running the bot 24/7 on a Linux server, with `deploy/` (service file, deploy
   and backup scripts).
 
-`SQLitePCLRaw.bundle_e_sqlite3` is pinned to 2.1.12 in the csproj on purpose. It overrides the
-2.1.11 that `Microsoft.Data.Sqlite` pulls in transitively, whose bundled SQLite is vulnerable to
-CVE-2025-6965. Keep the pin until `Microsoft.Data.Sqlite` itself brings in 2.1.12 or newer.
+`SQLitePCLRaw` comes in through `Microsoft.Data.Sqlite` (2.1.13 as of 10.0.14). Never let it fall
+below 2.1.12: the SQLite bundled with 2.1.11 and earlier is vulnerable to CVE-2025-6965. If a
+`Microsoft.Data.Sqlite` downgrade would bring an older one, pin `SQLitePCLRaw.bundle_e_sqlite3` in the
+csproj instead.
 
 ## Commands
 
@@ -142,5 +143,6 @@ constructor against a temp SQLite file.
 - `ProvinceMapGenerator` colours the province map from three aligned PNGs in `assets/map/` (base,
   province index, text overlay), keyed by each province's index colour. The assets, method and art
   rules are in the "Province map" part of the spec's Election section.
-- `SkiaSharp.NativeAssets.Linux.NoDependencies` supplies the native library on Linux; the renderers draw no text,
-  so no fonts are needed.
+- The bot is hosted on Windows, where SkiaSharp's native library comes with the base package. There
+  is no Linux native package: running on Linux needs `SkiaSharp.NativeAssets.Linux.NoDependencies`
+  added back (see [Deployment.md](Deployment.md)). The renderers draw no text, so no fonts are needed.

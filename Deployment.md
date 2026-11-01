@@ -21,6 +21,10 @@ dotnet build -c Release
 
 The rest of this file covers a Linux server with a service, for if you ever move it.
 
+> **Before moving to Linux:** add SkiaSharp's Linux native library back, matching the `SkiaSharp`
+> version in the csproj: `dotnet add package SkiaSharp.NativeAssets.Linux.NoDependencies --version <same>`.
+> Without it the seat charts, vote charts and province map fail to render on Linux.
+
 ## On a Linux server
 
 ### What you need
