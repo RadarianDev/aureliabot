@@ -33,7 +33,21 @@ public partial class DatabaseService
     {
         using var connection = new SqliteConnection(_connectionString);
         connection.Open();
+        Exec(connection, "BEGIN;");
+        try
+        {
+            CreateSchema(connection);
+            Exec(connection, "COMMIT;");
+        }
+        catch
+        {
+            Exec(connection, "ROLLBACK;");
+            throw;
+        }
+    }
 
+    private static void CreateSchema(SqliteConnection connection)
+    {
         Exec(connection, @"
             CREATE TABLE IF NOT EXISTS whitelisted_channels (
                 guild_id TEXT NOT NULL,
