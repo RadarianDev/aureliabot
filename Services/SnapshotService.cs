@@ -100,6 +100,7 @@ public partial class SnapshotService
             }
             using (var pooled = new SqliteConnection(_data.ConnectionString)) SqliteConnection.ClearPool(pooled);
 
+            _data.EnsureSchema();
             File.Delete(latest.Path);
             _data.SaveGameState(_data.GetGameState() with { Paused = true });
             return new RestorePlan(latest, lostCommands, posts);

@@ -29,6 +29,8 @@ public partial class DatabaseService
         return conn;
     }
 
+    internal void EnsureSchema() => InitializeDatabase();
+
     private void InitializeDatabase()
     {
         using var connection = new SqliteConnection(_connectionString);

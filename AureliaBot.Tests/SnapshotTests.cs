@@ -88,6 +88,24 @@ public class SnapshotTests : IDisposable
     }
 
     [Fact]
+    public void RestoringASnapshotFromAnOlderVersion_AddsTheTablesItLacks()
+    {
+        Db.CreateFaction(1, "A", "aurenten", 10);
+        var snapshot = BackupAndAdvanceClock();
+        using (var old = new SqliteConnection($"Data Source={snapshot.Path};Pooling=False"))
+        {
+            old.Open();
+            using var cmd = old.CreateCommand();
+            cmd.CommandText = "DROP TABLE regional_popularity;";
+            cmd.ExecuteNonQuery();
+        }
+
+        Assert.NotNull(_snapshots.RestoreLatest());
+
+        Assert.Empty(Db.GetRegionalPopularity(1, DatabaseFixture.Constants.Popularity));
+    }
+
+    [Fact]
     public void RestoreLatest_BringsBackTheStateAndPauses()
     {
         Db.SaveGameState(Db.GetGameState() with { Year = 1851, Threat = 12, ResolutionNumber = 4, RngSeed = 99 });
