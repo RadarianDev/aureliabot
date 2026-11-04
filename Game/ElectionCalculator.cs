@@ -1,6 +1,11 @@
 public sealed record ElectionProvince(string Id, double Population);
 
-public sealed record ElectionFaction(ulong Id, long PartyId, double Popularity, string HomeProvinceId);
+public sealed record ElectionFaction(
+    ulong Id, long PartyId, double Popularity, string HomeProvinceId, IReadOnlyDictionary<string, double>? Regional = null)
+{
+    public double PopularityIn(string provinceId) =>
+        Regional is not null && Regional.TryGetValue(provinceId, out var regional) ? regional : Popularity;
+}
 
 public sealed record ElectionParty(long Id, IReadOnlyDictionary<string, Stance> Programme);
 
@@ -131,7 +136,8 @@ public static class ElectionCalculator
         var c = input.Constants;
         var weights = members
             .Select(f => (f, AtHome: f.HomeProvinceId == provinceId))
-            .Select(x => new MemberWeight(x.f.Id, x.f.Popularity, x.AtHome, x.f.Popularity * (x.AtHome ? c.HomeMultiplier : 1)))
+            .Select(x => (x.f, x.AtHome, Popularity: x.f.PopularityIn(provinceId)))
+            .Select(x => new MemberWeight(x.f.Id, x.Popularity, x.AtHome, x.Popularity * (x.AtHome ? c.HomeMultiplier : 1)))
             .ToList();
         var weighted = weights.Sum(w => w.Weighted);
         var baseStrength = Math.Pow(Math.Max(0, weighted), c.BaseExponent);

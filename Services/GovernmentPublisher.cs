@@ -121,16 +121,15 @@ public class GovernmentPublisher
 
     public string NominationText(Cabinet cabinet)
     {
-        var votes = _data.GetVotes(VoteSubject.Cabinet, cabinet.Id);
-        var tally = VoteCounting.Tally(votes, _data.GetVotingSeats());
         var lines = new List<string>
         {
             Texts.Get("cabinet.post.heading", ("chancellor", Who(cabinet.ChancellorId))),
             CabinetLines(cabinet),
-            Texts.Get("cabinet.post.tally", ("yes", tally.YesSeats), ("no", tally.NoSeats), ("abstain", tally.AbstainSeats)),
         };
-        if (votes.Count > 0)
-            lines.Add(Texts.Get("cabinet.post.voters", ("votes", string.Join(", ", votes.Select(v => Texts.Get("cabinet.post.voter", ("faction", Who(v.Key)), ("choice", ChoiceName(v.Value))))))));
+        if (cabinet is { Kind: CabinetKind.Nominated, Status: CabinetStatus.Voting })
+            lines.Add(Texts.Get("cabinet.post.secret"));
+        else if (cabinet is { Kind: CabinetKind.Sitting } or { Status: CabinetStatus.Rejected })
+            lines.AddRange(CountedVoteLines(cabinet));
         lines.Add(cabinet switch
         {
             { Kind: CabinetKind.Nominated, Status: CabinetStatus.Voting } => Texts.Get("cabinet.post.due", ("due", Deadline(_data.GetGameState(), cabinet.DueResolution))),
@@ -139,6 +138,15 @@ public class GovernmentPublisher
             _ => Texts.Get("cabinet.post.withdrawn"),
         });
         return string.Join("\n", lines);
+    }
+
+    private IEnumerable<string> CountedVoteLines(Cabinet cabinet)
+    {
+        var votes = _data.GetVotes(VoteSubject.Cabinet, cabinet.Id);
+        var tally = VoteCounting.Tally(votes, _data.GetVotingSeats());
+        yield return Texts.Get("cabinet.post.tally", ("yes", tally.YesSeats), ("no", tally.NoSeats), ("abstain", tally.AbstainSeats));
+        if (votes.Count > 0)
+            yield return Texts.Get("cabinet.post.voters", ("votes", string.Join(", ", votes.Select(v => Texts.Get("cabinet.post.voter", ("faction", Who(v.Key)), ("choice", ChoiceName(v.Value)))))));
     }
 
     public string CabinetLines(Cabinet cabinet) =>

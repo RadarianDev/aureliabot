@@ -185,19 +185,20 @@ public class Publisher
         {
             var actor = Display.Faction(_data, action.FactionId);
             var issue = titles.GetValueOrDefault(action.IssueId, action.IssueId);
+            var province = Display.Province(_constants.Config, action.ProvinceId);
             switch (action.Kind)
             {
                 case ActionKind.Campaign:
                     var stance = action.Stance?.DisplayName() ?? Texts.Get("news.action.noStance");
-                    yield return Texts.Get("news.action.campaign", ("actor", actor), ("stance", stance), ("issue", issue),
+                    yield return Texts.Get("news.action.campaign", ("actor", actor), ("stance", stance), ("issue", issue), ("province", province),
                         ("offProgramme", action.OffProgramme ? Texts.Get("news.action.offProgramme") : ""),
                         ("change", Display.Signed(action.ActorPopularityChange)));
                     break;
                 case ActionKind.Attack when action.TargetFactionId is { } targetId:
                     var target = Display.Faction(_data, targetId);
                     yield return action.AttackSucceeded
-                        ? Texts.Get("news.action.attackLanded", ("actor", actor), ("target", target), ("issue", issue), ("change", Display.Signed(action.TargetPopularityChange)))
-                        : Texts.Get("news.action.attackBackfired", ("actor", actor), ("target", target), ("issue", issue), ("change", Display.Signed(action.ActorPopularityChange)));
+                        ? Texts.Get("news.action.attackLanded", ("actor", actor), ("target", target), ("issue", issue), ("province", province), ("change", Display.Signed(action.TargetPopularityChange)))
+                        : Texts.Get("news.action.attackBackfired", ("actor", actor), ("target", target), ("issue", issue), ("province", province), ("change", Display.Signed(action.ActorPopularityChange)));
                     break;
             }
         }

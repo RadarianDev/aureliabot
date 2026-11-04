@@ -26,32 +26,39 @@ public class CampaignModule : InteractionModuleBase<SocketInteractionContext>
     {
         var issue = Texts.Get("campaign.describe.issue", ("issue", data.GetIssue(action.IssueId)?.Title ?? action.IssueId));
         var stance = action.Stance?.DisplayName() ?? Texts.Get("campaign.describe.noStance");
+        var province = Display.Province(config, action.ProvinceId);
         return action.Kind switch
         {
             ActionKind.Campaign => action.OffProgramme
-                ? Texts.Get("campaign.describe.campaignOff", ("stance", stance), ("issue", issue))
-                : Texts.Get("campaign.describe.campaign", ("stance", stance), ("issue", issue)),
+                ? Texts.Get("campaign.describe.campaignOff", ("stance", stance), ("issue", issue), ("province", province))
+                : Texts.Get("campaign.describe.campaign", ("stance", stance), ("issue", issue), ("province", province)),
             ActionKind.Attack => Texts.Get("campaign.describe.attack",
                 ("target", action.TargetFactionId is { } target ? Display.Faction(data, target) : Texts.Get("campaign.describe.nobody")),
-                ("issue", issue)),
-            _ => action.ProvinceId is null
-                ? Texts.Get("campaign.describe.pollNational", ("issue", issue))
-                : Texts.Get("campaign.describe.pollProvince", ("issue", issue), ("province", Display.Province(config, action.ProvinceId))),
+                ("issue", issue), ("province", province)),
+            _ => Texts.Get("campaign.describe.poll", ("issue", issue)),
         };
     }
 
     public static string Resolves(GameState state) =>
         Texts.Get("campaign.resolves", ("when", Display.NextResolution(state)));
 
-    [SlashCommand("campaign", "Campaign on an issue nationally")]
+    public static int ActionsAllowed(GameConstants constants, GameState state) => constants.Campaign.ActionsAllowed(state.IsPreElection);
+
+    [SlashCommand("campaign", "Campaign on an issue in one province")]
     [RequireFaction]
     public async Task CampaignAsync(
         [Summary("issue", "The open issue to campaign on"), Autocomplete(typeof(CampaignIssueAutocomplete))] string issue,
+        [Summary("province", "Where to campaign; defaults to your home province"), Autocomplete(typeof(ProvinceAutocomplete))] string? province = null,
         [Summary("stance", "Your stance; defaults to your party's programme")] StanceChoice? stance = null)
     {
         if (OpenIssueAutocomplete.Find(_data, issue) is not { } target)
         {
             await RespondAsync(NoOpenIssue(issue), ephemeral: true, allowedMentions: AllowedMentions.None);
+            return;
+        }
+        if (!TryProvince(province, out var provinceId))
+        {
+            await RespondAsync(Texts.Get("campaign.noSuchProvince", ("province", province)), ephemeral: true, allowedMentions: AllowedMentions.None);
             return;
         }
 
@@ -68,7 +75,8 @@ public class CampaignModule : InteractionModuleBase<SocketInteractionContext>
             return;
         }
 
-        if (SlotRefusal(faction.UserId, ActionKind.Campaign) is { } refusal)
+        var where = provinceId ?? faction.HomeProvinceId;
+        if (SlotRefusal(faction.UserId, ActionKind.Campaign, target.Id, where) is { } refusal)
         {
             await RespondAsync(refusal, ephemeral: true, allowedMentions: AllowedMentions.None);
             return;
@@ -77,7 +85,8 @@ public class CampaignModule : InteractionModuleBase<SocketInteractionContext>
         var chosen = decision.Stance!.Value;
         if (!decision.OffProgramme)
         {
-            await RespondAsync(Submit(faction.UserId, ActionKind.Campaign, target.Id, stance: chosen), ephemeral: true, allowedMentions: AllowedMentions.None);
+            await RespondAsync(Submit(faction.UserId, ActionKind.Campaign, target.Id, stance: chosen, provinceId: provinceId),
+                ephemeral: true, allowedMentions: AllowedMentions.None);
             return;
         }
 
@@ -88,17 +97,18 @@ public class CampaignModule : InteractionModuleBase<SocketInteractionContext>
                 ("programme", decision.ProgrammeStance!.Value.DisplayName()), ("issue", target.Title),
                 ("stance", chosen.DisplayName()), ("when", Display.NextResolution(_data.GetGameState()))),
             components: _confirmations.Create(userId,
-                () => Task.FromResult(Submit(userId, ActionKind.Campaign, issueId, stance: chosen)),
+                () => Task.FromResult(Submit(userId, ActionKind.Campaign, issueId, stance: chosen, provinceId: provinceId)),
                 Texts.Get("campaign.offProgrammeButton")),
             ephemeral: true,
             allowedMentions: AllowedMentions.None);
     }
 
-    [SlashCommand("attack", "Attack a rival's stance on an issue nationally")]
+    [SlashCommand("attack", "Attack a rival's stance on an issue in one province")]
     [RequireFaction]
     public async Task AttackAsync(
         [Summary("faction", "The rival to attack"), Autocomplete(typeof(RivalAutocomplete))] string faction,
-        [Summary("issue", "The issue where the rival holds a stance"), Autocomplete(typeof(RivalStanceIssueAutocomplete))] string issue)
+        [Summary("issue", "The issue where the rival holds a stance"), Autocomplete(typeof(RivalStanceIssueAutocomplete))] string issue,
+        [Summary("province", "Where to attack; defaults to your home province"), Autocomplete(typeof(ProvinceAutocomplete))] string? province = null)
     {
         if (FactionAutocomplete.Find(_data, faction) is not { } rival)
         {
@@ -108,6 +118,11 @@ public class CampaignModule : InteractionModuleBase<SocketInteractionContext>
         if (OpenIssueAutocomplete.Find(_data, issue) is not { } target)
         {
             await RespondAsync(NoOpenIssue(issue), ephemeral: true, allowedMentions: AllowedMentions.None);
+            return;
+        }
+        if (!TryProvince(province, out var provinceId))
+        {
+            await RespondAsync(Texts.Get("campaign.noSuchProvince", ("province", province)), ephemeral: true, allowedMentions: AllowedMentions.None);
             return;
         }
 
@@ -120,15 +135,14 @@ public class CampaignModule : InteractionModuleBase<SocketInteractionContext>
             return;
         }
 
-        await RespondAsync(Submit(Context.User.Id, ActionKind.Attack, target.Id, targetFactionId: rival.UserId),
+        await RespondAsync(Submit(Context.User.Id, ActionKind.Attack, target.Id, provinceId: provinceId, targetFactionId: rival.UserId),
             ephemeral: true, allowedMentions: AllowedMentions.None);
     }
 
-    [SlashCommand("poll", "Poll an issue, nationally or in one province")]
+    [SlashCommand("poll", "Poll an issue across the kingdom and in every province")]
     [RequireFaction]
     public async Task PollAsync(
-        [Summary("issue", "The open issue to poll"), Autocomplete(typeof(OpenIssueAutocomplete))] string issue,
-        [Summary("province", "Poll one province instead of the nation"), Autocomplete(typeof(ProvinceAutocomplete))] string? province = null)
+        [Summary("issue", "The open issue to poll"), Autocomplete(typeof(OpenIssueAutocomplete))] string issue)
     {
         if (OpenIssueAutocomplete.Find(_data, issue) is not { } target)
         {
@@ -136,19 +150,7 @@ public class CampaignModule : InteractionModuleBase<SocketInteractionContext>
             return;
         }
 
-        string? provinceId = null;
-        if (province is not null)
-        {
-            if (ProvinceAutocomplete.Find(_constants.Config, province) is not { } found)
-            {
-                await RespondAsync(Texts.Get("campaign.noSuchProvince", ("province", province)), ephemeral: true, allowedMentions: AllowedMentions.None);
-                return;
-            }
-            provinceId = found.Id;
-        }
-
-        await RespondAsync(Submit(Context.User.Id, ActionKind.Poll, target.Id, provinceId: provinceId),
-            ephemeral: true, allowedMentions: AllowedMentions.None);
+        await RespondAsync(Submit(Context.User.Id, ActionKind.Poll, target.Id), ephemeral: true, allowedMentions: AllowedMentions.None);
     }
 
     [ComponentInteraction("action:cancel:*", ignoreGroupNames: true)]
@@ -172,10 +174,21 @@ public class CampaignModule : InteractionModuleBase<SocketInteractionContext>
             allowedMentions: AllowedMentions.None);
     }
 
-    private string? SlotRefusal(ulong factionId, ActionKind kind)
+    private bool TryProvince(string? text, out string? provinceId)
+    {
+        provinceId = null;
+        if (text is null) return true;
+        if (ProvinceAutocomplete.Find(_constants.Config, text) is not { } found) return false;
+        provinceId = found.Id;
+        return true;
+    }
+
+    private int MaxPending() => ActionsAllowed(_constants.Current, _data.GetGameState());
+
+    private string? SlotRefusal(ulong factionId, ActionKind kind, string issueId, string? provinceId)
     {
         var pending = _data.GetPendingActions(factionId);
-        var slot = ActionPlanner.SlotFor(pending, kind, _constants.Current.Campaign.ActionsPerTurn);
+        var slot = ActionPlanner.SlotFor(pending, kind, issueId, provinceId, MaxPending(), _data.GetGameState().IsPreElection);
         return slot.Allowed ? null : TooMany(pending);
     }
 
@@ -186,7 +199,8 @@ public class CampaignModule : InteractionModuleBase<SocketInteractionContext>
     private string Submit(ulong factionId, ActionKind kind, string issueId, Stance? stance = null, string? provinceId = null, ulong? targetFactionId = null)
     {
         var config = _constants.Config;
-        var result = _data.SubmitAction(factionId, kind, issueId, config.Constants.Campaign.ActionsPerTurn, stance, provinceId, targetFactionId);
+        var max = MaxPending();
+        var result = _data.SubmitAction(factionId, kind, issueId, max, stance, provinceId, targetFactionId);
         var state = _data.GetGameState();
         switch (result.Outcome)
         {
@@ -215,7 +229,7 @@ public class CampaignModule : InteractionModuleBase<SocketInteractionContext>
             : Resolves(state));
         if (kind != ActionKind.Poll)
             lines.Add(Texts.Get("campaign.postedWithResolution"));
-        lines.Add(Texts.Get("campaign.pendingCount", ("count", result.Pending.Count), ("max", config.Constants.Campaign.ActionsPerTurn)));
+        lines.Add(Texts.Get("campaign.pendingCount", ("count", result.Pending.Count), ("max", max)));
         return string.Join("\n", lines);
     }
 

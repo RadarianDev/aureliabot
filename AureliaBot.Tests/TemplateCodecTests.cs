@@ -337,7 +337,7 @@ public class TemplateCodecTests : IDisposable
         var opening = TemplateCodec.Parse(Starting("events/opening_1850.yaml").Yaml, "o.yaml").Template!;
         var yaml = TemplateCodec.Serialize(opening);
         Assert.All(yaml.Split('\n'), line => Assert.True(line.Length <= 100 || !line.Contains("effects"), line));
-        Assert.Contains("schedule: { season: Spring, year: 1850 }", yaml);
+        Assert.DoesNotContain("schedule", yaml);
     }
 
     internal static void AssertSameContent(object? expected, object? actual)

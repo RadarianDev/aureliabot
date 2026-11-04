@@ -251,12 +251,11 @@ money above the pace is partly lost to graft (`project.graft` in `constants.yaml
 One file per event. Events fire at the start of a turn, and bring issues and crises into play.
 
 ```yaml
-id: carden_strike
-title: Strike at the Carden Docks
+id: lanten_strike
+title: Strike at the Lanten Docks
 text: The dockers walk out over wages, and the harbour falls silent.
-effects: { discontent.north_arpal: 1, salience.social_reform: 1,
-           condition.north_arpal.striking: 1, crisis.dock_strike_carden: true }
-schedule: { season: Autumn, year: 1851 }
+effects: { discontent.ocidanten: 1, salience.social_reform: 1,
+           condition.ocidanten.striking: 1, crisis.lanten_dock_strike: true }
 ```
 
 | Field | Required | Meaning |
@@ -282,32 +281,32 @@ One file per crisis. A crisis is posted by an event (`crisis.{id}: true`), goes 
 is due at the next resolution.
 
 ```yaml
-id: dock_strike_carden
-title: The Carden Dock Strike
+id: lanten_dock_strike
+title: The Lanten Dock Strike
 ministry: CommerceLabor
-province: north_arpal
+province: ocidanten
 issue: social_reform
 answers:
   - lean: For
     label: Meet the strikers' demands
     price: 30
     text: The docks reopen within the week, and the owners are furious.
-    effects: { discontent.north_arpal: -2, economy: -10, condition.north_arpal.striking: -1 }
+    effects: { discontent.ocidanten: -2, economy: -10, condition.ocidanten.striking: -1 }
   - lean: Neutral
     label: Commission a royal inquiry
     price: 40
     text: Learned gentlemen take evidence, and the dockers wait.
-    effects: { discontent.north_arpal: -1 }
+    effects: { discontent.ocidanten: -1 }
   - lean: Against
     label: Declare the strike unlawful
-    text: The strike collapses, and so does trust in Carden.
-    effects: { discontent.north_arpal: 2, condition.north_arpal.striking: -1 }
+    text: The strike collapses, and so does trust in Lanten.
+    effects: { discontent.ocidanten: 2, condition.ocidanten.striking: -1 }
 complication:
   text: The money runs out mid-negotiation, and the strike spreads.
-  effects: { discontent.north_arpal: 1, discontent.iracterie: 1 }
+  effects: { discontent.ocidanten: 1, discontent.provencie_sacs: 1 }
 default:
   text: The strike drags on unanswered, and ships divert to Mugi.
-  effects: { economy: -20, discontent.north_arpal: 2 }
+  effects: { economy: -20, discontent.ocidanten: 2 }
 ```
 
 | Field | Required | Meaning |
@@ -343,8 +342,8 @@ timeZone: "Europe/Prague"
 minHoursBetweenResolutions: 12
 preElectionDays: 3
 seasonsPerTerm: 16
-popularity: { min: 0, max: 100, start: 10, drift: 0.05 }
-campaign: { factor: 4, actionsPerTurn: 2, crowding: true }
+popularity: { min: 0, max: 100, start: 10, drift: 0.05, spread: 0.2 }
+campaign: { factor: 4, baseline: 0.5, actionsPerTurn: 2, actionsPerPreElectionDay: 5, crowding: true }
 attack: { factor: 3, backfire: 2 }
 poll: { opinionNoise: 0.15, salienceNoise: 1 }
 strongStancePenalty: 0.5
@@ -399,9 +398,12 @@ startingForces:
 | `popularity.min`, `.max` | Popularity range. |
 | `popularity.start` | New factions start here, and popularity drifts back to it. |
 | `popularity.drift` | Share of the gap to `start` closed each season. |
-| `campaign.factor` | Popularity scale of a campaign; also scales crisis gains and losses. |
-| `campaign.actionsPerTurn` | Actions per faction per turn (per day in a pre-election). |
-| `campaign.crowding` | Divide a campaign's gain by √(factions on the same side). |
+| `popularity.spread` | Share of each regional lead or deficit (a province's popularity minus the national one) lost each season, so regional gains spread across the kingdom. 0 keeps them forever, 1 wipes them every season. |
+| `campaign.factor` | Popularity scale of a campaign's agreement term; also scales crisis gains and losses. |
+| `campaign.baseline` | Popularity a campaign wins per point of salience whatever the province thinks, before crowding: being heard on an issue that matters. |
+| `campaign.actionsPerTurn` | Actions per faction in a normal turn. |
+| `campaign.actionsPerPreElectionDay` | Actions per faction on each day of the pre-election. |
+| `campaign.crowding` | Divide a campaign's gain by √(factions on the same side of the issue in the same province × that faction's own campaigns there). |
 | `attack.factor` | Popularity a successful attack takes. |
 | `attack.backfire` | Popularity the attacker loses when it backfires. |
 | `poll.opinionNoise` | ± noise on polled opinion. |

@@ -8,4 +8,3 @@ effects:
   - { favour: 3 }
   - if: "issue.integration.open"
     then: { bill.charter_confirmation: true }
-schedule: { season: Winter, year: 1850 }

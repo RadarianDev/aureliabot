@@ -393,7 +393,7 @@ refused for a closed issue, and a closed issue withdrawing its bills.
   government bills, `billsPerSeason` a turn, none while the Chancellorship is vacant; kind from the
   proposer's role; one bill per issue before the Assembly, scheduled ones included; withdrawal from
   `/me` until the vote opens; no proposing in a pre-election or the turn before a scheduled one),
-  readings opened in resolution step 10 with vote buttons on #assembly posts, a running tally and
+  readings opened in resolution step 10 with vote buttons on #assembly posts, secret until counted, and
   `/vote` as fallback, laws with the bill's lean, per-bill cooldowns, a law closing its issue
   withdrawing the issue's other bills.
 - `/noconfidence` for any active faction outside the cabinet, with Cosign buttons open to the same
@@ -513,6 +513,7 @@ None block a stage. Everything is decided in the spec, `config/` and `content/`.
 | Upkeep against the default War and Interior shares, so training is lost only when a Treasury underfunds on purpose | Stage 7 |
 | Programme flip penalty and Favour drift | Stages 2 and 7 |
 | Popularity drift against campaign gains: at 0.05 an idle faction keeps about 81% of its lead over 10 after a year and 44% after a term; a faction campaigning well every turn should still settle well above 10 | Stage 3 |
+| Regional campaigning (`campaign.baseline`, `popularity.spread`): a campaign moves the national figure only by its province's population share (about 6% to 16%), so `campaign.factor` and `baseline` may need raising if national standing moves too slowly; at a spread of 0.2 a regional lead halves in about three seasons | Stage 3 |
 | Unrest drag (`discontent.growthDrag`) against base growth | Stage 7 |
 | Project prices and terms against purse sizes (Commerce and Labor gets about 60 a year at the default split, while the starting projects' paces are 10 to 20 a season), and `project.graft` | Stage 7 |
 | The size of bills' pass effects, especially the Act of Union's Favour hit and the Corn Duties' swing between town and farm | Stage 5 |

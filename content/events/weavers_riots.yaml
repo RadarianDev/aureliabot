@@ -6,4 +6,3 @@ text: >-
   duty on foreign cloth, and for a law against the union.
 effects: { discontent.iracterie: 1, salience.free_trade: 1, salience.social_reform: 1,
            bill.tariff_act: true, bill.combination_act: true }
-schedule: { season: Spring, year: 1852 }

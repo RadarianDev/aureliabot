@@ -23,7 +23,7 @@ public partial class DatabaseService
         var pending = GetPendingActions(factionId);
         return new FactionOutstanding(
             pending,
-            Math.Max(0, constants.Campaign.ActionsPerTurn - pending.Count),
+            Math.Max(0, constants.Campaign.ActionsAllowed(GetGameState().IsPreElection) - pending.Count),
             GetAllIssues().Any(i => i.Status == IssueStatus.Open),
             RoleOf(factionId) == FactionRole.Opposition ? GetOppositionStanding(factionId, constants) : null,
             CabinetVotesAwaiting(factionId),

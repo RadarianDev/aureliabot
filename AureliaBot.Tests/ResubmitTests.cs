@@ -54,8 +54,9 @@ public class ResubmitTests : AssemblyTestBase
     public void Arguments_AreRebuiltFromTheOptions_WithDefaultsForMissingOnes()
     {
         var campaign = ResubmitService.Find("campaign")!.Method;
-        Assert.Equal(new object?[] { "labour", StanceChoice.StronglyFor }, ResubmitService.Arguments(campaign, Payload("campaign", ("issue", "labour"), ("stance", "StronglyFor")).Options)!);
-        Assert.Equal(new object?[] { "labour", null }, ResubmitService.Arguments(campaign, Payload("campaign", ("issue", "labour")).Options)!);
+        Assert.Equal(new object?[] { "labour", null, StanceChoice.StronglyFor }, ResubmitService.Arguments(campaign, Payload("campaign", ("issue", "labour"), ("stance", "StronglyFor")).Options)!);
+        Assert.Equal(new object?[] { "labour", "iracterie", null }, ResubmitService.Arguments(campaign, Payload("campaign", ("issue", "labour"), ("province", "iracterie")).Options)!);
+        Assert.Equal(new object?[] { "labour", null, null }, ResubmitService.Arguments(campaign, Payload("campaign", ("issue", "labour")).Options)!);
         Assert.Null(ResubmitService.Arguments(campaign, Payload("campaign", ("issue", "labour"), ("stance", "Sideways")).Options));
 
         var fund = ResubmitService.Find("ministry fund")!.Method;

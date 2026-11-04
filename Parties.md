@@ -21,7 +21,7 @@ A faction is a player, keyed on their Discord user id. It has no name of its own
 |---|---|
 | `user_id` | Primary key: the player |
 | `character_name` | The character the GM registered |
-| `popularity` | 0–100 (`popularity.min/max`), clamped on every change; starts at `popularity.start` |
+| `popularity` | 0–100 (`popularity.min/max`), clamped on every change; starts at `popularity.start`. This is the national figure; each province keeps its own deviation in `regional_popularity` (see the spec, section 5) |
 | `seats` | Seats held. Only elections change them; joining or leaving a party never does |
 | `party_id` | The party; NULL means independent |
 | `home_province_id` | The character's safe borough (a province id from `config/provinces.yaml`) |
@@ -118,7 +118,10 @@ every membership change, on startup and from the Repair button on the `/gm setup
   overwrites as the chat. Any active member lets an outsider in with `/party foreign add user` (a
   per-user overwrite: view, send, read history, attach, embed, react) and out with `/party foreign
   remove user`; both post a line in the channel. `/party foreign list` lists the user overwrites other
-  than the bot. Bots and the party's own active members are refused (`PartySyncService.GuestRefusal`).
+  than the bot. `/party foreign clear` (with a Confirm) reads the whole history, replies privately with
+  a `.txt` transcript (`ChatTranscript`), then deletes every message it read, in bulk
+  for messages under 14 days old and one by one for older ones. Bots and the party's own active
+  members are refused (`PartySyncService.GuestRefusal`).
   The sync only rewrites the overwrites it manages (@everyone, the bot, the party role, the GM role), so
   guests survive syncs and renames. These commands only touch Discord, so they are not resubmittable
   after `/gm undo`.

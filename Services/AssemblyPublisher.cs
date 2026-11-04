@@ -205,7 +205,7 @@ public class AssemblyPublisher
         {
             case ReadingStatus.Open:
                 lines.Add(Texts.Get("assembly.reading.closes", ("when", Display.NextResolution(_data.GetGameState()))));
-                lines.AddRange(TallyLines(VoteSubject.Reading, reading.Id));
+                lines.Add(Texts.Get("assembly.secret"));
                 break;
             case ReadingStatus.Passed or ReadingStatus.Rejected:
                 (string, object?)[] seats = [("yes", reading.YesSeats ?? 0), ("no", reading.NoSeats ?? 0), ("abstain", reading.AbstainSeats ?? 0)];
@@ -243,7 +243,7 @@ public class AssemblyPublisher
             case NoConfidenceStatus.Voting:
                 lines.Add(Texts.Get("noConfidence.post.signers", ("signers", signers)));
                 lines.Add(Texts.Get("noConfidence.post.voting", ("filled", _data.GetVotingSeats().Values.Sum()), ("when", DueTime(motion.DueResolution))));
-                lines.AddRange(TallyLines(VoteSubject.NoConfidence, motion.Id));
+                lines.Add(Texts.Get("assembly.secret"));
                 break;
             case NoConfidenceStatus.Passed:
                 lines.Add(Texts.Get("noConfidence.post.passed", ("yes", motion.YesSeats ?? 0), ("no", motion.NoSeats ?? 0)));
@@ -277,14 +277,6 @@ public class AssemblyPublisher
         var state = _data.GetGameState();
         if (resolution is not { } due || state.NextResolutionAt is not { } next) return Texts.Get("display.notScheduled");
         return due <= state.ResolutionNumber + 1 ? Display.When(next) : Texts.Get("assembly.afterNext", ("when", Display.When(next)));
-    }
-
-    private IEnumerable<string> TallyLines(VoteSubject subject, long subjectId)
-    {
-        var tally = _data.TallyOf(subject, subjectId);
-        yield return Texts.Get("assembly.tally", ("yes", tally.YesSeats), ("no", tally.NoSeats), ("abstain", tally.AbstainSeats));
-        foreach (var line in VoterLines(subject, subjectId))
-            yield return line;
     }
 
     private IEnumerable<string> VoterLines(VoteSubject subject, long subjectId)

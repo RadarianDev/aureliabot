@@ -65,12 +65,13 @@ public partial class GmModule
 
         lines.Add("");
         lines.Add(Texts.Get("gm.peek.actions.popularityHeading"));
-        foreach (var (factionId, delta) in plan.PopularityDeltas.OrderBy(kv => kv.Value))
+        foreach (var delta in plan.PopularityDeltas.OrderBy(d => d.Change))
         {
-            var before = _data.GetFaction(factionId)?.Popularity ?? 0;
+            var before = _data.GetRegionalPopularity(delta.FactionId, c.Popularity).GetValueOrDefault(delta.ProvinceId);
             lines.Add(Texts.Get("gm.peek.actions.popularityLine",
-                ("faction", Display.Faction(_data, factionId)), ("before", Fixed(before)), ("change", SignedFixed(delta)),
-                ("after", Fixed(Math.Clamp(before + delta, c.Popularity.Min, c.Popularity.Max)))));
+                ("faction", Display.Faction(_data, delta.FactionId)), ("province", Display.Province(config, delta.ProvinceId)),
+                ("before", Fixed(before)), ("change", SignedFixed(delta.Change)),
+                ("after", Fixed(Math.Clamp(before + delta.Change, c.Popularity.Min, c.Popularity.Max)))));
         }
         if (plan.PopularityDeltas.Count == 0) lines.Add(Texts.Get("gm.peek.actions.noChange"));
 
@@ -94,42 +95,41 @@ public partial class GmModule
         if (outcome.Fizzled)
             return Texts.Get("gm.peek.actions.fizzled", ("kind", KindName(action.Kind)), ("issue", issue), ("result", outcome.Result));
 
-        var national = snapshot.National(action.IssueId);
         var salience = snapshot.Salience(action.IssueId);
+        var provinceId = action.ProvinceId ?? "";
+        var province = Display.Province(_constants.Config, action.ProvinceId);
+        var opinion = snapshot.Provincial(action.IssueId, provinceId);
         switch (action.Kind)
         {
             case ActionKind.Campaign:
             {
                 var stance = action.Stance!.Value;
-                var crowd = c.Campaign.Crowding ? ActionPlanner.SameSideCampaigners(plan.StanceLogs, action.IssueId, stance) : 1;
+                var crowd = c.Campaign.Crowding ? ActionPlanner.Crowd(plan.StanceLogs, action, stance) : 1;
                 var line = Texts.Get("gm.peek.actions.campaign",
-                    ("issue", issue), ("stance", stance.DisplayName()),
-                    ("factor", Fixed(c.Campaign.Factor)), ("score", SignedFixed(Formulas.StanceScore(stance, national, c.StrongStancePenalty))),
+                    ("issue", issue), ("stance", stance.DisplayName()), ("province", province),
+                    ("baseline", Fixed(c.Campaign.Baseline)),
+                    ("factor", Fixed(c.Campaign.Factor)), ("score", SignedFixed(Formulas.StanceScore(stance, opinion, c.StrongStancePenalty))),
                     ("salience", Fixed(salience)), ("crowd", crowd), ("change", SignedFixed(outcome.ActorChange)),
-                    ("opinion", SignedFixed(national)));
+                    ("opinion", SignedFixed(opinion)));
                 return action.OffProgramme ? line + Texts.Get("gm.peek.actions.offProgramme") : line;
             }
             case ActionKind.Attack:
             {
                 var stance = outcome.TargetStance!.Value;
                 var target = Display.Faction(_data, action.TargetFactionId!.Value);
-                var score = SignedFixed(Formulas.StanceScore(stance, national, c.StrongStancePenalty));
+                var score = SignedFixed(Formulas.StanceScore(stance, opinion, c.StrongStancePenalty));
                 return outcome.Succeeded
                     ? Texts.Get("gm.peek.actions.attackHits",
-                        ("target", target), ("stance", stance.DisplayName()), ("issue", issue), ("opinion", SignedFixed(national)),
+                        ("target", target), ("stance", stance.DisplayName()), ("issue", issue), ("province", province), ("opinion", SignedFixed(opinion)),
                         ("score", score), ("factor", Fixed(c.Attack.Factor)), ("salience", Fixed(salience)), ("change", SignedFixed(outcome.TargetChange)))
                     : Texts.Get("gm.peek.actions.attackBackfires",
-                        ("target", target), ("stance", stance.DisplayName()), ("issue", issue), ("opinion", SignedFixed(national)),
+                        ("target", target), ("stance", stance.DisplayName()), ("issue", issue), ("province", province), ("opinion", SignedFixed(opinion)),
                         ("score", score), ("change", SignedFixed(outcome.ActorChange)));
             }
             default:
-            {
-                var opinion = action.ProvinceId is { } provinceId ? snapshot.Provincial(action.IssueId, provinceId) : national;
                 return Texts.Get("gm.peek.actions.poll",
-                    ("issue", issue), ("where", action.ProvinceId is { } id ? Display.Province(_constants.Config, id) : Texts.Get("gm.peek.actions.nation")),
-                    ("opinion", SignedFixed(opinion)), ("salience", Fixed(salience)),
+                    ("issue", issue), ("opinion", SignedFixed(snapshot.National(action.IssueId))), ("salience", Fixed(salience)),
                     ("opinionNoise", Fixed(c.Poll.OpinionNoise)), ("salienceNoise", Fixed(c.Poll.SalienceNoise)));
-            }
         }
     }
 }

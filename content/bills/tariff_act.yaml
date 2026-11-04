@@ -6,6 +6,6 @@ motion: Lay a duty of one part in five on foreign cloth, iron and manufactures, 
 pass:
   text: >-
     The customs houses double their clerks, and foreign cloth vanishes from the Iracterie markets. The
-    weavers go back to their looms, and in Carden the shipowners count empty berths.
+    weavers go back to their looms, and in Lanten the shipowners count empty berths.
   effects: { reserve: 40, economy: -30, discontent.iracterie: -2,
              discontent.north_arpal: 1, discontent.ocidanten: 1 }

@@ -11,6 +11,8 @@
 ## Factions
 - Each player is a **faction**, led by a **character** with a **home province**. The GM registers every player, with the character and home province agreed between them.
 - A faction has **popularity**, and **seats** once elected. Seats belong to the faction, not its party.
+- Popularity is kept **per province**. Campaigns and attacks change it only where they happen; everything else (crises, laws, rewards, penalties) moves it everywhere at once. A faction's national popularity is the average of its provinces, each counting by its population.
+- A lead or a loss in one province spreads out: every season each province moves part of the way back towards the faction's national popularity.
 - Popularity fades: every season it slides a little back towards 10, so standing has to be kept up, and a faction that fell low slowly recovers.
 - The GM may reward excellent roleplay, such as a propaganda poster, a well-written manifesto or a stirring speech, with popularity. Rewards are announced publicly.
 ## Parties
@@ -19,7 +21,7 @@
 - Each party otherwise governs itself by its own constitution, written by its members. How it decides is roleplay.
 - A faction can leave at any time and keeps its seats. A party left with one faction dissolves.
 - Only parties stand in elections. A faction outside a party is an **independent**.
-- Each party also has a **foreign affairs** channel for talks with outsiders. Any member can let someone in with `/party foreign add`, take them out with `/party foreign remove`, and see who is in with `/party foreign list`. Guests can read and write there but nowhere else in the party, and they lose access if the party dissolves.
+- Each party also has a **foreign affairs** channel for talks with outsiders. Any member can let someone in with `/party foreign add`, take them out with `/party foreign remove`, see who is in with `/party foreign list`, and wipe every message in it with `/party foreign clear`, which gives you a private .txt transcript of what was deleted. Guests can read and write there but nowhere else in the party, and they lose access if the party dissolves.
 ## The World
 - Aurelia has ten **provinces**, each with a population, **discontent** and **conditions**.
 - A **condition** is a public fact about a province, such as *Lawless*, *Epidemic*, *Striking* or *Coastal*. Conditions push local opinion, discontent and the economy; by how much is hidden.
@@ -42,13 +44,14 @@
 - Answers cost money from the minister's ministry. If it can't pay, the answer still happens, with a *complication*.
 - No answer lets the crisis run its course, and the minister loses popularity.
 ## Actions
-- Each turn, a faction takes two **actions** of different kinds (two per day in the pre-election turn):
-	- **Campaign** on an issue: gain popularity if the nation agrees with you.
-	- **Attack** a rival's stance: if the nation disagrees with them, they lose popularity. Otherwise it backfires, and you lose some.
-	- **Poll** an issue, nationally or in one province.
+- Each turn, a faction takes two **actions** (five per day in the pre-election turn). Campaigns and attacks happen in one **province**, your home province unless you name another:
+	- **Campaign** on an issue: a politician talking about an issue people care about always wins some popularity there, the more the issue matters. On top of that you gain if the province agrees with you, and lose if it doesn't.
+	- **Attack** a rival's stance: if the province disagrees with them, they lose popularity there. Otherwise it backfires, and you lose some there.
+	- **Poll** an issue: the mood across the kingdom and in every province.
+- You can run one campaign and one attack in each province per turn, and one poll per issue. In the pre-election there is no limit on campaigns: run as many as you like, in any provinces, even several on the same issue in the same place.
 - A faction campaigns on its party's stance by default. It may take a different one, but that is announced as going **off-programme**.
-- A faction's **stance** on an issue is the last one it took in public: its party's programme, a campaign, or a vote (voting Yes on a bill takes the bill's side of the issue, No takes the other). That is the stance rivals can attack. Factions of the same party can't attack each other.
-- The nation is judged as a whole, each province counting by its population. The more factions campaign on the same side of an issue in a turn, the less each gains.
+- A faction's **stance** on an issue is the last one it took in public: its party's programme, a campaign, or a vote once counted (voting Yes on a bill takes the bill's side of the issue, No takes the other). That is the stance rivals can attack. Factions of the same party can't attack each other.
+- Each province is judged on its own mood. The more factions campaign on the same side of an issue in the same province in a turn, the less each gains.
 - All actions are revealed together when the turn ends.
 ## Government & Opposition
 - A party is in **government** if any of its factions holds a cabinet post, and so is every cabinet member. Every other party is in **opposition**. Independents outside the cabinet are neither.
@@ -61,13 +64,14 @@
 - The **chancellor** sets the government's agenda: each turn they may pick one **bill** to put before the Assembly. With no chancellor, the government proposes no bills. An opposition faction can propose one bill a year as its opposition action.
 - A bill proposed during a turn is voted on during the next turn, and counted when that turn ends. Only one bill per issue can be before the Assembly at a time.
 - Cabinet and no-confidence votes stay open until the end of the next turn. Each faction votes all its seats one way, and a bill passes when more seats vote for it than against.
+- Votes are **secret** until the count: nobody sees how many seats stand for or against, or who voted how, until the vote is resolved. Then the totals and each faction's vote are published.
 - A passed bill becomes **law**: its effects apply, and its proposer gains popularity if the people back the bill's side of the issue, or loses some if they don't. The issue stays open unless the law settles it.
 - Laws can change the rules themselves, from taxes to the number of seats.
 - Any faction outside the cabinet, including members of governing parties, can table a **vote of no confidence**. It goes to a vote once its backers hold a sixth of the seats, and lapses if they don't within two turns. It passes with more than half of all seats, and the next turn becomes a pre-election turn. If it is voted down, no new motion can be tabled for a year.
 - A rejected bill rests for a year before it can be proposed again. Other bills on the same issue can still be proposed.
 ## Elections
 - Seats are counted province by province, by population. Apart from the safe boroughs, each province's seats are split between parties by how strong each party is there.
-- A party's strength is its factions' combined popularity, weighed by how well its programme fits the local mood: stances on salient issues the province agrees with count for most. A stance shared by many parties counts for less.
+- A party's strength in a province is its factions' combined popularity there, weighed by how well its programme fits the local mood: stances on salient issues the province agrees with count for most. A stance shared by many parties counts for less.
 - A faction counts for more in its **home province**.
 - Inside a party, seats go to factions by popularity.
 - Every faction in a standing party also wins a *safe borough* seat in its home province.

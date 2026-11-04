@@ -8,11 +8,13 @@ public partial class PartyModule
     {
         private readonly DatabaseService _data;
         private readonly PartySyncService _partySync;
+        private readonly Confirmations _confirmations;
 
-        public ForeignGroup(DatabaseService data, PartySyncService partySync)
+        public ForeignGroup(DatabaseService data, PartySyncService partySync, Confirmations confirmations)
         {
             _data = data;
             _partySync = partySync;
+            _confirmations = confirmations;
         }
 
         [SlashCommand("add", "Give someone outside your party access to its foreign affairs channel")]
@@ -68,6 +70,86 @@ public partial class PartyModule
                     : Texts.Get("foreignAffairs.list.guests", ("channel", channel.Mention), ("count", guests.Count),
                         ("guests", string.Join(", ", guests.Select(id => $"<@{id}>")))),
                 ephemeral: true, allowedMentions: AllowedMentions.None);
+        }
+
+        [SlashCommand("clear", "Delete every message in your party's foreign affairs channel")]
+        [RequirePartyMember]
+        public async Task ClearAsync()
+        {
+            if (PartyOf(Context.User.Id) is not { } party)
+            {
+                await RespondAsync(Texts.Get("common.needsPartyMember"), ephemeral: true);
+                return;
+            }
+            await DeferAsync(ephemeral: true);
+
+            if (await _partySync.ForeignChannelAsync(party.Id) is not { } channel)
+            {
+                await FollowupAsync(Texts.Get("foreignAffairs.noChannel"), ephemeral: true);
+                return;
+            }
+            var userId = Context.User.Id;
+            await FollowupAsync(Texts.Get("foreignAffairs.clear.confirm", ("channel", channel.Mention)),
+                components: _confirmations.CreateWithResult(userId, () => ClearConfirmedAsync(channel, userId), Texts.Get("foreignAffairs.clear.button")),
+                ephemeral: true, allowedMentions: AllowedMentions.None);
+        }
+
+        private async Task<ConfirmedResult> ClearConfirmedAsync(ITextChannel channel, ulong userId)
+        {
+            List<IMessage> history;
+            try
+            {
+                history = await ReadHistoryAsync(channel);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[PartyForeign] Could not read {channel.Id}: {ex.Message}");
+                return new ConfirmedResult(Texts.Get("foreignAffairs.clear.unreadable", ("error", ex.Message)));
+            }
+
+            var now = DateTimeOffset.UtcNow;
+            var clearer = Context.Guild.GetUser(userId)?.DisplayName ?? Context.User.Username;
+            var transcript = ChatTranscript.Render(channel.Name, clearer, now, history.Select(ChatTranscript.From));
+            var fileName = ChatTranscript.FileName(channel.Name, now);
+
+            try
+            {
+                await DeleteAsync(channel, history);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[PartyForeign] Could not clear {channel.Id}: {ex.Message}");
+                return new ConfirmedResult(Texts.Get("foreignAffairs.clear.partly", ("error", ex.Message)), fileName, transcript);
+            }
+            _data.Log(LogKinds.Command, "party foreign clear", $"Cleared {history.Count} messages from {channel.Id}.", userId);
+            await PostAsync(channel, Texts.Get("foreignAffairs.posted.cleared", ("by", $"<@{userId}>")), AllowedMentions.None, "party foreign clear");
+            return new ConfirmedResult(Texts.Get("foreignAffairs.clear.done", ("count", history.Count), ("channel", channel.Mention)), fileName, transcript);
+        }
+
+        private static async Task<List<IMessage>> ReadHistoryAsync(ITextChannel channel)
+        {
+            var history = new List<IMessage>();
+            var batch = (await channel.GetMessagesAsync(100).FlattenAsync()).ToList();
+            while (batch.Count > 0)
+            {
+                history.AddRange(batch);
+                var oldest = batch.MinBy(m => m.Timestamp)!;
+                batch = (await channel.GetMessagesAsync(oldest.Id, Direction.Before, 100).FlattenAsync()).ToList();
+            }
+            return history;
+        }
+
+        private static async Task DeleteAsync(ITextChannel channel, IReadOnlyList<IMessage> messages)
+        {
+            var bulkCutoff = DateTimeOffset.UtcNow - TimeSpan.FromDays(14) + TimeSpan.FromHours(1);
+            var recent = messages.Where(m => m.Timestamp > bulkCutoff).ToList();
+            foreach (var chunk in recent.Chunk(100))
+            {
+                if (chunk.Length > 1) await channel.DeleteMessagesAsync(chunk);
+                else await chunk[0].DeleteAsync();
+            }
+            foreach (var message in messages.Except(recent))
+                await message.DeleteAsync();
         }
 
         private Party? PartyOf(ulong userId) =>

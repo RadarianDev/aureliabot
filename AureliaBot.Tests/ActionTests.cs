@@ -24,6 +24,17 @@ public class ActionTests : IDisposable
 
     public ActionTests()
     {
+        using (var conn = new SqliteConnection(_fixture.ConnectionString))
+        {
+            conn.Open();
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = @"
+                INSERT INTO provinces (id, name, population, discontent) VALUES ('aurenten', 'Aurenten', 3, 3);
+                INSERT INTO provinces (id, name, population, discontent) VALUES ('iracterie', 'Iracterie', 1, 3);";
+            cmd.ExecuteNonQuery();
+        }
+        var state = Db.GetGameState();
+        Db.SaveGameState(state with { PreElectionYear = state.Year + 4 });
         foreach (var id in new[] { Liberal1, Liberal2, Radical1, Radical2, Independent })
             Db.CreateFaction(id, $"Faction {id}", "aurenten", 10);
         Db.OpenIssue(Labour, "labour", "The Condition of Labour", "for", "against", 0.3, 2);
@@ -45,16 +56,53 @@ public class ActionTests : IDisposable
         Db.SubmitAction(faction, ActionKind.Attack, issue, Max, targetFactionId: target);
 
     [Fact]
-    public void ASecondActionOfTheSameKind_ReplacesTheFirst()
+    public void ASecondCampaignInTheSameProvince_ReplacesTheFirst()
     {
-        var first = Poll(Liberal1, Labour);
-        var second = Poll(Liberal1, Tariffs);
+        var first = Campaign(Liberal1, Labour);
+        var second = Campaign(Liberal1, Tariffs, Stance.Against);
 
         Assert.Equal(SubmitActionOutcome.Submitted, first.Outcome);
         Assert.Equal(SubmitActionOutcome.Replaced, second.Outcome);
         Assert.Equal(first.Action!.Id, second.Replaced!.Id);
         var pending = Assert.Single(Db.GetPendingActions(Liberal1));
         Assert.Equal(Tariffs, pending.IssueId);
+    }
+
+    [Fact]
+    public void InThePreElection_CampaignsInTheSameProvince_AreAllKept()
+    {
+        var state = Db.GetGameState();
+        Db.SaveGameState(state with { PreElectionSeason = state.Season, PreElectionYear = state.Year });
+
+        Campaign(Liberal1, Labour);
+        var second = Db.SubmitAction(Liberal1, ActionKind.Campaign, Labour, 5);
+        var third = Db.SubmitAction(Liberal1, ActionKind.Campaign, Tariffs, 5, Stance.Against);
+
+        Assert.Equal(SubmitActionOutcome.Submitted, second.Outcome);
+        Assert.Equal(SubmitActionOutcome.Submitted, third.Outcome);
+        Assert.Equal(3, Db.GetPendingActions(Liberal1).Count(a => a.ProvinceId == "aurenten"));
+    }
+
+    [Fact]
+    public void TwoCampaignsInDifferentProvinces_AreBothKept()
+    {
+        Campaign(Liberal1, Labour);
+        var second = Db.SubmitAction(Liberal1, ActionKind.Campaign, Labour, Max, provinceId: "iracterie");
+
+        Assert.Equal(SubmitActionOutcome.Submitted, second.Outcome);
+        Assert.Equal(["aurenten", "iracterie"], Db.GetPendingActions(Liberal1).Select(a => a.ProvinceId));
+    }
+
+    [Fact]
+    public void APollOnTheSameIssue_ReplacesTheFirst_AndOnAnotherIssueIsKept()
+    {
+        var first = Poll(Liberal1, Labour);
+
+        Assert.Equal(SubmitActionOutcome.Replaced, Poll(Liberal1, Labour).Outcome);
+        Assert.Equal(SubmitActionOutcome.Submitted, Poll(Liberal1, Tariffs).Outcome);
+        Assert.Equal(2, Db.GetPendingActions(Liberal1).Count);
+        Assert.All(Db.GetPendingActions(Liberal1), a => Assert.Null(a.ProvinceId));
+        Assert.DoesNotContain(Db.GetPendingActions(Liberal1), a => a.Id == first.Action!.Id);
     }
 
     [Fact]
@@ -193,21 +241,27 @@ public class ActionTests : IDisposable
     }
 
     [Fact]
-    public void Polls_KeepTheirProvince_AndRefuseOneNotInPlay()
+    public void Campaigns_DefaultToTheHomeProvince_AndRefuseOneNotInPlay()
     {
         Assert.Equal(SubmitActionOutcome.UnknownProvince,
-            Db.SubmitAction(Liberal1, ActionKind.Poll, Labour, Max, provinceId: "aurenten").Outcome);
-        using (var conn = new SqliteConnection(_fixture.ConnectionString))
-        {
-            conn.Open();
-            using var cmd = conn.CreateCommand();
-            cmd.CommandText = "INSERT INTO provinces (id, name, population, discontent) VALUES ('aurenten', 'Aurenten', 1, 3);";
-            cmd.ExecuteNonQuery();
-        }
+            Db.SubmitAction(Liberal1, ActionKind.Campaign, Labour, Max, provinceId: "nowhere").Outcome);
 
-        var result = Db.SubmitAction(Liberal1, ActionKind.Poll, Labour, Max, provinceId: "aurenten");
+        Assert.Equal("aurenten", Campaign(Liberal1, Labour).Action!.ProvinceId);
+        Assert.Equal("aurenten", Attack(Liberal2, Radical1, Labour).Action!.ProvinceId);
+    }
 
-        Assert.Equal("aurenten", result.Action!.ProvinceId);
+    [Fact]
+    public void RegionalGains_MoveTheNationalFigureByThePopulationShare_AndSpreadOverTime()
+    {
+        var constants = DatabaseFixture.Constants;
+        Db.SubmitAction(Liberal1, ActionKind.Campaign, Labour, Max, provinceId: "iracterie");
+        Db.ResolveCampaignDay(DatabaseFixture.Config, new ScriptedRandomSource(), 1, DateTimeOffset.UtcNow);
+
+        var regional = Db.GetRegionalPopularity(Liberal1, constants.Popularity);
+        var gain = regional["iracterie"] - 10;
+        Assert.True(gain > 0);
+        Assert.Equal(10, regional["aurenten"], 6);
+        Assert.Equal(10 + gain / 4, Db.GetFaction(Liberal1)!.Popularity, 6);
     }
 
     [Fact]

@@ -79,13 +79,12 @@ party:
 campaign:
   describe:
     issue: "*{issue}*"
-    campaign: "a campaign {stance} on {issue}"
-    campaignOff: "a campaign {stance} on {issue} (off-programme)"
+    campaign: "a campaign {stance} on {issue} in {province}"
+    campaignOff: "a campaign {stance} on {issue} in {province} (off-programme)"
     noStance: "with no stance"
-    attack: "an attack on {target}'s stance on {issue}"
+    attack: "an attack on {target}'s stance on {issue} in {province}"
     nobody: "nobody"
-    pollNational: "a poll on {issue} nationally"
-    pollProvince: "a poll on {issue} in {province}"
+    poll: "a poll on {issue} across the kingdom"
   resolves: "It resolves at the next resolution, {when}, simultaneously with everyone else's actions; results are revealed then."
   needStanceIndependent: "As an independent you must give a stance to campaign on *{issue}*."
   needStanceSilent: "Your party's programme takes no stance on *{issue}*, so you must give one. It will not count as off-programme."
@@ -96,7 +95,7 @@ campaign:
   noSuchProvince: "There is no province called \"{province}\"."
   noLongerPending: "That action is no longer pending; it was already cancelled, replaced or resolved."
   cancelled: "Cancelled {action}. You have a free action slot until the next resolution, {when}."
-  tooMany: "You already have {count} pending actions, the most you can have, each of a different kind: {actions}. Cancel one in `/me` to free a slot, or submit an action of a kind already pending to replace it."
+  tooMany: "You already have {count} pending actions, the most you can have this turn: {actions}. Cancel one in `/me` to free a slot, or replace one: an attack in a province where you already have one, a poll on an issue you are already polling, or (outside the pre-election) a campaign in a province where you already have one, takes its place."
   issueNotOpen: "That issue is no longer open."
   stanceRequired: "You must give a stance on this issue."
   provinceNotInPlay: "That province is not in play yet."
@@ -104,7 +103,7 @@ campaign:
   recorded: "Recorded {action}."
   replaces: "This replaces your pending {action}, which is cancelled."
   loggedOffProgramme: "It will be logged publicly as **off-programme** in #campaign-log."
-  pollTiming: "The poll is taken at the next resolution, {when}, against the mood at its start, and the answer comes to your private channel in words."
+  pollTiming: "The poll is taken at the next resolution, {when}, against the mood at its start, and the answer, for the kingdom and every province, comes to your private channel in words."
   postedWithResolution: "Campaigns and attacks are posted to #campaign-log with the resolution."
   pendingCount: "Pending actions: {count} of {max}."
   noOpenIssue: "There is no open issue \"{issue}\". Pick one from the list."
@@ -176,7 +175,9 @@ info:
   faction:
     missing: "That faction doesn't exist."
     retired: "*Retired from politics.*"
-    popularity: "Popularity: {popularity}"
+    popularity: "Popularity: {popularity} across the kingdom"
+    regional: "By province: {provinces}"
+    regionalEntry: "{province} {popularity}"
     party: "Party: {party}"
     home: "Home province: {province}"
     stances: "**Stances**"
@@ -259,7 +260,7 @@ me:
   pollNational: "Poll {issue} nationally"
   pollProvince: "Poll {issue} in {province}"
   cancelButton: "Cancel {kind}"
-  noActions: "You have {count} actions this turn, each of a different kind: `/campaign`, `/attack`, `/poll`."
+  noActions: "You have {count} actions this turn: `/campaign` or `/attack` in a province, or `/poll` an issue."
   waiting: "**Waiting on you**"
   nothingWaiting: "**Nothing is waiting on you.**"
   independentPreElection: "You are independent, and only parties stand in elections: `/party apply` to join one this season."
@@ -281,17 +282,18 @@ help:
     - A party writes its programme as a message and sends the GM its link. Outside the pre-election, flipping a stance between For and Against costs every member {flipPenalty} popularity.
   campaigning: |-
     ## Campaigning
-    Each turn you take up to {actionsPerTurn} actions of different kinds (per day in the pre-election):
-    - **Campaign** on an issue: gain popularity if the nation agrees with you.
-    - **Attack** a rival's stance: they lose popularity if the nation disagrees with them; otherwise it backfires.
-    - **Poll** an issue, nationally or in one province.
+    Each turn you take up to {actionsPerTurn} actions, and {actionsPerDay} a day in the pre-election. Campaigns and attacks happen in one province, your home province unless you name another:
+    - **Campaign** on an issue: talking about an issue people care about always wins you some popularity there, and more if the province agrees with you.
+    - **Attack** a rival's stance: they lose popularity there if the province disagrees with them; otherwise it backfires on you.
+    - **Poll** an issue, for the kingdom and every province.
+    You can run one campaign and one attack per province each turn; in the pre-election, campaigns are unlimited. Popularity is kept per province, and what you win in one province spreads to the rest of the kingdom over the following seasons.
     All actions are revealed together when the turn ends.
   opposition: |-
     ## Opposition
     A faction in a party with no cabinet seat is in opposition, and has one opposition action a season: `/opposition question` to question a minister, or `/bill propose` to put a private bill to the Assembly (one a year). `/opposition condemn` backs *For* or *Against* on a live crisis before the minister answers: being right where the minister was wrong earns popularity, being wrong where the minister was right costs it.
   voting: |-
     ## Voting
-    Each faction votes all its seats one way, with the buttons on the post in #assembly, `/vote`, or from `/me`. A bill passes when more seats vote for it than against; a tie fails. Voting Yes on a bill takes its side of the issue as your stance, No the other side. Cabinet and no-confidence votes stay open until the end of the next turn. Any faction outside the cabinet can table a motion of no confidence with `/noconfidence`; it goes to a vote once its backers hold a sixth of the seats.
+    Each faction votes all its seats one way, with the buttons on the post in #assembly, `/vote`, or from `/me`. A bill passes when more seats vote for it than against; a tie fails. Votes are secret until the count: only then are the totals and each faction's vote published. Voting Yes on a bill takes its side of the issue as your stance once the vote is counted, No the other side. Cabinet and no-confidence votes stay open until the end of the next turn. Any faction outside the cabinet can table a motion of no confidence with `/noconfidence`; it goes to a vote once its backers hold a sixth of the seats.
   ministries: |-
     ## Ministries
     The King appoints a Chancellor, who names four ministers with `/chancellor nominate`: Treasury, War, Interior, and Commerce and Labor. The Assembly then approves the cabinet. The Chancellor alone puts government bills before the Assembly, one a turn, with `/bill propose`. A crisis goes to the minister of its ministry (the Chancellor if the ministry is empty), who picks an answer with `/crisis respond` before the next resolution: leaning with the people of its province gains popularity, against them costs it, and an answer the purse cannot pay goes wrong. The Treasury divides the yearly budget each Winter with `/treasury allocate` and grants from the reserve with `/treasury grant`; War and Interior raise, train and station their units with `/war` and `/interior`, and Interior can order a crackdown; a project's minister starts ministerial projects with `/ministry project` and sets their spending with `/ministry fund`. Ministers also answer questions; `/ministry status` shows a ministry's purse and business, and `/ministry resign` steps down.
@@ -609,14 +611,13 @@ gm:
         attack: "Attack"
         poll: "Poll"
       fizzled: "- {kind} on {issue}: {result}"
-      campaign: "- Campaign {stance} on {issue} (national {opinion}): {factor} × score {score} × salience {salience}/3 ÷ √{crowd} = **{change}**"
+      campaign: "- Campaign {stance} on {issue} in {province} (opinion there {opinion}): ({baseline} × salience {salience} + {factor} × score {score} × salience {salience}/3) ÷ √{crowd} = **{change}**"
       offProgramme: " · off-programme"
-      attackHits: "- Attack on {target}'s {stance} on {issue} (national {opinion}, score {score}): lands, −{factor} × |score| × salience {salience}/3 = **{change}** to the target"
-      attackBackfires: "- Attack on {target}'s {stance} on {issue} (national {opinion}, score {score}): backfires, **{change}** to the attacker"
-      poll: "- Poll {issue} in {where}: true opinion {opinion} · salience {salience} (noise ±{opinionNoise} and ±{salienceNoise})"
-      nation: "the nation"
+      attackHits: "- Attack on {target}'s {stance} on {issue} in {province} (opinion there {opinion}, score {score}): lands, −{factor} × |score| × salience {salience}/3 = **{change}** to the target there"
+      attackBackfires: "- Attack on {target}'s {stance} on {issue} in {province} (opinion there {opinion}, score {score}): backfires, **{change}** to the attacker there"
+      poll: "- Poll {issue} across the kingdom and every province: national opinion {opinion} · salience {salience} (noise ±{opinionNoise} and ±{salienceNoise})"
       popularityHeading: "**Popularity** (now → after the actions)"
-      popularityLine: "- {faction}: {before} {change} → **{after}**"
+      popularityLine: "- {faction} in {province}: {before} {change} → **{after}**"
       noChange: "No popularity changes."
       salience: "-# Salience +{raise} (max {max}) on: {issues}"
     strength:
@@ -1189,6 +1190,7 @@ wording:
     divided: the people are *divided* on it
     mood: the people are *{mood}* it
     line: "{place}, {issue} is *{salience}*, and {people}."
+    provinceLine: "- {place}, {people}."
 
 programme:
   closed: "{issue} is closed"
@@ -1239,9 +1241,9 @@ news:
   action:
     noStance: no stance
     offProgramme: " (off-programme)"
-    campaign: "{actor} campaigns *{stance}* on {issue}{offProgramme}: popularity {change}."
-    attackLanded: "{actor} attacks {target} on {issue}, and lands the blow: {target} popularity {change}."
-    attackBackfired: "{actor} attacks {target} on {issue}, but the nation sides with {target}: {actor} popularity {change}."
+    campaign: "{actor} campaigns *{stance}* on {issue} in {province}{offProgramme}: popularity there {change}."
+    attackLanded: "{actor} attacks {target} on {issue} in {province}, and lands the blow: {target} popularity there {change}."
+    attackBackfired: "{actor} attacks {target} on {issue} in {province}, but the people there side with {target}: {actor} popularity there {change}."
   party:
     dissolvedEmpty: "**The {party} dissolves.** Its benches have emptied, and what remains of it sits on as independent."
     dissolvedLast: "**The {party} dissolves.** With its ranks dwindled to {faction} alone, the party is no more. {faction} sits on as an independent and keeps {seats}."
@@ -1386,12 +1388,15 @@ data:
     dropped: "Dropped: the faction is not active."
     fizzledClosed: "Fizzled: the issue was closed."
     fizzledNoStance: "Fizzled: no stance."
+    fizzledNoProvince: "Fizzled: no province."
     fizzledBecause: "Fizzled: {reason}."
     targetNoStanceShort: the target holds no stance
     campaignClosed: "Your campaign fizzled: the issue was closed before the resolution."
     campaignNoStance: "Your campaign fizzled: it had no stance."
+    campaignNoProvince: "Your campaign fizzled: it had no province to campaign in."
     attackClosed: "Your attack fizzled: the issue was closed before the resolution."
     attackFizzled: "Your attack fizzled: {reason}."
+    attackNoProvince: "Your attack fizzled: it had no province to campaign in."
     pollClosed: "Your poll fizzled: the issue was closed before the resolution."
     campaigned: "Campaigned {stance}: {change} popularity."
     attackSucceeded: "Attack on {stance} succeeded: target {change} popularity."
@@ -1489,6 +1494,7 @@ cabinet:
       ## Approval of the cabinet
       {chancellor} asks the Assembly to approve this cabinet:
     tally: "**Yes** {yes} seats · **No** {no} · **Abstain** {abstain}"
+    secret: "Votes are secret until the count."
     voters: "Votes: {votes}"
     voter: "{faction} {choice}"
     due: "Counted {due}. Every faction with seats votes all its seats, and may change its vote until then."
@@ -1645,13 +1651,13 @@ vote:
   noSuchVote: "There is no such vote."
   noSeats: "Only active factions with seats in the Assembly can vote."
   closed: "That vote is not open."
-  cabinetCast: "You voted {choice} on the cabinet's approval. You can change your vote until the deadline."
+  cabinetCast: "You voted {choice} on the cabinet's approval. Votes stay secret until the count, and you can change yours until the deadline."
   theMotion: "the motion of no confidence"
   recorded: "You vote **{choice}** on {what}."
   changed: "You change your vote on {what} from {previous} to **{choice}**."
-  stanceLogged: "This logs your stance on {issue} as *{stance}*, publicly."
-  offProgramme: "⚠️ This contradicts your party's programme (*{programme}*), and is shown as off-programme."
-  counted: "You can change it until it is counted, {when}."
+  stanceLogged: "When the vote is counted, it logs your stance on {issue} as *{stance}*, publicly."
+  offProgramme: "⚠️ This contradicts your party's programme (*{programme}*), and will be shown as off-programme once the vote is counted."
+  counted: "Votes stay secret until the count, {when}, and you can change yours until then."
   autocomplete:
     reading: "Bill: {bill} · {lean} · {mine}"
     motion: "No confidence, tabled by {tabler} · {mine}"
@@ -1722,7 +1728,7 @@ assembly:
   announceOpened: "**Before the Assembly:** {bill} ({issue}, *{lean}*), a {kind} bill proposed by {sponsor}."
   announceCancelled: "~~{bill} ({issue}, *{lean}*), a {kind} bill proposed by {sponsor}~~: withdrawn."
   afterNext: "at the resolution after next (the next one is {when})"
-  tally: "**Yes {yes} · No {no} · Abstain {abstain}**"
+  secret: "Votes are secret until the count."
   voters: "{choice}: {voters}"
   reading:
     heading: "## {bill}"
@@ -2148,6 +2154,21 @@ foreignAffairs:
   posted:
     added: "{by} invited {user} to this channel."
     removed: "{by} removed {user} from this channel."
+    cleared: "{by} cleared this channel."
   list:
     empty: "Nobody outside the party has access to {channel}."
     guests: "**Guests in {channel} ({count}):** {guests}"
+  clear:
+    confirm: "This deletes **every message** in {channel}, for everyone, and cannot be undone. You will get a .txt transcript of the channel, privately. Guests keep their access. Confirm?"
+    button: "Clear the channel"
+    done: "Deleted {count} message(s) from {channel}. The transcript is attached; only you can see it."
+    unreadable: "Nothing was deleted: the channel's history could not be read ({error})."
+    partly: "The transcript is attached, but Discord stopped the deletion part-way ({error}). Some messages may remain; run the command again."
+
+transcript:
+  header: "Transcript of #{channel}, {count} message(s), saved by {by} on {when} before the channel was cleared."
+  empty: "(The channel was empty.)"
+  line: "[{when}] {author}: {content}"
+  attachment: "    attachment: {url}"
+  embed: "    embed: {title}"
+  sticker: "    sticker: {name}"

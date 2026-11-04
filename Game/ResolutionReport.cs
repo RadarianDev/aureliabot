@@ -42,6 +42,7 @@ public sealed record ActionReport(
     ulong FactionId,
     ActionKind Kind,
     string IssueId,
+    string? ProvinceId,
     Stance? Stance,
     bool OffProgramme,
     ulong? TargetFactionId,

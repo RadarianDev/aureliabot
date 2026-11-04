@@ -104,6 +104,7 @@ public partial class DatabaseService
             Exec(conn, tx, "UPDATE factions SET popularity = $value WHERE user_id = $id;",
                 ("$id", faction.UserId.ToString()),
                 ("$value", Math.Clamp(Formulas.DriftToward(faction.Popularity, c.Popularity.Start, c.Popularity.Drift), c.Popularity.Min, c.Popularity.Max)));
+        SpreadRegionalPopularityTx(conn, tx, c.Popularity);
     }
 
     private static void AdvanceSeasonTx(SqliteConnection conn, SqliteTransaction tx, GameState state, GameConfig config, ResolutionReport report, DateTimeOffset now)

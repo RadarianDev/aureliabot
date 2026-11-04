@@ -46,7 +46,7 @@ public class GameFilesTests : IDisposable
         Assert.Equal(fileCount, result.Imported.Count(o => o.Imported));
         Assert.Empty(result.NotReady);
         Assert.Empty(Db.GetTemplates(status: TemplateStatus.Draft));
-        Assert.Single(Db.GetQueuedEvents(), e => e.TemplateId == "opening_1850");
+        Assert.Empty(Db.GetQueuedEvents());
     }
 
     [Fact]

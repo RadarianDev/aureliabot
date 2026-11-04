@@ -3,15 +3,21 @@ using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
 
+public sealed record ConfirmedResult(string Text, string? FileName = null, string? FileText = null);
+
 public class Confirmations
 {
     private static readonly TimeSpan Lifetime = TimeSpan.FromMinutes(15);
 
-    private sealed record Pending(ulong UserId, DateTimeOffset ExpiresAt, Func<Task<string>> OnConfirm);
+    private sealed record Pending(ulong UserId, DateTimeOffset ExpiresAt, Func<Task<ConfirmedResult>> OnConfirm);
 
     private readonly ConcurrentDictionary<string, Pending> _pending = new();
 
-    public MessageComponent Create(ulong userId, Func<Task<string>> onConfirm, string? confirmLabel = null, ButtonStyle style = ButtonStyle.Danger)
+    public MessageComponent Create(ulong userId, Func<Task<string>> onConfirm, string? confirmLabel = null, ButtonStyle style = ButtonStyle.Danger) =>
+        CreateWithResult(userId, async () => new ConfirmedResult(await onConfirm()), confirmLabel, style);
+
+    public MessageComponent CreateWithResult(
+        ulong userId, Func<Task<ConfirmedResult>> onConfirm, string? confirmLabel = null, ButtonStyle style = ButtonStyle.Danger)
     {
         foreach (var expired in _pending.Where(p => p.Value.ExpiresAt < DateTimeOffset.UtcNow).Select(p => p.Key).ToList())
             _pending.TryRemove(expired, out _);
@@ -24,7 +30,7 @@ public class Confirmations
             .Build();
     }
 
-    public (bool Found, bool WrongUser, Func<Task<string>>? Action) Take(string id, ulong userId)
+    public (bool Found, bool WrongUser, Func<Task<ConfirmedResult>>? Action) Take(string id, ulong userId)
     {
         if (!_pending.TryGetValue(id, out var pending) || pending.ExpiresAt < DateTimeOffset.UtcNow)
         {
@@ -62,7 +68,7 @@ public class ConfirmationModule : InteractionModuleBase<SocketInteractionContext
         }
 
         await DeferAsync();
-        string result;
+        ConfirmedResult result;
         try
         {
             result = await action();
@@ -70,13 +76,18 @@ public class ConfirmationModule : InteractionModuleBase<SocketInteractionContext
         catch (Exception ex)
         {
             Console.WriteLine($"[Confirmations] Confirmed action failed: {ex}");
-            result = Texts.Get("confirm.failed", ("error", ex.Message));
+            result = new ConfirmedResult(Texts.Get("confirm.failed", ("error", ex.Message)));
         }
+
+        using var file = result is { FileName: { } name, FileText: { } text }
+            ? new MemoryStream(System.Text.Encoding.UTF8.GetBytes(text))
+            : null;
         await ModifyOriginalResponseAsync(p =>
         {
-            p.Content = Truncate(result);
+            p.Content = Truncate(result.Text);
             p.Components = new ComponentBuilder().Build();
             p.Embeds = Array.Empty<Embed>();
+            if (file is not null) p.Attachments = new[] { new FileAttachment(file, result.FileName!) };
         });
     }
 

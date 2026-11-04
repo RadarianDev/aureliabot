@@ -118,7 +118,7 @@ public abstract class AssemblyTestBase : IDisposable
 public class BillTests : AssemblyTestBase
 {
     [Fact]
-    public void AYesVoteOnAnAgainstBill_LogsAgainst_AndANoVoteLogsFor()
+    public void AYesVoteOnAnAgainstBill_LogsAgainst_AndANoVoteLogsFor_OnlyOnceCounted()
     {
         var reading = Propose(Opposer, "labour_repeal");
         Resolve();
@@ -130,11 +130,15 @@ public class BillTests : AssemblyTestBase
         Assert.Equal(Stance.Against, yes.Logged);
         Assert.True(yes.OffProgramme);
         Assert.Equal(Stance.For, yes.ProgrammeStance);
-        Assert.Equal(Stance.Against, Db.GetLatestLoggedStance(Chancellor, "labour"));
         Assert.Equal(Stance.For, no.Logged);
         Assert.False(no.OffProgramme);
-        Assert.Equal(Stance.For, Db.GetLatestLoggedStance(Opposer, "labour"));
         Assert.Null(abstain.Logged);
+        Assert.NotEqual(Stance.Against, Db.GetLatestLoggedStance(Chancellor, "labour"));
+
+        Count();
+
+        Assert.Equal(Stance.Against, Db.GetLatestLoggedStance(Chancellor, "labour"));
+        Assert.Equal(Stance.For, Db.GetLatestLoggedStance(Opposer, "labour"));
         Assert.Null(Db.GetLatestLoggedStance(Independent, "labour"));
     }
 

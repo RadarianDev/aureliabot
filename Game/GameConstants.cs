@@ -21,12 +21,16 @@ public sealed record PopularityConstants
     public double Max { get; init; }
     public double Start { get; init; }
     public double Drift { get; init; }
+    public double Spread { get; init; }
 }
 
 public sealed record CampaignConstants
 {
     public double Factor { get; init; }
+    public double Baseline { get; init; }
     public int ActionsPerTurn { get; init; }
+    public int ActionsPerPreElectionDay { get; init; }
+    public int ActionsAllowed(bool preElection) => preElection ? ActionsPerPreElectionDay : ActionsPerTurn;
     public bool Crowding { get; init; }
 }
 
@@ -386,6 +390,10 @@ public sealed class ConstantsStore
         if (c.PreElectionDays < 1) errors.Add("preElectionDays must be at least 1.");
         if (c.SeasonsPerTerm < 2) errors.Add("seasonsPerTerm must be at least 2.");
         if (c.Popularity.Min >= c.Popularity.Max) errors.Add("popularity.min must be below popularity.max.");
+        if (c.Popularity.Spread is < 0 or > 1) errors.Add("popularity.spread must be between 0 and 1.");
+        if (c.Campaign.Baseline < 0) errors.Add("campaign.baseline must not be negative.");
+        if (c.Campaign.ActionsPerTurn < 1 || c.Campaign.ActionsPerPreElectionDay < 1)
+            errors.Add("campaign.actionsPerTurn and campaign.actionsPerPreElectionDay must be at least 1.");
         if (c.Salience.Min >= c.Salience.Max) errors.Add("salience.min must be below salience.max.");
         if (c.Discontent.Min >= c.Discontent.Max) errors.Add("discontent.min must be below discontent.max.");
 

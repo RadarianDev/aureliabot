@@ -357,8 +357,7 @@ public partial class DatabaseService
         {
             logged = stance;
             programme = GetProgrammeStanceTx(conn, tx, factionId, bill.IssueId);
-            offProgramme = programme is { } p && p.Sign() * stance.Sign() < 0;
-            InsertStanceLogTx(conn, tx, GetGameStateTx(conn, tx), factionId, bill.IssueId, stance, StanceSource.Vote, offProgramme);
+            offProgramme = IsOffProgramme(programme, stance);
         }
         tx.Commit();
         return new(AssemblyVoteOutcome.Recorded, cast.Previous, logged, offProgramme, programme, bill);
@@ -491,8 +490,10 @@ public partial class DatabaseService
         {
             if (QueryReadingsTx(conn, tx, "id = $id AND status = 'Open'", ("$id", dueReading.Id)).FirstOrDefault() is not { } reading) continue;
             var bill = QueryBillsTx(conn, tx, "id = $id", ("$id", reading.BillId)).Single();
-            var tally = rules.Tally(GetVotesTx(conn, tx, VoteSubject.Reading, reading.Id), seats);
+            var votes = GetVotesTx(conn, tx, VoteSubject.Reading, reading.Id);
+            var tally = rules.Tally(votes, seats);
             var passed = rules.MajorityPasses(tally);
+            LogVoteStancesTx(conn, tx, state, bill, votes, rules);
             Exec(conn, tx, "UPDATE readings SET yes_seats = $yes, no_seats = $no, abstain_seats = $abstain WHERE id = $id;",
                 ("$id", reading.Id), ("$yes", tally.YesSeats), ("$no", tally.NoSeats), ("$abstain", tally.AbstainSeats));
 
@@ -520,6 +521,19 @@ public partial class DatabaseService
             report.VoteResults.Add(new VoteResultReport(VoteSubject.Reading, reading.Id, bill.Title, passed, tally.YesSeats, tally.NoSeats, tally.AbstainSeats));
             LogTx(conn, tx, LogKinds.Resolution, "reading",
                 $"Reading {reading.Id} of {bill.Id} {(passed ? "passed" : "rejected")} {tally.YesSeats}-{tally.NoSeats} ({tally.AbstainSeats} abstaining).", isPublic: true);
+        }
+    }
+
+    private static bool IsOffProgramme(Stance? programme, Stance stance) => programme is { } p && p.Sign() * stance.Sign() < 0;
+
+    private static void LogVoteStancesTx(SqliteConnection conn, SqliteTransaction tx, GameState state, Bill bill,
+        IReadOnlyDictionary<ulong, VoteChoice> votes, AssemblyRules rules)
+    {
+        foreach (var (factionId, choice) in votes.OrderBy(v => v.Key))
+        {
+            if (rules.LoggedStance(bill.Lean, choice) is not { } stance || stance == Stance.Silent) continue;
+            var offProgramme = IsOffProgramme(GetProgrammeStanceTx(conn, tx, factionId, bill.IssueId), stance);
+            InsertStanceLogTx(conn, tx, state, factionId, bill.IssueId, stance, StanceSource.Vote, offProgramme);
         }
     }
 

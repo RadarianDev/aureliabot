@@ -7,4 +7,3 @@ effects:
   - if: "not issue.public_works.open"
     then: { open.public_works: true }
   - { salience.public_works: 1, discontent.aurenten: 1, bill.public_health_act: true }
-schedule: { season: Summer, year: 1851 }

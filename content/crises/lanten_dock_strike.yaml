@@ -1,26 +1,26 @@
-id: carden_dock_strike
-title: The Carden Dock Strike
+id: lanten_dock_strike
+title: The Lanten Dock Strike
 ministry: CommerceLabor
-province: north_arpal
+province: ocidanten
 issue: social_reform
 answers:
   - lean: For
     label: Meet the strikers' demands
     price: 30
     text: The docks reopen within the week, and the owners are furious.
-    effects: { discontent.north_arpal: -2, economy: -10, condition.north_arpal.striking: -1 }
+    effects: { discontent.ocidanten: -2, economy: -10, condition.ocidanten.striking: -1 }
   - lean: Neutral
     label: Commission a royal inquiry
     price: 40
-    text: Learned gentlemen arrive in Carden to take evidence, and the dockers wait.
-    effects: { discontent.north_arpal: -1 }
+    text: Learned gentlemen arrive in Lanten to take evidence, and the dockers wait.
+    effects: { discontent.ocidanten: -1 }
   - lean: Against
     label: Declare the strike unlawful
-    text: The strike collapses, and so does Carden's trust in the capital.
-    effects: { discontent.north_arpal: 2, condition.north_arpal.striking: -1 }
+    text: The strike collapses, and so does Lanten's trust in the capital.
+    effects: { discontent.ocidanten: 2, condition.ocidanten.striking: -1 }
 complication:
-  text: The money runs out in the middle of the talks, and the strike spreads up the canal to the pits.
-  effects: { discontent.north_arpal: 1, discontent.iracterie: 1 }
+  text: The money runs out in the middle of the talks, and the strike spreads from the quays to the carters on the inland roads.
+  effects: { discontent.ocidanten: 1, discontent.provencie_sacs: 1 }
 default:
   text: The strike drags on unanswered, and ships divert to Mugi.
-  effects: { economy: -20, discontent.north_arpal: 2 }
+  effects: { economy: -20, discontent.ocidanten: 2 }

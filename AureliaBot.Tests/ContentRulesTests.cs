@@ -79,7 +79,7 @@ public class ContentRulesTests : IDisposable
     }
 
     [Fact]
-    public void StartingContent_CanAllBeMadeReady_AndTheOpeningEventIsQueuedForGmStart()
+    public void StartingContent_CanAllBeMadeReady_AndQueuesNoEventByItself()
     {
         ContentRules.Import(Db, ContentRules.ImportContext(Db, Config), TemplateCodecTests.StartingFiles());
         for (var pass = 0; pass < 6 && Db.GetTemplates(status: TemplateStatus.Draft).Count > 0; pass++)
@@ -89,10 +89,7 @@ public class ContentRulesTests : IDisposable
         foreach (var row in Db.GetTemplates(status: TemplateStatus.Draft))
             Assert.Fail($"{row.Id}: {ContentRules.MakeReady(Db, Config, row.Id).Message}");
 
-        Assert.All(Db.GetQueuedEvents(), e => Assert.True(e.FromSchedule));
-        var queued = Assert.Single(Db.GetQueuedEvents(), e => e.FireAtResolution == 0);
-        Assert.Equal("opening_1850", queued.TemplateId);
-        Assert.Equal(0, queued.FireAtResolution);
+        Assert.Empty(Db.GetQueuedEvents());
         Assert.Equal("at /gm start", ContentRules.DescribeFireAt(Db.GetGameState(), 0));
     }
 
@@ -206,6 +203,6 @@ public class ContentRulesTests : IDisposable
             Assert.Contains("What players will see", text);
         }
         Assert.Contains("## The Ten Hours Bill becomes law", ContentPreview.Render(Db, Config, "ten_hours_bill"));
-        Assert.Contains("Spring 1850", ContentPreview.Render(Db, Config, "opening_1850"));
+        Assert.Contains("The King Summons the Assembly", ContentPreview.Render(Db, Config, "opening_1850"));
     }
 }

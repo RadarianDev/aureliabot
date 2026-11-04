@@ -43,11 +43,15 @@ public static class Wording
         var place = provinceName is null
             ? Texts.Get("wording.poll.kingdom")
             : Texts.Get("wording.poll.province", ("province", provinceName));
-        var people = IsDivided(opinion)
-            ? Texts.Get("wording.poll.divided")
-            : Texts.Get("wording.poll.mood", ("mood", Opinion(opinion)));
-        return Texts.Get("wording.poll.line", ("place", place), ("issue", issueTitle), ("salience", Salience(salience)), ("people", people));
+        return Texts.Get("wording.poll.line", ("place", place), ("issue", issueTitle), ("salience", Salience(salience)), ("people", People(opinion)));
     }
+
+    public static string PollProvinceLine(string provinceName, double opinion) =>
+        Texts.Get("wording.poll.provinceLine", ("place", Texts.Get("wording.poll.province", ("province", provinceName))), ("people", People(opinion)));
+
+    private static string People(double opinion) => IsDivided(opinion)
+        ? Texts.Get("wording.poll.divided")
+        : Texts.Get("wording.poll.mood", ("mood", Opinion(opinion)));
 
     private static bool IsDivided(double opinion) => opinion is < 0.2 and > -0.2;
 }

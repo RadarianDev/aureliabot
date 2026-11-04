@@ -1,5 +1,7 @@
 public sealed record AttackResult(bool Succeeded, double TargetChange, double AttackerChange);
 
+public sealed record RegionalShift(double NationalChange, double RegionalChange, IReadOnlyDictionary<string, double> Deviations);
+
 public static class Formulas
 {
     public static double ProvincialOpinion(double baseOpinion, IEnumerable<ConditionDefinition> conditions, string issueId) =>
@@ -26,13 +28,36 @@ public static class Formulas
 
     public static double SalienceFactor(double salience) => salience / 3;
 
-    public static double CampaignGain(GameConstants constants, Stance stance, double nationalOpinion, double salience, int sameSideCampaigners)
+    public static double CampaignGain(GameConstants constants, Stance stance, double provincialOpinion, double salience, int sameSideCampaigners)
     {
         var crowd = constants.Campaign.Crowding ? Math.Max(1, sameSideCampaigners) : 1;
-        return constants.Campaign.Factor
-            * StanceScore(stance, nationalOpinion, constants.StrongStancePenalty)
-            * SalienceFactor(salience)
-            / Math.Sqrt(crowd);
+        var heard = constants.Campaign.Baseline * salience;
+        var agreed = constants.Campaign.Factor
+            * StanceScore(stance, provincialOpinion, constants.StrongStancePenalty)
+            * SalienceFactor(salience);
+        return (heard + agreed) / Math.Sqrt(crowd);
+    }
+
+    public static double RegionalPopularity(double national, double deviation, PopularityConstants range) =>
+        Math.Clamp(national + deviation, range.Min, range.Max);
+
+    public static RegionalShift ShiftInProvince(
+        double national, IReadOnlyDictionary<string, double> deviations, IReadOnlyDictionary<string, double> populations,
+        string provinceId, double delta, PopularityConstants range)
+    {
+        var totalPopulation = populations.Values.Sum();
+        var weight = totalPopulation > 0 ? populations.GetValueOrDefault(provinceId) / totalPopulation : 0;
+        if (weight <= 0 || delta == 0) return new RegionalShift(0, 0, deviations);
+
+        var regional = national + deviations.GetValueOrDefault(provinceId);
+        var allowed = Math.Clamp(delta, Math.Min(0, range.Min - regional), Math.Max(0, range.Max - regional));
+        var nationalChange = Math.Clamp(national + weight * allowed, range.Min, range.Max) - national;
+        var regionalChange = nationalChange / weight;
+
+        var shifted = populations.Keys.ToDictionary(
+            id => id,
+            id => deviations.GetValueOrDefault(id) - nationalChange + (id == provinceId ? regionalChange : 0));
+        return new RegionalShift(nationalChange, regionalChange, shifted);
     }
 
     public static AttackResult Attack(GameConstants constants, Stance targetStance, double nationalOpinion, double salience)

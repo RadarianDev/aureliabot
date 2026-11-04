@@ -67,16 +67,17 @@ public class ResolutionFlowTests : IDisposable
     }
 
     [Fact]
-    public void APoll_IsDeliveredPrivatelyInWords()
+    public void APoll_IsDeliveredPrivatelyInWords_ForTheKingdomAndEveryProvince()
     {
         StartWithIssue();
         Db.CreateFaction(1, "Pollster", "aurenten", 10);
-        Db.SubmitAction(1, ActionKind.Poll, "labour", 2, provinceId: "north_arpal");
+        Db.SubmitAction(1, ActionKind.Poll, "labour", 2);
 
         var report = Resolve();
 
         var message = Assert.Single(report.PrivateMessages[1]);
-        Assert.Contains("North Arpal", message);
+        Assert.Contains("Across the kingdom", message);
+        Assert.All(Config.Provinces, p => Assert.Contains(p.Name, message));
         Assert.Contains("*", message);
         Assert.Empty(report.Actions);
     }
@@ -106,20 +107,22 @@ public class ResolutionFlowTests : IDisposable
         Db.SubmitAction(3, ActionKind.Campaign, "labour", 2);
         Db.SubmitAction(2, ActionKind.Attack, "labour", 2, targetFactionId: 3);
         Db.SubmitAction(2, ActionKind.Poll, "labour", 2);
-        var before = Enumerable.Range(1, 4).ToDictionary(i => (ulong)i, i => Db.GetFaction((ulong)i)!.Popularity);
+        double Local(ulong id) => Db.GetRegionalPopularity(id, Config.Constants.Popularity)["aurenten"];
+        var before = Enumerable.Range(1, 4).ToDictionary(i => (ulong)i, i => Local((ulong)i));
 
         var preview = Db.PreviewActions(Config);
 
         Assert.Equal(4, preview.Plan.Outcomes.Count);
         Assert.All(preview.Plan.Outcomes, o => Assert.False(o.Fizzled));
         Assert.True(preview.Plan.Outcomes.Single(o => o.Action.Kind == ActionKind.Attack).Succeeded);
-        Assert.Equal(before, Enumerable.Range(1, 4).ToDictionary(i => (ulong)i, i => Db.GetFaction((ulong)i)!.Popularity));
+        Assert.Equal(before, Enumerable.Range(1, 4).ToDictionary(i => (ulong)i, i => Local((ulong)i)));
 
-        Db.ResolveCampaignDay(Config, new ScriptedRandomSource([], Enumerable.Repeat(0.5, 4)), 1, DateTimeOffset.UtcNow);
+        Db.ResolveCampaignDay(Config, new ScriptedRandomSource([], Enumerable.Repeat(0.5, 20)), 1, DateTimeOffset.UtcNow);
 
         foreach (var (id, popularity) in before)
-            Assert.Equal(popularity + preview.Plan.PopularityDeltas.GetValueOrDefault(id), Db.GetFaction(id)!.Popularity, 6);
-        Assert.True(preview.Plan.PopularityDeltas[3] < 0);
+            Assert.Equal(popularity + preview.Plan.PopularityDeltas.Where(d => d.FactionId == id).Sum(d => d.Change), Local(id), 6);
+        Assert.True(preview.Plan.PopularityDeltas.Single(d => d.FactionId == 3).Change < 0);
+        Assert.All(preview.Plan.PopularityDeltas, d => Assert.Equal("aurenten", d.ProvinceId));
     }
 
     [Fact]
@@ -135,7 +138,8 @@ public class ResolutionFlowTests : IDisposable
         Assert.True(report.CampaignDay);
         Assert.Equal(Season.Spring, state.Season);
         Assert.Equal(1, state.CampaignDaysRun);
-        Assert.Equal(30 + report.Actions.Single().ActorPopularityChange, Db.GetFaction(1)!.Popularity, 6);
+        Assert.Equal(30 + report.Actions.Single().ActorPopularityChange, Db.GetRegionalPopularity(1, Config.Constants.Popularity)["aurenten"], 6);
+        Assert.Equal("aurenten", report.Actions.Single().ProvinceId);
     }
 
     [Fact]
@@ -145,5 +149,24 @@ public class ResolutionFlowTests : IDisposable
         Db.CreateFaction(1, "High", "aurenten", 50);
         Resolve();
         Assert.Equal(48, Db.GetFaction(1)!.Popularity, 6);
+    }
+
+    [Fact]
+    public void ARegionalLead_SpreadsAcrossTheKingdomEachSeason_KeepingTheNationalFigure()
+    {
+        StartWithIssue();
+        Db.CreateFaction(1, "A", "aurenten", 10);
+        Db.SubmitAction(1, ActionKind.Campaign, "labour", 2, Stance.For, provinceId: "provencie_gares");
+        Db.ResolveCampaignDay(Config, new ScriptedRandomSource(), 1, DateTimeOffset.UtcNow);
+        var popularity = Config.Constants.Popularity;
+        var national = Db.GetFaction(1)!.Popularity;
+        var lead = Db.GetRegionalPopularity(1, popularity)["provencie_gares"] - national;
+        Assert.True(lead > 0);
+
+        Resolve();
+
+        var drifted = Formulas.DriftToward(national, popularity.Start, popularity.Drift);
+        Assert.Equal(drifted, Db.GetFaction(1)!.Popularity, 6);
+        Assert.Equal(drifted + lead * (1 - popularity.Spread), Db.GetRegionalPopularity(1, popularity)["provencie_gares"], 6);
     }
 }

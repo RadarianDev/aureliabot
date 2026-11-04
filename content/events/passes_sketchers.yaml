@@ -8,4 +8,3 @@ effects:
   - if: "not issue.rearmament.open"
     then: { open.rearmament: true }
   - { threat: 5, bill.army_bill: true, bill.militia_act: true }
-schedule: { season: Spring, year: 1851 }

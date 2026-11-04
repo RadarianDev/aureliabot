@@ -16,6 +16,16 @@ public static class Display
     public static string Province(GameConfig config, string? provinceId) =>
         provinceId is null ? Texts.Get("display.none") : config.Province(provinceId)?.Name ?? provinceId;
 
+    public static string? RegionalPopularity(DatabaseService data, GameConfig config, ulong factionId)
+    {
+        var regional = data.GetRegionalPopularity(factionId, config.Constants.Popularity);
+        if (regional.Count == 0) return null;
+        var entries = config.Provinces
+            .Where(p => regional.ContainsKey(p.Id))
+            .Select(p => Texts.Get("info.faction.regionalEntry", ("province", p.Name), ("popularity", Number(regional[p.Id]))));
+        return Texts.Get("info.faction.regional", ("provinces", string.Join(" · ", entries)));
+    }
+
     public static string Timestamp(DateTimeOffset at, char style = 'F') => $"<t:{at.ToUnixTimeSeconds()}:{style}>";
 
     public static string When(DateTimeOffset at) => $"{Timestamp(at)} ({Timestamp(at, 'R')})";

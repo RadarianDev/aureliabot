@@ -141,7 +141,7 @@ public partial class DatabaseService
         using var tx = conn.BeginTransaction();
         var pending = GetPendingActionsTx(conn, tx, factionId);
 
-        if (GetFactionTx(conn, tx, factionId) is not { IsActive: true })
+        if (GetFactionTx(conn, tx, factionId) is not { IsActive: true } faction)
             return new SubmitActionResult(SubmitActionOutcome.NotActive, null, null, pending);
         if (GetIssueTx(conn, tx, issueId) is not { Status: IssueStatus.Open })
             return new SubmitActionResult(SubmitActionOutcome.IssueNotOpen, null, null, pending);
@@ -149,7 +149,10 @@ public partial class DatabaseService
         var offProgramme = false;
         Stance? recordedStance = null;
         ulong? target = null;
-        string? province = null;
+        var province = kind == ActionKind.Poll ? null : provinceId ?? faction.HomeProvinceId;
+        if (kind != ActionKind.Poll && (province is null || GetProvincesTx(conn, tx).All(p => p.Id != province)))
+            return new SubmitActionResult(SubmitActionOutcome.UnknownProvince, null, null, pending);
+
         switch (kind)
         {
             case ActionKind.Campaign:
@@ -167,19 +170,15 @@ public partial class DatabaseService
                     return new SubmitActionResult(SubmitActionOutcome.AttackRefused, null, null, pending, check.Refusal);
                 target = targetId;
                 break;
-            case ActionKind.Poll:
-                if (provinceId is not null && GetProvincesTx(conn, tx).All(p => p.Id != provinceId))
-                    return new SubmitActionResult(SubmitActionOutcome.UnknownProvince, null, null, pending);
-                province = provinceId;
-                break;
         }
 
-        var slot = ActionPlanner.SlotFor(pending, kind, maxPending);
+        var slot = ActionPlanner.SlotFor(pending, kind, issueId, province, maxPending, GetGameStateTx(conn, tx).IsPreElection);
         if (!slot.Allowed)
             return new SubmitActionResult(SubmitActionOutcome.TooMany, null, null, pending);
         if (slot.Replaces is { } replaced)
             Exec(conn, tx, "DELETE FROM actions WHERE id = $id;", ("$id", replaced.Id));
 
+        long insertedId;
         using (var cmd = conn.CreateCommand())
         {
             cmd.Transaction = tx;
@@ -195,11 +194,11 @@ public partial class DatabaseService
             cmd.Parameters.AddWithValue("$off", offProgramme ? 1 : 0);
             cmd.Parameters.AddWithValue("$target", (object?)target?.ToString() ?? DBNull.Value);
             cmd.Parameters.AddWithValue("$now", Now());
-            cmd.ExecuteScalar();
+            insertedId = (long)cmd.ExecuteScalar()!;
         }
 
         var after = GetPendingActionsTx(conn, tx, factionId);
-        var action = after.First(a => a.Kind == kind);
+        var action = after.First(a => a.Id == insertedId);
         LogTx(conn, tx, LogKinds.Command, kind.ToString().ToLowerInvariant(),
             $"Submitted {kind} {action.Id} on {issueId}{(slot.Replaces is { } r ? $", replacing {r.Id}" : "")}.", factionId);
         tx.Commit();
@@ -211,8 +210,8 @@ public partial class DatabaseService
         SqliteConnection conn, SqliteTransaction tx, GameState state, GameConfig config, IRandomSource random, ResolutionReport report)
     {
         var constants = config.Constants;
-        var actions = QueryPendingActionsTx(conn, tx,
-            "resolved = 0 AND faction_id IN (SELECT user_id FROM factions WHERE status = 'Active')");
+        var actions = WithProvincesTx(conn, tx, QueryPendingActionsTx(conn, tx,
+            "resolved = 0 AND faction_id IN (SELECT user_id FROM factions WHERE status = 'Active')"));
         var resolutionNumber = state.ResolutionNumber + 1;
         Exec(conn, tx, @"
             UPDATE actions SET resolved = 1, resolution_number = $resolution, result = $result
@@ -224,8 +223,8 @@ public partial class DatabaseService
         var plan = ActionPlanner.Plan(actions, ActionStartTx(conn, tx, state, config, snapshot, actions),
             Scoring(config, action => PollLine(config, snapshot, random, action)));
 
-        foreach (var (factionId, delta) in plan.PopularityDeltas)
-            AddPopularityTx(conn, tx, factionId, delta, constants.Popularity);
+        foreach (var delta in plan.PopularityDeltas)
+            AddRegionalPopularityTx(conn, tx, delta.FactionId, delta.ProvinceId, delta.Change, constants.Popularity);
 
         foreach (var campaign in plan.StanceLogs)
             InsertStanceLogTx(conn, tx, state, campaign.FactionId, campaign.IssueId, campaign.Stance!.Value, StanceSource.Campaign, campaign.OffProgramme);
@@ -251,6 +250,7 @@ public partial class DatabaseService
                 action.FactionId,
                 action.Kind,
                 action.IssueId,
+                action.ProvinceId,
                 action.Kind == ActionKind.Attack ? outcome.TargetStance : action.Stance,
                 action.OffProgramme,
                 action.TargetFactionId,
@@ -267,8 +267,8 @@ public partial class DatabaseService
     {
         using var conn = Open();
         var state = GetGameStateTx(conn, null);
-        var actions = QueryPendingActionsTx(conn, null,
-            "resolved = 0 AND faction_id IN (SELECT user_id FROM factions WHERE status = 'Active')");
+        var actions = WithProvincesTx(conn, null, QueryPendingActionsTx(conn, null,
+            "resolved = 0 AND faction_id IN (SELECT user_id FROM factions WHERE status = 'Active')"));
         var snapshot = LoadOpinionSnapshotTx(conn, null, config);
         var plan = ActionPlanner.Plan(actions, ActionStartTx(conn, null, state, config, snapshot, actions), Scoring(config, _ => ""));
         return new ActionPreview(plan, snapshot);
@@ -287,7 +287,7 @@ public partial class DatabaseService
             state.ResolutionNumber,
             config.Constants.Campaign.Crowding,
             issueId => snapshot.Issue(issueId) is not null,
-            snapshot.National,
+            snapshot.Provincial,
             snapshot.Salience,
             issueId => snapshot.Issue(issueId)?.SalienceRaisedResolution,
             action => attackTargets[action.Id]);
@@ -307,16 +307,19 @@ public partial class DatabaseService
         var poll = config.Constants.Poll;
         var salienceRange = config.Constants.Salience;
         var issue = snapshot.Issue(action.IssueId)!;
-        var opinion = action.ProvinceId is { } provinceId
-            ? snapshot.Provincial(action.IssueId, provinceId)
-            : snapshot.National(action.IssueId);
-        var noisyOpinion = Math.Clamp(opinion + Noise(random, poll.OpinionNoise), -1, 1);
+        double Noisy(double opinion) => Math.Clamp(opinion + Noise(random, poll.OpinionNoise), -1, 1);
         var noisySalience = Math.Clamp(issue.Salience + Noise(random, poll.SalienceNoise), salienceRange.Min, salienceRange.Max);
-        var provinceName = action.ProvinceId is { } id
-            ? snapshot.Provinces.FirstOrDefault(p => p.Id == id)?.Name ?? config.Province(id)?.Name ?? id
-            : null;
-        return Wording.PollLine(provinceName, issue.Title, noisyOpinion, noisySalience);
+        var lines = new List<string> { Wording.PollLine(null, issue.Title, Noisy(snapshot.National(action.IssueId)), noisySalience) };
+        lines.AddRange(snapshot.Provinces.Select(p => Wording.PollProvinceLine(p.Name, Noisy(snapshot.Provincial(action.IssueId, p.Id)))));
+        return string.Join("\n", lines);
     }
 
     private static double Noise(IRandomSource random, double amplitude) => (random.NextDouble() * 2 - 1) * amplitude;
+
+    private static List<PendingAction> WithProvincesTx(SqliteConnection conn, SqliteTransaction? tx, List<PendingAction> actions) =>
+        actions
+            .Select(a => a.Kind != ActionKind.Poll && a.ProvinceId is null
+                ? a with { ProvinceId = GetFactionTx(conn, tx, a.FactionId)?.HomeProvinceId }
+                : a)
+            .ToList();
 }

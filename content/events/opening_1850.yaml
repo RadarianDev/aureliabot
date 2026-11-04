@@ -8,4 +8,3 @@ effects: { open.free_trade: true, open.electoral_reform: true, open.social_refor
            open.integration: true,
            bill.corn_law_repeal: true, bill.ballot_act: true, bill.ten_hours_bill: true,
            bill.new_poor_law: true, bill.act_of_union: true }
-schedule: { season: Spring, year: 1850 }

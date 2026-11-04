@@ -39,6 +39,7 @@ public class StatusModule : InteractionModuleBase<SocketInteractionContext>
             : Texts.Get("me.status", ("season", state.Label), ("when", Display.NextResolution(state))));
         sb.AppendLine(Texts.Get("me.summary", ("popularity", Display.Number(faction.Popularity)), ("seats", faction.Seats),
             ("party", party is null ? Display.Independent : Display.Party(party)), ("role", role.ToString().ToLowerInvariant())));
+        if (Display.RegionalPopularity(_data, _constants.Config, faction.UserId) is { } regional) sb.AppendLine(regional);
 
         var buttons = new ComponentBuilder();
         var waiting = new List<string>();
@@ -154,7 +155,7 @@ public class StatusModule : InteractionModuleBase<SocketInteractionContext>
         else
         {
             sb.AppendLine();
-            sb.AppendLine(Texts.Get("me.noActions", ("count", _constants.Current.Campaign.ActionsPerTurn)));
+            sb.AppendLine(Texts.Get("me.noActions", ("count", CampaignModule.ActionsAllowed(_constants.Current, _data.GetGameState()))));
         }
 
         sb.AppendLine();
@@ -190,7 +191,7 @@ public class StatusModule : InteractionModuleBase<SocketInteractionContext>
         {
             HelpTopic.Basics => Texts.Get("help.basics", ("preElectionDays", c.PreElectionDays)),
             HelpTopic.Parties => Texts.Get("help.parties", ("flipPenalty", Display.Number(c.Programme.FlipPenalty))),
-            HelpTopic.Campaigning => Texts.Get("help.campaigning", ("actionsPerTurn", c.Campaign.ActionsPerTurn)),
+            HelpTopic.Campaigning => Texts.Get("help.campaigning", ("actionsPerTurn", c.Campaign.ActionsPerTurn), ("actionsPerDay", c.Campaign.ActionsPerPreElectionDay)),
             HelpTopic.Opposition => Texts.Get("help.opposition"),
             HelpTopic.Voting => Texts.Get("help.voting"),
             HelpTopic.Ministries => Texts.Get("help.ministries"),

@@ -181,6 +181,7 @@ public partial class InfoModule : InteractionModuleBase<SocketInteractionContext
         sb.AppendLine($"## {Display.Faction(faction)}");
         if (!faction.IsActive) sb.AppendLine(Texts.Get("info.faction.retired"));
         sb.AppendLine(Texts.Get("info.faction.popularity", ("popularity", Display.Number(faction.Popularity))));
+        if (Display.RegionalPopularity(_data, _constants.Config, faction.UserId) is { } regional) sb.AppendLine(regional);
         sb.AppendLine(Texts.Get("info.faction.party", ("party", party is null ? Display.Independent : Display.Party(party))));
         sb.AppendLine(Texts.Get("info.seats", ("seats", faction.Seats)));
         sb.AppendLine(Texts.Get("info.faction.home", ("province", Display.Province(_constants.Config, faction.HomeProvinceId))));

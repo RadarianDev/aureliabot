@@ -501,6 +501,14 @@ public partial class DatabaseService
         Exec(connection, "CREATE INDEX IF NOT EXISTS ix_stance_log_faction ON stance_log (faction_id, issue_id, id);");
 
         Exec(connection, @"
+            CREATE TABLE IF NOT EXISTS regional_popularity (
+                faction_id TEXT NOT NULL REFERENCES factions(user_id),
+                province_id TEXT NOT NULL REFERENCES provinces(id),
+                deviation REAL NOT NULL DEFAULT 0,
+                PRIMARY KEY (faction_id, province_id)
+            );");
+
+        Exec(connection, @"
             CREATE TABLE IF NOT EXISTS province_results (
                 term_number INTEGER NOT NULL,
                 province_id TEXT NOT NULL,

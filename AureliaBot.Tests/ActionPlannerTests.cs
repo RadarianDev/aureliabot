@@ -6,11 +6,16 @@ public class ActionPlannerTests
 {
     private const long Resolution = 7;
 
-    private static PendingAction Campaign(long id, ulong faction, string issue, Stance stance) =>
-        new(id, faction, ActionKind.Campaign, issue, null, stance, false, null, DateTimeOffset.UnixEpoch);
+    private const string Home = "home";
+
+    private static IReadOnlyDictionary<ulong, double> Deltas(ActionPlan plan) =>
+        plan.PopularityDeltas.GroupBy(d => d.FactionId).ToDictionary(g => g.Key, g => g.Sum(d => d.Change));
+
+    private static PendingAction Campaign(long id, ulong faction, string issue, Stance stance, string province = Home) =>
+        new(id, faction, ActionKind.Campaign, issue, province, stance, false, null, DateTimeOffset.UnixEpoch);
 
     private static PendingAction Attack(long id, ulong faction, ulong target, string issue) =>
-        new(id, faction, ActionKind.Attack, issue, null, null, false, target, DateTimeOffset.UnixEpoch);
+        new(id, faction, ActionKind.Attack, issue, Home, null, false, target, DateTimeOffset.UnixEpoch);
 
     private static PendingAction Poll(long id, ulong faction, string issue) =>
         new(id, faction, ActionKind.Poll, issue, null, null, false, null, DateTimeOffset.UnixEpoch);
@@ -19,7 +24,7 @@ public class ActionPlannerTests
         Func<PendingAction, AttackTarget>? targets = null,
         Func<string, long?>? raised = null,
         bool crowding = true) =>
-        new(Resolution, crowding, issue => issue != "closed", _ => 0.5, _ => 3, raised ?? (_ => null),
+        new(Resolution, crowding, issue => issue != "closed", (_, _) => 0.5, _ => 3, raised ?? (_ => null),
             targets ?? (_ => new AttackTarget(Stance.For, null)));
 
     private static ActionScoring CountingScoring(List<Stance>? attackedStances = null) =>
@@ -42,10 +47,10 @@ public class ActionPlannerTests
             Campaign(4, 13, "tariffs", Stance.For),
         ], Start(), CountingScoring());
 
-        Assert.Equal(2, plan.PopularityDeltas[10]);
-        Assert.Equal(2, plan.PopularityDeltas[11]);
-        Assert.Equal(1, plan.PopularityDeltas[12]);
-        Assert.Equal(1, plan.PopularityDeltas[13]);
+        Assert.Equal(2, Deltas(plan)[10]);
+        Assert.Equal(2, Deltas(plan)[11]);
+        Assert.Equal(1, Deltas(plan)[12]);
+        Assert.Equal(1, Deltas(plan)[13]);
     }
 
     [Fact]
@@ -57,8 +62,60 @@ public class ActionPlannerTests
             Campaign(2, 11, "labour", Stance.For),
         ], Start(crowding: false), CountingScoring());
 
-        Assert.Equal(1, plan.PopularityDeltas[10]);
-        Assert.Equal(1, plan.PopularityDeltas[11]);
+        Assert.Equal(1, Deltas(plan)[10]);
+        Assert.Equal(1, Deltas(plan)[11]);
+    }
+
+    [Fact]
+    public void CampaignCrowding_CountsOnlyCampaignsInTheSameProvince()
+    {
+        var plan = ActionPlanner.Plan(
+        [
+            Campaign(1, 10, "labour", Stance.For, "north"),
+            Campaign(2, 11, "labour", Stance.For, "north"),
+            Campaign(3, 12, "labour", Stance.For, "south"),
+        ], Start(), CountingScoring());
+
+        Assert.Equal(new RegionalDelta(10, "north", 2), plan.PopularityDeltas.Single(d => d.FactionId == 10));
+        Assert.Equal(new RegionalDelta(11, "north", 2), plan.PopularityDeltas.Single(d => d.FactionId == 11));
+        Assert.Equal(new RegionalDelta(12, "south", 1), plan.PopularityDeltas.Single(d => d.FactionId == 12));
+    }
+
+    [Fact]
+    public void Campaigns_AreScoredOnTheOpinionOfTheirProvince()
+    {
+        var start = new ActionStartState(Resolution, true, _ => true, (_, province) => province == "north" ? 0.8 : -0.8, _ => 3, _ => null,
+            _ => new AttackTarget(Stance.For, null));
+        var scoring = new ActionScoring((_, opinion, _, _) => opinion, (_, _, _) => new AttackResult(false, 0, 0), _ => "");
+
+        var plan = ActionPlanner.Plan([Campaign(1, 10, "labour", Stance.For, "north"), Campaign(2, 11, "labour", Stance.For, "south")], start, scoring);
+
+        Assert.Equal(0.8, Deltas(plan)[10]);
+        Assert.Equal(-0.8, Deltas(plan)[11]);
+    }
+
+    [Fact]
+    public void Slots_ReplaceTheSameKindInTheSameProvince_OrAPollOnTheSameIssue()
+    {
+        IReadOnlyList<PendingAction> pending = [Campaign(1, 10, "labour", Stance.For, "north"), Poll(2, 10, "labour")];
+
+        Assert.Equal(1, ActionPlanner.SlotFor(pending, ActionKind.Campaign, "tariffs", "north", 2).Replaces?.Id);
+        Assert.Equal(2, ActionPlanner.SlotFor(pending, ActionKind.Poll, "labour", null, 2).Replaces?.Id);
+        Assert.False(ActionPlanner.SlotFor(pending, ActionKind.Campaign, "labour", "south", 2).Allowed);
+        Assert.True(ActionPlanner.SlotFor(pending, ActionKind.Campaign, "labour", "south", 3).Allowed);
+        Assert.Null(ActionPlanner.SlotFor(pending, ActionKind.Attack, "labour", "north", 3).Replaces);
+    }
+
+    [Fact]
+    public void InThePreElection_CampaignsStackWithoutReplacing_ButOtherKindsStillDo()
+    {
+        IReadOnlyList<PendingAction> pending = [Campaign(1, 10, "labour", Stance.For, "north"), Poll(2, 10, "labour")];
+
+        var campaign = ActionPlanner.SlotFor(pending, ActionKind.Campaign, "labour", "north", 5, campaignsStack: true);
+        Assert.True(campaign.Allowed);
+        Assert.Null(campaign.Replaces);
+        Assert.False(ActionPlanner.SlotFor(pending, ActionKind.Campaign, "labour", "north", 2, campaignsStack: true).Allowed);
+        Assert.Equal(2, ActionPlanner.SlotFor(pending, ActionKind.Poll, "labour", null, 5, campaignsStack: true).Replaces?.Id);
     }
 
     [Fact]
@@ -87,9 +144,9 @@ public class ActionPlannerTests
             var actions = order.Select((spec, position) =>
             {
                 var (faction, kind, issue, stance, target) = specs[spec];
-                return new PendingAction(100 + position, faction, kind, issue, null, stance, false, target, DateTimeOffset.UnixEpoch);
+                return new PendingAction(100 + position, faction, kind, issue, Home, stance, false, target, DateTimeOffset.UnixEpoch);
             });
-            return ActionPlanner.Plan(actions, start, CountingScoring()).PopularityDeltas;
+            return Deltas(ActionPlanner.Plan(actions, start, CountingScoring()));
         }
 
         var baseline = Run(Enumerable.Range(0, specs.Length));
@@ -115,7 +172,7 @@ public class ActionPlannerTests
         Assert.Equal([Stance.For], attacked);
         var attack = plan.Outcomes.Single(o => o.Action.Kind == ActionKind.Attack);
         Assert.Equal(Stance.For, attack.TargetStance);
-        Assert.Equal(-2, plan.PopularityDeltas[21]);
+        Assert.Equal(-2, Deltas(plan)[21]);
         Assert.Contains(plan.StanceLogs, s => s.FactionId == 20 && s.Stance == Stance.Against);
     }
 
@@ -128,10 +185,10 @@ public class ActionPlannerTests
             Attack(2, 32, 33, "tariffs"),
         ], Start(a => new AttackTarget(a.TargetFactionId == 31 ? Stance.Against : Stance.For, null)), CountingScoring());
 
-        Assert.Equal(-3, plan.PopularityDeltas[31]);
-        Assert.False(plan.PopularityDeltas.ContainsKey(30));
-        Assert.Equal(-2, plan.PopularityDeltas[32]);
-        Assert.False(plan.PopularityDeltas.ContainsKey(33));
+        Assert.Equal(-3, Deltas(plan)[31]);
+        Assert.False(Deltas(plan).ContainsKey(30));
+        Assert.Equal(-2, Deltas(plan)[32]);
+        Assert.False(Deltas(plan).ContainsKey(33));
     }
 
     [Fact]
@@ -174,7 +231,7 @@ public class ActionPlannerTests
 
         Assert.Equal("poll labour", plan.Outcomes.Single(o => o.Action.Kind == ActionKind.Poll).PrivateMessage);
         Assert.Single(plan.StanceLogs);
-        Assert.Equal(1, plan.PopularityDeltas[10]);
+        Assert.Equal(1, Deltas(plan)[10]);
     }
 
     [Fact]

@@ -6,8 +6,8 @@ timeZone: "Europe/Prague"
 minHoursBetweenResolutions: 12
 preElectionDays: 3
 seasonsPerTerm: 16
-popularity: { min: 0, max: 100, start: 10, drift: 0.05 }
-campaign: { factor: 4, actionsPerTurn: 2, crowding: true }
+popularity: { min: 0, max: 100, start: 10, drift: 0.05, spread: 0.2 }
+campaign: { factor: 4, baseline: 0.5, actionsPerTurn: 2, actionsPerPreElectionDay: 5, crowding: true }
 attack: { factor: 3, backfire: 2 }
 poll: { opinionNoise: 0.15, salienceNoise: 1 }
 strongStancePenalty: 0.5

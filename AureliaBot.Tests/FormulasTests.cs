@@ -103,6 +103,44 @@ public class FormulasTests
             Tolerance);
 
     [Fact]
+    public void CampaignGain_adds_the_baseline_share_of_salience_before_crowding()
+    {
+        var heard = Constants with { Campaign = Constants.Campaign with { Baseline = 0.5 } };
+
+        Assert.Equal(0.5 * 4, Formulas.CampaignGain(heard, Stance.For, 0, 4, 1), Tolerance);
+        Assert.Equal(-1.2, Formulas.CampaignGain(Constants, Stance.StronglyFor, 0.1, 3, 1), Tolerance);
+        Assert.Equal(0.3, Formulas.CampaignGain(heard, Stance.StronglyFor, 0.1, 3, 1), Tolerance);
+        Assert.Equal((0.5 * 3 + 4 * 0.5) / 2, Formulas.CampaignGain(heard, Stance.For, 0.5, 3, 4), Tolerance);
+    }
+
+    [Fact]
+    public void ShiftInProvince_MovesOnlyThatProvince_AndTheNationalFigureByItsShare()
+    {
+        var range = new PopularityConstants { Min = 0, Max = 100, Start = 10 };
+        var populations = new Dictionary<string, double> { ["big"] = 3, ["small"] = 1 };
+
+        var shift = Formulas.ShiftInProvince(10, new Dictionary<string, double>(), populations, "small", 4, range);
+
+        Assert.Equal(1, shift.NationalChange, Tolerance);
+        Assert.Equal(4, shift.RegionalChange, Tolerance);
+        Assert.Equal(14, 11 + shift.Deviations["small"], Tolerance);
+        Assert.Equal(10, 11 + shift.Deviations["big"], Tolerance);
+        Assert.Equal(0, 3 * shift.Deviations["big"] + shift.Deviations["small"], Tolerance);
+    }
+
+    [Fact]
+    public void ShiftInProvince_StopsAtTheBottomOfTheRange()
+    {
+        var range = new PopularityConstants { Min = 0, Max = 100, Start = 10 };
+        var populations = new Dictionary<string, double> { ["big"] = 3, ["small"] = 1 };
+
+        var shift = Formulas.ShiftInProvince(1, new Dictionary<string, double>(), populations, "small", -5, range);
+
+        Assert.Equal(-1, shift.RegionalChange, Tolerance);
+        Assert.Equal(0, 1 + shift.NationalChange + shift.Deviations["small"], Tolerance);
+    }
+
+    [Fact]
     public void CampaignGain_ignores_crowd_when_crowding_is_off()
     {
         var uncrowded = Constants with { Campaign = Constants.Campaign with { Crowding = false } };

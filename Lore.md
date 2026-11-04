@@ -29,7 +29,8 @@ Only five provinces touch the sea: Ocidanten, North Arpal, Tovrerie, Silvicarie 
 - **Agrinenten:** the northern interior, the direct land bridge between central Aurelia and Anzaria.
   Gently sloping plains and north-to-south river valleys carry overland movement between the two realms.
 - **Ocidanten:** the far western reach, wedged along the border of the western nation. A large,
-  continuous interior expanse of arable farmland, western hills and vital trade routes.
+  continuous interior expanse of arable farmland, western hills and vital trade routes. Its coast holds
+  the port of Lanten and the smugglers' harbour of Saltmouth.
 - **Soralenten:** a long, narrow corridor in the northeast, bordered by Anzaria to the north and the
   neighbouring territory to the south. A frontier zone of rugged uplands, border hills and narrow river
   valleys.

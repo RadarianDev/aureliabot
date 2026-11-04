@@ -28,13 +28,17 @@ public class OpeningContentTests : IDisposable
             Assert.Fail($"{row.Id}: {ContentRules.MakeReady(Db, Config, row.Id).Message}");
     }
 
+    private void Queue(string templateId, long fireAt) =>
+        Db.QueueEvent((EventTemplate)Db.GetParsedTemplate(templateId)!, fireAt, fromSchedule: false);
+
+    private void QueueOpening() => Queue("opening_1850", 0);
+
     [Fact]
-    public void TheOpeningEvent_IsQueuedForTheStart_AndFiresAtGmStart()
+    public void NoStartingEvent_IsQueuedByItself_AndTheOpeningEventQueuedByHandFiresAtGmStart()
     {
         ImportAndReadyStartingContent();
-        var queued = Assert.Single(Db.GetQueuedEvents(), e => e.TemplateId == "opening_1850");
-        Assert.Equal(0, queued.FireAtResolution);
-        var later = Db.GetQueuedEvents().Count - 1;
+        Assert.Empty(Db.GetQueuedEvents());
+        QueueOpening();
 
         var result = Db.StartGame(Config, DateTimeOffset.UtcNow);
 
@@ -42,8 +46,7 @@ public class OpeningContentTests : IDisposable
         Assert.Equal("The King Summons the Assembly", fired.Title);
         Assert.Equal(4, Db.GetOpenIssues().Count);
         Assert.Equal(5, Db.GetBills().Count(b => b.Status == BillStatus.Available));
-        Assert.Equal(later, Db.GetQueuedEvents().Count);
-        Assert.All(Db.GetQueuedEvents(), e => Assert.True(e.FireAtResolution > 0));
+        Assert.Empty(Db.GetQueuedEvents());
         Assert.DoesNotContain(result.Report.Alerts, a => a.Contains("not"));
     }
 
@@ -51,6 +54,7 @@ public class OpeningContentTests : IDisposable
     public void TheOpeningEventSummary_ListsNewIssuesAndBills()
     {
         ImportAndReadyStartingContent();
+        QueueOpening();
         var report = Db.StartGame(Config, DateTimeOffset.UtcNow).Report!;
         var lines = EffectSummary.Lines(report.FiredEvents[0].Effects, Publisher.Names(Db, Config), Config.Constants.Display);
 
@@ -60,9 +64,16 @@ public class OpeningContentTests : IDisposable
     }
 
     [Fact]
-    public void TheScheduledEvents_OpenTheLaterIssues_AndBringInTheirBills()
+    public void TheStorylineEvents_QueuedInOrder_OpenTheLaterIssues_AndBringInTheirBills()
     {
         ImportAndReadyStartingContent();
+        QueueOpening();
+        Queue("railway_projectors", 2);
+        Queue("admirals_ball", 3);
+        Queue("passes_sketchers", 4);
+        Queue("great_stink", 5);
+        Queue("franchise_petition", 6);
+        Queue("weavers_riots", 8);
         Db.StartGame(Config, DateTimeOffset.UtcNow);
 
         for (var turn = 0; turn < 12 && Db.GetQueuedEvents().Count > 0; turn++)
@@ -86,6 +97,7 @@ public class OpeningContentTests : IDisposable
     public void ClosingAnIssue_WithdrawsItsBills()
     {
         ImportAndReadyStartingContent();
+        QueueOpening();
         Db.StartGame(Config, DateTimeOffset.UtcNow);
 
         var result = Db.ApplyEffects([new Effect("close.social_reform", null)], Config, new EffectSource("test", "test", "1"));
@@ -99,6 +111,7 @@ public class OpeningContentTests : IDisposable
     public void ABillForAClosedIssue_IsRefused()
     {
         ImportAndReadyStartingContent();
+        QueueOpening();
         Db.StartGame(Config, DateTimeOffset.UtcNow);
         Db.ApplyEffects([new Effect("close.social_reform", null)], Config, new EffectSource("test", "test", "1"));
 

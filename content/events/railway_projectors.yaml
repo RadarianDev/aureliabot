@@ -8,4 +8,3 @@ effects:
   - if: "not issue.public_works.open"
     then: { open.public_works: true }
   - { bill.railway_charter: true, bill.private_railways_act: true }
-schedule: { season: Autumn, year: 1850 }
