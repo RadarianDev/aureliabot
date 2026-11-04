@@ -53,7 +53,10 @@ public class PartySyncService
         {
             var problems = new List<string>();
             if (await GuildAsync(problems) is { } guild)
+            {
                 await SyncPartyAsync(guild, partyId, problems);
+                await OrderRolesAsync(guild, problems);
+            }
             return problems;
         }
         finally
@@ -69,14 +72,57 @@ public class PartySyncService
         {
             var problems = new List<string>();
             if (await GuildAsync(problems) is { } guild)
+            {
                 foreach (var party in _data.GetAllParties())
                     await SyncPartyAsync(guild, party.Id, problems);
+                await OrderRolesAsync(guild, problems);
+            }
             return problems;
         }
         finally
         {
             _lock.Release();
         }
+    }
+
+    public async Task<IReadOnlyList<string>> OrderRolesAsync()
+    {
+        await _lock.WaitAsync();
+        try
+        {
+            var problems = new List<string>();
+            if (await GuildAsync(problems) is { } guild)
+                await OrderRolesAsync(guild, problems);
+            return problems;
+        }
+        finally
+        {
+            _lock.Release();
+        }
+    }
+
+    public static IReadOnlyDictionary<ulong, int> RolePositionsBySeats(IReadOnlyList<(ulong RoleId, int Position, long Seats, long PartyId)> roles)
+    {
+        var slots = roles.Select(r => r.Position).OrderByDescending(p => p).ToList();
+        return roles
+            .OrderByDescending(r => r.Seats)
+            .ThenBy(r => r.PartyId)
+            .Select((r, i) => (r.RoleId, Position: slots[i]))
+            .ToDictionary(r => r.RoleId, r => r.Position);
+    }
+
+    private async Task OrderRolesAsync(SocketGuild guild, List<string> problems)
+    {
+        var roles = _data.GetAllParties()
+            .Select(p => (Party: p, Role: p.RoleId is { } id ? guild.GetRole(id) : null))
+            .Where(x => x.Role is not null)
+            .Select(x => (x.Role!.Id, x.Role.Position, _data.GetPartyMembers(x.Party.Id).Sum(f => f.Seats), x.Party.Id))
+            .ToList();
+        var targets = RolePositionsBySeats(roles);
+        if (roles.All(r => targets[r.Item1] == r.Position)) return;
+
+        await TryAsync(problems, Texts.Get("sync.party.reorderRoles"),
+            () => guild.ReorderRolesAsync(targets.Select(t => new ReorderRoleProperties(t.Key, t.Value))));
     }
 
     public async Task SyncMemberAsync(ulong userId)
@@ -86,7 +132,10 @@ public class PartySyncService
         {
             var problems = new List<string>();
             if (await GuildAsync(problems) is { } guild)
+            {
                 await SyncMemberAsync(guild, userId, problems);
+                await OrderRolesAsync(guild, problems);
+            }
         }
         finally
         {

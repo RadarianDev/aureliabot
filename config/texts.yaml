@@ -1369,6 +1369,7 @@ sync:
     addGuest: give {user} access to a foreign affairs channel
     removeGuest: take {user}'s access to a foreign affairs channel
     deleteRole: delete the role of party '{party}'
+    reorderRoles: order the party roles by seats
     noArchive: "No archive category is set, so the channels {channels} of party '{party}' were locked where they are."
     archiveChat: archive the channel <#{channel}> of party '{party}'
     noNews: "No #news channel is set, so an announcement was not posted."

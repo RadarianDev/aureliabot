@@ -8,6 +8,7 @@ public class ResolutionService
     private readonly Publisher _publisher;
     private readonly TurnTrackerService _turnTracker;
     private readonly AlertService _alerts;
+    private readonly PartySyncService _partySync;
     private readonly SemaphoreSlim _gate = new(1, 1);
 
     public ResolutionService(
@@ -16,7 +17,8 @@ public class ResolutionService
         SnapshotService snapshots,
         Publisher publisher,
         TurnTrackerService turnTracker,
-        AlertService alerts)
+        AlertService alerts,
+        PartySyncService partySync)
     {
         _data = data;
         _constants = constants;
@@ -24,6 +26,7 @@ public class ResolutionService
         _publisher = publisher;
         _turnTracker = turnTracker;
         _alerts = alerts;
+        _partySync = partySync;
     }
 
     public async Task RunAsync(CancellationToken cancellationToken)
@@ -129,6 +132,8 @@ public class ResolutionService
             Console.WriteLine($"[Resolution] Publishing failed: {ex}");
             await _alerts.PostAsync(Texts.Get("alerts.resolution.publishFailed", ("number", report.ResolutionNumber), ("error", ex.Message)));
         }
+        if (report.Election is not null)
+            await _partySync.OrderRolesAsync();
         _turnTracker.RequestCurrent();
         await _publisher.PostGmDigestAsync(report);
     }

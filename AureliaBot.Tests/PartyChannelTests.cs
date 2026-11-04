@@ -10,6 +10,17 @@ public class PartyChannelTests
     private static Faction Faction(ulong userId, long? partyId, FactionStatus status = FactionStatus.Active) =>
         new(userId, "Someone", 10, 0, partyId, "aurenten", null, status);
 
+    [Fact]
+    public void RolePositionsBySeats_PutsTheBiggestPartyOnTop_WithinTheSlotsTheRolesHold()
+    {
+        var positions = PartySyncService.RolePositionsBySeats([(100, 9, 5, 1), (200, 7, 20, 2), (300, 4, 12, 3), (400, 2, 12, 4)]);
+
+        Assert.Equal(9, positions[200]);
+        Assert.Equal(7, positions[300]);
+        Assert.Equal(4, positions[400]);
+        Assert.Equal(2, positions[100]);
+    }
+
     [Theory]
     [InlineData("Liberal Union", "lu")]
     [InlineData("Party of the People's Will", "potpw")]

@@ -102,6 +102,10 @@ The database is the truth; `PartySyncService` makes Discord match it and is idem
 every membership change, on startup and from the Repair button on the `/gm setup` checklist.
 
 - **Role:** named after the party, in its colour, hoisted. Held by exactly its active members.
+- **Role order** (`PartySyncService.RolePositionsBySeats`): party roles are ordered by the party's
+  seats (the sum of its active members' seats), most seats on top, ties by party id. The roles are
+  shuffled only among the positions they already hold, so other roles stay where the GM put them. The
+  order is re-applied after every sync and after each election.
 - **Channel names** (`PartySyncService.ChatNames`): the chat is the lowercased initials of the name's
   words (`Liberal Union` is `lu`, `Party of the People's Will` is `potpw`). Words split at whitespace,
   dashes, slashes and underscores; each contributes its first letter or digit, so apostrophes and other
