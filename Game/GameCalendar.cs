@@ -20,7 +20,9 @@ public static class GameCalendar
         Add(termStartSeason, termStartYear, constants.SeasonsPerTerm - 1);
 
     public static int SeasonLengthDays(GameState state, GameConstants constants) =>
-        state.SeasonLengthDays ?? (state.IsPreElection ? constants.PreElectionDays : 1);
+        state.SeasonLengthDays ?? (state.IsPreElection ? constants.PreElectionDays : state.IsSenateCampaign ? constants.Senate.CampaignDays : 1);
+
+    public static bool IsSenateElectionSeason(Season season, int year) => season == Season.Summer && Mod(year, 2) == 1;
 
     public static DateTimeOffset NextResolutionAt(DateTimeOffset from, GameConstants constants, int seasonLengthDays)
     {

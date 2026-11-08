@@ -21,7 +21,8 @@ opposition: { actionsPerSeason: 1, privateBillsPerYear: 1,
               unansweredQuestion: 2, questionReward: 1, condemnReward: 2, condemnPenalty: 1 }
 assembly: { noConfidenceShare: 0.1666, noConfidenceGatherResolutions: 2, noConfidenceCooldownSeasons: 4 }
 election: { baseExponent: 0.85, homeMultiplier: 1.5, programmeWeight: 0.5,
-            multiplierMin: 0.5, multiplierMax: 1.5, crowding: true }
+            multiplierMin: 0.5, multiplierMax: 1.5, crowding: true, threshold: 0.08 }
+senate: { campaignDays: 2, actionsPerCampaignDay: 4, maxHomeFactions: 4, overrideShare: 0.6 }
 economy: { start: 1000, growth: 0.01 }
 taxRate: 0.20
 reserve: { start: 100, interest: 0.03 }

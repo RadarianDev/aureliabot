@@ -42,7 +42,7 @@ public class CampaignModule : InteractionModuleBase<SocketInteractionContext>
     public static string Resolves(GameState state) =>
         Texts.Get("campaign.resolves", ("when", Display.NextResolution(state)));
 
-    public static int ActionsAllowed(GameConstants constants, GameState state) => constants.Campaign.ActionsAllowed(state.IsPreElection);
+    public static int ActionsAllowed(GameConstants constants, GameState state) => constants.ActionsAllowed(state);
 
     [SlashCommand("campaign", "Campaign on an issue in one province")]
     [RequireFaction]

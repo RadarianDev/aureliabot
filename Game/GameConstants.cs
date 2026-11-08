@@ -30,7 +30,6 @@ public sealed record CampaignConstants
     public double Baseline { get; init; }
     public int ActionsPerTurn { get; init; }
     public int ActionsPerPreElectionDay { get; init; }
-    public int ActionsAllowed(bool preElection) => preElection ? ActionsPerPreElectionDay : ActionsPerTurn;
     public bool Crowding { get; init; }
 }
 
@@ -101,6 +100,15 @@ public sealed record ElectionConstants
     public double MultiplierMin { get; init; }
     public double MultiplierMax { get; init; }
     public bool Crowding { get; init; }
+    public double Threshold { get; init; }
+}
+
+public sealed record SenateConstants
+{
+    public int CampaignDays { get; init; }
+    public int ActionsPerCampaignDay { get; init; }
+    public int MaxHomeFactions { get; init; }
+    public double OverrideShare { get; init; }
 }
 
 public sealed record EconomyConstants
@@ -202,6 +210,7 @@ public sealed record GameConstants
     public OppositionConstants Opposition { get; init; } = new();
     public AssemblyConstants Assembly { get; init; } = new();
     public ElectionConstants Election { get; init; } = new();
+    public SenateConstants Senate { get; init; } = new();
     public EconomyConstants Economy { get; init; } = new();
     public double TaxRate { get; init; }
     public ReserveConstants Reserve { get; init; } = new();
@@ -217,6 +226,11 @@ public sealed record GameConstants
 
     public UnitConstants UnitsOf(UnitType type) => type == UnitType.Division ? Division : Gendarmerie;
 
+    public int ActionsAllowed(GameState state) =>
+        state.IsPreElection ? Campaign.ActionsPerPreElectionDay
+        : state.IsSenateCampaign ? Senate.ActionsPerCampaignDay
+        : Campaign.ActionsPerTurn;
+
     public TimeOnly ResolutionTimeOfDay => TimeOnly.ParseExact(ResolutionTime, "HH:mm", CultureInfo.InvariantCulture);
 
     public TimeZoneInfo Zone => TimeZoneInfo.FindSystemTimeZoneById(TimeZone);
@@ -227,6 +241,7 @@ public sealed record ProvinceDefinition
     public string Id { get; init; } = "";
     public string Name { get; init; } = "";
     public double Population { get; init; }
+    public int SenateSeats { get; init; }
     public string MapKey { get; init; } = "";
     public string Description { get; init; } = "";
     public List<string> Conditions { get; init; } = [];
@@ -378,6 +393,11 @@ public sealed class ConstantsStore
         var errors = new List<string>();
 
         if (c.Seats <= 0) errors.Add("seats must be positive.");
+        if (c.Election.Threshold is < 0 or >= 1) errors.Add("election.threshold must be at least 0 and below 1.");
+        if (c.Senate.CampaignDays < 1) errors.Add("senate.campaignDays must be at least 1.");
+        if (c.Senate.ActionsPerCampaignDay < 1) errors.Add("senate.actionsPerCampaignDay must be at least 1.");
+        if (c.Senate.MaxHomeFactions < 1) errors.Add("senate.maxHomeFactions must be at least 1.");
+        if (c.Senate.OverrideShare is <= 0.5 or > 1) errors.Add("senate.overrideShare must be above 0.5 and at most 1.");
         if (string.IsNullOrWhiteSpace(c.Display.UpEmoji) || string.IsNullOrWhiteSpace(c.Display.DownEmoji))
             errors.Add("display.upEmoji and display.downEmoji are required.");
         if (!TimeOnly.TryParseExact(c.ResolutionTime, "HH:mm", CultureInfo.InvariantCulture, DateTimeStyles.None, out _))

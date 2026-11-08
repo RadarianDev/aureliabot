@@ -31,6 +31,7 @@ public class TurnTrackerService
     {
         var name = state.Label;
         if (state.IsPreElection) name = Texts.Get("news.turnTracker.preElection", ("name", name));
+        else if (state.IsSenateCampaign) name = Texts.Get("news.turnTracker.senateCampaign", ("name", name));
         if (state.Paused) name = Texts.Get("news.turnTracker.paused", ("name", name));
         return name;
     }

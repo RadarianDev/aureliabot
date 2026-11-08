@@ -201,6 +201,45 @@ public partial class DatabaseService
         return map;
     }
 
+    public Dictionary<ulong, VoteChoice> GetPartyFollowers(VoteSubject subject, long subjectId)
+    {
+        using var conn = Open();
+        return PartyFollowersTx(conn, null, subject, subjectId);
+    }
+
+    private static Dictionary<ulong, VoteChoice> PartyFollowersTx(SqliteConnection conn, SqliteTransaction? tx, VoteSubject subject, long subjectId)
+    {
+        if (subject == VoteSubject.NoConfidence) return new Dictionary<ulong, VoteChoice>();
+
+        var partyLines = new Dictionary<long, VoteChoice>();
+        using (var cmd = conn.CreateCommand())
+        {
+            cmd.Transaction = tx;
+            cmd.CommandText = @"
+                SELECT f.party_id, v.choice FROM votes v JOIN factions f ON f.user_id = v.faction_id
+                WHERE v.subject_type = $type AND v.subject_id = $id AND f.status = 'Active' AND f.party_id IS NOT NULL AND v.choice <> 'Abstain'
+                ORDER BY v.id;";
+            cmd.Parameters.AddWithValue("$type", subject.ToString());
+            cmd.Parameters.AddWithValue("$id", subjectId);
+            using var r = cmd.ExecuteReader();
+            while (r.Read())
+                partyLines.TryAdd(r.GetInt64(0), Enum.Parse<VoteChoice>(r.GetString(1)));
+        }
+
+        var voted = GetVotesTx(conn, tx, subject, subjectId);
+        return QueryFactionsTx(conn, tx, "status = 'Active' AND party_id IS NOT NULL")
+            .Where(f => !voted.ContainsKey(f.UserId) && partyLines.ContainsKey(f.PartyId!.Value))
+            .ToDictionary(f => f.UserId, f => partyLines[f.PartyId!.Value]);
+    }
+
+    private static Dictionary<ulong, VoteChoice> CountedVotesTx(SqliteConnection conn, SqliteTransaction? tx, VoteSubject subject, long subjectId)
+    {
+        var counted = GetVotesTx(conn, tx, subject, subjectId);
+        foreach (var (factionId, choice) in PartyFollowersTx(conn, tx, subject, subjectId))
+            counted[factionId] = choice;
+        return counted;
+    }
+
     private static Dictionary<ulong, int> VotingSeatsTx(SqliteConnection conn, SqliteTransaction? tx) =>
         QueryFactionsTx(conn, tx, "status = 'Active' AND seats > 0").ToDictionary(f => f.UserId, f => (int)f.Seats);
 

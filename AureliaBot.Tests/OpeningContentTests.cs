@@ -86,10 +86,11 @@ public class OpeningContentTests : IDisposable
         Assert.Equal(6, Db.GetOpenIssues().Count);
         var introduced = Db.GetBills().Select(b => b.Id).ToHashSet();
         var chained = new[] { "free_ports_act" };
+        var releasedByTheGm = new[] { "senate_bill" };
         foreach (var bill in Directory.EnumerateFiles(Path.Combine(AppContext.BaseDirectory, "content", "bills"), "*.yaml"))
         {
             var id = Path.GetFileNameWithoutExtension(bill);
-            Assert.True(introduced.Contains(id) || chained.Contains(id), $"{id} is never introduced");
+            Assert.True(introduced.Contains(id) || chained.Contains(id) || releasedByTheGm.Contains(id), $"{id} is never introduced");
         }
     }
 

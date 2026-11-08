@@ -59,10 +59,11 @@ Implementation spec for the Discord bot that runs Aurelian Assembly. Read with [
 - **Resolution:** the full daily resolution in section 7 that ends a turn. Every deadline counts in resolutions. The campaign days of a pre-election (below) are not resolutions.
 - **Calendar:** the bot stores the season and the year, and every post is dated, for example "Summer 1851".
 - **Start:** the GM opens the game with `/gm start` (section 6). The first turn, **Spring 1850**, is a founding pre-election: it runs like any pre-election, ending in the election that seats the first Assembly from Summer 1850. Before the start, the founding parties form and the opening event is queued for Spring 1850. `/gm start` fires it at once, so the first issues are open from the first day, and parties write their programmes as manifestos throughout the founding pre-election.
-- **Term:** a term runs from one election to the next, normally **16 seasons**. Its last season is the **pre-election period**, which lasts **3 real days**; it is the only turn longer than one day. The first two days each end with a **campaign day** at 08:00 (section 7), and the third ends with the full resolution, which runs the election and begins the next term.
+- **Term:** a term runs from one election to the next, normally **16 seasons**. Its last season is the **pre-election period**, which lasts **3 real days**. The first two days each end with a **campaign day** at 08:00 (section 7), and the third ends with the full resolution, which runs the election and begins the next term.
   - First term: Summer 1850 to Spring 1854, with the pre-election in Spring 1854.
   - **Snap election:** a passed no-confidence motion cuts the term short. The season that the same resolution opens becomes the pre-election, and the new term runs 16 seasons from the election after it.
   - The season and year of the next pre-election are stored in the game state, set when a term begins and moved by a snap election.
+- **Senate campaign turn:** once `GameState.senateEstablished` is set (section 8), every Summer of an odd-numbered year lasts `senate.campaignDays` (2) real days. The first day ends with a campaign day at 08:00, and the second ends with the full resolution, which runs the Senate election (section 8). It is derived from the calendar, so nothing is stored and snap elections don't move it. If the same turn is also a pre-election, the pre-election's length and action counts apply, and both elections run at its end.
 - **Fiscal year:** the year's Budget is computed at the start of each Winter. The Treasury allocates it during Winter, and the allocation takes effect at the Winter resolution, which opens Spring. At game start the bot runs the Winter budget step once with the default percentages, so the purses are funded from Spring 1850.
 - **Deadlines:** anything with a deadline (crises, questions, votes) is due at a resolution.
 
@@ -84,9 +85,9 @@ These are the main tables. Ids are short strings (slugs) for anything defined in
 
 | Entity | Key fields |
 | --- | --- |
-| GameState | season, year, termNumber, termStartSeason, preElectionSeason, preElectionYear, resolutionNumber, nextResolutionAt, seasonLengthDays (null uses the default), paused, seats, taxRate, economy, favour, favourBaseline, lastNavyShare, threat, reserve, rngSeed |
+| GameState | season, year, termNumber, termStartSeason, preElectionSeason, preElectionYear, resolutionNumber, nextResolutionAt, seasonLengthDays (null uses the default), paused, seats, senateEstablished, taxRate, economy, favour, favourBaseline, lastNavyShare, threat, reserve, rngSeed |
 | Channel | role (News, Dashboard, Assembly, CampaignLog, PartyRegistry, Cabinet, Gm, FactionCategory, PartyCategory, ArchiveCategory, TurnTracker, GmRole, CabinetRole), discordId (a channel, category or role id) |
-| Faction | id (the player's Discord user id), characterName, popularity, homeProvinceId, partyId (null if independent), seats, privateChannelId, status (Active, Retired) |
+| Faction | id (the player's Discord user id), characterName, popularity, homeProvinceId, partyId (null if independent), seats, senateSeats, privateChannelId, status (Active, Retired) |
 | Party | id, name, colour, emojiId, createdSeason, roleId, channelId, programmeMessageUrl |
 | PartyJoinRequest | id, factionId, partyId, requestedAt, status (Pending, Accepted, Declined, Dropped) |
 | PartyJoinAnswer | requestId, factionId, accept |
@@ -98,7 +99,7 @@ These are the main tables. Ids are short strings (slugs) for anything defined in
 | Crisis | id, templateId, eventId, title, ministry, provinceId, issueId, answers, complication, default, postedAt, dueResolution, status, chosenAnswer, responseText |
 | Answer (inside Crisis) | number (its position in the list, from 1), label, lean (For, Against, Neutral), price, text, effects |
 | Bill | id, templateId, issueId, title, motion, lean (For, Against), passText, passEffects, status (Available, Voting, Cooldown, Passed, Withdrawn), cooldownUntil |
-| Reading | id, billId, sponsorFactionId, kind (Government, Private), proposedAt, opensResolution, dueResolution, status (Scheduled, Open, Passed, Rejected, Cancelled). One reading is one vote on a bill; a bill rejected and proposed again gets a new reading |
+| Reading | id, billId, sponsorFactionId, kind (Government, Private, Override), proposedAt, opensResolution, dueResolution, status (Scheduled, Open, Passed, Rejected, Cancelled, ReturnedBySenate). One reading is one vote on a bill; a bill rejected and proposed again gets a new reading |
 | NoConfidence | id, tablerFactionId, tabledAt, gatherUntilResolution, dueResolution, status (Gathering, Voting, Passed, Failed, Lapsed, Cancelled) |
 | NoConfidenceCosigner | noConfidenceId, factionId |
 | Vote | id, subjectType (Reading, NoConfidence, Cabinet), subjectId, factionId, choice (Yes, No, Abstain), castAt |
@@ -116,6 +117,7 @@ These are the main tables. Ids are short strings (slugs) for anything defined in
 | Condemnation | id, factionId, crisisId, side (For, Against), madeAt |
 | StanceLog | factionId, issueId, stance, season, source (Programme, Campaign, Vote; a vote is logged when it is counted), offProgramme |
 | ProvinceResult | termNumber, provinceId, partyId, strength, seats |
+| SenateResult | resolutionNumber, provinceId, partyId, strength, contestedSeats, boroughSeats |
 | Snapshot | id, resolutionAt, file path to a copy of the database |
 | LogEntry | id, at, kind, source, payload, publicFlag |
 
@@ -596,10 +598,20 @@ The responsible minister is whoever holds the ministry at the deadline, or the C
 **Votes**
 
 - Votes are weighted by each faction's seats at the time of the count. Only active factions with seats vote.
+- **Following the party:** at the count, a party member who cast no ballot follows the party's first Yes or No on that vote, by the order ballots were first cast among its active members. It applies to readings (in both chambers) and cabinet approval, never to no confidence. Changing a ballot keeps its place in the order. An explicit Abstain is a member's own ballot, but never sets the party's line. Nothing is written until the count, and followers are published separately from those who voted. Following never logs a stance. While a vote is open, `/me` tells a member who has not voted how they would follow, which is the one thing a vote's secrecy lets out, and only to that party's members. When it is counted, each follower with seats in a voting chamber is told in their private channel how their seats went.
 - Bills and cabinet approval pass with a majority of Yes and No votes. Abstentions don't count, and a tie fails.
 - No confidence passes when Yes votes hold more than half of all filled seats.
 - Votes are secret until the count. Nothing about a vote is shown while it is open: no running tally and no list of voters. When it is counted, the totals and each faction's vote are published.
 - When a reading is counted, a Yes vote on the bill logs the bill's lean as the voter's stance on its issue, and a No vote logs the opposite: Yes on a *For* bill is For, Yes on an *Against* bill is Against. Nothing is logged while the vote is open, so a vote cannot be read from the stance log early.
+
+**The Senate's part in a bill**
+
+- Each faction casts one ballot on a reading. It counts in the Assembly with the faction's `seats` and in the Senate with its `senateSeats`, so a faction holding seats in either chamber can vote.
+- Assembly No (Yes not above No, abstentions aside): the bill is Rejected, whatever the Senate voted.
+- Assembly Yes and Senate Yes: the bill is Passed.
+- Assembly Yes and Senate No (a tie is a No): the reading becomes ReturnedBySenate, and the same resolution opens an **Override** reading, due at the next resolution, voted by the Assembly alone with a fresh ballot. It passes when Yes holds at least `senate.overrideShare` (three-fifths) of Yes and No votes; otherwise the bill is Rejected. The bill stays before the Assembly meanwhile, for the rule of one bill per issue. An override is cancelled like any open reading if a pre-election opens.
+- While no faction holds a Senate seat, readings are decided by the Assembly alone.
+- Cabinet and no-confidence votes ignore `senateSeats`.
 
 **Laws**, where L is the bill's lean, +1 for *For* and −1 for *Against*
 
@@ -738,7 +750,7 @@ A party has **two or more** factions. Only the GM founds parties (`/gm party cre
 
 | Command | Who | When | Effect |
 | --- | --- | --- | --- |
-| `/party apply party` | An independent faction | Pre-election only | Applies to join. The application is posted in the party chat with Accept and Decline buttons, and each member answers once (an answer can be changed). The faction joins as soon as a majority of the members accept, and the application is declined as soon as a majority decline. Applications still pending when the election runs are dropped. |
+| `/party apply party` | An independent faction | Pre-election or Senate campaign turn | Applies to join. The application is posted in the party chat with Accept and Decline buttons, and each member answers once (an answer can be changed). The faction joins as soon as a majority of the members accept, and the application is declined as soon as a majority decline. Applications still pending when either election runs are dropped. |
 | `/party leave` | A member | Any time | The faction becomes independent and keeps its seats. |
 | `/party foreign add user` | A member | Any time | Gives someone outside the party access to its foreign affairs channel: they can read, write, attach and react there. Bots and the party's own members are refused. The channel is told who was let in and by whom. |
 | `/party foreign remove user` | A member | Any time | Takes that access away again, and tells the channel. |
@@ -852,7 +864,7 @@ The GM's commands are split in two groups: `/gm` runs the game, and `/content` (
 | `/gm party move faction [party]` | Moves a faction into a party, or with no party makes it independent, at any time. A GM override of the pre-election joining rule and of the members' vote. |
 | `/gm party programme party message` | Records the linked message as the party's programme (see Party programmes). |
 | `/gm party delete party` | Deletes a party. Its members become independent, its role is deleted and its chat and foreign affairs channel are archived. |
-| `/gm faction create player character home` | Registers a player as a faction: keyed on their Discord account, at starting popularity, independent, with a private channel. The home province is the character's safe borough (section 8); autocomplete shows each province's description. It holds no seats until the next election. Announced in #news as the character entering politics, and the player is greeted in their private channel. Refused if the player already has a faction. |
+| `/gm faction create player character home` | Registers a player as a faction: keyed on their Discord account, at starting popularity, independent, with a private channel. The home province is the character's safe borough (section 8); autocomplete shows each province's description. It holds no seats until the next election. Announced in #news as the character entering politics, and the player is greeted in their private channel. Refused if the player already has a faction, or if `senate.maxHomeFactions` active factions already have that home province. |
 | `/gm faction edit faction [character] [home]` | Edits a faction. Players can't change their character or home province; only the GM can. |
 | `/gm reward faction amount reason` | Rewards excellent roleplay (a propaganda poster, a manifesto, a speech) with popularity, applied at once. Posted to #news as a royal commendation naming the faction and the reason, so players see what earns favour. A negative amount is refused; use `/gm apply` for penalties. |
 | `/gm faction retire faction` | Retires a faction: it leaves its party and any ministry, its pending actions are dropped, and its seats stay vacant until the next election. |
@@ -949,7 +961,7 @@ At 08:00 (or when the GM triggers it), the bot first **snapshots** the database 
    - pay each project's spending, add its progress after graft, and apply any that finish, with their bonus if they are on time.
 6. **Seasonal changes:** salience decay, discontent drift, Favour drift, then popularity drift.
 7. **Fiscal steps,** only at the start of Winter or Spring (section 5).
-8. **Election,** only at the end of a pre-election: cancel open votes and drop pending join applications (section 5), then run section 8.
+8. **Election,** only at the end of a pre-election: cancel open votes and drop pending join applications (section 5), then run section 8. At the end of a Senate campaign turn, drop pending join applications and run the Senate election (section 8), after the Assembly election if both are due. A Senate election cancels no votes.
 9. **Advance** the season, and the year after Winter. Lift cooldowns that have expired, returning those bills to Available. Increment `resolutionNumber` and schedule the next resolution.
 10. **Events:** the new turn starts, so every queued event whose `fireAtResolution` has come fires in the order it was queued, and its effects apply. Issues it opens are open from this turn, and crises it posts are due at the next resolution, so a minister always has the whole turn to answer. Then open the bills scheduled for this turn, due at the next resolution, or cancel them if this turn is a pre-election (section 5).
 11. **Alerts** to the GM (section 10).
@@ -957,14 +969,14 @@ At 08:00 (or when the GM triggers it), the bot first **snapshots** the database 
 
 Actions submitted after the resolution has started count towards the next one.
 
-**Campaign days.** On the first two days of a pre-election, 08:00 runs a shorter step instead: snapshot, campaign actions (step 4), and posting, as **dispatches from the hustings** in #news. Nothing else changes, no events fire, and deadlines don't count it.
+**Campaign days.** On the first two days of a pre-election, and the first day of a Senate campaign turn, 08:00 runs a shorter step instead: snapshot, campaign actions (step 4), and posting, as **dispatches from the hustings** in #news. Nothing else changes, no events fire, and deadlines don't count it.
 
 ## 8. Election
 
 Every party with at least one active member stands. Independents and retired factions win no seats.
 
-1. **Safe boroughs:** S is the Assembly size (`GameState.seats`, 180 unless reformed), and F is the number of factions in standing parties. Each of them holds a safe borough in its home province and is guaranteed 1 seat, which leaves `S − F` seats.
-2. **Apportionment:** split the remaining seats among the ten provinces by population, using the largest remainder.
+1. **Size and safe boroughs:** S is the Assembly size (`GameState.seats`, 180 unless reformed), and F is the number of factions in standing parties. Until the Senate is established, each of them holds a safe borough in its home province and is guaranteed 1 seat, which leaves `S − F` contested seats. Once it is established, all S seats are contested and safe boroughs belong to the Senate.
+2. **Apportionment:** split the contested seats among the ten provinces by population, using the largest remainder.
 3. **Base strength** of party P in province p:
 
    `base(P, p) = (sum of members' popularity in p, multiplied by homeMultiplier for members whose home province is p) ^ baseExponent`
@@ -973,10 +985,10 @@ Every party with at least one active member stands. Independents and retired fac
    - `n_i` is the number of parties, P included, whose stance on i has the same sign as P's; Silent stances and missing stances are left out;
    - `score(P, p) = Σ w_i × g(stance_Pi, o(i, p)) / √n_i`. If crowding is turned off in config, drop the √n\_i.
 5. **Strength:** `strength(P, p) = base × clamp(1 + programmeWeight × score, multiplierMin, multiplierMax)`.
-6. **Provincial seats:** D'Hondt on strengths, in each province. A tie goes to the party with the higher total popularity, then to the older party.
-7. **Faction seats:** add up each party's seats from every province, split them among its members by popularity using the largest remainder (equally if the members' total popularity is 0), then add each member's safe borough seat.
+6. **Threshold and provincial seats:** a party's **national vote** is its share of the strength in each province, averaged over the provinces by population (a province where no party has strength is left out). Once the Senate is established, only parties with at least `election.threshold` (8%) of the national vote take part in the seat count; if none does, the threshold is ignored. D'Hondt on strengths, in each province. A tie goes to the party with the higher total popularity, then to the older party.
+7. **Faction seats:** add up each party's seats from every province, split them among its members by popularity using the largest remainder (equally if the members' total popularity is 0), then add each member's safe borough seat while the Assembly has them. Without one, a member can win no seats.
 8. **Store** each party's strength and seats in each province as ProvinceResult rows for the new term.
-9. **Post** the results with the rest of the resolution (section 7, step 12), never before the transaction commits: seats by party and province, the national vote share (each party's summed strength divided by the total), a seat chart and the province map. The post closes with a royal proclamation summoning the new Assembly.
+9. **Post** the results with the rest of the resolution (section 7, step 12), never before the transaction commits: seats by party and province, the national vote share (step 6, naming any party below the threshold), a seat chart and the province map. The post closes with a royal proclamation summoning the new Assembly.
 
 **Seat chart:** the hemicycle (`ArchGenerator`), with parties ordered by seats, largest first, and each in its party colour.
 
@@ -984,7 +996,7 @@ Every party with at least one active member stands. Independents and retired fac
 
 **Province map**
 
-Each province is coloured after the party holding the most seats there, safe boroughs included. A tie goes to the party with the higher strength (its vote in the province), then the D'Hondt tie-break. A province where no party has any strength keeps the map's original fill.
+Each province is coloured after the party holding the most seats there, any safe boroughs included. A tie goes to the party with the higher strength (its vote in the province), then the D'Hondt tie-break. A province where no party has any strength keeps the map's original fill.
 
 - **Images:** three 849×504 PNGs in `assets/map/`, aligned pixel for pixel and copied to the build output.
   - `base.png` is the land, sea and borders, with no text. Every Aurelian province is filled with one grey, `#808080`, and Anzaria with a darker `#404040`. Anzaria is not in the index, so it never changes colour. The borders' blur and shadows lie outside the provinces.
@@ -1016,6 +1028,22 @@ Each province is coloured after the party holding the most seats there, safe bor
 After the election the next term begins. The outgoing cabinet stays as caretaker until the GM appoints a Chancellor and a new cabinet is approved (section 5).
 
 `/gm peek mode:election` runs this algorithm on the current state and shows the result only to the GM. It is meant for balancing and testing.
+
+### Senate election
+
+Held at the end of every Senate campaign turn (section 2). All 89 seats are replaced at once, for a two-year term. The Senate starts switched off: the `senate` effect sets `GameState.senateEstablished`, and the Senate Bill (`content/bills/senate_bill.yaml`) carries that effect. Until the first election after that, no faction holds a Senate seat. A bill that establishes the Senate at the end of a campaign-season turn does not trigger an election that turn; the Senate waits for the next Senate campaign.
+
+1. **Seats:** each province has its `senateSeats` from `provinces.yaml`: 9, and 8 for Provencie Gares.
+2. **Safe boroughs:** every faction in a standing party holds one in its home province. B is the number of them in province p, which leaves `max(0, senateSeats − B)` contested seats. If B exceeds the province's seats, every borough is still seated and the GM is alerted.
+3. **Strength:** as in steps 3 to 5 of the Assembly election.
+4. **Provincial seats:** D'Hondt on strengths over the contested seats, in each province, with the same tie-break. There is no threshold.
+5. **Faction seats:** add up each party's contested seats from every province, split them among its members as in step 7, then add each member's safe borough. Every other faction's `senateSeats` becomes 0.
+6. **Store** a SenateResult row per party and province.
+7. **Post** with the rest of the resolution: seats by party and province, a seat chart and a province map from these results. `/map` stays on the latest Assembly result.
+
+A counted bill's result post shows both chambers' totals and a vote chart for each.
+
+`/gm peek mode:senate` runs this algorithm the same way, privately.
 
 ## 9. Visibility and channels
 
@@ -1111,17 +1139,18 @@ The bot never acts on an alert itself. The GM decides what happens.
 Build and test in this order. Each stage should be playable before the next begins.
 
 1. **Foundation:** the schema in `InitializeDatabase()`, config loading, channel setup, the turn tracker and the resolution poller with scheduling, snapshots and pause. Include a test command that advances the season.
-2. **Factions and parties:** GM faction registration and private channels, `/gm setup`, GM party management (create, move, edit, delete), party roles and chats with sync, joining through `/party apply` (pre-election only, by majority) and leaving, dissolution, programmes recorded by the GM, `/gm reward`, manifestos and flip penalties, `/info` (for factions and parties first), `/me` and `/help` (first versions, grown each stage), and the dashboard.
+2. **Factions and parties:** GM faction registration and private channels, `/gm setup`, GM party management (create, move, edit, delete), party roles and chats with sync, joining through `/party apply` (pre-election or Senate campaign turn, by majority) and leaving, dissolution, programmes recorded by the GM, `/gm reward`, manifestos and flip penalties, `/info` (for factions and parties first), `/me` and `/help` (first versions, grown each stage), and the dashboard.
 3. **Issues, events and campaigning:** `/content import`, `edit`, `preview`, `ready`, `list` and `remove` for every kind of template, the event queue with delays, bills made available by effects, province conditions, `/info` for provinces, issues and bills, events firing at the start of a turn with effect summaries, `/gm start` opening the founding pre-election and firing the opening event, `/gm apply`, campaign (regional, with a salience baseline and crowding), attack (regional) and poll (in words, for every province), salience, opinion, popularity drift and regional spread.
 4. **Elections:** the full algorithm in section 8, with unit tests built around the worked example below, the seat chart, the province map and the GM preview.
 5. **Government:** the cabinet lifecycle with resignation, royal proclamations, votes with buttons, secret until counted, `/bill propose` (the Chancellor's agenda and private bills) with readings scheduled for the next turn, laws with leans and per-bill cooldowns, `/opposition` actions (question, condemnation or private bill), questions, vacant ministries passing to the Chancellor, `/noconfidence` from any non-cabinet faction with co-signing buttons and lapsing, and snap elections.
 6. **Crises:** `/info` for crises, posting through events, responses with two or more answers (including Neutral), prices from purses, complications (with the standard fallback), defaults and condemnations.
 7. **Budget and standing work:** the fiscal year with the unrest drag, purses and upkeep, the Navy contribution and Favour, the reserve, divisions and gendarmerie (one unit model) with training lost to unpaid upkeep, crackdowns, and projects: started by effects or by ministers, spending with graft, bonus deadlines, `/ministry project`, `/ministry fund` and `/info` for projects.
 8. **GM tools:** `/content export`, `/gm agenda`, alerts, reminders, battle and riot rolls, set, undo with resubmit buttons, and peek.
+9. **Senate:** the Assembly threshold and the move of safe boroughs first, then the Senate campaign turn and election with its posts, then the Senate's vote on bills and the override.
 
 **Cut:** honours, loans, informants (on factions or provinces) and unit equipment were in earlier drafts. None of them is in the Human Rules: informants duplicated polls, equipment duplicated training, and each added a command to learn.
 
-**Test case for the election code.** With crowding off and a single national "province" (both test-only settings), 30 seats in total (6 of them reserved, one per faction), three parties whose faction popularities are {20, 15, 10}, {30, 10} and {12}, and two issues (opinion +0.3 at salience 4, and +0.4 at salience 3):
+**Test case for the Senate seat count.** With crowding off and a single national "province" (both test-only settings), 30 seats in total (6 of them safe boroughs, one per faction), three parties whose faction popularities are {20, 15, 10}, {30, 10} and {12}, and two issues (opinion +0.3 at salience 4, and +0.4 at salience 3):
 
 - Stances: party A is Strongly For / For, party B is Against / Silent, party C is For / Strongly For.
 - Expected seats: A 12, B 8, C 4 from D'Hondt over the remaining 24 seats. With the reserved seats added: A 15 (split 6, 5, 4), B 10 (split 7, 3), C 5.

@@ -143,10 +143,13 @@ public class GovernmentPublisher
     private IEnumerable<string> CountedVoteLines(Cabinet cabinet)
     {
         var votes = _data.GetVotes(VoteSubject.Cabinet, cabinet.Id);
-        var tally = VoteCounting.Tally(votes, _data.GetVotingSeats());
+        var followers = _data.GetPartyFollowers(VoteSubject.Cabinet, cabinet.Id);
+        var tally = VoteCounting.Tally(votes.Concat(followers).ToDictionary(), _data.GetVotingSeats());
         yield return Texts.Get("cabinet.post.tally", ("yes", tally.YesSeats), ("no", tally.NoSeats), ("abstain", tally.AbstainSeats));
         if (votes.Count > 0)
             yield return Texts.Get("cabinet.post.voters", ("votes", string.Join(", ", votes.Select(v => Texts.Get("cabinet.post.voter", ("faction", Who(v.Key)), ("choice", ChoiceName(v.Value)))))));
+        if (followers.Count > 0)
+            yield return Texts.Get("cabinet.post.followers", ("votes", string.Join(", ", followers.Select(v => Texts.Get("cabinet.post.voter", ("faction", Who(v.Key)), ("choice", ChoiceName(v.Value)))))));
     }
 
     public string CabinetLines(Cabinet cabinet) =>

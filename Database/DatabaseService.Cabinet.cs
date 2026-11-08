@@ -333,8 +333,13 @@ public partial class DatabaseService
         var due = QueryCabinetsTx(conn, tx, "kind = 'Nominated' AND status = 'Voting' AND due_resolution <= $resolution", ("$resolution", resolution));
         foreach (var nomination in due)
         {
-            var tally = counter.Tally(GetVotesTx(conn, tx, VoteSubject.Cabinet, nomination.Id), VotingSeatsTx(conn, tx));
+            var seats = VotingSeatsTx(conn, tx);
+            var tally = counter.Tally(CountedVotesTx(conn, tx, VoteSubject.Cabinet, nomination.Id), seats);
             var approved = counter.Passes(tally);
+            foreach (var (factionId, choice) in PartyFollowersTx(conn, tx, VoteSubject.Cabinet, nomination.Id))
+                if (seats.ContainsKey(factionId))
+                    report.AddPrivate(factionId, Texts.Get("vote.followedCabinet",
+                        ("chancellor", nomination.ChancellorId is { } nominator ? $"<@{nominator}>" : Texts.Get("cabinet.vacant")), ("choice", AssemblyPublisher.ChoiceName(choice))));
             if (approved)
             {
                 Exec(conn, tx, "UPDATE cabinets SET status = 'Replaced' WHERE kind = 'Sitting' AND status IN ('Approved', 'Caretaker');");

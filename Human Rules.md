@@ -7,9 +7,10 @@
 - A **turn** lasts one real day and is one season (Spring, Summer, Autumn, Winter). Four turns make a **year**.
 - Every turn opens with the news: new **events**, the outcomes of last turn's **crises** and actions, and what the Assembly decided.
 - The **pre-election turn** lasts three days and ends in an **election**. A term is four years.
+- Once the Senate exists, the **Senate campaign turn**, the Summer of every odd-numbered year, lasts two days and ends in a **Senate election**.
 - The game opens with a pre-election turn in Spring 1850. The first issues are announced at the start, so parties can write their programmes before the first election.
 ## Factions
-- Each player is a **faction**, led by a **character** with a **home province**. The GM registers every player, with the character and home province agreed between them.
+- Each player is a **faction**, led by a **character** with a **home province**. The GM registers every player, with the character and home province agreed between them. At most four factions can share a home province.
 - A faction has **popularity**, and **seats** once elected. Seats belong to the faction, not its party.
 - Popularity is kept **per province**. Campaigns and attacks change it only where they happen; everything else (crises, laws, rewards, penalties) moves it everywhere at once. A faction's national popularity is the average of its provinces, each counting by its population.
 - A lead or a loss in one province spreads out: every season each province moves part of the way back towards the faction's national popularity.
@@ -17,7 +18,7 @@
 - The GM may reward excellent roleplay, such as a propaganda poster, a well-written manifesto or a stirring speech, with popularity. Rewards are announced publicly.
 ## Parties
 - **Parties** are founded by the GM, at the request of two or more factions.
-- A faction can apply to join a party only during the pre-election turn, and joins with the agreement of a majority of the party's factions.
+- A faction can apply to join a party only during a pre-election or Senate campaign turn, and joins with the agreement of a majority of the party's factions.
 - Each party otherwise governs itself by its own constitution, written by its members. How it decides is roleplay.
 - A faction can leave at any time and keeps its seats. A party left with one faction dissolves.
 - Only parties stand in elections. A faction outside a party is an **independent**.
@@ -44,7 +45,7 @@
 - Answers cost money from the minister's ministry. If it can't pay, the answer still happens, with a *complication*.
 - No answer lets the crisis run its course, and the minister loses popularity.
 ## Actions
-- Each turn, a faction takes two **actions** (five per day in the pre-election turn). Campaigns and attacks happen in one **province**, your home province unless you name another:
+- Each turn, a faction takes two **actions** (five per day in the pre-election turn, four per day in a Senate campaign turn). Campaigns and attacks happen in one **province**, your home province unless you name another:
 	- **Campaign** on an issue: a politician talking about an issue people care about always wins some popularity there, the more the issue matters. On top of that you gain if the province agrees with you, and lose if it doesn't.
 	- **Attack** a rival's stance: if the province disagrees with them, they lose popularity there. Otherwise it backfires, and you lose some there.
 	- **Poll** an issue: the mood across the kingdom and in every province.
@@ -64,18 +65,28 @@
 - The **chancellor** sets the government's agenda: each turn they may pick one **bill** to put before the Assembly. With no chancellor, the government proposes no bills. An opposition faction can propose one bill a year as its opposition action.
 - A bill proposed during a turn is voted on during the next turn, and counted when that turn ends. Only one bill per issue can be before the Assembly at a time.
 - Cabinet and no-confidence votes stay open until the end of the next turn. Each faction votes all its seats one way, and a bill passes when more seats vote for it than against.
-- Votes are **secret** until the count: nobody sees how many seats stand for or against, or who voted how, until the vote is resolved. Then the totals and each faction's vote are published.
+- On bills and cabinet votes, a party member who doesn't vote follows the first of the party's factions to vote Yes or No. Voting yourself, even to abstain, always keeps your own vote. Following a vote takes no stance. A vote of no confidence is never followed.
+- Votes are **secret** until the count: nobody sees how many seats stand for or against, or who voted how, until the vote is resolved. Then the totals and each faction's vote are published. The one exception is that a member who hasn't voted can see which way their own party is voting so far.
 - A passed bill becomes **law**: its effects apply, and its proposer gains popularity if the people back the bill's side of the issue, or loses some if they don't. The issue stays open unless the law settles it.
 - Laws can change the rules themselves, from taxes to the number of seats.
 - Any faction outside the cabinet, including members of governing parties, can table a **vote of no confidence**. It goes to a vote once its backers hold a sixth of the seats, and lapses if they don't within two turns. It passes with more than half of all seats, and the next turn becomes a pre-election turn. If it is voted down, no new motion can be tabled for a year.
 - A rejected bill rests for a year before it can be proposed again. Other bills on the same issue can still be proposed.
+## The Senate
+- The Senate does not exist until the *Senate Bill* becomes law. Until then, nothing in this section applies.
+- The *Senate* has 89 seats: nine for each province, and eight for Provencie Gares. The whole Senate is elected every two years.
+- Every bill is voted on by both chambers in the same turn. Each faction casts one vote, counted in each chamber with its seats there.
+- A bill the Assembly rejects fails. A bill the Assembly passes and the Senate rejects returns to the Assembly the next turn, and becomes law only if three-fifths of the votes cast are for it.
+- Cabinet and no-confidence votes belong to the Assembly alone.
+- Every faction in a standing party wins a *safe borough* seat in its home province. The rest of each province's seats are split between parties by how strong each party is there. There is no threshold.
+- Seats change only at a Senate election. If it falls on an Assembly election, both are held together.
 ## Elections
-- Seats are counted province by province, by population. Apart from the safe boroughs, each province's seats are split between parties by how strong each party is there.
+- Assembly seats are counted province by province, by population, and split between parties by how strong each party is there.
+- Until the Senate exists, every faction in a standing party also wins a *safe borough* seat in its home province.
+- Once the Senate exists, the safe boroughs belong to it, and a party needs at least 8% of the national vote, each province counting by its population, to win any Assembly seats.
 - A party's strength in a province is its factions' combined popularity there, weighed by how well its programme fits the local mood: stances on salient issues the province agrees with count for most. A stance shared by many parties counts for less.
 - A faction counts for more in its **home province**.
 - Inside a party, seats go to factions by popularity.
-- Every faction in a standing party also wins a *safe borough* seat in its home province.
-- Results are posted with a seat chart and a map coloured by the party that won each province: the one holding the most seats there, safe boroughs included, with the vote breaking a tie.
+- Results are posted with a seat chart and a map coloured by the party that won each province: the one holding the most seats there, any safe boroughs included, with the vote breaking a tie.
 ## Cabinet
 - After an election, *His Majesty King Arthas II* (the GM) appoints a **chancellor**, who names a cabinet of four **ministers**: Treasury, War, Interior, and Commerce and Labor. A faction holds at most one post, and the chancellor holds none. The Assembly then votes on the cabinet. If it fails, the chancellor tries again.
 - Until a cabinet is confirmed, the previous one stays in office.

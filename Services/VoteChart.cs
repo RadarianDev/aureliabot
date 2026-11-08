@@ -15,11 +15,16 @@ public static class VoteChart
             new PartyData { Name = "No", SeatCount = no, HexColor = NoColour },
         }.Where(b => b.SeatCount > 0).ToList();
 
-    public static string? Render(DatabaseService data, int yes, int no)
+    public static string? Render(DatabaseService data, int yes, int no) => Render(yes, no, ChamberSize(data));
+
+    public static string? RenderSenate(DatabaseService data, int yes, int no) =>
+        Render(yes, no, (int)data.GetAllFactions().Sum(f => f.SenateSeats));
+
+    private static string? Render(int yes, int no, int seats)
     {
         try
         {
-            return ElectionPublisher.RenderSeatChart(Blocs(yes, no, ChamberSize(data)));
+            return ElectionPublisher.RenderSeatChart(Blocs(yes, no, seats));
         }
         catch (Exception ex)
         {

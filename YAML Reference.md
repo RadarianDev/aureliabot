@@ -35,6 +35,7 @@ effects: { economy: -20, discontent.north_arpal: 1, open.social_reform: true, bi
 | `threat` | number | Foreign Threat, 0–100. |
 | `reserve` | number | The Treasury reserve. |
 | `seats` | number | Assembly size, applied at the next election. |
+| `senate` | `1` or `-1` | Establishes or abolishes the Senate. |
 | `purse.{ministry}` | number | Changes that ministry's current balance at once, not its yearly allocation, and never below 0. `War`, `Interior`, `CommerceLabor` or `Treasury`; never `Navy`. Shows in the ministry's ledger under the bill or event's name. |
 | `discontent.{province}` | number | Province discontent, 0–10. |
 | `condition.{province}.{condition}` | `1` or `-1` | Gives or removes a condition. |
@@ -357,7 +358,8 @@ opposition: { actionsPerSeason: 1, privateBillsPerYear: 1,
               unansweredQuestion: 2, questionReward: 1, condemnReward: 2, condemnPenalty: 1 }
 assembly: { noConfidenceShare: 0.1667, noConfidenceGatherResolutions: 2, noConfidenceCooldownSeasons: 4 }
 election: { baseExponent: 0.85, homeMultiplier: 1.5, programmeWeight: 0.5,
-            multiplierMin: 0.5, multiplierMax: 1.5, crowding: true }
+            multiplierMin: 0.5, multiplierMax: 1.5, crowding: true, threshold: 0.08 }
+senate: { campaignDays: 2, actionsPerCampaignDay: 4, maxHomeFactions: 4, overrideShare: 0.6 }
 economy: { start: 1000, growth: 0.01 }
 taxRate: 0.20
 reserve: { start: 100, interest: 0.03 }
@@ -448,6 +450,16 @@ startingForces:
 | `election.programmeWeight` | How much the programme score moves strength. |
 | `election.multiplierMin`, `.multiplierMax` | Clamp on the programme multiplier. |
 | `election.crowding` | Weaken stances many parties share. |
+| `election.threshold` | Share of the national vote a party needs for Assembly seats, once the Senate is established. |
+
+**Senate**
+
+| Field | Meaning |
+| --- | --- |
+| `senate.campaignDays` | Real days in a Senate campaign turn. |
+| `senate.actionsPerCampaignDay` | Actions per faction on each day of a Senate campaign. |
+| `senate.maxHomeFactions` | Most active factions that can call one province home. |
+| `senate.overrideShare` | Share of Yes and No votes the Assembly needs to pass a bill the Senate returned. |
 
 **Economy and state**
 
@@ -501,6 +513,7 @@ north_arpal:
 | --- | --- | --- |
 | `name` | yes | Display name. |
 | `population` | yes | Millions; only the proportions matter (seats, national opinion, unrest drag). |
+| `senateSeats` | yes | The province's seats in the Senate, safe boroughs included. |
 | `mapKey` | yes | The province's flat colour in the map's index image. Unique. |
 | `description` | yes | One public line, shown in `/info` and autocomplete. |
 | `conditions` | no | Starting conditions, ids from `conditions.yaml`. Harbours need `coastal`. |

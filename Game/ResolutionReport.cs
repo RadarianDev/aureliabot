@@ -17,7 +17,16 @@ public sealed record CrisisOutcomeReport(
     double PopularityChange,
     IReadOnlyList<CondemnationScore> Condemnations);
 
-public sealed record VoteResultReport(VoteSubject Subject, long SubjectId, string Title, bool Passed, int YesSeats, int NoSeats, int AbstainSeats);
+public sealed record VoteResultReport(
+    VoteSubject Subject,
+    long SubjectId,
+    string Title,
+    bool Passed,
+    int YesSeats,
+    int NoSeats,
+    int AbstainSeats,
+    VoteTally? Senate = null,
+    bool ReturnedBySenate = false);
 
 public sealed record LawReport(
     string BillId,
@@ -75,7 +84,9 @@ public sealed record ResolutionReport
     public bool CampaignDay { get; init; }
     public bool SnapElectionCalled { get; set; }
     public bool PreElectionOpened { get; set; }
+    public bool SenateCampaignOpened { get; set; }
     public ElectionReport? Election { get; set; }
+    public ElectionReport? SenateElection { get; set; }
 
     public List<string> News { get; } = [];
     public List<FiredEventReport> FiredEvents { get; } = [];

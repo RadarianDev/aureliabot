@@ -91,7 +91,7 @@ public class AgendaTests : AssemblyTestBase
         Vote(VoteSubject.Reading, reading.Id, Opposer, VoteChoice.No);
 
         agenda = Agenda();
-        Assert.Contains(Texts.Get("agenda.votes.tally", ("yes", 0), ("no", 50), ("abstain", 0)), agenda);
+        Assert.Contains(Texts.Get("agenda.votes.tally", ("yes", 0), ("no", 80), ("abstain", 0)), agenda);
         Assert.Contains(Texts.Get("agenda.scheduled.none"), agenda);
     }
 }

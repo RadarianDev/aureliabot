@@ -22,9 +22,9 @@ public enum CrisisOutcome { Clean, Complicated, Default }
 
 public enum BillStatus { Available, Voting, Cooldown, Passed, Withdrawn }
 
-public enum ReadingKind { Government, Private }
+public enum ReadingKind { Government, Private, Override }
 
-public enum ReadingStatus { Scheduled, Open, Passed, Rejected, Cancelled }
+public enum ReadingStatus { Scheduled, Open, Passed, Rejected, Cancelled, ReturnedBySenate }
 
 public enum NoConfidenceStatus { Gathering, Voting, Passed, Failed, Lapsed, Cancelled }
 

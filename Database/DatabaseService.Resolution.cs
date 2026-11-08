@@ -40,6 +40,8 @@ public partial class DatabaseService
             CancelAtElectionTx(conn, tx, report);
             RunElectionTx(conn, tx, state, config, report);
         }
+        if (state.Started && before.IsSenateElectionTurn && state.SenateEstablished)
+            RunSenateElectionTx(conn, tx, state, config, report);
 
         AdvanceSeasonTx(conn, tx, state, config, report, now);
 
@@ -139,6 +141,7 @@ public partial class DatabaseService
         }
 
         report.PreElectionOpened = advanced.IsPreElection;
+        report.SenateCampaignOpened = advanced.IsSenateCampaign;
         advanced = advanced with { NextResolutionAt = GameCalendar.NextResolutionAt(now, c, GameCalendar.SeasonLengthDays(advanced, c)) };
         SaveGameStateTx(conn, tx, advanced);
 

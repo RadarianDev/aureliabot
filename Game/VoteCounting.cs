@@ -13,6 +13,12 @@ public static class VoteCounting
 
     public static bool MajorityPasses(VoteTally tally) => tally.YesSeats > tally.NoSeats;
 
+    public static bool OverridePasses(VoteTally tally, double share)
+    {
+        var cast = tally.YesSeats + tally.NoSeats;
+        return cast > 0 && tally.YesSeats >= share * cast - 1e-9;
+    }
+
     public static bool NoConfidencePasses(VoteTally tally, int filledSeats) => 2L * tally.YesSeats > filledSeats;
 
     public static int TablingThreshold(int assemblySeats, double share) =>

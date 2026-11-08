@@ -6,6 +6,7 @@ public enum PeekMode
 {
     [ChoiceDisplay("Hidden state")] State,
     [ChoiceDisplay("Election preview")] Election,
+    [ChoiceDisplay("Senate election preview")] Senate,
     [ChoiceDisplay("Party strength working")] Strength,
     [ChoiceDisplay("Opinion by province")] Opinion,
     [ChoiceDisplay("Pending actions")] Actions,
@@ -21,7 +22,13 @@ public partial class GmModule
         await DeferAsync(ephemeral: true);
         if (mode == PeekMode.Election)
         {
-            await PeekElectionAsync();
+            await PeekElectionAsync(ElectionCalculator.Run(_data.BuildElectionInput(_constants.Config)), Texts.Get("gm.peek.electionHeader"));
+            return;
+        }
+        if (mode == PeekMode.Senate)
+        {
+            var config = _constants.Config;
+            await PeekElectionAsync(ElectionCalculator.RunSenate(_data.BuildElectionInput(config), ElectionCalculator.SenateSeats(config)), Texts.Get("gm.peek.senateHeader"));
             return;
         }
 
@@ -201,13 +208,11 @@ public partial class GmModule
         return string.Join("\n", lines);
     }
 
-    private async Task PeekElectionAsync()
+    private async Task PeekElectionAsync(ElectionResult result, string header)
     {
         var config = _constants.Config;
-        var result = ElectionCalculator.Run(_data.BuildElectionInput(config));
         var parties = _data.GetPartySnapshots();
-        var text = Texts.Get("gm.peek.electionHeader") + "\n"
-            + ElectionPublisher.ResultsBody(result, parties, config);
+        var text = header + "\n" + ElectionPublisher.ResultsBody(result, parties, config);
         foreach (var chunk in Publisher.Chunk(text))
             await FollowupAsync(chunk, ephemeral: true, allowedMentions: AllowedMentions.None);
 

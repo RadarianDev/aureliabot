@@ -31,8 +31,12 @@ public class AssemblyPublisher
         _ => Texts.Get("assembly.lean.neutral"),
     };
 
-    public static string KindName(ReadingKind kind) =>
-        kind == ReadingKind.Government ? Texts.Get("assembly.kind.government") : Texts.Get("assembly.kind.private");
+    public static string KindName(ReadingKind kind) => kind switch
+    {
+        ReadingKind.Government => Texts.Get("assembly.kind.government"),
+        ReadingKind.Override => Texts.Get("assembly.kind.override"),
+        _ => Texts.Get("assembly.kind.private"),
+    };
 
     public static string ChoiceName(VoteChoice choice) => choice switch
     {
@@ -123,14 +127,29 @@ public class AssemblyPublisher
         var chart = VoteChart.Render(_data, result.YesSeats, result.NoSeats);
         try
         {
-            await PostAsync(ChannelRole.Assembly, result.Passed
-                ? Texts.Get("assembly.result.passed", ("bill", result.Title), ("yes", result.YesSeats), ("no", result.NoSeats), ("abstain", result.AbstainSeats))
-                : Texts.Get("assembly.result.rejected", ("bill", result.Title), ("yes", result.YesSeats), ("no", result.NoSeats), ("abstain", result.AbstainSeats),
-                    ("season", GameCalendar.Label(rests.Season, rests.Year))), source, chart: chart);
+            await PostAsync(ChannelRole.Assembly, result.ReturnedBySenate
+                ? Texts.Get("assembly.result.returned", ("bill", result.Title), ("yes", result.YesSeats), ("no", result.NoSeats), ("abstain", result.AbstainSeats),
+                    ("percent", Display.Number(_constants.Current.Senate.OverrideShare * 100)))
+                : result.Passed
+                    ? Texts.Get("assembly.result.passed", ("bill", result.Title), ("yes", result.YesSeats), ("no", result.NoSeats), ("abstain", result.AbstainSeats))
+                    : Texts.Get("assembly.result.rejected", ("bill", result.Title), ("yes", result.YesSeats), ("no", result.NoSeats), ("abstain", result.AbstainSeats),
+                        ("season", GameCalendar.Label(rests.Season, rests.Year))), source, chart: chart);
         }
         finally
         {
             VoteChart.Discard(chart);
+        }
+
+        if (result.Senate is not { } senate) return;
+        var senateChart = VoteChart.RenderSenate(_data, senate.YesSeats, senate.NoSeats);
+        try
+        {
+            await PostAsync(ChannelRole.Assembly,
+                Texts.Get("assembly.result.senate", ("yes", senate.YesSeats), ("no", senate.NoSeats), ("abstain", senate.AbstainSeats)), source, chart: senateChart);
+        }
+        finally
+        {
+            VoteChart.Discard(senateChart);
         }
     }
 
@@ -204,14 +223,21 @@ public class AssemblyPublisher
         switch (reading.Status)
         {
             case ReadingStatus.Open:
+                if (reading.Kind == ReadingKind.Override)
+                    lines.Add(Texts.Get("assembly.reading.overrideNote", ("percent", Display.Number(_constants.Current.Senate.OverrideShare * 100))));
                 lines.Add(Texts.Get("assembly.reading.closes", ("when", Display.NextResolution(_data.GetGameState()))));
                 lines.Add(Texts.Get("assembly.secret"));
                 break;
-            case ReadingStatus.Passed or ReadingStatus.Rejected:
+            case ReadingStatus.Passed or ReadingStatus.Rejected or ReadingStatus.ReturnedBySenate:
                 (string, object?)[] seats = [("yes", reading.YesSeats ?? 0), ("no", reading.NoSeats ?? 0), ("abstain", reading.AbstainSeats ?? 0)];
-                lines.Add(reading.Status == ReadingStatus.Passed
-                    ? Texts.Get("assembly.reading.passed", seats)
-                    : Texts.Get("assembly.reading.rejected", seats));
+                lines.Add(reading.Status switch
+                {
+                    ReadingStatus.Passed => Texts.Get("assembly.reading.passed", seats),
+                    ReadingStatus.Rejected => Texts.Get("assembly.reading.rejected", seats),
+                    _ => Texts.Get("assembly.reading.returned", seats),
+                });
+                if (reading.SenateYesSeats is { } senateYes)
+                    lines.Add(Texts.Get("assembly.reading.senate", ("yes", senateYes), ("no", reading.SenateNoSeats ?? 0), ("abstain", reading.SenateAbstainSeats ?? 0)));
                 lines.AddRange(VoterLines(VoteSubject.Reading, reading.Id));
                 break;
             case ReadingStatus.Cancelled:
@@ -282,11 +308,15 @@ public class AssemblyPublisher
     private IEnumerable<string> VoterLines(VoteSubject subject, long subjectId)
     {
         var votes = _data.GetVotes(subject, subjectId);
+        var followers = _data.GetPartyFollowers(subject, subjectId);
         foreach (var choice in new[] { VoteChoice.Yes, VoteChoice.No, VoteChoice.Abstain })
         {
             var voters = votes.Where(v => v.Value == choice).Select(v => Display.Faction(_data, v.Key)).ToList();
             if (voters.Count > 0)
                 yield return Texts.Get("assembly.voters", ("choice", ChoiceName(choice)), ("voters", string.Join(", ", voters)));
+            var following = followers.Where(v => v.Value == choice).Select(v => Display.Faction(_data, v.Key)).ToList();
+            if (following.Count > 0)
+                yield return Texts.Get("assembly.followers", ("choice", ChoiceName(choice)), ("voters", string.Join(", ", following)));
         }
     }
 

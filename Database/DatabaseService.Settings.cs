@@ -26,9 +26,16 @@ public record GameState(
     double Threat,
     decimal Reserve,
     int? RngSeed,
-    long? NoConfidenceCooldownUntil)
+    long? NoConfidenceCooldownUntil,
+    bool SenateEstablished)
 {
     public bool IsPreElection => Season == PreElectionSeason && Year == PreElectionYear;
+
+    public bool IsSenateElectionTurn => SenateEstablished && GameCalendar.IsSenateElectionSeason(Season, Year);
+
+    public bool IsSenateCampaign => IsSenateElectionTurn && !IsPreElection;
+
+    public bool IsJoiningOpen => IsPreElection || IsSenateElectionTurn;
 
     public string Label => GameCalendar.Label(Season, Year);
 }
@@ -38,7 +45,7 @@ public partial class DatabaseService
     private const string SelectGameStateColumns = @"started, season, year, term_number, term_start_season, term_start_year,
         pre_election_season, pre_election_year, resolution_number, campaign_days_run, next_resolution_at,
         last_resolution_at, season_length_days, paused, seats, tax_rate, economy, favour, favour_baseline,
-        last_navy_share, threat, reserve, rng_seed, no_confidence_cooldown_until";
+        last_navy_share, threat, reserve, rng_seed, no_confidence_cooldown_until, senate_established";
 
     private static GameState ReadGameState(SqliteDataReader r) => new(
         r.GetInt64(0) != 0,
@@ -64,7 +71,8 @@ public partial class DatabaseService
         r.GetDouble(20),
         r.GetDecimal(21),
         r.IsDBNull(22) ? null : r.GetInt32(22),
-        r.IsDBNull(23) ? null : r.GetInt64(23));
+        r.IsDBNull(23) ? null : r.GetInt64(23),
+        r.GetInt64(24) != 0);
 
     public GameState GetGameState()
     {
@@ -98,7 +106,8 @@ public partial class DatabaseService
                 next_resolution_at = $next, last_resolution_at = $last, season_length_days = $length,
                 paused = $paused, seats = $seats, tax_rate = $taxRate, economy = $economy, favour = $favour,
                 favour_baseline = $favourBaseline, last_navy_share = $navyShare, threat = $threat,
-                reserve = $reserve, rng_seed = $seed, no_confidence_cooldown_until = $ncCooldown
+                reserve = $reserve, rng_seed = $seed, no_confidence_cooldown_until = $ncCooldown,
+                senate_established = $senateEstablished
             WHERE id = 1;",
             ("$started", s.Started ? 1 : 0),
             ("$season", s.Season.ToString()),
@@ -123,7 +132,8 @@ public partial class DatabaseService
             ("$threat", s.Threat),
             ("$reserve", Money(s.Reserve)),
             ("$seed", s.RngSeed),
-            ("$ncCooldown", s.NoConfidenceCooldownUntil));
+            ("$ncCooldown", s.NoConfidenceCooldownUntil),
+            ("$senateEstablished", s.SenateEstablished ? 1 : 0));
 
     public ulong? GetChannel(ChannelRole role)
     {

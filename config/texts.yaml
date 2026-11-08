@@ -19,6 +19,7 @@ party:
   tally: "Accepts {accepts} of {needed} needed · Declines {declines}"
   apply:
     notPreElection: "You can apply to join a party only during a pre-election. The next pre-election is {preElection}."
+    notOpenSenate: "You can apply to join a party only during a pre-election or a Senate campaign. The next pre-election is {preElection}, and Senate campaigns fall in the Summer of every odd-numbered year."
     notPreElectionOpens: "You can apply to join a party only during a pre-election. The next pre-election is {preElection}, which opens {opens}."
     noSuchParty: "There is no party called \"{party}\"."
     alreadyMember: "You are already a member of {party}. Only an independent can apply; leave first with `/party leave`."
@@ -172,6 +173,7 @@ info:
     projectLine: "- {project} · {province}"
     noneYet: "None yet."
   seats: "Seats: {seats}"
+  senateSeats: "Senate seats: {seats}"
   faction:
     missing: "That faction doesn't exist."
     retired: "*Retired from politics.*"
@@ -230,6 +232,7 @@ info:
 me:
   cabinetVote: "The cabinet nominated by {chancellor} awaits the Assembly's approval: cast your vote."
   readingVote: "**{bill}** is before the Assembly: cast your vote."
+  partyLine: "So far your party is voting **{choice}** on this. Your seats follow that unless you vote."
   motionVote: "The motion of no confidence tabled by {tabler} is at a vote: cast your vote."
   motionCosign: "{tabler} has tabled a motion of no confidence, gathering support: you can co-sign it."
   cosignButton: "Co-sign"
@@ -245,6 +248,7 @@ me:
   status: "{season} · next resolution {when}"
   statusPreElection: "{season} · Pre-election · next resolution {when}"
   summary: "Popularity {popularity} · {seats} seats · {party} · {role}"
+  senateSeats: "Senate seats: {seats}"
   youAccepted: "you accepted"
   youDeclined: "you declined"
   notAnswered: "not answered yet"
@@ -293,13 +297,19 @@ help:
     A faction in a party with no cabinet seat is in opposition, and has one opposition action a season: `/opposition question` to question a minister, or `/bill propose` to put a private bill to the Assembly (one a year). `/opposition condemn` backs *For* or *Against* on a live crisis before the minister answers: being right where the minister was wrong earns popularity, being wrong where the minister was right costs it.
   voting: |-
     ## Voting
-    Each faction votes all its seats one way, with the buttons on the post in #assembly, `/vote`, or from `/me`. A bill passes when more seats vote for it than against; a tie fails. Votes are secret until the count: only then are the totals and each faction's vote published. Voting Yes on a bill takes its side of the issue as your stance once the vote is counted, No the other side. Cabinet and no-confidence votes stay open until the end of the next turn. Any faction outside the cabinet can table a motion of no confidence with `/noconfidence`; it goes to a vote once its backers hold a sixth of the seats.
+    Each faction votes all its seats one way, with the buttons on the post in #assembly, `/vote`, or from `/me`. A bill passes when more seats vote for it than against; a tie fails. On bills and cabinets, if you don't vote and you're in a party, your seats follow the first of your party's factions to vote Yes or No; `/me` shows which way that is, and you're told privately when it happens. Voting yourself, even to abstain, keeps your own vote, and no-confidence motions are never followed. Votes are secret until the count: only then are the totals and each faction's vote published. Voting Yes on a bill takes its side of the issue as your stance once the vote is counted, No the other side. Cabinet and no-confidence votes stay open until the end of the next turn. Any faction outside the cabinet can table a motion of no confidence with `/noconfidence`; it goes to a vote once its backers hold a sixth of the seats.
   ministries: |-
     ## Ministries
     The King appoints a Chancellor, who names four ministers with `/chancellor nominate`: Treasury, War, Interior, and Commerce and Labor. The Assembly then approves the cabinet. The Chancellor alone puts government bills before the Assembly, one a turn, with `/bill propose`. A crisis goes to the minister of its ministry (the Chancellor if the ministry is empty), who picks an answer with `/crisis respond` before the next resolution: leaning with the people of its province gains popularity, against them costs it, and an answer the purse cannot pay goes wrong. The Treasury divides the yearly budget each Winter with `/treasury allocate` and grants from the reserve with `/treasury grant`; War and Interior raise, train and station their units with `/war` and `/interior`, and Interior can order a crackdown; a project's minister starts ministerial projects with `/ministry project` and sets their spending with `/ministry fund`. Ministers also answer questions; `/ministry status` shows a ministry's purse and business, and `/ministry resign` steps down.
   elections: |-
     ## Elections
     Seats are counted province by province, by population. A party's strength is its factions' combined popularity, weighed by how well its programme fits the local mood. Every faction in a standing party also wins a safe borough seat in its home province.
+  electionsSenate: |-
+    ## Elections
+    Assembly seats are counted province by province, by population. A party's strength is its factions' combined popularity, weighed by how well its programme fits the local mood. A party needs {threshold}% of the national vote to win any Assembly seats.
+
+    ## The Senate
+    The whole Senate is elected every two years, at the end of the Summer of odd-numbered years. That turn lasts two days, with {actionsPerDay} actions a day, and parties take applications during it. Every faction in a standing party wins a safe borough seat in its home province, and each province's other seats are split between parties with no threshold. Every bill goes to both chambers in the same turn: your one vote counts with your seats in each. A bill the Senate returns comes back to the Assembly the next turn and needs three-fifths of the votes cast.
   unknown: "Unknown topic."
 
 confirm:
@@ -353,6 +363,7 @@ gm:
   faction:
     notFound: "No such faction. Pick one from the list."
     noProvince: "There is no province `{home}`. Pick one from the list."
+    homeFull: "{province} already has {max} active factions, the most that can call one province home."
     create:
       refusedBot: "A bot can't be a faction."
       refusedNoName: "The character needs a name."
@@ -590,6 +601,7 @@ gm:
     provinceLine: "{province}: {discontent} · {conditions}"
     noConditions: "no conditions"
     electionHeader: "## Election preview (current state, nothing saved)"
+    senateHeader: "## Senate election preview (current state, nothing saved)"
     chartTitle: "Preview: the Assembly"
     renderFailed: "⚠️ Could not draw the images: {error}"
     noProvince: "`{province}` is not a province. Pick one from the list."
@@ -1086,6 +1098,7 @@ effects:
     discontentShape: write it as `discontent.<province>`.
     conditionShape: write it as `condition.<province>.<condition>`.
     conditionValue: a condition takes 1 (gives it) or -1 (removes it).
+    senateValue: senate takes 1 (establishes it) or -1 (abolishes it).
     issueShape: write it as `{prefix}.<issue>`.
     popularityShape: write it as `popularity.<faction user id>`.
     noBaseline: issue opinion has no baseline; use `opinion.<issue>`, which lasts.
@@ -1134,6 +1147,8 @@ effects:
     economy: Economy
     reserve: Reserve
     seats: Assembly seats
+    senateEstablished: "The Senate is established"
+    senateAbolished: "The Senate is abolished"
     taxRate: Tax rate
     percent: "{amount}%"
     purse: "{ministry} purse"
@@ -1230,6 +1245,7 @@ news:
   season:
     header: "## {season}"
     hustingsOpen: "The hustings open: this season ends in an election."
+    senateCampaignOpen: "The Senate campaign opens: this season ends in a Senate election, and the parties are taking applications."
     closes: The season closes {when}.
   campaignLog:
     header: "## The campaign, {season}"
@@ -1251,6 +1267,7 @@ news:
     seats: its {seats} seats
   turnTracker:
     preElection: "{name} · Pre-election"
+    senateCampaign: "{name} · Senate campaign"
     paused: "{name} · Paused"
 
 election:
@@ -1259,6 +1276,12 @@ election:
     The returns are in for the Assembly of term {term}.
   partiesHeading: "**Seats and votes**"
   partyLine: "- {party}: **{seats}** seats · {share}% of the vote"
+  partyLineBelowThreshold: "- {party}: no seats · {share}% of the vote, below the {threshold}% needed to sit in the Assembly"
+  senateHeader: |-
+    ## The provinces have voted
+    The returns are in for the Senate.
+  senateChartTitle: The new Senate
+  senateProclamation: "His Majesty King Arthas II summons the newly elected Senate, {seats} members strong."
   provincesHeading: "**The provinces**"
   provinceLine: "- **{province}**: {seats}"
   provinceSeat: "{party} {seats}"
@@ -1293,8 +1316,11 @@ dashboard:
     Next resolution: {nextResolution}
     Next election: end of {nextElection}
   preElectionTag: " · **Pre-election**"
+  senateCampaignTag: " · **Senate campaign**"
   pausedTag: " · Paused"
   assemblyField: The Assembly · {seats} seats
+  senateField: The Senate · {seats} seats
+  senateEmpty: "Not yet elected."
   partyLine: "{party}: {seats} seats · {members} members"
   independentsLine: "Independents: {seats} seats · {factions} factions"
   noParties: No parties yet.
@@ -1314,6 +1340,7 @@ dashboard:
 
 alerts:
   election:
+    senateOverflow: "{province} has {seats} Senate seats but {boroughs} factions call it home: every borough was seated, so the Senate is larger than its size this time."
     tooFewSeats: "The Assembly has {seats} seats but {boroughs} factions stand, each with a safe borough: every borough was seated, so the Assembly is larger than its size this term."
   resolution:
     missed: The resolution due <t:{time}:F> was missed while the bot was offline. Running it once now.
@@ -1464,6 +1491,7 @@ digest:
   actions: "- Actions resolved: {campaigns} campaign(s), {attacks} attack(s); {private} private message(s) sent"
   election: "- Election for term {term}: {seats}"
   electionSeat: "{party} {seats}"
+  senateElection: "- Senate election: {seats}"
   electionProvince: "  - {province}: {strengths}"
   electionStrength: "{party} {strength}"
   readingCancelled: "- Cancelled: {bill} ({reason})"
@@ -1497,6 +1525,7 @@ cabinet:
     tally: "**Yes** {yes} seats · **No** {no} · **Abstain** {abstain}"
     secret: "Votes are secret until the count."
     voters: "Votes: {votes}"
+    followers: "Following their party: {votes}"
     voter: "{faction} {choice}"
     due: "Counted {due}. Every faction with seats votes all its seats, and may change its vote until then."
     approved: "**Approved.** This cabinet now sits."
@@ -1650,7 +1679,9 @@ bill:
 
 vote:
   noSuchVote: "There is no such vote."
-  noSeats: "Only active factions with seats in the Assembly can vote."
+  followedBill: "You didn't vote on **{bill}**, so your seats followed your party: **{choice}**. It takes no stance on your behalf."
+  followedCabinet: "You didn't vote on the cabinet of {chancellor}, so your seats followed your party: **{choice}**."
+  noSeats: "Only active factions with seats in a chamber voting on this can vote."
   closed: "That vote is not open."
   cabinetCast: "You voted {choice} on the cabinet's approval. Votes stay secret until the count, and you can change yours until the deadline."
   theMotion: "the motion of no confidence"
@@ -1719,6 +1750,7 @@ assembly:
   kind:
     government: "government"
     private: "private"
+    override: "returned"
   choice:
     yes: "Yes"
     no: "No"
@@ -1731,6 +1763,7 @@ assembly:
   afterNext: "at the resolution after next (the next one is {when})"
   secret: "Votes are secret until the count."
   voters: "{choice}: {voters}"
+  followers: "{choice}, following their party: {voters}"
   reading:
     heading: "## {bill}"
     motion: "*{motion}*"
@@ -1738,8 +1771,13 @@ assembly:
     closes: "The vote is counted {when}."
     passed: "**Passed** by {yes} seats to {no} ({abstain} abstaining)."
     rejected: "**Rejected**, {yes} seats to {no} ({abstain} abstaining)."
+    returned: "**Passed the Assembly** by {yes} seats to {no} ({abstain} abstaining), and returned by the Senate."
+    senate: "In the Senate: Yes {yes} seats, No {no}, Abstain {abstain}."
+    overrideNote: "The Senate returned this bill. Only the Assembly votes now, and it needs {percent}% of the votes cast to become law."
     cancelled: "**Cancelled.**"
   result:
+    returned: "The Assembly passes **{bill}**, {yes} seats to {no} ({abstain} abstaining), but the Senate returns it. It comes back to the Assembly next turn and needs {percent}% of the votes cast to become law."
+    senate: "**In the Senate:** Yes {yes} seats, No {no}, Abstain {abstain}."
     passed: "**{bill}** passes, {yes} seats to {no} ({abstain} abstaining)."
     rejected: "**{bill}** is rejected, {yes} seats to {no} ({abstain} abstaining). It rests until {season}; other bills on its issue can still be proposed."
   alert:

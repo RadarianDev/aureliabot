@@ -56,6 +56,8 @@ public partial class GmModule
                 (_, _, _, not null) => Texts.Get("gm.faction.create.alreadyRetired", ("player", player.Mention)),
                 _ => null,
             };
+            if (refusal is null && _data.IsHomeProvinceFull(province!.Id, config.Constants))
+                refusal = Texts.Get("gm.faction.homeFull", ("province", province.Name), ("max", config.Constants.Senate.MaxHomeFactions));
             if (refusal is not null)
             {
                 await FollowupAsync(refusal, ephemeral: true, allowedMentions: AllowedMentions.None);
@@ -114,6 +116,12 @@ public partial class GmModule
             if (character is null && province is null)
             {
                 await RespondAsync(Texts.Get("gm.faction.edit.nothing"), ephemeral: true);
+                return;
+            }
+
+            if (province is not null && province.Id != target.HomeProvinceId && _data.IsHomeProvinceFull(province.Id, config.Constants))
+            {
+                await RespondAsync(Texts.Get("gm.faction.homeFull", ("province", province.Name), ("max", config.Constants.Senate.MaxHomeFactions)), ephemeral: true);
                 return;
             }
 

@@ -63,7 +63,7 @@ public class TemplateCodecTests : IDisposable
     {
         var names = StartingFiles().Select(f => f.Name).ToList();
         Assert.Equal(6, names.Count(n => n.StartsWith("issues/")));
-        Assert.Equal(16, names.Count(n => n.StartsWith("bills/")));
+        Assert.Equal(17, names.Count(n => n.StartsWith("bills/")));
         Assert.Equal(6, names.Count(n => n.StartsWith("projects/")));
         Assert.Contains("events/opening_1850.yaml", names);
     }

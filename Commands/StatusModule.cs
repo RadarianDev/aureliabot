@@ -39,6 +39,7 @@ public class StatusModule : InteractionModuleBase<SocketInteractionContext>
             : Texts.Get("me.status", ("season", state.Label), ("when", Display.NextResolution(state))));
         sb.AppendLine(Texts.Get("me.summary", ("popularity", Display.Number(faction.Popularity)), ("seats", faction.Seats),
             ("party", party is null ? Display.Independent : Display.Party(party)), ("role", role.ToString().ToLowerInvariant())));
+        if (state.SenateEstablished) sb.AppendLine(Texts.Get("me.senateSeats", ("seats", faction.SenateSeats)));
         if (Display.RegionalPopularity(_data, _constants.Config, faction.UserId) is { } regional) sb.AppendLine(regional);
 
         var buttons = new ComponentBuilder();
@@ -82,14 +83,22 @@ public class StatusModule : InteractionModuleBase<SocketInteractionContext>
             row++;
         }
 
+        void PartyLine(VoteSubject subject, long id)
+        {
+            if (_data.GetPartyFollowers(subject, id).TryGetValue(faction.UserId, out var line))
+                waiting.Add(Texts.Get("me.partyLine", ("choice", AssemblyPublisher.ChoiceName(line))));
+        }
+
         foreach (var cabinet in outstanding.CabinetVotes)
         {
             waiting.Add(Texts.Get("me.cabinetVote", ("chancellor", cabinet.ChancellorId is { } c ? Display.Faction(_data, c) : Texts.Get("me.unknownTarget"))));
+            PartyLine(VoteSubject.Cabinet, cabinet.Id);
             VoteRow(choice => GovernmentPublisher.CabinetVoteButtonId(choice, cabinet.Id));
         }
         foreach (var reading in outstanding.Readings)
         {
             waiting.Add(Texts.Get("me.readingVote", ("bill", _data.GetBill(reading.BillId)?.Title ?? reading.BillId)));
+            PartyLine(VoteSubject.Reading, reading.Id);
             VoteRow(choice => AssemblyPublisher.ReadingVoteButtonId(choice, reading.Id));
         }
         foreach (var motion in outstanding.Motions)
@@ -195,7 +204,9 @@ public class StatusModule : InteractionModuleBase<SocketInteractionContext>
             HelpTopic.Opposition => Texts.Get("help.opposition"),
             HelpTopic.Voting => Texts.Get("help.voting"),
             HelpTopic.Ministries => Texts.Get("help.ministries"),
-            HelpTopic.Elections => Texts.Get("help.elections"),
+            HelpTopic.Elections => _data.GetGameState().SenateEstablished
+                ? Texts.Get("help.electionsSenate", ("threshold", Display.Number(c.Election.Threshold * 100)), ("actionsPerDay", c.Senate.ActionsPerCampaignDay))
+                : Texts.Get("help.elections"),
             _ => Texts.Get("help.unknown"),
         };
         await RespondAsync(text, ephemeral: true);

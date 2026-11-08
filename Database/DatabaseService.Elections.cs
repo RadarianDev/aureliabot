@@ -31,7 +31,8 @@ public partial class DatabaseService
             issues.Select(i => new ElectionIssue(i.Id, i.Salience,
                 snapshot.Provinces.ToDictionary(p => p.Id, p => snapshot.Provincial(i.Id, p.Id)))).ToList(),
             c.Election,
-            c.StrongStancePenalty);
+            c.StrongStancePenalty,
+            state.SenateEstablished);
     }
 
     public List<ElectionPartySnapshot> GetPartySnapshots() =>
@@ -41,7 +42,7 @@ public partial class DatabaseService
     {
         var input = BuildElectionInputTx(conn, tx, config);
         var result = ElectionCalculator.Run(input);
-        if (input.Seats < input.Factions.Count)
+        if (!input.SenateEstablished && input.Seats < input.Factions.Count)
             report.Alerts.Add(Texts.Get("alerts.election.tooFewSeats", ("seats", input.Seats), ("boroughs", input.Factions.Count)));
         var term = state.TermNumber + 1;
 
@@ -49,15 +50,7 @@ public partial class DatabaseService
         foreach (var (factionId, seats) in result.FactionSeats)
             Exec(conn, tx, "UPDATE factions SET seats = $seats WHERE user_id = $id;", ("$id", factionId.ToString()), ("$seats", seats));
 
-        var parties = new List<ElectionPartySnapshot>();
-        using (var cmd = conn.CreateCommand())
-        {
-            cmd.Transaction = tx;
-            cmd.CommandText = "SELECT id, name, colour, emoji_id FROM parties ORDER BY id;";
-            using var r = cmd.ExecuteReader();
-            while (r.Read())
-                parties.Add(new ElectionPartySnapshot(r.GetInt64(0), r.GetString(1), r.GetString(2), r.IsDBNull(3) ? null : ulong.Parse(r.GetString(3))));
-        }
+        var parties = PartySnapshotsTx(conn, tx);
         var names = parties.ToDictionary(p => p.Id, p => p.Name);
 
         Exec(conn, tx, "DELETE FROM province_results WHERE term_number = $term;", ("$term", term));
@@ -77,6 +70,18 @@ public partial class DatabaseService
         report.Election = new ElectionReport(term, result, parties.Where(p => result.PartySeats.ContainsKey(p.Id) || result.VoteShare.ContainsKey(p.Id)).ToList());
         LogTx(conn, tx, LogKinds.Resolution, "election",
             $"Election for term {term}: " + string.Join(", ", result.PartySeats.Select(kv => $"{names.GetValueOrDefault(kv.Key)} {kv.Value}")));
+    }
+
+    private static List<ElectionPartySnapshot> PartySnapshotsTx(SqliteConnection conn, SqliteTransaction tx)
+    {
+        var parties = new List<ElectionPartySnapshot>();
+        using var cmd = conn.CreateCommand();
+        cmd.Transaction = tx;
+        cmd.CommandText = "SELECT id, name, colour, emoji_id FROM parties ORDER BY id;";
+        using var r = cmd.ExecuteReader();
+        while (r.Read())
+            parties.Add(new ElectionPartySnapshot(r.GetInt64(0), r.GetString(1), r.GetString(2), r.IsDBNull(3) ? null : ulong.Parse(r.GetString(3))));
+        return parties;
     }
 
     private static void CancelAtElectionTx(SqliteConnection conn, SqliteTransaction tx, ResolutionReport report)

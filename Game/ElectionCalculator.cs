@@ -18,7 +18,8 @@ public sealed record ElectionInput(
     IReadOnlyList<ElectionFaction> Factions,
     IReadOnlyList<ElectionIssue> Issues,
     ElectionConstants Constants,
-    double StrongStancePenalty);
+    double StrongStancePenalty,
+    bool SenateEstablished = false);
 
 public sealed record ProvinceOutcome(
     string ProvinceId,
@@ -46,37 +47,33 @@ public sealed record ElectionResult(
     IReadOnlyList<ProvinceOutcome> Provinces,
     IReadOnlyDictionary<long, int> PartySeats,
     IReadOnlyDictionary<ulong, int> FactionSeats,
-    IReadOnlyDictionary<long, double> VoteShare);
+    IReadOnlyDictionary<long, double> VoteShare,
+    IReadOnlySet<long>? BelowThreshold = null);
 
 public static class ElectionCalculator
 {
     public static ElectionResult Run(ElectionInput input)
     {
-        if (input.Parties.Count == 0)
-            return new ElectionResult([], new Dictionary<long, int>(), new Dictionary<ulong, int>(), new Dictionary<long, double>());
+        if (input.Parties.Count == 0) return NoResult();
 
-        var parties = input.Parties.OrderBy(p => p.Id).ToList();
-        var partyIds = parties.Select(p => p.Id).ToHashSet();
-        var factions = input.Factions.Where(f => partyIds.Contains(f.PartyId)).ToList();
-        var membersByParty = parties.ToDictionary(p => p.Id, p => factions.Where(f => f.PartyId == p.Id).ToList());
-        var totalPopularity = parties.ToDictionary(p => p.Id, p => membersByParty[p.Id].Sum(f => f.Popularity));
-
-        var contestedByProvince = Apportion(input.Provinces, Math.Max(0, input.Seats - factions.Count));
+        var (parties, membersByParty, totalPopularity, strengthByProvince, voteShare) = Prepare(input);
+        var factionCount = membersByParty.Values.Sum(members => members.Count);
+        var boroughSeatsPerFaction = input.SenateEstablished ? 0 : 1;
+        var contestedByProvince = Apportion(input.Provinces, Math.Max(0, input.Seats - factionCount * boroughSeatsPerFaction));
         var contestedByParty = parties.ToDictionary(p => p.Id, _ => 0);
-        var strengthTotal = parties.ToDictionary(p => p.Id, _ => 0.0);
+        var belowThreshold = PartiesBelowThreshold(input, parties, voteShare);
         var outcomes = new List<ProvinceOutcome>();
 
         foreach (var province in input.Provinces)
         {
-            var strength = parties.ToDictionary(p => p.Id, p => Strength(input, parties, p, membersByParty[p.Id], province.Id));
-            var seats = DHondt(strength, totalPopularity, contestedByProvince[province.Id]);
-            var borough = parties.ToDictionary(p => p.Id, p => membersByParty[p.Id].Count(f => f.HomeProvinceId == province.Id));
+            var strength = strengthByProvince[province.Id];
+            var contesting = strength.Where(kv => !belowThreshold.Contains(kv.Key)).ToDictionary(kv => kv.Key, kv => kv.Value);
+            var won = DHondt(contesting, totalPopularity, contestedByProvince[province.Id]);
+            var seats = parties.ToDictionary(p => p.Id, p => won.GetValueOrDefault(p.Id));
+            var borough = parties.ToDictionary(p => p.Id, p => boroughSeatsPerFaction * membersByParty[p.Id].Count(f => f.HomeProvinceId == province.Id));
 
             foreach (var party in parties)
-            {
                 contestedByParty[party.Id] += seats[party.Id];
-                strengthTotal[party.Id] += strength[party.Id];
-            }
 
             outcomes.Add(new ProvinceOutcome(province.Id, contestedByProvince[province.Id], strength, seats, borough,
                 Winner(strength, seats, borough, totalPopularity)));
@@ -85,13 +82,86 @@ public static class ElectionCalculator
         var factionSeats = new Dictionary<ulong, int>();
         foreach (var party in parties)
             foreach (var (factionId, seats) in SplitAmongMembers(membersByParty[party.Id], contestedByParty[party.Id]))
+                factionSeats[factionId] = seats + boroughSeatsPerFaction;
+
+        var partySeats = parties.ToDictionary(p => p.Id, p => contestedByParty[p.Id] + membersByParty[p.Id].Count * boroughSeatsPerFaction);
+
+        return new ElectionResult(outcomes, partySeats, factionSeats, voteShare, belowThreshold);
+    }
+
+    public static ElectionResult RunSenate(ElectionInput input, IReadOnlyDictionary<string, int> seatsByProvince)
+    {
+        if (input.Parties.Count == 0) return NoResult();
+
+        var (parties, membersByParty, totalPopularity, strengthByProvince, voteShare) = Prepare(input);
+        var contestedByParty = parties.ToDictionary(p => p.Id, _ => 0);
+        var outcomes = new List<ProvinceOutcome>();
+
+        foreach (var province in input.Provinces)
+        {
+            var strength = strengthByProvince[province.Id];
+            var borough = parties.ToDictionary(p => p.Id, p => membersByParty[p.Id].Count(f => f.HomeProvinceId == province.Id));
+            var contested = Math.Max(0, seatsByProvince.GetValueOrDefault(province.Id) - borough.Values.Sum());
+            var seats = DHondt(strength, totalPopularity, contested);
+
+            foreach (var party in parties)
+                contestedByParty[party.Id] += seats[party.Id];
+
+            outcomes.Add(new ProvinceOutcome(province.Id, contested, strength, seats, borough, Winner(strength, seats, borough, totalPopularity)));
+        }
+
+        var factionSeats = new Dictionary<ulong, int>();
+        foreach (var party in parties)
+            foreach (var (factionId, seats) in SplitAmongMembers(membersByParty[party.Id], contestedByParty[party.Id]))
                 factionSeats[factionId] = seats + 1;
 
         var partySeats = parties.ToDictionary(p => p.Id, p => contestedByParty[p.Id] + membersByParty[p.Id].Count);
-        var grandTotal = strengthTotal.Values.Sum();
-        var voteShare = parties.ToDictionary(p => p.Id, p => grandTotal > 0 ? strengthTotal[p.Id] / grandTotal : 0);
-
         return new ElectionResult(outcomes, partySeats, factionSeats, voteShare);
+    }
+
+    public static IReadOnlyDictionary<string, int> SenateSeats(GameConfig config) =>
+        config.Provinces.ToDictionary(p => p.Id, p => p.SenateSeats);
+
+    private sealed record Contest(
+        List<ElectionParty> Parties,
+        Dictionary<long, List<ElectionFaction>> Members,
+        Dictionary<long, double> TotalPopularity,
+        Dictionary<string, Dictionary<long, double>> StrengthByProvince,
+        Dictionary<long, double> VoteShare);
+
+    private static ElectionResult NoResult() =>
+        new([], new Dictionary<long, int>(), new Dictionary<ulong, int>(), new Dictionary<long, double>());
+
+    private static Contest Prepare(ElectionInput input)
+    {
+        var parties = input.Parties.OrderBy(p => p.Id).ToList();
+        var partyIds = parties.Select(p => p.Id).ToHashSet();
+        var factions = input.Factions.Where(f => partyIds.Contains(f.PartyId)).ToList();
+        var members = parties.ToDictionary(p => p.Id, p => factions.Where(f => f.PartyId == p.Id).ToList());
+        var popularity = parties.ToDictionary(p => p.Id, p => members[p.Id].Sum(f => f.Popularity));
+        var strength = input.Provinces.ToDictionary(
+            province => province.Id,
+            province => parties.ToDictionary(p => p.Id, p => Strength(input, parties, p, members[p.Id], province.Id)));
+        return new Contest(parties, members, popularity, strength, NationalVote(input.Provinces, strength, parties));
+    }
+
+    private static Dictionary<long, double> NationalVote(
+        IReadOnlyList<ElectionProvince> provinces,
+        IReadOnlyDictionary<string, Dictionary<long, double>> strengthByProvince,
+        IReadOnlyList<ElectionParty> parties)
+    {
+        var counted = provinces.Where(p => strengthByProvince[p.Id].Values.Sum() > 0).ToList();
+        var population = counted.Sum(p => Math.Max(0, p.Population));
+        return parties.ToDictionary(party => party.Id, party => population > 0
+            ? counted.Sum(p => Math.Max(0, p.Population) * strengthByProvince[p.Id][party.Id] / strengthByProvince[p.Id].Values.Sum()) / population
+            : 0);
+    }
+
+    private static HashSet<long> PartiesBelowThreshold(ElectionInput input, IReadOnlyList<ElectionParty> parties, IReadOnlyDictionary<long, double> voteShare)
+    {
+        if (!input.SenateEstablished) return [];
+        var below = parties.Where(p => voteShare[p.Id] < input.Constants.Threshold).Select(p => p.Id).ToHashSet();
+        return below.Count == parties.Count ? [] : below;
     }
 
     internal static Dictionary<string, int> Apportion(IReadOnlyList<ElectionProvince> provinces, int seats)

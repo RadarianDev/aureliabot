@@ -16,7 +16,10 @@ public record Reading(
     int? NoSeats,
     int? AbstainSeats,
     ulong? AnnounceMessageId,
-    ulong? MessageId);
+    ulong? MessageId,
+    int? SenateYesSeats,
+    int? SenateNoSeats,
+    int? SenateAbstainSeats);
 
 public record NoConfidenceMotion(
     long Id,
@@ -81,7 +84,7 @@ public sealed record MotionSupport(int Supporters, int Threshold, IReadOnlyList<
 public partial class DatabaseService
 {
     private const string SelectReadingColumns =
-        "id, bill_id, sponsor_faction_id, kind, proposed_resolution, opens_resolution, due_resolution, status, yes_seats, no_seats, abstain_seats, announce_message_id, message_id";
+        "id, bill_id, sponsor_faction_id, kind, proposed_resolution, opens_resolution, due_resolution, status, yes_seats, no_seats, abstain_seats, announce_message_id, message_id, senate_yes_seats, senate_no_seats, senate_abstain_seats";
 
     private static Reading ReadReading(SqliteDataReader r) => new(
         r.GetInt64(0),
@@ -96,7 +99,10 @@ public partial class DatabaseService
         r.IsDBNull(9) ? null : r.GetInt32(9),
         r.IsDBNull(10) ? null : r.GetInt32(10),
         r.IsDBNull(11) ? null : ulong.Parse(r.GetString(11)),
-        r.IsDBNull(12) ? null : ulong.Parse(r.GetString(12)));
+        r.IsDBNull(12) ? null : ulong.Parse(r.GetString(12)),
+        r.IsDBNull(13) ? null : r.GetInt32(13),
+        r.IsDBNull(14) ? null : r.GetInt32(14),
+        r.IsDBNull(15) ? null : r.GetInt32(15));
 
     private const string SelectMotionColumns =
         "id, tabler_faction_id, tabled_resolution, gather_until_resolution, due_resolution, status, yes_seats, no_seats, message_id";
@@ -228,7 +234,7 @@ public partial class DatabaseService
     public VoteTally TallyOf(VoteSubject subject, long subjectId, AssemblyRules? rules = null)
     {
         using var conn = Open();
-        return (rules ?? AssemblyRules.Standard).Tally(GetVotesTx(conn, null, subject, subjectId), VotingSeatsTx(conn, null));
+        return (rules ?? AssemblyRules.Standard).Tally(CountedVotesTx(conn, null, subject, subjectId), VotingSeatsTx(conn, null));
     }
 
     public ProposeBillResult ProposeBill(ulong factionId, string billId, GameConstants constants)
@@ -335,7 +341,10 @@ public partial class DatabaseService
         using var conn = Open();
         using var tx = conn.BeginTransaction();
         if (GetFactionTx(conn, tx, factionId) is not { IsActive: true }) return new(AssemblyVoteOutcome.NotActive);
-        if (!VotingSeatsTx(conn, tx).ContainsKey(factionId)) return new(AssemblyVoteOutcome.NoSeats);
+        var votesInTheSenate = subject == VoteSubject.Reading
+            && SenateVotingSeatsTx(conn, tx).ContainsKey(factionId)
+            && QueryReadingsTx(conn, tx, "id = $id AND kind <> 'Override'", ("$id", subjectId)).Count > 0;
+        if (!votesInTheSenate && !VotingSeatsTx(conn, tx).ContainsKey(factionId)) return new(AssemblyVoteOutcome.NoSeats);
 
         Bill? bill = null;
         if (subject == VoteSubject.Reading)
@@ -485,17 +494,38 @@ public partial class DatabaseService
         var due = QueryReadingsTx(conn, tx, "status = 'Open' AND due_resolution <= $resolution", ("$resolution", resolution));
         if (due.Count == 0) return;
         var seats = VotingSeatsTx(conn, tx);
+        var senateSeats = SenateVotingSeatsTx(conn, tx);
 
         foreach (var dueReading in due)
         {
             if (QueryReadingsTx(conn, tx, "id = $id AND status = 'Open'", ("$id", dueReading.Id)).FirstOrDefault() is not { } reading) continue;
             var bill = QueryBillsTx(conn, tx, "id = $id", ("$id", reading.BillId)).Single();
             var votes = GetVotesTx(conn, tx, VoteSubject.Reading, reading.Id);
-            var tally = rules.Tally(votes, seats);
-            var passed = rules.MajorityPasses(tally);
+            var counted = CountedVotesTx(conn, tx, VoteSubject.Reading, reading.Id);
+            var tally = rules.Tally(counted, seats);
+            var isOverride = reading.Kind == ReadingKind.Override;
+            var senateTally = isOverride || senateSeats.Count == 0 ? null : rules.Tally(counted, senateSeats);
+            var assemblyPassed = isOverride ? VoteCounting.OverridePasses(tally, c.Senate.OverrideShare) : rules.MajorityPasses(tally);
+            var returned = assemblyPassed && senateTally is not null && !rules.MajorityPasses(senateTally);
+            var passed = assemblyPassed && !returned;
             LogVoteStancesTx(conn, tx, state, bill, votes, rules);
-            Exec(conn, tx, "UPDATE readings SET yes_seats = $yes, no_seats = $no, abstain_seats = $abstain WHERE id = $id;",
-                ("$id", reading.Id), ("$yes", tally.YesSeats), ("$no", tally.NoSeats), ("$abstain", tally.AbstainSeats));
+            foreach (var (factionId, choice) in PartyFollowersTx(conn, tx, VoteSubject.Reading, reading.Id))
+                if (seats.ContainsKey(factionId) || (!isOverride && senateSeats.ContainsKey(factionId)))
+                    report.AddPrivate(factionId, Texts.Get("vote.followedBill", ("bill", bill.Title), ("choice", AssemblyPublisher.ChoiceName(choice))));
+            Exec(conn, tx, @"UPDATE readings SET yes_seats = $yes, no_seats = $no, abstain_seats = $abstain,
+                senate_yes_seats = $senateYes, senate_no_seats = $senateNo, senate_abstain_seats = $senateAbstain WHERE id = $id;",
+                ("$id", reading.Id), ("$yes", tally.YesSeats), ("$no", tally.NoSeats), ("$abstain", tally.AbstainSeats),
+                ("$senateYes", senateTally?.YesSeats), ("$senateNo", senateTally?.NoSeats), ("$senateAbstain", senateTally?.AbstainSeats));
+
+            if (returned)
+            {
+                Exec(conn, tx, "UPDATE readings SET status = 'ReturnedBySenate' WHERE id = $id;", ("$id", reading.Id));
+                ScheduleOverrideTx(conn, tx, reading, resolution);
+                report.VoteResults.Add(new VoteResultReport(VoteSubject.Reading, reading.Id, bill.Title, false, tally.YesSeats, tally.NoSeats, tally.AbstainSeats, senateTally, ReturnedBySenate: true));
+                LogTx(conn, tx, LogKinds.Resolution, "reading",
+                    $"Reading {reading.Id} of {bill.Id} passed the Assembly {tally.YesSeats}-{tally.NoSeats} and was returned by the Senate {senateTally!.YesSeats}-{senateTally.NoSeats}.", isPublic: true);
+                continue;
+            }
 
             if (passed)
             {
@@ -518,7 +548,7 @@ public partial class DatabaseService
                 Exec(conn, tx, "UPDATE readings SET status = 'Rejected' WHERE id = $id;", ("$id", reading.Id));
             }
 
-            report.VoteResults.Add(new VoteResultReport(VoteSubject.Reading, reading.Id, bill.Title, passed, tally.YesSeats, tally.NoSeats, tally.AbstainSeats));
+            report.VoteResults.Add(new VoteResultReport(VoteSubject.Reading, reading.Id, bill.Title, passed, tally.YesSeats, tally.NoSeats, tally.AbstainSeats, senateTally));
             LogTx(conn, tx, LogKinds.Resolution, "reading",
                 $"Reading {reading.Id} of {bill.Id} {(passed ? "passed" : "rejected")} {tally.YesSeats}-{tally.NoSeats} ({tally.AbstainSeats} abstaining).", isPublic: true);
         }
@@ -561,7 +591,7 @@ public partial class DatabaseService
 
         foreach (var motion in due)
         {
-            var tally = rules.Tally(GetVotesTx(conn, tx, VoteSubject.NoConfidence, motion.Id), seats);
+            var tally = rules.Tally(CountedVotesTx(conn, tx, VoteSubject.NoConfidence, motion.Id), seats);
             var passed = rules.NoConfidencePasses(tally, filled);
             var outcome = passed ? NoConfidenceStatus.Passed : NoConfidenceStatus.Failed;
             Exec(conn, tx, "UPDATE no_confidence SET status = $status, yes_seats = $yes, no_seats = $no WHERE id = $id;",

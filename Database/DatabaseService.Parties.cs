@@ -315,7 +315,7 @@ public partial class DatabaseService
         if (members.All(m => m.UserId != voterId))
             return new JoinAnswerResult(JoinAnswerOutcome.NotAMember, request, 0, 0, members.Count);
 
-        if (!GetGameStateTx(conn, tx).IsPreElection)
+        if (!GetGameStateTx(conn, tx).IsJoiningOpen)
         {
             SetJoinRequestStatusTx(conn, tx, requestId, JoinRequestStatus.Dropped);
             tx.Commit();

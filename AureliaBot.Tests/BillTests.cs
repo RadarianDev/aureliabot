@@ -169,7 +169,7 @@ public class BillTests : AssemblyTestBase
 
         var result = Assert.Single(counted.VoteResults);
         Assert.True(result.Passed);
-        Assert.Equal((70, 50, 10), (result.YesSeats, result.NoSeats, result.AbstainSeats));
+        Assert.Equal((90, 80, 10), (result.YesSeats, result.NoSeats, result.AbstainSeats));
         var law = Assert.Single(counted.Laws);
         Assert.Equal(Chancellor, law.SponsorFactionId);
         Assert.True(law.SponsorPopularityChange > 0);
@@ -178,7 +178,7 @@ public class BillTests : AssemblyTestBase
         Assert.Equal(BillStatus.Passed, Db.GetBill("ten_hours")!.Status);
         var passed = Db.GetReading(reading.Id)!;
         Assert.Equal(ReadingStatus.Passed, passed.Status);
-        Assert.Equal((70, 50, 10), (passed.YesSeats, passed.NoSeats, passed.AbstainSeats));
+        Assert.Equal((90, 80, 10), (passed.YesSeats, passed.NoSeats, passed.AbstainSeats));
     }
 
     [Fact]

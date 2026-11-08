@@ -184,6 +184,7 @@ public partial class InfoModule : InteractionModuleBase<SocketInteractionContext
         if (Display.RegionalPopularity(_data, _constants.Config, faction.UserId) is { } regional) sb.AppendLine(regional);
         sb.AppendLine(Texts.Get("info.faction.party", ("party", party is null ? Display.Independent : Display.Party(party))));
         sb.AppendLine(Texts.Get("info.seats", ("seats", faction.Seats)));
+        if (_data.GetGameState().SenateEstablished) sb.AppendLine(Texts.Get("info.senateSeats", ("seats", faction.SenateSeats)));
         sb.AppendLine(Texts.Get("info.faction.home", ("province", Display.Province(_constants.Config, faction.HomeProvinceId))));
 
         var log = _data.GetLatestStances(userId);
@@ -219,6 +220,7 @@ public partial class InfoModule : InteractionModuleBase<SocketInteractionContext
         if (party.CreatedSeason is { } season && party.CreatedYear is { } year)
             sb.AppendLine(Texts.Get("info.party.founded", ("season", GameCalendar.Label(season, year))));
         sb.AppendLine(Texts.Get("info.seats", ("seats", members.Sum(m => m.Seats))));
+        if (_data.GetGameState().SenateEstablished) sb.AppendLine(Texts.Get("info.senateSeats", ("seats", members.Sum(m => m.SenateSeats))));
         sb.AppendLine();
         sb.AppendLine(Texts.Get("info.party.members"));
         foreach (var member in members)

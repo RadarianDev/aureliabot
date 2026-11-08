@@ -30,9 +30,10 @@ public partial class PartyModule : InteractionModuleBase<SocketInteractionContex
 
     public static string? ApplyTimingRefusal(GameState state)
     {
-        if (state.IsPreElection) return null;
+        if (state.IsJoiningOpen) return null;
         var preElection = (state.PreElectionSeason, state.PreElectionYear);
         var label = GameCalendar.Label(state.PreElectionSeason, state.PreElectionYear);
+        if (state.SenateEstablished) return Texts.Get("party.apply.notOpenSenate", ("preElection", label));
         return GameCalendar.Next(state.Season, state.Year) == preElection && state.NextResolutionAt is not null
             ? Texts.Get("party.apply.notPreElectionOpens", ("preElection", label), ("opens", Display.NextResolution(state)))
             : Texts.Get("party.apply.notPreElection", ("preElection", label));
@@ -43,7 +44,7 @@ public partial class PartyModule : InteractionModuleBase<SocketInteractionContex
     public static string Tally(int accepts, int declines, int members) =>
         Texts.Get("party.tally", ("accepts", accepts), ("needed", MajorityOf(members)), ("declines", declines));
 
-    [SlashCommand("apply", "Apply to join a party (pre-election only)")]
+    [SlashCommand("apply", "Apply to join a party (pre-election or Senate campaign only)")]
     [RequireFaction]
     public async Task ApplyAsync(
         [Summary("party", "The party to join"), Autocomplete(typeof(PartyNameAutocomplete))] string party)

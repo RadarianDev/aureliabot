@@ -312,6 +312,99 @@ public class ElectionCalculatorTests
     }
 
     [Fact]
+    public void The_senate_worked_example_matches_the_spec()
+    {
+        var result = ElectionCalculator.RunSenate(WorkedExample(1.0), new Dictionary<string, int> { [Nation] = 30 });
+
+        var province = Assert.Single(result.Provinces);
+        Assert.Equal(24, province.ContestedSeats);
+        Assert.Equal(15, result.PartySeats[A]);
+        Assert.Equal(10, result.PartySeats[B]);
+        Assert.Equal(5, result.PartySeats[C]);
+        Assert.Equal(7, result.FactionSeats[21]);
+    }
+
+    [Fact]
+    public void Senate_boroughs_come_out_of_each_provinces_own_seats()
+    {
+        var result = ElectionCalculator.RunSenate(Input(0,
+            [new ElectionProvince("p1", 90), new ElectionProvince("p2", 10)],
+            [Party(A), Party(B)],
+            [new ElectionFaction(11, A, 10, "p1"), new ElectionFaction(12, A, 10, "p1"), new ElectionFaction(21, B, 10, "p2")],
+            []), new Dictionary<string, int> { ["p1"] = 9, ["p2"] = 9 });
+
+        Assert.Equal(7, result.Provinces.Single(p => p.ProvinceId == "p1").ContestedSeats);
+        Assert.Equal(8, result.Provinces.Single(p => p.ProvinceId == "p2").ContestedSeats);
+        Assert.Equal(18, result.PartySeats.Values.Sum());
+    }
+
+    [Fact]
+    public void The_senate_has_no_threshold()
+    {
+        var result = ElectionCalculator.RunSenate(LopsidedContest(senateEstablished: true), new Dictionary<string, int> { [Nation] = 89 });
+
+        Assert.True(result.FactionSeats[21] >= 1);
+        Assert.Null(result.BelowThreshold);
+    }
+
+    private static ElectionInput LopsidedContest(bool senateEstablished) => Input(100,
+        [new ElectionProvince(Nation, 1)],
+        [Party(A), Party(B)],
+        [new ElectionFaction(11, A, 90, Abroad), new ElectionFaction(21, B, 1, Abroad)],
+        []) with { SenateEstablished = senateEstablished };
+
+    [Fact]
+    public void Before_the_senate_small_parties_keep_their_boroughs_and_face_no_threshold()
+    {
+        var result = ElectionCalculator.Run(LopsidedContest(senateEstablished: false));
+
+        Assert.Equal(98, Assert.Single(result.Provinces).ContestedSeats);
+        Assert.Equal(1, result.FactionSeats[21] - Assert.Single(result.Provinces).ContestedSeatsByParty[B]);
+        Assert.Empty(result.BelowThreshold!);
+    }
+
+    [Fact]
+    public void Once_the_senate_exists_the_assembly_has_no_boroughs_and_a_threshold()
+    {
+        var result = ElectionCalculator.Run(LopsidedContest(senateEstablished: true));
+
+        var province = Assert.Single(result.Provinces);
+        Assert.Equal(100, province.ContestedSeats);
+        Assert.Equal(0, province.BoroughSeatsByParty[B]);
+        Assert.Equal(100, result.PartySeats[A]);
+        Assert.Equal(0, result.PartySeats[B]);
+        Assert.Equal(0, result.FactionSeats[21]);
+        Assert.Contains(B, result.BelowThreshold!);
+    }
+
+    [Fact]
+    public void The_threshold_is_ignored_when_no_party_clears_it()
+    {
+        var input = LopsidedContest(senateEstablished: true) with { Constants = Election with { Threshold = 0.99 } };
+
+        var result = ElectionCalculator.Run(input);
+
+        Assert.Empty(result.BelowThreshold!);
+        Assert.Equal(100, result.PartySeats.Values.Sum());
+    }
+
+    [Fact]
+    public void The_national_vote_counts_each_province_by_its_population()
+    {
+        var result = ElectionCalculator.Run(Input(10,
+            [new ElectionProvince("p1", 90), new ElectionProvince("p2", 10)],
+            [Party(A), Party(B)],
+            [
+                new ElectionFaction(11, A, 10, Abroad, new Dictionary<string, double> { ["p1"] = 10, ["p2"] = 0 }),
+                new ElectionFaction(21, B, 10, Abroad, new Dictionary<string, double> { ["p1"] = 0, ["p2"] = 10 }),
+            ],
+            []));
+
+        Assert.Equal(0.9, result.VoteShare[A], 9);
+        Assert.Equal(0.1, result.VoteShare[B], 9);
+    }
+
+    [Fact]
     public void No_parties_gives_an_empty_result()
     {
         var result = ElectionCalculator.Run(Input(10, [new ElectionProvince(Nation, 1)], [], [], []));

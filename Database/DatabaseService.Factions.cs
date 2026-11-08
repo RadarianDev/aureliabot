@@ -10,7 +10,8 @@ public record Faction(
     long? PartyId,
     string? HomeProvinceId,
     ulong? PrivateChannelId,
-    FactionStatus Status)
+    FactionStatus Status,
+    long SenateSeats = 0)
 {
     public bool IsActive => Status == FactionStatus.Active;
 
@@ -22,7 +23,7 @@ public sealed record RetireResult(Faction Faction, Party? DissolvedParty, ulong?
 public partial class DatabaseService
 {
     private const string SelectFactionColumns =
-        "user_id, character_name, popularity, seats, party_id, home_province_id, private_channel_id, status";
+        "user_id, character_name, popularity, seats, party_id, home_province_id, private_channel_id, status, senate_seats";
 
     private static Faction ReadFaction(SqliteDataReader r) => new(
         ulong.Parse(r.GetString(0)),
@@ -32,7 +33,8 @@ public partial class DatabaseService
         r.IsDBNull(4) ? null : r.GetInt64(4),
         r.IsDBNull(5) ? null : r.GetString(5),
         r.IsDBNull(6) ? null : ulong.Parse(r.GetString(6)),
-        Enum.Parse<FactionStatus>(r.GetString(7)));
+        Enum.Parse<FactionStatus>(r.GetString(7)),
+        r.GetInt64(8));
 
     public bool CreateFaction(ulong userId, string characterName, string homeProvinceId, double popularity)
     {
@@ -124,6 +126,19 @@ public partial class DatabaseService
         cmd.Parameters.AddWithValue("$seats", seats);
         return cmd.ExecuteNonQuery() > 0;
     }
+
+    public bool SetFactionSenateSeats(ulong userId, long seats)
+    {
+        using var conn = Open();
+        var cmd = conn.CreateCommand();
+        cmd.CommandText = "UPDATE factions SET senate_seats = $seats WHERE user_id = $user;";
+        cmd.Parameters.AddWithValue("$user", userId.ToString());
+        cmd.Parameters.AddWithValue("$seats", seats);
+        return cmd.ExecuteNonQuery() > 0;
+    }
+
+    public bool IsHomeProvinceFull(string provinceId, GameConstants constants) =>
+        GetActiveFactions().Count(f => f.HomeProvinceId == provinceId) >= constants.Senate.MaxHomeFactions;
 
     public double? AddPopularity(ulong userId, double delta, PopularityConstants range)
     {

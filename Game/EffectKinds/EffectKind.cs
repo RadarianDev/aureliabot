@@ -99,6 +99,7 @@ public static class EffectKinds
         new StateEffect("favourBaseline", "favour_baseline", 0, 100, publicAmount: false, () => Texts.Get("effects.summary.favour")),
         new StateEffect("threat", "threat", 0, 100, publicAmount: false, () => Texts.Get("effects.summary.threat")),
         new SeatsEffect(),
+        new SenateEffect(),
         new ReserveEffect(),
         new PurseEffect(),
         new DiscontentEffect(),

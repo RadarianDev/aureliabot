@@ -27,6 +27,22 @@ public class AdvancedEffectTests : AssemblyTestBase
         public IRandomSource Random { get; } = new ScriptedRandomSource(4, 2);
     }
 
+    [Fact]
+    public void Senate_Effect_SwitchesTheSenateOnAndOff()
+    {
+        Assert.False(Db.GetGameState().SenateEstablished);
+
+        Run("senate 1");
+        Assert.True(Db.GetGameState().SenateEstablished);
+
+        Run("senate -1");
+        Assert.False(Db.GetGameState().SenateEstablished);
+    }
+
+    [Fact]
+    public void Senate_Effect_TakesOnlyOneOrMinusOne() =>
+        Assert.False(EffectParser.ParseText("senate 2", Context).IsValid);
+
     [Theory]
     [InlineData("1 + 2 * 3", 7)]
     [InlineData("(1 + 2) * 3", 9)]

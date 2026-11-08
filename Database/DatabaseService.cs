@@ -87,6 +87,7 @@ public partial class DatabaseService
         AddColumnIfMissing(connection, "factions", "private_channel_id", "TEXT");
         AddColumnIfMissing(connection, "factions", "status", "TEXT NOT NULL DEFAULT 'Active'");
         AddColumnIfMissing(connection, "factions", "created_at", "INTEGER NOT NULL DEFAULT 0");
+        AddColumnIfMissing(connection, "factions", "senate_seats", "INTEGER NOT NULL DEFAULT 0");
 
         Exec(connection, @"
             CREATE TABLE IF NOT EXISTS game_state (
@@ -116,6 +117,7 @@ public partial class DatabaseService
                 rng_seed INTEGER,
                 no_confidence_cooldown_until INTEGER
             );");
+        AddColumnIfMissing(connection, "game_state", "senate_established", "INTEGER NOT NULL DEFAULT 0");
         Exec(connection, "INSERT OR IGNORE INTO game_state (id) VALUES (1);");
 
         Exec(connection, @"
@@ -508,6 +510,22 @@ public partial class DatabaseService
                 province_id TEXT NOT NULL REFERENCES provinces(id),
                 deviation REAL NOT NULL DEFAULT 0,
                 PRIMARY KEY (faction_id, province_id)
+            );");
+
+        AddColumnIfMissing(connection, "readings", "senate_yes_seats", "INTEGER");
+        AddColumnIfMissing(connection, "readings", "senate_no_seats", "INTEGER");
+        AddColumnIfMissing(connection, "readings", "senate_abstain_seats", "INTEGER");
+
+        Exec(connection, @"
+            CREATE TABLE IF NOT EXISTS senate_results (
+                resolution_number INTEGER NOT NULL,
+                province_id TEXT NOT NULL,
+                party_id INTEGER NOT NULL,
+                party_name TEXT NOT NULL,
+                strength REAL NOT NULL,
+                contested_seats INTEGER NOT NULL,
+                borough_seats INTEGER NOT NULL,
+                PRIMARY KEY (resolution_number, province_id, party_id)
             );");
 
         Exec(connection, @"

@@ -40,7 +40,18 @@ public class ElectionPublisher
         _alerts = alerts;
     }
 
-    public async Task PublishAsync(ElectionReport report, string source)
+    public Task PublishAsync(ElectionReport report, string source) =>
+        PublishResultsAsync(report, ResultsText(report, _constants.Config), Texts.Get("election.chartTitle", ("term", report.TermNumber)), Proclamation(report), source);
+
+    public Task PublishSenateAsync(ElectionReport report, string source)
+    {
+        var config = _constants.Config;
+        var results = Texts.Get("election.senateHeader") + "\n" + ResultsBody(report.Result, report.Parties, config);
+        var proclamation = Texts.Get("election.senateProclamation", ("seats", report.Result.PartySeats.Values.Sum()));
+        return PublishResultsAsync(report, results, Texts.Get("election.senateChartTitle"), proclamation, source);
+    }
+
+    private async Task PublishResultsAsync(ElectionReport report, string results, string chartTitle, string proclamation, string source)
     {
         if (_data.GetChannel(ChannelRole.News) is not { } channelId || _client.GetChannel(channelId) is not IMessageChannel channel)
         {
@@ -51,8 +62,7 @@ public class ElectionPublisher
         var config = _constants.Config;
         try
         {
-            var text = ResultsText(report, config);
-            foreach (var chunk in Publisher.Chunk(text))
+            foreach (var chunk in Publisher.Chunk(results))
                 await SendAsync(channel, channelId, source, chunk);
 
             var winners = WinnersFromResult(report.Result);
@@ -63,7 +73,7 @@ public class ElectionPublisher
             var attachments = images.Attachments();
             try
             {
-                var embeds = Embeds(images, winners, report.Parties, config, Texts.Get("election.chartTitle", ("term", report.TermNumber)));
+                var embeds = Embeds(images, winners, report.Parties, config, chartTitle);
                 if (attachments.Count > 0)
                 {
                     var message = await channel.SendFilesAsync(attachments, embeds: embeds, allowedMentions: AllowedMentions.None);
@@ -75,7 +85,7 @@ public class ElectionPublisher
                 foreach (var attachment in attachments) attachment.Dispose();
             }
 
-            await SendAsync(channel, channelId, source, Proclamation(report));
+            await SendAsync(channel, channelId, source, proclamation);
         }
         catch (Exception ex)
         {
@@ -306,10 +316,14 @@ public class ElectionPublisher
             .ThenByDescending(id => result.VoteShare.GetValueOrDefault(id))
             .ThenBy(id => id)
             .ToList();
-        lines.AddRange(partyIds.Select(id => Texts.Get("election.partyLine",
-            ("party", byId.TryGetValue(id, out var named) ? PartyName(named) : Texts.Get("election.unknownParty", ("id", id))),
-            ("seats", result.PartySeats.GetValueOrDefault(id)),
-            ("share", Percent(result.VoteShare.GetValueOrDefault(id))))));
+        lines.AddRange(partyIds.Select(id =>
+        {
+            var party = byId.TryGetValue(id, out var named) ? PartyName(named) : Texts.Get("election.unknownParty", ("id", id));
+            var share = Percent(result.VoteShare.GetValueOrDefault(id));
+            return result.BelowThreshold?.Contains(id) == true
+                ? Texts.Get("election.partyLineBelowThreshold", ("party", party), ("share", share), ("threshold", Percent(config.Constants.Election.Threshold)))
+                : Texts.Get("election.partyLine", ("party", party), ("seats", result.PartySeats.GetValueOrDefault(id)), ("share", share));
+        }));
         if (partyIds.Count == 0) lines.Add(Texts.Get("election.nobody"));
 
 

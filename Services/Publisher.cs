@@ -47,6 +47,8 @@ public class Publisher
             var news = new List<string> { Texts.Get("news.season.header", ("season", GameCalendar.Label(report.ToSeason, report.ToYear))) };
             if (report.PreElectionOpened)
                 news.Add(Texts.Get("news.season.hustingsOpen"));
+            if (report.SenateCampaignOpened)
+                news.Add(Texts.Get("news.season.senateCampaignOpen"));
             if (_data.GetGameState().NextResolutionAt is { } next)
                 news.Add(Texts.Get("news.season.closes", ("when", Display.When(next))));
             news.AddRange(report.News);
@@ -54,6 +56,8 @@ public class Publisher
 
             if (report.Election is { } election)
                 await _elections.PublishAsync(election, source);
+            if (report.SenateElection is { } senateElection)
+                await _elections.PublishSenateAsync(senateElection, source);
 
             await PostEventsAsync(report, source);
             await _crises.PublishAsync(report, source);
@@ -140,6 +144,14 @@ public class Publisher
                     ("strengths", string.Join(", ", province.Strength.Where(kv => kv.Value > 0).OrderByDescending(kv => kv.Value)
                         .Select(kv => Texts.Get("digest.electionStrength", ("party", names.GetValueOrDefault(kv.Key, kv.Key.ToString())),
                             ("strength", kv.Value.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture))))))));
+        }
+
+        if (report.SenateElection is { } senate)
+        {
+            var names = senate.Parties.ToDictionary(p => p.Id, p => p.Name);
+            lines.Add(Texts.Get("digest.senateElection",
+                ("seats", string.Join(", ", senate.Result.PartySeats.OrderByDescending(kv => kv.Value)
+                    .Select(kv => Texts.Get("digest.electionSeat", ("party", names.GetValueOrDefault(kv.Key, kv.Key.ToString())), ("seats", kv.Value)))))));
         }
 
         foreach (var cancelled in report.ReadingsCancelled)
@@ -248,7 +260,9 @@ public class Publisher
 
         var calendar = Texts.Get("dashboard.calendar",
             ("label", state.Label),
-            ("preElection", state.IsPreElection ? Texts.Get("dashboard.preElectionTag") : ""),
+            ("preElection", state.IsPreElection ? Texts.Get("dashboard.preElectionTag")
+                : state.IsSenateCampaign ? Texts.Get("dashboard.senateCampaignTag")
+                : ""),
             ("paused", state.Paused ? Texts.Get("dashboard.pausedTag") : ""),
             ("nextResolution", Display.NextResolution(state)),
             ("nextElection", GameCalendar.Label(state.PreElectionSeason, state.PreElectionYear)));
@@ -265,11 +279,29 @@ public class Publisher
 
         var openIssues = _data.GetOpenIssues();
 
-        return new EmbedBuilder()
+        var embed = new EmbedBuilder()
             .WithTitle(Texts.Get("dashboard.title", ("label", state.Label)))
             .WithColor(new Color(0xB8, 0x86, 0x0B))
             .AddField(Texts.Get("dashboard.calendarField"), calendar)
-            .AddField(Texts.Get("dashboard.assemblyField", ("seats", state.Seats)), seatLines.Count == 0 ? Texts.Get("dashboard.noParties") : Display.Truncate(string.Join("\n", seatLines), 1024))
+            .AddField(Texts.Get("dashboard.assemblyField", ("seats", state.Seats)), seatLines.Count == 0 ? Texts.Get("dashboard.noParties") : Display.Truncate(string.Join("\n", seatLines), 1024));
+
+        if (state.SenateEstablished)
+        {
+            var senateLines = parties
+                .Select(p => (Party: p, Members: factions.Where(f => f.PartyId == p.Id).ToList()))
+                .Where(x => x.Members.Sum(m => m.SenateSeats) > 0)
+                .OrderByDescending(x => x.Members.Sum(m => m.SenateSeats))
+                .ThenBy(x => x.Party.Id)
+                .Select(x => Texts.Get("dashboard.partyLine", ("party", Display.Party(x.Party)), ("seats", x.Members.Sum(m => m.SenateSeats)), ("members", x.Members.Count)))
+                .ToList();
+            var independentSenators = independents.Sum(f => f.SenateSeats);
+            if (independentSenators > 0)
+                senateLines.Add(Texts.Get("dashboard.independentsLine", ("seats", independentSenators), ("factions", independents.Count(f => f.SenateSeats > 0))));
+            embed.AddField(Texts.Get("dashboard.senateField", ("seats", factions.Sum(f => f.SenateSeats))),
+                senateLines.Count == 0 ? Texts.Get("dashboard.senateEmpty") : Display.Truncate(string.Join("\n", senateLines), 1024));
+        }
+
+        return embed
             .AddField(Texts.Get("dashboard.issuesField"), openIssues.Count == 0 ? Texts.Get("dashboard.noIssues") : Display.Truncate(string.Join("\n", openIssues.Select(i => i.Title)), 1024))
             .AddField(Texts.Get("dashboard.economyField"), EconomyField(state))
             .AddField(Texts.Get("dashboard.realmField"), RealmField(state))

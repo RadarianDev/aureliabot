@@ -49,6 +49,34 @@ public sealed class SeatsEffect() : StateEffect("seats", "seats", 1, int.MaxValu
     }
 }
 
+public sealed class SenateEffect : EffectKind
+{
+    public override string Prefix => "senate";
+
+    public override string? Parse(string[] parts, string? rawValue, EffectParseOptions options, out double? value)
+    {
+        value = null;
+        if (parts.Length != 1) return Texts.Get("effects.errors.scalarNoId", ("prefix", Prefix));
+        if (RequireNumber(rawValue, out value) is { } error) return error;
+        return value is 1 or -1 ? null : Texts.Get("effects.errors.senateValue");
+    }
+
+    public override double? CurrentValue(Effect effect, IEffectStore store) => store.State.SenateEstablished ? 1 : 0;
+
+    public override string? Apply(Effect effect, IEffectStore store)
+    {
+        if (effect.Amount != 0) store.SetState("senate_established", effect.Amount > 0 ? 1 : 0);
+        return null;
+    }
+
+    public override string? SummaryLine(Effect effect, EffectNames names, DisplayConstants display) => effect.Amount switch
+    {
+        > 0 => Texts.Get("effects.summary.senateEstablished"),
+        < 0 => Texts.Get("effects.summary.senateAbolished"),
+        _ => null,
+    };
+}
+
 public sealed class ReserveEffect : EffectKind
 {
     public override string Prefix => "reserve";

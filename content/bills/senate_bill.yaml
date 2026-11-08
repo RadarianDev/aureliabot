@@ -1,0 +1,10 @@
+id: senate_bill
+title: The Senate Bill
+issue: electoral_reform
+lean: For
+motion: Raise a Senate of eighty-nine, chosen by the provinces every second year, to sit beside the Assembly and check its bills.
+pass:
+  text: >-
+    Great provinces and small will send near equal numbers to the new Senate, and every borough seat passes
+    to it from the Assembly. Henceforth a party must win eight votes in every hundred to sit in the Assembly at all.
+  effects: { senate: 1 }

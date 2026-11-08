@@ -58,7 +58,7 @@ A party doesn't store a member list: a party's members are the **active** factio
 
 - **Founding:** only `/gm party create`, with two or more founders, each an active independent.
   The GM is warned (not refused) when the colour is close to another party's (CIE76 ΔE below 20).
-- **Joining:** `/party apply` by an active independent, only during a pre-election. The application is
+- **Joining:** `/party apply` by an active independent, only during a pre-election or a Senate campaign. The application is
   posted in the party chat with Accept and Decline buttons. Only the party's active members may answer,
   each answer can be changed, and the request is decided as soon as more than half of the active
   members accept (joined) or decline (refused). Joining drops the faction's other pending applications.
