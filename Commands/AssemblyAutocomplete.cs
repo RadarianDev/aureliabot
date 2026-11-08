@@ -31,6 +31,31 @@ public class ProposableBillAutocomplete : AutocompleteHandler
     }
 }
 
+public class OpenReadingAutocomplete : AutocompleteHandler
+{
+    public override Task<AutocompletionResult> GenerateSuggestionsAsync(
+        IInteractionContext context, IAutocompleteInteraction autocompleteInteraction, IParameterInfo parameter, IServiceProvider services)
+    {
+        var typed = autocompleteInteraction.Data.Current.Value?.ToString() ?? "";
+        var data = services.GetRequiredService<DatabaseService>();
+        var results = data.GetReadings(ReadingStatus.Open)
+            .Select(reading => (Reading: reading, Bill: data.GetBill(reading.BillId)))
+            .Where(x => x.Bill is not null)
+            .Select(x => (x.Reading, Label: Texts.Get("bill.autocomplete", ("bill", x.Bill!.Title),
+                ("issue", data.GetIssue(x.Bill.IssueId)?.Title ?? x.Bill.IssueId), ("lean", AssemblyPublisher.LeanName(x.Bill.Lean)))))
+            .Where(x => x.Label.Contains(typed, StringComparison.OrdinalIgnoreCase))
+            .Take(25)
+            .Select(x => new AutocompleteResult(Display.Truncate(x.Label, 100), VoteSubjectAutocomplete.ReadingValue(x.Reading.Id)));
+        return Task.FromResult(AutocompletionResult.FromSuccess(results));
+    }
+}
+
+public class CabinetMemberAutocomplete : FactionAutocomplete
+{
+    protected override IEnumerable<Faction> Candidates(DatabaseService data) =>
+        (data.GetSittingCabinet()?.Holders ?? []).Select(data.GetFaction).OfType<Faction>();
+}
+
 public class VoteSubjectAutocomplete : AutocompleteHandler
 {
     private const string ReadingPrefix = "reading:";

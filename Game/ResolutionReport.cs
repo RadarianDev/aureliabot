@@ -65,6 +65,8 @@ public enum QuestionOutcomeKind { Unanswered, Dropped, Extended }
 
 public sealed record QuestionReport(long QuestionId, Ministry Ministry, ulong AskerId, ulong? MinisterId, QuestionOutcomeKind Outcome, double MinisterChange, double AskerChange);
 
+public sealed record WhipCountReport(string Title, ulong FactionId, ulong MinisterId, VoteChoice Predicted, VoteChoice? Actual, double PopularityChange);
+
 public sealed record CabinetVoteReport(long CabinetId, ulong? ChancellorId, bool Approved, int YesSeats, int NoSeats, int AbstainSeats);
 
 public sealed record NoConfidenceReport(long MotionId, ulong TablerId, NoConfidenceStatus Outcome, int YesSeats, int NoSeats, int FilledSeats);
@@ -93,6 +95,7 @@ public sealed record ResolutionReport
     public List<CrisisPostedReport> NewCrises { get; } = [];
     public List<CrisisOutcomeReport> CrisisOutcomes { get; } = [];
     public List<VoteResultReport> VoteResults { get; } = [];
+    public List<WhipCountReport> WhipCounts { get; } = [];
     public List<LawReport> Laws { get; } = [];
     public List<ReadingOpenedReport> ReadingsOpened { get; } = [];
     public List<ReadingCancelledReport> ReadingsCancelled { get; } = [];

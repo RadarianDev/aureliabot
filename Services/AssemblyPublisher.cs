@@ -69,6 +69,9 @@ public class AssemblyPublisher
         foreach (var result in report.VoteResults.Where(r => r.Subject == VoteSubject.Reading))
             await Safely(() => PublishReadingResultAsync(result, source));
 
+        if (report.WhipCounts.Count > 0)
+            await Safely(() => PostAsync(ChannelRole.Assembly, string.Join("\n", report.WhipCounts.Select(WhipCountLine)), source));
+
         foreach (var law in report.Laws)
             await Safely(() => PostAsync(ChannelRole.News, LawPost(law), source));
 
@@ -176,6 +179,19 @@ public class AssemblyPublisher
         {
             VoteChart.Discard(chart);
         }
+    }
+
+    private string WhipCountLine(WhipCountReport score)
+    {
+        var faction = Display.Faction(_data, score.FactionId);
+        var member = Display.Faction(_data, score.MinisterId);
+        var predicted = ChoiceName(score.Predicted);
+        if (score.Actual is null or VoteChoice.Abstain)
+            return Texts.Get("whipCount.score.void", ("faction", faction), ("member", member), ("choice", predicted), ("bill", score.Title));
+        var change = Display.Signed(score.PopularityChange);
+        return score.Actual == score.Predicted
+            ? Texts.Get("whipCount.score.right", ("faction", faction), ("member", member), ("choice", predicted), ("bill", score.Title), ("change", change))
+            : Texts.Get("whipCount.score.wrong", ("faction", faction), ("member", member), ("choice", predicted), ("bill", score.Title), ("change", change));
     }
 
     public string LawPost(LawReport law)

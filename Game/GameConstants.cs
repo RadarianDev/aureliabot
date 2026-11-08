@@ -83,6 +83,8 @@ public sealed record OppositionConstants
     public double QuestionReward { get; init; }
     public double CondemnReward { get; init; }
     public double CondemnPenalty { get; init; }
+    public double WhipCountReward { get; init; }
+    public double WhipCountPenalty { get; init; }
 }
 
 public sealed record AssemblyConstants

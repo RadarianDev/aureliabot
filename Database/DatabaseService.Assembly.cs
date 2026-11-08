@@ -516,6 +516,7 @@ public partial class DatabaseService
                 senate_yes_seats = $senateYes, senate_no_seats = $senateNo, senate_abstain_seats = $senateAbstain WHERE id = $id;",
                 ("$id", reading.Id), ("$yes", tally.YesSeats), ("$no", tally.NoSeats), ("$abstain", tally.AbstainSeats),
                 ("$senateYes", senateTally?.YesSeats), ("$senateNo", senateTally?.NoSeats), ("$senateAbstain", senateTally?.AbstainSeats));
+            ScoreWhipCountsTx(conn, tx, reading, bill, counted, c, report);
 
             if (returned)
             {

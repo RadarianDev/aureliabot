@@ -60,6 +60,7 @@
 	- **Question** a minister, who must answer publicly within two turns. An unanswered question costs the minister and rewards the asker.
 	- **Condemn** a crisis by publicly backing *For* or *Against* before the turn ends. Being right where the minister was wrong earns popularity; being wrong where the minister was right costs it.
 	- **Propose a bill**, once a year.
+	- **Whip count** a bill under vote: secretly predict that a cabinet member will break from the government's line (voting against the government's bill, or for an opposition one). It is revealed at the count. Being right earns popularity, being wrong costs it, and if the member abstains or doesn't vote, nothing happens.
 ## The Assembly
 - The *Aurelian Assembly* has 180 seats.
 - The **chancellor** sets the government's agenda: each turn they may pick one **bill** to put before the Assembly. With no chancellor, the government proposes no bills. An opposition faction can propose one bill a year as its opposition action.

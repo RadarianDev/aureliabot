@@ -355,7 +355,8 @@ rejectedCooldownSeasons: 4
 law: { sponsorFactor: 4 }
 government: { billsPerSeason: 1 }
 opposition: { actionsPerSeason: 1, privateBillsPerYear: 1,
-              unansweredQuestion: 2, questionReward: 1, condemnReward: 2, condemnPenalty: 1 }
+              unansweredQuestion: 2, questionReward: 1, condemnReward: 2, condemnPenalty: 1,
+              whipCountReward: 1, whipCountPenalty: 0.5 }
 assembly: { noConfidenceShare: 0.1667, noConfidenceGatherResolutions: 2, noConfidenceCooldownSeasons: 4 }
 election: { baseExponent: 0.85, homeMultiplier: 1.5, programmeWeight: 0.5,
             multiplierMin: 0.5, multiplierMax: 1.5, crowding: true, threshold: 0.08 }
@@ -437,6 +438,7 @@ startingForces:
 | `opposition.unansweredQuestion` | Popularity a minister loses for an unanswered question. |
 | `opposition.questionReward` | Popularity the asker gains for it. |
 | `opposition.condemnReward`, `.condemnPenalty` | Gain and loss from a condemnation. |
+| `opposition.whipCountReward`, `.whipCountPenalty` | Gain and loss from a whip count. |
 | `assembly.noConfidenceShare` | Share of seats needed to bring no confidence to a vote. |
 | `assembly.noConfidenceGatherResolutions` | Resolutions to gather those seats. |
 | `assembly.noConfidenceCooldownSeasons` | Seasons after a failed motion before another. |

@@ -473,6 +473,17 @@ public partial class DatabaseService
         AddColumnIfMissing(connection, "opposition_actions", "cancelled", "INTEGER NOT NULL DEFAULT 0");
 
         Exec(connection, @"
+            CREATE TABLE IF NOT EXISTS whip_counts (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                faction_id TEXT NOT NULL REFERENCES factions(user_id),
+                reading_id INTEGER NOT NULL REFERENCES readings(id),
+                minister_faction_id TEXT NOT NULL REFERENCES factions(user_id),
+                side TEXT NOT NULL,
+                made_at INTEGER NOT NULL,
+                UNIQUE (faction_id, reading_id, minister_faction_id)
+            );");
+
+        Exec(connection, @"
             CREATE TABLE IF NOT EXISTS questions (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 asker_faction_id TEXT NOT NULL REFERENCES factions(user_id),

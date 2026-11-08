@@ -49,7 +49,7 @@ public enum ProjectStatus { Active, Stalled, Finished, Halted }
 
 public enum ActionKind { Campaign, Attack, Poll }
 
-public enum OppositionActionKind { Question, Condemn, Bill }
+public enum OppositionActionKind { Question, Condemn, Bill, WhipCount }
 
 public enum QuestionStatus { Open, Answered, Unanswered, Dropped }
 

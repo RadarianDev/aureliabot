@@ -85,6 +85,12 @@ public static class Formulas
     public static double CrisisDefaultLoss(GameConstants constants, double salience) =>
         constants.Campaign.Factor * SalienceFactor(salience);
 
+    public static double WhipCountChange(GameConstants constants, VoteChoice predicted, VoteChoice? actual)
+    {
+        if (actual is null or VoteChoice.Abstain) return 0;
+        return actual == predicted ? constants.Opposition.WhipCountReward : -constants.Opposition.WhipCountPenalty;
+    }
+
     public static double CondemnationChange(GameConstants constants, Lean side, Lean? ministerLean, double provincialOpinion)
     {
         var rightSign = Math.Sign(provincialOpinion);

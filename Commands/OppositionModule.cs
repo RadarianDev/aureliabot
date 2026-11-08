@@ -46,6 +46,38 @@ public class OppositionModule : InteractionModuleBase<SocketInteractionContext>
             ephemeral: true, allowedMentions: AllowedMentions.None);
     }
 
+    [SlashCommand("whipcount", "Secretly predict a cabinet member breaking ranks on a bill; spends the season's opposition action")]
+    [RequireFaction]
+    public async Task WhipCountAsync(
+        [Summary("bill", "A bill the Assembly is voting on"), Autocomplete(typeof(OpenReadingAutocomplete))] string bill,
+        [Summary("member", "The cabinet member"), Autocomplete(typeof(CabinetMemberAutocomplete))] string member,
+        [Summary("vote", "How you predict they will vote")] WhipCountSide vote)
+    {
+        if (VoteSubjectAutocomplete.Parse(bill) is not (VoteSubject.Reading, var readingId))
+        {
+            await RespondAsync(Texts.Get("whipCount.refusal.notOpen"), ephemeral: true);
+            return;
+        }
+        if (FactionAutocomplete.Find(_data, member) is not { } target)
+        {
+            await RespondAsync(Texts.Get("whipCount.refusal.noMember"), ephemeral: true);
+            return;
+        }
+
+        await DeferAsync(ephemeral: true);
+        var result = _data.MakeWhipCount(Context.User.Id, readingId, target.UserId, vote == WhipCountSide.For ? VoteChoice.Yes : VoteChoice.No, _constants.Current);
+        if (result.Count is not { } count)
+        {
+            await FollowupAsync(result.Refusal ?? Texts.Get("whipCount.refusal.notOpen"), ephemeral: true, allowedMentions: AllowedMentions.None);
+            return;
+        }
+
+        await FollowupAsync(Texts.Get("whipCount.done",
+                ("member", Display.Faction(_data, count.MinisterId)), ("choice", AssemblyPublisher.ChoiceName(count.Side)), ("bill", result.BillTitle),
+                ("when", Display.NextResolution(_data.GetGameState()))),
+            ephemeral: true, allowedMentions: AllowedMentions.None);
+    }
+
     [SlashCommand("question", "Question a minister publicly; spends the season's opposition action")]
     [RequireFaction]
     public async Task QuestionAsync([Summary("ministry", "The ministry to question")] CabinetMinistryChoice ministry)
@@ -145,3 +177,5 @@ public class GovernmentTextModal : IModal
 }
 
 public enum CondemnSide { For, Against }
+
+public enum WhipCountSide { For, Against }

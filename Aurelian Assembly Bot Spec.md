@@ -112,7 +112,8 @@ These are the main tables. Ids are short strings (slugs) for anything defined in
 | Project | id, templateId, title, purse, provinceId, price, term, progress, spending (the purse's planned spend per season), startedResolution, bonusDueResolution, effects, bonusText, bonusEffects, status (Active, Stalled, Finished) |
 | Action | id, factionId, kind (Campaign, Attack, Poll), issueId, provinceId (where a campaign or attack happens; null for a poll), stance, offProgramme, targetFactionId, submittedAt, resolved |
 | RegionalPopularity | factionId, provinceId, deviation (the faction's popularity in the province minus its national popularity; a missing row is 0) |
-| OppositionAction | id, factionId, kind (Question, Condemn, Bill), season, year |
+| OppositionAction | id, factionId, kind (Question, Condemn, Bill, WhipCount), season, year |
+| WhipCount | id, factionId, readingId, ministerFactionId, side (Yes, No), madeAt |
 | Question | id, askerFactionId, ministry, text, askedAt, dueResolution, answerText, answeredAt |
 | Condemnation | id, factionId, crisisId, side (For, Against), madeAt |
 | StanceLog | factionId, issueId, stance, season, source (Programme, Campaign, Vote; a vote is logged when it is counted), offProgramme |
@@ -182,7 +183,8 @@ rejectedCooldownSeasons: 4
 law: { sponsorFactor: 4 }
 government: { billsPerSeason: 1 }
 opposition: { actionsPerSeason: 1, privateBillsPerYear: 1,
-              unansweredQuestion: 2, questionReward: 1, condemnReward: 2, condemnPenalty: 1 }
+              unansweredQuestion: 2, questionReward: 1, condemnReward: 2, condemnPenalty: 1,
+              whipCountReward: 1, whipCountPenalty: 0.5 }
 assembly: { noConfidenceShare: 0.1667, noConfidenceGatherResolutions: 2, noConfidenceCooldownSeasons: 4 }
 election: { baseExponent: 0.85, homeMultiplier: 1.5, programmeWeight: 0.5,
             multiplierMin: 0.5, multiplierMax: 1.5, crowding: true }
@@ -557,7 +559,7 @@ A faction cannot attack a member of its own party.
 - **Government:** every cabinet member, plus every member of a party that holds at least one cabinet seat (the Chancellorship counts).
 - **Opposition:** every active member of a party that holds no cabinet seat. An independent outside the cabinet is neither, and cannot use opposition commands.
 
-**Opposition actions:** each opposition faction has `opposition.actionsPerSeason` opposition action a season, spent on a question, a condemnation or a private bill. At most `privateBillsPerYear` of a faction's opposition actions in a year can be bills.
+**Opposition actions:** each opposition faction has `opposition.actionsPerSeason` opposition action a season, spent on a question, a condemnation, a whip count or a private bill. At most `privateBillsPerYear` of a faction's opposition actions in a year can be bills.
 
 **Cabinet lifecycle**
 
@@ -820,6 +822,7 @@ A faction may have at most as many pending actions as the turn allows, of any ki
 | --- | --- | --- |
 | `/opposition question ministry` | The season's opposition action | Opens a modal for the question. It is posted publicly with an Answer button, which opens a modal for the responsible minister; the answer is posted under it. The minister must answer by the second resolution after it is asked. |
 | `/opposition condemn crisis side` | The season's opposition action | Publicly backs *For* or *Against* on a live crisis's issue, posted to #news at once, so the minister sees it before answering. Scored at the resolution (section 5). One per faction per crisis. |
+| `/opposition whipcount bill member vote` | The season's opposition action | Secretly predicts that a cabinet member will break from the line on a bill whose vote is open: *Against* a bill sponsored from the government, *For* any other. Predicting the expected vote is refused. Revealed in #assembly at the count and scored on the member's counted vote, party following included: `whipCountReward` if right, `whipCountPenalty` lost if wrong, nothing if the member abstains or casts no vote. A bill cancelled before its count is never scored. |
 
 **The Assembly**
 

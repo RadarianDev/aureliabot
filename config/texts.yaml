@@ -242,8 +242,8 @@ me:
   answerButton: "Answer"
   crisisAwaiting: "**Crisis:** {crisis} awaits your answer as {ministry} minister: `/crisis respond` before {when}."
   crisisAnswered: "**Crisis:** you have answered {crisis}; you can change your answer with `/crisis respond` until {when}."
-  oppositionFreeWithBill: "Your opposition action this season is unused: `/opposition question`, or `/bill propose` (a private bill is still allowed this year)."
-  oppositionFree: "Your opposition action this season is unused: `/opposition question` (your private bill for this year is spent)."
+  oppositionFreeWithBill: "Your opposition action this season is unused: `/opposition question`, `/opposition whipcount`, or `/bill propose` (a private bill is still allowed this year)."
+  oppositionFree: "Your opposition action this season is unused: `/opposition question` or `/opposition whipcount` (your private bill for this year is spent)."
   oppositionUsed: "Your opposition action this season is used."
   status: "{season} · next resolution {when}"
   statusPreElection: "{season} · Pre-election · next resolution {when}"
@@ -294,7 +294,7 @@ help:
     All actions are revealed together when the turn ends.
   opposition: |-
     ## Opposition
-    A faction in a party with no cabinet seat is in opposition, and has one opposition action a season: `/opposition question` to question a minister, or `/bill propose` to put a private bill to the Assembly (one a year). `/opposition condemn` backs *For* or *Against* on a live crisis before the minister answers: being right where the minister was wrong earns popularity, being wrong where the minister was right costs it.
+    A faction in a party with no cabinet seat is in opposition, and has one opposition action a season: `/opposition question` to question a minister, or `/bill propose` to put a private bill to the Assembly (one a year). `/opposition condemn` backs *For* or *Against* on a live crisis before the minister answers: being right where the minister was wrong earns popularity, being wrong where the minister was right costs it. `/opposition whipcount` secretly predicts that a cabinet member will break from the government's line on a bill under vote: it is revealed at the count, earning popularity if right and costing some if wrong.
   voting: |-
     ## Voting
     Each faction votes all its seats one way, with the buttons on the post in #assembly, `/vote`, or from `/me`. A bill passes when more seats vote for it than against; a tie fails. On bills and cabinets, if you don't vote and you're in a party, your seats follow the first of your party's factions to vote Yes or No; `/me` shows which way that is, and you're told privately when it happens. Voting yourself, even to abstain, keeps your own vote, and no-confidence motions are never followed. Votes are secret until the count: only then are the totals and each faction's vote published. Voting Yes on a bill takes its side of the issue as your stance once the vote is counted, No the other side. Cabinet and no-confidence votes stay open until the end of the next turn. Any faction outside the cabinet can table a motion of no confidence with `/noconfidence`; it goes to a vote once its backers hold a sixth of the seats.
@@ -1843,6 +1843,22 @@ condemn:
     already: "You have already condemned **{crisis}**."
     side: "A condemnation stands For or Against the crisis's issue."
 
+whipCount:
+  done: "Your whip count is sealed: {member} to vote **{choice}** on **{bill}**. It spends this season's opposition action, and is revealed and scored when the vote is counted, {when}."
+  score:
+    right: "Whip count: {faction} called {member} to vote **{choice}** on **{bill}**, and was right: popularity {change}."
+    wrong: "Whip count: {faction} called {member} to vote **{choice}** on **{bill}**, and was wrong: popularity {change}."
+    void: "Whip count: {faction} called {member} to vote **{choice}** on **{bill}**, but {member} did not take a side. Nothing is gained or lost."
+  refusal:
+    notOpposition: "Only opposition factions can make a whip count: members of a party that holds no cabinet seat."
+    actionUsed: "You have spent this season's opposition action. The next comes with {season}, after the resolution {when}."
+    notOpen: "That bill is not being voted on."
+    noMember: "That cabinet member could not be found."
+    notCabinet: "{member} is not in the cabinet."
+    noSeats: "{member} holds no seats to vote with on this bill."
+    withTheLine: "**{choice}** is the vote everyone expects from the cabinet on this bill. A whip count has to call a break from the government's line."
+    already: "You have already made a whip count on {member} for this bill."
+
 treasury:
   refusal:
     notStarted: "The game has not started yet."
@@ -2152,7 +2168,7 @@ reminders:
   heading: "{faction}, the next resolution comes {when}. Still waiting on you:"
   actionUnused: "One of your actions this turn is unused: `/campaign`, `/attack` or `/poll`."
   actionsUnused: "{count} of your actions this turn are unused: `/campaign`, `/attack` or `/poll`."
-  opposition: "This season's opposition action is unused: `/opposition question`, `/opposition condemn` or `/bill propose`."
+  opposition: "This season's opposition action is unused: `/opposition question`, `/opposition condemn`, `/opposition whipcount` or `/bill propose`."
 
 cleanup:
   preview: "**Server cleanup.** Confirm to delete these from Discord:"
