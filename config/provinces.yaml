@@ -64,7 +64,7 @@ tovrerie:
 provencie_gares:
   name: Provencie Gares
   population: 1.18
-  senateSeats: 8
+  senateSeats: 9
   mapKey: "#32FF00"
   description: Windswept cliffs at the far eastern edge of the kingdom.
   conditions: [frontier, remote, coastal]

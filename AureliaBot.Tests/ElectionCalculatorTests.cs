@@ -341,7 +341,7 @@ public class ElectionCalculatorTests
     [Fact]
     public void The_senate_has_no_threshold()
     {
-        var result = ElectionCalculator.RunSenate(LopsidedContest(senateEstablished: true), new Dictionary<string, int> { [Nation] = 89 });
+        var result = ElectionCalculator.RunSenate(LopsidedContest(senateEstablished: true), new Dictionary<string, int> { [Nation] = 90 });
 
         Assert.True(result.FactionSeats[21] >= 1);
         Assert.Null(result.BelowThreshold);

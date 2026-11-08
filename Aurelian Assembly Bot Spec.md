@@ -1031,9 +1031,9 @@ After the election the next term begins. The outgoing cabinet stays as caretaker
 
 ### Senate election
 
-Held at the end of every Senate campaign turn (section 2). All 89 seats are replaced at once, for a two-year term. The Senate starts switched off: the `senate` effect sets `GameState.senateEstablished`, and the Senate Bill (`content/bills/senate_bill.yaml`) carries that effect. Until the first election after that, no faction holds a Senate seat. A bill that establishes the Senate at the end of a campaign-season turn does not trigger an election that turn; the Senate waits for the next Senate campaign.
+Held at the end of every Senate campaign turn (section 2). All 90 seats are replaced at once, for a two-year term. The Senate starts switched off: the `senate` effect sets `GameState.senateEstablished`, and the Senate Bill (`content/bills/senate_bill.yaml`) carries that effect. Until the first election after that, no faction holds a Senate seat. A bill that establishes the Senate at the end of a campaign-season turn does not trigger an election that turn; the Senate waits for the next Senate campaign.
 
-1. **Seats:** each province has its `senateSeats` from `provinces.yaml`: 9, and 8 for Provencie Gares.
+1. **Seats:** each province has its `senateSeats` from `provinces.yaml`: 9.
 2. **Safe boroughs:** every faction in a standing party holds one in its home province. B is the number of them in province p, which leaves `max(0, senateSeats − B)` contested seats. If B exceeds the province's seats, every borough is still seated and the GM is alerted.
 3. **Strength:** as in steps 3 to 5 of the Assembly election.
 4. **Provincial seats:** D'Hondt on strengths over the contested seats, in each province, with the same tie-break. There is no threshold.

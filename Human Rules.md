@@ -73,7 +73,7 @@
 - A rejected bill rests for a year before it can be proposed again. Other bills on the same issue can still be proposed.
 ## The Senate
 - The Senate does not exist until the *Senate Bill* becomes law. Until then, nothing in this section applies.
-- The *Senate* has 89 seats: nine for each province, and eight for Provencie Gares. The whole Senate is elected every two years.
+- The *Senate* has 90 seats, nine for each province. The whole Senate is elected every two years.
 - Every bill is voted on by both chambers in the same turn. Each faction casts one vote, counted in each chamber with its seats there.
 - A bill the Assembly rejects fails. A bill the Assembly passes and the Senate rejects returns to the Assembly the next turn, and becomes law only if three-fifths of the votes cast are for it.
 - Cabinet and no-confidence votes belong to the Assembly alone.
