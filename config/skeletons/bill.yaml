@@ -1,5 +1,6 @@
 id: new_bill
 title: The New Bill
+summary: In a sentence or two, what this is about and why it matters.
 issue: new_issue
 lean: For
 motion: What the Assembly votes on.

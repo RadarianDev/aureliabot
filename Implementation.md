@@ -321,7 +321,7 @@ DST change), undo restoring a known state.
 - `Confirmations` and `Preconditions`, used by every later stage.
 - `/gm party create|edit|move|delete` (create is the only way a party is founded; colour-similarity
   warning on create and edit; move overrides the joining rules), party repair from the setup checklist,
-  `/gm faction edit|retire`, `/gm reward` (a royal commendation in #news).
+  `/gm faction edit|retire`, `/gm reward` (a royal commendation in #notices).
 - `/party apply|leave`, join applications with Accept/Decline buttons in the party chat, decided by a
   majority of active members (`PartyJoinAnswer`); applying only during a pre-election.
 - Dissolution: one `DissolveIfUnderTwoTx` check run after every leave, retire and GM move, sharing
@@ -399,8 +399,7 @@ refused for a closed issue, and a closed issue withdrawing its bills.
 - `/noconfidence` for any active faction outside the cabinet, with Cosign buttons open to the same
   factions (repeated in `/me`), the share-based threshold and lapsing, and snap elections.
 - `/opposition question|condemn` (one opposition action a season, spent on a
-  question, a condemnation or a private bill through `/bill propose`; condemnations posted to #news
-  at once), questions with the minister's penalty and the asker's reward.
+  question, a condemnation or a private bill through `/bill propose`; condemnations sealed until the crisis resolves), questions with the minister's penalty and the asker's reward.
 - One `ResponsibleMinister(ministry)` lookup, the holder or else the Chancellor, used by crises,
   questions, autocomplete and reminders.
 

@@ -9,17 +9,15 @@ public class OppositionModule : InteractionModuleBase<SocketInteractionContext>
     private readonly DatabaseService _data;
     private readonly ConstantsStore _constants;
     private readonly GovernmentPublisher _government;
-    private readonly CrisisPublisher _crises;
 
-    public OppositionModule(DatabaseService data, ConstantsStore constants, GovernmentPublisher government, CrisisPublisher crises)
+    public OppositionModule(DatabaseService data, ConstantsStore constants, GovernmentPublisher government)
     {
         _data = data;
         _constants = constants;
         _government = government;
-        _crises = crises;
     }
 
-    [SlashCommand("condemn", "Publicly back For or Against on a live crisis; spends the season's opposition action")]
+    [SlashCommand("condemn", "Secretly back a side on a live crisis, revealed when it resolves; spends your opposition action")]
     [RequireFaction]
     public async Task CondemnAsync(
         [Summary("crisis", "A live crisis"), Autocomplete(typeof(LiveCrisisAutocomplete))] string crisis,
@@ -35,13 +33,12 @@ public class OppositionModule : InteractionModuleBase<SocketInteractionContext>
 
         await DeferAsync(ephemeral: true);
         var result = _data.Condemn(Context.User.Id, target.Id, side == CondemnSide.For ? Lean.For : Lean.Against, _constants.Current);
-        if (result is not { Crisis: { } condemned, Condemnation: { } condemnation })
+        if (result is not { Crisis: { } condemned, Condemnation: not null })
         {
             await FollowupAsync(result.Refusal ?? Texts.Get("crisis.refusal.gone"), ephemeral: true, allowedMentions: AllowedMentions.None);
             return;
         }
 
-        await _crises.PostCondemnationAsync(condemned, condemnation, "opposition condemn");
         await FollowupAsync(Texts.Get("condemn.done", ("crisis", condemned.Title), ("when", Display.NextResolution(_data.GetGameState()))),
             ephemeral: true, allowedMentions: AllowedMentions.None);
     }

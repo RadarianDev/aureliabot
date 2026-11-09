@@ -28,16 +28,11 @@ public class CrisisPublisher
             await Safely(() => PublishNewCrisisAsync(posted.CrisisId, source));
     }
 
-    public async Task PostCondemnationAsync(Crisis crisis, Condemnation condemnation, string source) =>
-        await Safely(() => PostAsync(Texts.Get("condemn.post",
-            ("faction", Display.Faction(_data, condemnation.FactionId)), ("crisis", crisis.Title),
-            ("side", AssemblyPublisher.LeanName(condemnation.Side)), ("issue", IssueTitle(_data, crisis.IssueId))), source));
-
     private async Task PublishNewCrisisAsync(long crisisId, string source)
     {
         if (_data.GetCrisis(crisisId) is not { } crisis) return;
         var state = _data.GetGameState();
-        var message = await PostAsync(CrisisPost(crisis, state, _constants.Config, IssueTitle(_data, crisis.IssueId)), source);
+        var message = await PostAsync(CrisisPost(crisis, state, _constants.Config, IssueTitle(_data, crisis.IssueId), Briefing.ForCrisis(_data, crisis)), source);
         if (message is not null) _data.SetCrisisMessageId(crisis.Id, message.Id);
 
         if (_data.ResponsibleMinister(crisis.Ministry) is { } minister)
@@ -48,7 +43,7 @@ public class CrisisPublisher
     public async Task RefreshPostAsync(long crisisId)
     {
         if (_data.GetCrisis(crisisId) is not { MessageId: { } messageId } crisis) return;
-        var post = CrisisPost(crisis, _data.GetGameState(), _constants.Config, IssueTitle(_data, crisis.IssueId));
+        var post = CrisisPost(crisis, _data.GetGameState(), _constants.Config, IssueTitle(_data, crisis.IssueId), Briefing.ForCrisis(_data, crisis));
         if (crisis.Status == CrisisStatus.Cancelled) post = Texts.Get("gmCrisis.post.withdrawn") + "\n" + post;
         await Safely(() => EditAsync(messageId, post));
     }
@@ -59,7 +54,7 @@ public class CrisisPublisher
         var note = string.IsNullOrWhiteSpace(message)
             ? Texts.Get("gmCrisis.news.withdrawn", ("crisis", crisis.Title))
             : Texts.Get("gmCrisis.news.withdrawnMessage", ("crisis", crisis.Title), ("message", message.Trim().ReplaceLineEndings("\n> ")));
-        await Safely(() => PostAsync(note, source));
+        await Safely(() => PostAsync(note, source, ChannelRole.Notices));
     }
 
     public async Task NotifyAmendedAsync(long crisisId)
@@ -89,15 +84,16 @@ public class CrisisPublisher
     public static string MetaLine(Crisis crisis, GameConfig config, string issueTitle) =>
         Texts.Get("crisis.post.meta", ("ministry", crisis.Ministry.DisplayName()), ("province", Display.Province(config, crisis.ProvinceId)), ("issue", issueTitle));
 
-    public static string CrisisPost(Crisis crisis, GameState state, GameConfig config, string issueTitle)
+    public static string CrisisPost(Crisis crisis, GameState state, GameConfig config, string issueTitle, IEnumerable<string> briefing)
     {
         var lines = new List<string>
         {
             Texts.Get("crisis.post.heading", ("crisis", crisis.Title)),
             MetaLine(crisis, config, issueTitle),
             Texts.Get("crisis.post.due", ("due", GovernmentPublisher.Deadline(state, crisis.DueResolution))),
-            "",
         };
+        lines.AddRange(briefing);
+        lines.Add("");
         lines.AddRange(crisis.Answers.Select((answer, index) => AnswerLine(index + 1, answer)));
         return string.Join("\n", lines);
     }
@@ -128,7 +124,7 @@ public class CrisisPublisher
         }
 
         var post = Publisher.FormatEffectPost(outcome.Title, preamble, string.Join("\n\n", outcome.Texts),
-            EffectSummary.Lines(effects, Publisher.Names(_data, config), config.Constants.Display));
+            EffectSummary.Lines(effects, Publisher.Names(_data, config), config.Constants.Display), Briefing.ForEffects(_data, outcome.Effects));
         var condemnations = outcome.Condemnations.Select(score => CondemnationLine(score, outcome)).ToList();
         return condemnations.Count == 0 ? post : post + "\n\n" + string.Join("\n", condemnations);
     }
@@ -157,11 +153,11 @@ public class CrisisPublisher
         }
     }
 
-    private async Task<IUserMessage?> PostAsync(string text, string source)
+    private async Task<IUserMessage?> PostAsync(string text, string source, ChannelRole role = ChannelRole.News)
     {
-        if (_data.GetChannel(ChannelRole.News) is not { } channelId || _client.GetChannel(channelId) is not IMessageChannel channel)
+        if (_data.GetPostingChannel(role) is not { } channelId || _client.GetChannel(channelId) is not IMessageChannel channel)
         {
-            Console.WriteLine($"[CrisisPublisher] No News channel is set; skipped a post from {source}.");
+            Console.WriteLine($"[CrisisPublisher] No {role} channel is set; skipped a post from {source}.");
             return null;
         }
 

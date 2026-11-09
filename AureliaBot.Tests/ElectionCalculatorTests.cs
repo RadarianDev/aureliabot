@@ -339,6 +339,52 @@ public class ElectionCalculatorTests
     }
 
     [Fact]
+    public void Independents_hold_a_senate_borough_taken_from_their_provinces_contested_seats()
+    {
+        var input = Input(0,
+            [new ElectionProvince("p1", 50), new ElectionProvince("p2", 50)],
+            [Party(A)],
+            [new ElectionFaction(11, A, 10, "p1")],
+            []) with { Independents = [new ElectionIndependent(91, "p1"), new ElectionIndependent(92, "p2")] };
+
+        var result = ElectionCalculator.RunSenate(input, new Dictionary<string, int> { ["p1"] = 9, ["p2"] = 9 });
+
+        var p1 = result.Provinces.Single(p => p.ProvinceId == "p1");
+        Assert.Equal(7, p1.ContestedSeats);
+        Assert.Equal(1, p1.IndependentBoroughSeats);
+        Assert.Equal(8, result.Provinces.Single(p => p.ProvinceId == "p2").ContestedSeats);
+        Assert.Equal(1, result.FactionSeats[91]);
+        Assert.Equal(1, result.FactionSeats[92]);
+        Assert.Equal(2, result.IndependentSeats);
+        Assert.Equal(16, result.PartySeats[A]);
+        Assert.Equal(A, p1.WinnerPartyId);
+    }
+
+    [Fact]
+    public void Independents_are_seated_in_the_senate_when_no_party_stands()
+    {
+        var input = Input(0, [new ElectionProvince("p1", 50)], [], [], []) with { Independents = [new ElectionIndependent(91, "p1")] };
+
+        var result = ElectionCalculator.RunSenate(input, new Dictionary<string, int> { ["p1"] = 9 });
+
+        Assert.Equal(1, result.FactionSeats[91]);
+        Assert.Equal(1, result.IndependentSeats);
+        Assert.Null(Assert.Single(result.Provinces).WinnerPartyId);
+    }
+
+    [Fact]
+    public void Independents_win_no_assembly_seats()
+    {
+        var input = Input(10, [new ElectionProvince("p1", 50)], [Party(A)], [new ElectionFaction(11, A, 10, "p1")], [])
+            with { Independents = [new ElectionIndependent(91, "p1")] };
+
+        var result = ElectionCalculator.Run(input);
+
+        Assert.False(result.FactionSeats.ContainsKey(91));
+        Assert.Equal(0, result.IndependentSeats);
+    }
+
+    [Fact]
     public void The_senate_has_no_threshold()
     {
         var result = ElectionCalculator.RunSenate(LopsidedContest(senateEstablished: true), new Dictionary<string, int> { [Nation] = 90 });

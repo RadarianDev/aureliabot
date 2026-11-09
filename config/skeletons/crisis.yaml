@@ -1,5 +1,6 @@
 id: new_crisis
 title: New Crisis
+summary: In a sentence or two, what this is about and why it matters.
 ministry: Interior
 province: aurenten
 issue: new_issue

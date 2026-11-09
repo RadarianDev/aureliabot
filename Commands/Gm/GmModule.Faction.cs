@@ -73,7 +73,7 @@ public partial class GmModule
 
             var channelId = await _factionChannels.EnsureChannelAsync(player.Id);
             await _publisher.PostAsync(
-                ChannelRole.News,
+                ChannelRole.Notices,
                 Texts.Get("gm.faction.create.news", ("character", character), ("player", player.Mention), ("province", province.Name)),
                 "gm faction create");
             var greeted = channelId is not null && await _factionChannels.SendAsync(
@@ -245,7 +245,7 @@ public partial class GmModule
                 return Texts.Get("gm.faction.unretire.notRetired", ("user", userId));
 
             await _publisher.PostAsync(
-                ChannelRole.News,
+                ChannelRole.Notices,
                 Texts.Get("gm.faction.unretire.news", ("character", faction.CharacterName), ("player", MentionUtils.MentionUser(userId))),
                 "gm faction unretire");
             return Texts.Get("gm.faction.unretire.returned", ("faction", Display.Faction(faction)));

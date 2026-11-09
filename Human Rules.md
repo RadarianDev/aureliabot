@@ -3,6 +3,7 @@
 - The state is public in numbers: money (the **economy**, **budget**, every ministry's funds, what each ministry spent its money on, and every price), **popularity**, **seats** and the armed forces.
 - The mood of the people is told only in words, through **events**, **polls** and province **conditions**: public opinion, salience, **discontent** and **Anzarian Favour**. **Foreign Threat** is only ever hinted at.
 - Every **event** lists its effects with UP and DOWN arrows. Numbers are shown with an amount; the people's mood shows only the arrow. Some effects stay secret.
+- `/info` shows everything public: the kingdom, the government, parties, factions, issues, bills, laws, crises, events, projects, provinces and conditions.
 ## Turns
 - A **turn** lasts one real day and is one season (Spring, Summer, Autumn, Winter). Four turns make a **year**.
 - Every turn opens with the news: new **events**, the outcomes of last turn's **crises** and actions, and what the Assembly decided.
@@ -21,7 +22,7 @@
 - A faction can apply to join a party only during a pre-election or Senate campaign turn, and joins with the agreement of a majority of the party's factions.
 - Each party otherwise governs itself by its own constitution, written by its members. How it decides is roleplay.
 - A faction can leave at any time and keeps its seats. A party left with one faction dissolves.
-- Only parties stand in elections. A faction outside a party is an **independent**.
+- Only parties stand in elections, though every faction holds a Senate seat in its home province. A faction outside a party is an **independent**.
 - Each party also has a **foreign affairs** channel for talks with outsiders. Any member can let someone in with `/party foreign add`, take them out with `/party foreign remove`, see who is in with `/party foreign list`, and wipe every message in it with `/party foreign clear`, which gives you a private .txt transcript of what was deleted. Guests can read and write there but nowhere else in the party, and they lose access if the party dissolves.
 ## The World
 - Aurelia has ten **provinces**, each with a population, **discontent** and **conditions**.
@@ -58,7 +59,7 @@
 - A party is in **government** if any of its factions holds a cabinet post, and so is every cabinet member. Every other party is in **opposition**. Independents outside the cabinet are neither.
 - Each turn, an opposition faction also gets one **opposition action**:
 	- **Question** a minister, who must answer publicly within two turns. An unanswered question costs the minister and rewards the asker.
-	- **Condemn** a crisis by publicly backing *For* or *Against* before the turn ends. Being right where the minister was wrong earns popularity; being wrong where the minister was right costs it.
+	- **Condemn** a crisis by secretly backing *For* or *Against* before the turn ends. It is revealed when the crisis resolves. Being right where the minister was wrong earns popularity; being wrong where the minister was right costs it.
 	- **Propose a bill**, once a year.
 	- **Whip count** a bill under vote: secretly predict that a cabinet member will break from the government's line (voting against the government's bill, or for an opposition one). It is revealed at the count. Being right earns popularity, being wrong costs it, and if the member abstains or doesn't vote, nothing happens.
 ## The Assembly
@@ -78,7 +79,7 @@
 - Every bill is voted on by both chambers in the same turn. Each faction casts one vote, counted in each chamber with its seats there.
 - A bill the Assembly rejects fails. A bill the Assembly passes and the Senate rejects returns to the Assembly the next turn, and becomes law only if three-fifths of the votes cast are for it.
 - Cabinet and no-confidence votes belong to the Assembly alone.
-- Every faction in a standing party wins a *safe borough* seat in its home province. The rest of each province's seats are split between parties by how strong each party is there. There is no threshold.
+- Every faction, independents included, wins a *safe borough* seat in its home province. The rest of each province's seats are split between parties by how strong each party is there. There is no threshold.
 - Seats change only at a Senate election. If it falls on an Assembly election, both are held together.
 ## Elections
 - Assembly seats are counted province by province, by population, and split between parties by how strong each party is there.

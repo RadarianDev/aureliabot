@@ -98,6 +98,10 @@ public partial class InfoModule
             ProjectStatus.Active or ProjectStatus.Stalled => ProjectPublisher.SummaryLine(project, state, config),
             _ => Texts.Get("info.project.halted", ("progress", Display.Crowns(project.Progress)), ("price", Display.Crowns(project.Price))),
         });
+        if (_data.SummaryOf(project.TemplateId) is { } summary) sb.AppendLine(summary);
+
+        if (project.Status == ProjectStatus.Finished)
+            AppendEffects(sb, Texts.Get("info.project.effects"), Expected(EffectParser.ResolveHere(project.ParsedEffects, project.ProvinceId)));
         return sb.ToString();
     }
 

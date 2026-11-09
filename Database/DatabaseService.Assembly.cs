@@ -158,6 +158,12 @@ public partial class DatabaseService
         return QueryReadingsTx(conn, null, "status = $status", ("$status", status.ToString()));
     }
 
+    public List<Reading> GetLiveReadings()
+    {
+        using var conn = Open();
+        return QueryReadingsTx(conn, null, "status IN ('Scheduled', 'Open')");
+    }
+
     public List<Reading> GetReadingsOfBill(string billId)
     {
         using var conn = Open();

@@ -1,5 +1,6 @@
 id: senate_bill
 title: The Senate Bill
+summary: "Creates a Senate of ninety, nine for each province, with a vote on every bill. Safe boroughs move from the Assembly to the Senate, and a party then needs 8% of the national vote to sit in the Assembly."
 issue: electoral_reform
 lean: For
 motion: Raise a Senate of ninety, chosen by the provinces every second year, to sit beside the Assembly and check its bills.

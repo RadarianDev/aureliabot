@@ -32,7 +32,9 @@ public partial class DatabaseService
                 snapshot.Provinces.ToDictionary(p => p.Id, p => snapshot.Provincial(i.Id, p.Id)))).ToList(),
             c.Election,
             c.StrongStancePenalty,
-            state.SenateEstablished);
+            state.SenateEstablished,
+            QueryFactionsTx(conn, tx, "status = 'Active' AND party_id IS NULL")
+                .Select(f => new ElectionIndependent(f.UserId, f.HomeProvinceId ?? "")).ToList());
     }
 
     public List<ElectionPartySnapshot> GetPartySnapshots() =>

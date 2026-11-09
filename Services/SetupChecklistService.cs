@@ -27,6 +27,7 @@ public class SetupChecklistService
         public string Label => Role switch
         {
             ChannelRole.News => Texts.Get("setup.item.news"),
+            ChannelRole.Notices => Texts.Get("setup.item.notices"),
             ChannelRole.Dashboard => Texts.Get("setup.item.dashboard"),
             ChannelRole.Assembly => Texts.Get("setup.item.assembly"),
             ChannelRole.CampaignLog => Texts.Get("setup.item.campaignLog"),
@@ -45,6 +46,7 @@ public class SetupChecklistService
     private static readonly IReadOnlyList<Item> Items =
     [
         new(ChannelRole.News, Kind.Text, "news"),
+        new(ChannelRole.Notices, Kind.Text, "notices"),
         new(ChannelRole.Dashboard, Kind.Text, "dashboard"),
         new(ChannelRole.Assembly, Kind.Text, "assembly"),
         new(ChannelRole.CampaignLog, Kind.Text, "campaign-log"),
@@ -59,7 +61,7 @@ public class SetupChecklistService
     ];
 
     private static readonly HashSet<ChannelRole> PublicReadOnly =
-        [ChannelRole.News, ChannelRole.Dashboard, ChannelRole.Assembly, ChannelRole.CampaignLog];
+        [ChannelRole.News, ChannelRole.Notices, ChannelRole.Dashboard, ChannelRole.Assembly, ChannelRole.CampaignLog];
 
     private readonly DiscordSocketClient _client;
     private readonly DatabaseService _data;

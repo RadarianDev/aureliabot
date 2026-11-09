@@ -27,7 +27,7 @@ public class SetupChecklistModule : InteractionModuleBase<SocketInteractionConte
 {
     private static readonly HashSet<ChannelRole> TextChannels =
     [
-        ChannelRole.News, ChannelRole.Dashboard, ChannelRole.Assembly, ChannelRole.CampaignLog, ChannelRole.Cabinet, ChannelRole.Gm,
+        ChannelRole.News, ChannelRole.Notices, ChannelRole.Dashboard, ChannelRole.Assembly, ChannelRole.CampaignLog, ChannelRole.Cabinet, ChannelRole.Gm,
     ];
 
     private readonly DatabaseService _data;

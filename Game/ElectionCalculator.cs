@@ -7,6 +7,8 @@ public sealed record ElectionFaction(
         Regional is not null && Regional.TryGetValue(provinceId, out var regional) ? regional : Popularity;
 }
 
+public sealed record ElectionIndependent(ulong Id, string HomeProvinceId);
+
 public sealed record ElectionParty(long Id, IReadOnlyDictionary<string, Stance> Programme);
 
 public sealed record ElectionIssue(string Id, double Salience, IReadOnlyDictionary<string, double> OpinionByProvince);
@@ -19,7 +21,8 @@ public sealed record ElectionInput(
     IReadOnlyList<ElectionIssue> Issues,
     ElectionConstants Constants,
     double StrongStancePenalty,
-    bool SenateEstablished = false);
+    bool SenateEstablished = false,
+    IReadOnlyList<ElectionIndependent>? Independents = null);
 
 public sealed record ProvinceOutcome(
     string ProvinceId,
@@ -27,7 +30,8 @@ public sealed record ProvinceOutcome(
     IReadOnlyDictionary<long, double> Strength,
     IReadOnlyDictionary<long, int> ContestedSeatsByParty,
     IReadOnlyDictionary<long, int> BoroughSeatsByParty,
-    long? WinnerPartyId);
+    long? WinnerPartyId,
+    int IndependentBoroughSeats = 0);
 
 public sealed record IssueTerm(string IssueId, Stance Stance, double Opinion, double SalienceShare, double StanceScore, int Crowd, double Contribution);
 
@@ -48,7 +52,8 @@ public sealed record ElectionResult(
     IReadOnlyDictionary<long, int> PartySeats,
     IReadOnlyDictionary<ulong, int> FactionSeats,
     IReadOnlyDictionary<long, double> VoteShare,
-    IReadOnlySet<long>? BelowThreshold = null);
+    IReadOnlySet<long>? BelowThreshold = null,
+    int IndependentSeats = 0);
 
 public static class ElectionCalculator
 {
@@ -91,7 +96,8 @@ public static class ElectionCalculator
 
     public static ElectionResult RunSenate(ElectionInput input, IReadOnlyDictionary<string, int> seatsByProvince)
     {
-        if (input.Parties.Count == 0) return NoResult();
+        var independents = input.Independents ?? [];
+        if (input.Parties.Count == 0 && independents.Count == 0) return NoResult();
 
         var (parties, membersByParty, totalPopularity, strengthByProvince, voteShare) = Prepare(input);
         var contestedByParty = parties.ToDictionary(p => p.Id, _ => 0);
@@ -101,22 +107,25 @@ public static class ElectionCalculator
         {
             var strength = strengthByProvince[province.Id];
             var borough = parties.ToDictionary(p => p.Id, p => membersByParty[p.Id].Count(f => f.HomeProvinceId == province.Id));
-            var contested = Math.Max(0, seatsByProvince.GetValueOrDefault(province.Id) - borough.Values.Sum());
+            var independentBoroughs = independents.Count(f => f.HomeProvinceId == province.Id);
+            var contested = Math.Max(0, seatsByProvince.GetValueOrDefault(province.Id) - borough.Values.Sum() - independentBoroughs);
             var seats = DHondt(strength, totalPopularity, contested);
 
             foreach (var party in parties)
                 contestedByParty[party.Id] += seats[party.Id];
 
-            outcomes.Add(new ProvinceOutcome(province.Id, contested, strength, seats, borough, Winner(strength, seats, borough, totalPopularity)));
+            outcomes.Add(new ProvinceOutcome(province.Id, contested, strength, seats, borough, Winner(strength, seats, borough, totalPopularity), independentBoroughs));
         }
 
         var factionSeats = new Dictionary<ulong, int>();
         foreach (var party in parties)
             foreach (var (factionId, seats) in SplitAmongMembers(membersByParty[party.Id], contestedByParty[party.Id]))
                 factionSeats[factionId] = seats + 1;
+        foreach (var independent in independents)
+            factionSeats[independent.Id] = 1;
 
         var partySeats = parties.ToDictionary(p => p.Id, p => contestedByParty[p.Id] + membersByParty[p.Id].Count);
-        return new ElectionResult(outcomes, partySeats, factionSeats, voteShare);
+        return new ElectionResult(outcomes, partySeats, factionSeats, voteShare, IndependentSeats: independents.Count);
     }
 
     public static IReadOnlyDictionary<string, int> SenateSeats(GameConfig config) =>

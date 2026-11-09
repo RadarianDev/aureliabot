@@ -32,6 +32,11 @@ public static class ContentPreview
             _ => "",
         };
         sb.AppendLine(shown.TrimEnd());
+        if (template.Summary is { } templateSummary)
+        {
+            sb.AppendLine();
+            sb.AppendLine(Texts.Get("content.preview.summary", ("text", templateSummary)));
+        }
 
         var warnings = Warnings(data, config, row, template, state).Concat(summary.Problems).ToList();
         sb.AppendLine();

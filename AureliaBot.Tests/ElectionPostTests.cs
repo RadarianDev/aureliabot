@@ -47,6 +47,36 @@ public class ElectionPostTests
     }
 
     [Fact]
+    public void SeatChartParties_PutIndependentsInGreyAfterTheParties()
+    {
+        var chart = ElectionPublisher.SeatChartParties(Result() with { IndependentSeats = 20 }, Parties);
+
+        Assert.Equal([8, 7, 2, 20], chart.Select(p => p.SeatCount));
+        Assert.Equal("#808080", chart[^1].HexColor);
+    }
+
+    [Fact]
+    public void ResultsBody_ListsIndependentsNationallyAndByProvince()
+    {
+        var provinces = Result().Provinces.Select(p => p.ProvinceId == "ocidanten" ? p with { IndependentBoroughSeats = 2 } : p).ToList();
+
+        var body = ElectionPublisher.ResultsBody(Result() with { Provinces = provinces, IndependentSeats = 2 }, Parties, DatabaseFixture.Config);
+
+        Assert.Contains("Independents: **2** seats", body);
+        Assert.Contains("Independent 2", body);
+    }
+
+    [Fact]
+    public void An_effect_post_ends_with_its_briefings()
+    {
+        var post = Publisher.FormatEffectPost("Heading", [], "Story.", ["A line"], ["**New issue: Trade**"]);
+
+        Assert.StartsWith("## Heading", post);
+        Assert.EndsWith("**New issue: Trade**", post);
+        Assert.True(post.IndexOf("A line", StringComparison.Ordinal) < post.IndexOf("New issue", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void MapColours_LeaveOutNullWinnersAndDeletedParties()
     {
         var config = DatabaseFixture.Config;

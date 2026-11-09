@@ -18,7 +18,7 @@ public partial class DatabaseService
 
         foreach (var province in result.Provinces)
         {
-            var boroughs = province.BoroughSeatsByParty.Values.Sum();
+            var boroughs = province.BoroughSeatsByParty.Values.Sum() + province.IndependentBoroughSeats;
             var seats = seatsByProvince.GetValueOrDefault(province.ProvinceId);
             if (boroughs > seats)
                 report.Alerts.Add(Texts.Get("alerts.election.senateOverflow",
@@ -44,7 +44,7 @@ public partial class DatabaseService
 
         report.SenateElection = new ElectionReport(state.TermNumber, result, parties.Where(p => result.PartySeats.ContainsKey(p.Id)).ToList());
         LogTx(conn, tx, LogKinds.Resolution, "senate election",
-            "Senate election: " + string.Join(", ", result.PartySeats.Select(kv => $"{names.GetValueOrDefault(kv.Key)} {kv.Value}")));
+            "Senate election: " + string.Join(", ", result.PartySeats.Select(kv => $"{names.GetValueOrDefault(kv.Key)} {kv.Value}")) + $", independents {result.IndependentSeats}");
     }
 
     private static void ScheduleOverrideTx(SqliteConnection conn, SqliteTransaction tx, Reading reading, long resolution)

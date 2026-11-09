@@ -122,6 +122,12 @@ info:
     ministry: "Ministry · {name}"
     project: "Project · {name}"
     budget: "The budget"
+    kingdom: "The kingdom"
+    government: "The government"
+    parliament: "Parliament: seats"
+    laws: "Laws in force"
+    condition: "Condition · {name}"
+    event: "Event · {name}"
   notFound: "Nothing called `{thing}` was found. Pick something from the list."
   budget:
     none: "There is no budget for {year} yet."
@@ -163,6 +169,7 @@ info:
     meta: "{province} · Ministry of {ministry} · {price} over {term} seasons"
     finished: "Finished: {price} of work, done."
     halted: "Halted at {progress} of {price}."
+    effects: "**Effects**"
   live:
     heading: "## {season}"
     headingPreElection: "## {season} · Pre-election"
@@ -172,6 +179,38 @@ info:
     projects: "**Projects under way**"
     projectLine: "- {project} · {province}"
     noneYet: "None yet."
+    issue: "- {issue}"
+    issueWithSummary: "- **{issue}**: {summary}"
+    business: "**Before the Assembly**"
+    noBusiness: "Nothing at present."
+    readingOpen: "- {bill} ({issue}, *{lean}*), proposed by {sponsor}: being voted on"
+    readingScheduled: "- {bill} ({issue}, *{lean}*), proposed by {sponsor}: vote opens next turn"
+    hint: "-# Pick anything from the `/info` list for the details: type *bill*, *issue*, *crisis*, *event*, *condition* or a name."
+  kingdom:
+    heading: "## The Kingdom · {season}"
+    provinces: "**The provinces**"
+  government:
+    heading: "## The Government"
+    caretaker: "*A caretaker government, until a new cabinet is approved.*"
+    chancellor: "Chancellor: {faction}"
+    minister: "{ministry}: {faction}"
+    inGovernment: "In government: {parties}"
+    inOpposition: "In opposition: {parties}"
+  parliament:
+    assembly: "## The Assembly · {seats} seats"
+    senate: "## The Senate · {seats} seats"
+    noSenate: "There is no Senate. It comes into being if the Senate Bill becomes law."
+    nextElection: "Next Assembly election: end of {season}"
+  laws:
+    heading: "## Laws in force"
+    none: "The Assembly has passed no laws yet."
+    line: "- {law} ({issue}, *{lean}*)"
+  condition:
+    missing: "That condition doesn't exist."
+    provinces: "Now in: {provinces}"
+    nowhere: "No province has it at present."
+  event:
+    missing: "That event hasn't happened."
   seats: "Seats: {seats}"
   senateSeats: "Senate seats: {seats}"
   faction:
@@ -201,8 +240,15 @@ info:
     against: "Against: {text}"
     status: "Status: {status}"
     bills: "**Bills**"
+    stances: "**Party programmes**"
   bill:
     missing: "That bill doesn't exist."
+    side: "It takes the *{side}* side: {text}"
+    effects: "**Effects**"
+    votes: "**Votes**"
+    votePassed: "- Passed, {yes} to {no} ({abstain} abstaining), proposed by {sponsor}"
+    voteRejected: "- Rejected, {yes} to {no} ({abstain} abstaining), proposed by {sponsor}"
+    voteReturned: "- Passed the Assembly {yes} to {no} ({abstain} abstaining), proposed by {sponsor}, and returned by the Senate"
     available: "available"
     voting: "before the Assembly"
     resting: "resting until {season}"
@@ -211,6 +257,10 @@ info:
   province:
     missing: "That province doesn't exist."
     discontent: "Discontent: {discontent}"
+    population: "Population: {population} million"
+    home: "Home to: {factions}"
+    projects: "Works under way: {projects}"
+    crises: "Crises: {crises}"
     conditions: "**Conditions**"
     stationed: "Stationed: {units}"
     lastElection: "Last election: {results}"
@@ -228,6 +278,8 @@ info:
     story: "*{text}*"
     condemnations: "**Condemnations**"
     condemnation: "- {faction} stands {side}"
+    ownCondemnation: "-# You have condemned this crisis, standing {side}. It stays sealed until the crisis resolves."
+    effects: "**Effects**"
 
 me:
   cabinetVote: "The cabinet nominated by {chancellor} awaits the Assembly's approval: cast your vote."
@@ -294,7 +346,7 @@ help:
     All actions are revealed together when the turn ends.
   opposition: |-
     ## Opposition
-    A faction in a party with no cabinet seat is in opposition, and has one opposition action a season: `/opposition question` to question a minister, or `/bill propose` to put a private bill to the Assembly (one a year). `/opposition condemn` backs *For* or *Against* on a live crisis before the minister answers: being right where the minister was wrong earns popularity, being wrong where the minister was right costs it. `/opposition whipcount` secretly predicts that a cabinet member will break from the government's line on a bill under vote: it is revealed at the count, earning popularity if right and costing some if wrong.
+    A faction in a party with no cabinet seat is in opposition, and has one opposition action a season: `/opposition question` to question a minister, or `/bill propose` to put a private bill to the Assembly (one a year). `/opposition condemn` secretly backs *For* or *Against* on a live crisis, revealed when it resolves: being right where the minister was wrong earns popularity, being wrong where the minister was right costs it. `/opposition whipcount` secretly predicts that a cabinet member will break from the government's line on a bill under vote: it is revealed at the count, earning popularity if right and costing some if wrong.
   voting: |-
     ## Voting
     Each faction votes all its seats one way, with the buttons on the post in #assembly, `/vote`, or from `/me`. A bill passes when more seats vote for it than against; a tie fails. On bills and cabinets, if you don't vote and you're in a party, your seats follow the first of your party's factions to vote Yes or No; `/me` shows which way that is, and you're told privately when it happens. Voting yourself, even to abstain, keeps your own vote, and no-confidence motions are never followed. Votes are secret until the count: only then are the totals and each faction's vote published. Voting Yes on a bill takes its side of the issue as your stance once the vote is counted, No the other side. Cabinet and no-confidence votes stay open until the end of the next turn. Any faction outside the cabinet can table a motion of no confidence with `/noconfidence`; it goes to a vote once its backers hold a sixth of the seats.
@@ -309,7 +361,7 @@ help:
     Assembly seats are counted province by province, by population. A party's strength is its factions' combined popularity, weighed by how well its programme fits the local mood. A party needs {threshold}% of the national vote to win any Assembly seats.
 
     ## The Senate
-    The whole Senate is elected every two years, at the end of the Summer of odd-numbered years. That turn lasts two days, with {actionsPerDay} actions a day, and parties take applications during it. Every faction in a standing party wins a safe borough seat in its home province, and each province's other seats are split between parties with no threshold. Every bill goes to both chambers in the same turn: your one vote counts with your seats in each. A bill the Senate returns comes back to the Assembly the next turn and needs three-fifths of the votes cast.
+    The whole Senate is elected every two years, at the end of the Summer of odd-numbered years. That turn lasts two days, with {actionsPerDay} actions a day, and parties take applications during it. Every faction, independents included, wins a safe borough seat in its home province, and each province's other seats are split between parties with no threshold. Every bill goes to both chambers in the same turn: your one vote counts with your seats in each. A bill the Senate returns comes back to the Assembly the next turn and needs three-fifths of the votes cast.
   unknown: "Unknown topic."
 
 confirm:
@@ -483,7 +535,7 @@ gm:
       noStance: "*no stance*"
       preElection: "This is the pre-election, so the programme is a manifesto: it changes freely and is posted to #news."
       noFlips: "No stance flips sign, so the change is free."
-      flips: "{flips} stance(s) flip sign: each of the {members} members loses {penalty} popularity, and each flip is announced in #news."
+      flips: "{flips} stance(s) flip sign: each of the {members} members loses {penalty} popularity, and each flip is announced in #campaign-log."
       postedToCampaignLog: "The programme is posted to #campaign-log."
       willReply: "I will reply to the original message with the recorded programme."
       button: "Record"
@@ -585,10 +637,10 @@ gm:
       His Majesty is pleased to commend {faction} for {reason}.
       *Popularity {gained}*
     capped: " (capped at {max})"
-    rewardedPosted: "Rewarded {faction}: popularity {from} → {to}{capped}. The commendation is in #news."
+    rewardedPosted: "Rewarded {faction}: popularity {from} → {to}{capped}. The commendation is in #notices."
     rewardedNotPosted: |-
       Rewarded {faction}: popularity {from} → {to}{capped}.
-      ⚠️ No #news channel is set, so the commendation was not posted.
+      ⚠️ Neither #notices nor #news is set, so the commendation was not posted.
   peek:
     header: "## Hidden state · {label}"
     kingdom: "**Kingdom:** Favour {favour} (baseline {baseline}) · Threat {threat} · Economy {economy} · Tax rate {tax} · Reserve {reserve}"
@@ -686,6 +738,7 @@ setup:
   missing: "❌ {text}"
   item:
     news: "#news"
+    notices: "#notices"
     dashboard: "#dashboard"
     assembly: "#assembly"
     campaignLog: "#campaign-log"
@@ -853,7 +906,7 @@ content:
       For: {for}
       Against: {against}
     issueEdited: "Edited the live issue `{id}`."
-    issueEditedPosted: "Edited the live issue `{id}`. The new For and Against text is posted to #news."
+    issueEditedPosted: "Edited the live issue `{id}`. The new For and Against text is posted to #notices."
     billKeeps: "A live bill keeps its `issue` and `lean`. Nothing was changed."
     billLocked: "The live bill `{id}` can only be edited while it is available or resting after a rejection. Nothing was changed."
     billNews: |-
@@ -861,7 +914,7 @@ content:
       The motion now reads:
       > {motion}
     billEdited: "Edited the live bill `{id}`."
-    billEditedPosted: "Edited the live bill `{id}`. The new motion is posted to #news."
+    billEditedPosted: "Edited the live bill `{id}`. The new motion is posted to #notices."
     eventGone: That event is no longer queued. Nothing was changed.
     eventEdited: "Edited queued event {eventId} from `{id}`."
     eventEditedScheduled: "Edited queued event {eventId} from `{id}`. A queued copy has no schedule: edit the template and mark it Ready again to move it."
@@ -871,6 +924,7 @@ content:
     unparsable: "It doesn't parse, so there is nothing to show:"
     playersSee: "-# What players will see:"
     forGm: "**For the GM**"
+    summary: "-# Its summary, shown in `/info` and its posts:\n{text}"
     hidden: "Hidden: opinion {opinion}, salience {salience}."
     ministerial: "Ministerial: the minister can start it with `/ministry project`."
     requires: Needs a province with {condition}.
@@ -1073,7 +1127,16 @@ formula:
     unknownParty: "`{id}` is not a party id."
     unknownReference: "`{reference}` is not something a formula can read."
     unreadable: "`{reference}` has no value right now."
+briefing:
+  summary: "{text}"
+  forMeans: "*For* means: {text}"
+  againstMeans: "*Against* means: {text}"
+  newIssue: "**New issue: {issue}**"
+  newBill: "**New bill: {bill}** ({issue}, *{lean}*)"
+
 effects:
+  expected:
+    conditional: "Further consequences, depending on the state of the kingdom"
   errors:
     unexpected: "can't read the effects from `{text}`."
     expected: "expected `{expected}` at `{text}`."
@@ -1277,6 +1340,8 @@ election:
   partiesHeading: "**Seats and votes**"
   partyLine: "- {party}: **{seats}** seats · {share}% of the vote"
   partyLineBelowThreshold: "- {party}: no seats · {share}% of the vote, below the {threshold}% needed to sit in the Assembly"
+  independentLine: "- Independent: **1** seat"
+  independentsLine: "- Independents: **{seats}** seats"
   senateHeader: |-
     ## The provinces have voted
     The returns are in for the Senate.
@@ -1285,6 +1350,7 @@ election:
   provincesHeading: "**The provinces**"
   provinceLine: "- **{province}**: {seats}"
   provinceSeat: "{party} {seats}"
+  provinceIndependent: "Independent {seats}"
   provinceSeparator: " · "
   provinceEmpty: "no seats returned"
   nobody: "None."
@@ -1830,8 +1896,7 @@ crisis:
 
 condemn:
   autocomplete: "{crisis} · {issue}"
-  post: "{faction} condemns the handling of **{crisis}**, and stands {side} {issue}."
-  done: "Your condemnation of **{crisis}** is posted in #news. It spends this season's opposition action, and is scored when the crisis is resolved, {when}."
+  done: "Your condemnation of **{crisis}** is sealed. It spends this season's opposition action, and is revealed and scored when the crisis is resolved, {when}."
   score:
     right: "Condemnation: {faction} was right where the minister was not: popularity {change}."
     wrong: "Condemnation: {faction} was wrong where the minister was right: popularity {change}."
@@ -2081,7 +2146,7 @@ gmCrisis:
     answered: "#{id} {crisis} · {ministry} · answered"
   cancel:
     notLive: "That crisis isn't live. Pick one from the list."
-    confirm: "Withdraw the crisis **{crisis}** ({ministry})? It is cancelled at once and never resolves: no answer, complication or default applies, and nobody gains or loses popularity over it. Its post in #news is marked withdrawn, and a note goes to #news."
+    confirm: "Withdraw the crisis **{crisis}** ({ministry})? It is cancelled at once and never resolves: no answer, complication or default applies, and nobody gains or loses popularity over it. Its post in #news is marked withdrawn, and a note goes to #notices."
     responded: "The minister has already answered it; that answer is discarded."
     refundOne: "One faction condemned it; its opposition action is given back."
     refundMany: "{count} factions condemned it; their opposition actions are given back."

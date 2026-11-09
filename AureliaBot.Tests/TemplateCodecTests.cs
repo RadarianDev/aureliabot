@@ -332,6 +332,28 @@ public class TemplateCodecTests : IDisposable
     }
 
     [Fact]
+    public void A_summary_survives_a_round_trip()
+    {
+        var issue = new IssueTemplate("tricky", "Tricky", "For.", "Against.", 0, 1) { Summary = "What it's about: this, and that." };
+
+        var parsed = TemplateCodec.Parse(TemplateCodec.Serialize(issue), "tricky.yaml");
+
+        Assert.True(parsed.IsValid, string.Join("\n", parsed.Errors));
+        Assert.Equal(issue.Summary, parsed.Template!.Summary);
+    }
+
+    [Fact]
+    public void Every_starting_issue_bill_crisis_and_project_has_a_summary()
+    {
+        var missing = StartingFiles()
+            .Where(f => !f.Name.StartsWith("events/"))
+            .Where(f => TemplateCodec.Parse(f.Yaml, f.Name).Template?.Summary is null)
+            .Select(f => f.Name);
+
+        Assert.Empty(missing);
+    }
+
+    [Fact]
     public void Serialize_WrapsLongEffectMaps()
     {
         var opening = TemplateCodec.Parse(Starting("events/opening_1850.yaml").Yaml, "o.yaml").Template!;

@@ -1,5 +1,6 @@
 id: royal_railway
 title: The Royal Railway
+summary: "The Crown's trunk line from the capital to the eastern coast, the largest works in the kingdom, with a rich bonus if it is finished on time."
 purse: CommerceLabor
 province: provencie_gares
 price: 90

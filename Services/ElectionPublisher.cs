@@ -25,6 +25,7 @@ public sealed record ElectionImages(string? SeatChartPath, string? MapPath) : ID
 
 public class ElectionPublisher
 {
+    private const string UnaffiliatedColour = "#808080";
     private static readonly Color EmbedColour = new(0xB8, 0x86, 0x0B);
 
     private readonly DiscordSocketClient _client;
@@ -47,7 +48,7 @@ public class ElectionPublisher
     {
         var config = _constants.Config;
         var results = Texts.Get("election.senateHeader") + "\n" + ResultsBody(report.Result, report.Parties, config);
-        var proclamation = Texts.Get("election.senateProclamation", ("seats", report.Result.PartySeats.Values.Sum()));
+        var proclamation = Texts.Get("election.senateProclamation", ("seats", report.Result.PartySeats.Values.Sum() + report.Result.IndependentSeats));
         return PublishResultsAsync(report, results, Texts.Get("election.senateChartTitle"), proclamation, source);
     }
 
@@ -195,7 +196,7 @@ public class ElectionPublisher
     public static List<PartyData> SeatChartParties(ElectionResult result, IReadOnlyList<ElectionPartySnapshot> parties)
     {
         var byId = parties.ToDictionary(p => p.Id);
-        return result.PartySeats
+        var chart = result.PartySeats
             .Where(kv => kv.Value > 0)
             .OrderByDescending(kv => kv.Value)
             .ThenBy(kv => kv.Key)
@@ -203,9 +204,12 @@ public class ElectionPublisher
             {
                 Name = byId.TryGetValue(kv.Key, out var party) ? party.Name : kv.Key.ToString(CultureInfo.InvariantCulture),
                 SeatCount = kv.Value,
-                HexColor = byId.TryGetValue(kv.Key, out var coloured) ? coloured.Colour : "#808080",
+                HexColor = byId.TryGetValue(kv.Key, out var coloured) ? coloured.Colour : UnaffiliatedColour,
             })
             .ToList();
+        if (result.IndependentSeats > 0)
+            chart.Add(new PartyData { Name = Display.Independent, SeatCount = result.IndependentSeats, HexColor = UnaffiliatedColour });
+        return chart;
     }
 
     public static IReadOnlyDictionary<string, long?> WinnersFromResult(ElectionResult result) =>
@@ -324,8 +328,9 @@ public class ElectionPublisher
                 ? Texts.Get("election.partyLineBelowThreshold", ("party", party), ("share", share), ("threshold", Percent(config.Constants.Election.Threshold)))
                 : Texts.Get("election.partyLine", ("party", party), ("seats", result.PartySeats.GetValueOrDefault(id)), ("share", share));
         }));
-        if (partyIds.Count == 0) lines.Add(Texts.Get("election.nobody"));
-
+        if (result.IndependentSeats == 1) lines.Add(Texts.Get("election.independentLine"));
+        if (result.IndependentSeats > 1) lines.Add(Texts.Get("election.independentsLine", ("seats", result.IndependentSeats)));
+        if (partyIds.Count == 0 && result.IndependentSeats == 0) lines.Add(Texts.Get("election.nobody"));
 
         lines.Add("");
         lines.Add(Texts.Get("election.provincesHeading"));
@@ -342,6 +347,8 @@ public class ElectionPublisher
                 .ThenBy(x => x.Id)
                 .Select(x => Texts.Get("election.provinceSeat", ("party", PartyEmoji(byId, x.Id)), ("seats", x.Seats)))
                 .ToList();
+            if (outcome.IndependentBoroughSeats > 0)
+                seats.Add(Texts.Get("election.provinceIndependent", ("seats", outcome.IndependentBoroughSeats)));
             lines.Add(Texts.Get("election.provinceLine",
                 ("province", ProvinceName(config, provinceId)),
                 ("seats", seats.Count == 0 ? Texts.Get("election.provinceEmpty") : string.Join(Texts.Get("election.provinceSeparator"), seats))));

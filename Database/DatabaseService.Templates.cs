@@ -104,6 +104,8 @@ public partial class DatabaseService
         return row is null ? null : TemplateCodec.Parse(row.Yaml, id).Template;
     }
 
+    public string? SummaryOf(string templateId) => GetParsedTemplate(templateId)?.Summary;
+
     public Template? GetParsedTemplate(string id)
     {
         using var conn = Open();

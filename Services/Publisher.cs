@@ -40,7 +40,7 @@ public class Publisher
         {
             var dispatch = new List<string> { Texts.Get("news.dispatches.header", ("season", GameCalendar.Label(report.FromSeason, report.FromYear))) };
             dispatch.Add(actionLines.Count == 0 ? Texts.Get("news.dispatches.quiet") : string.Join("\n", actionLines));
-            await PostAsync(ChannelRole.News, string.Join("\n", dispatch), source);
+            await PostAsync(ChannelRole.CampaignLog, string.Join("\n", dispatch), source);
         }
         else
         {
@@ -149,9 +149,12 @@ public class Publisher
         if (report.SenateElection is { } senate)
         {
             var names = senate.Parties.ToDictionary(p => p.Id, p => p.Name);
-            lines.Add(Texts.Get("digest.senateElection",
-                ("seats", string.Join(", ", senate.Result.PartySeats.OrderByDescending(kv => kv.Value)
-                    .Select(kv => Texts.Get("digest.electionSeat", ("party", names.GetValueOrDefault(kv.Key, kv.Key.ToString())), ("seats", kv.Value)))))));
+            var seats = senate.Result.PartySeats.OrderByDescending(kv => kv.Value)
+                .Select(kv => Texts.Get("digest.electionSeat", ("party", names.GetValueOrDefault(kv.Key, kv.Key.ToString())), ("seats", kv.Value)))
+                .ToList();
+            if (senate.Result.IndependentSeats > 0)
+                seats.Add(Texts.Get("digest.electionSeat", ("party", Display.Independent), ("seats", senate.Result.IndependentSeats)));
+            lines.Add(Texts.Get("digest.senateElection", ("seats", string.Join(", ", seats))));
         }
 
         foreach (var cancelled in report.ReadingsCancelled)
@@ -169,12 +172,18 @@ public class Publisher
     }
 
     public string EventPost(FiredEventReport fired, EffectNames names) =>
-        FormatEvent(fired.Title, fired.Text, EffectSummary.Lines(fired.Effects, names, _constants.Current.Display));
+        FormatEffectPost(fired.Title, [], fired.Text, EffectSummary.Lines(fired.Effects, names, _constants.Current.Display), Briefing.ForEffects(_data, fired.Effects));
 
     public static string FormatEvent(string title, string text, IReadOnlyList<string> effectLines) =>
         FormatEffectPost(title, [], text, effectLines);
 
-    public static string FormatEffectPost(string? heading, IEnumerable<string> preamble, string? story, IReadOnlyList<string> effectLines)
+    public static string FormatEffectPost(string? heading, IEnumerable<string> preamble, string? story, IReadOnlyList<string> effectLines, IReadOnlyList<string>? briefings = null)
+    {
+        var post = FormatEffectBody(heading, preamble, story, effectLines);
+        return briefings is null or { Count: 0 } ? post : string.Join("\n\n", briefings.Prepend(post).Where(part => part.Length > 0));
+    }
+
+    private static string FormatEffectBody(string? heading, IEnumerable<string> preamble, string? story, IReadOnlyList<string> effectLines)
     {
         var top = new List<string>();
         if (!string.IsNullOrWhiteSpace(heading)) top.Add(Texts.Get("news.effectPost.heading", ("heading", heading)));
@@ -267,15 +276,7 @@ public class Publisher
             ("nextResolution", Display.NextResolution(state)),
             ("nextElection", GameCalendar.Label(state.PreElectionSeason, state.PreElectionYear)));
 
-        var seatLines = parties
-            .Select(p => (Party: p, Members: factions.Where(f => f.PartyId == p.Id).ToList()))
-            .OrderByDescending(x => x.Members.Sum(m => m.Seats))
-            .ThenBy(x => x.Party.Id)
-            .Select(x => Texts.Get("dashboard.partyLine", ("party", Display.Party(x.Party)), ("seats", x.Members.Sum(m => m.Seats)), ("members", x.Members.Count)))
-            .ToList();
-        var independents = factions.Where(f => f.IsIndependent).ToList();
-        if (independents.Count > 0)
-            seatLines.Add(Texts.Get("dashboard.independentsLine", ("seats", independents.Sum(f => f.Seats)), ("factions", independents.Count)));
+        var seatLines = SeatLines(parties, factions, f => f.Seats);
 
         var openIssues = _data.GetOpenIssues();
 
@@ -287,16 +288,7 @@ public class Publisher
 
         if (state.SenateEstablished)
         {
-            var senateLines = parties
-                .Select(p => (Party: p, Members: factions.Where(f => f.PartyId == p.Id).ToList()))
-                .Where(x => x.Members.Sum(m => m.SenateSeats) > 0)
-                .OrderByDescending(x => x.Members.Sum(m => m.SenateSeats))
-                .ThenBy(x => x.Party.Id)
-                .Select(x => Texts.Get("dashboard.partyLine", ("party", Display.Party(x.Party)), ("seats", x.Members.Sum(m => m.SenateSeats)), ("members", x.Members.Count)))
-                .ToList();
-            var independentSenators = independents.Sum(f => f.SenateSeats);
-            if (independentSenators > 0)
-                senateLines.Add(Texts.Get("dashboard.independentsLine", ("seats", independentSenators), ("factions", independents.Count(f => f.SenateSeats > 0))));
+            var senateLines = SeatLines(parties, factions, f => f.SenateSeats, skipEmpty: true);
             embed.AddField(Texts.Get("dashboard.senateField", ("seats", factions.Sum(f => f.SenateSeats))),
                 senateLines.Count == 0 ? Texts.Get("dashboard.senateEmpty") : Display.Truncate(string.Join("\n", senateLines), 1024));
         }
@@ -311,6 +303,21 @@ public class Publisher
             .WithFooter(Texts.Get("dashboard.footer"))
             .WithCurrentTimestamp()
             .Build();
+    }
+
+    public static List<string> SeatLines(IReadOnlyList<Party> parties, IReadOnlyList<Faction> factions, Func<Faction, long> seats, bool skipEmpty = false)
+    {
+        var lines = parties
+            .Select(p => (Party: p, Members: factions.Where(f => f.PartyId == p.Id).ToList()))
+            .Where(x => !skipEmpty || x.Members.Sum(seats) > 0)
+            .OrderByDescending(x => x.Members.Sum(seats))
+            .ThenBy(x => x.Party.Id)
+            .Select(x => Texts.Get("dashboard.partyLine", ("party", Display.Party(x.Party)), ("seats", x.Members.Sum(seats)), ("members", x.Members.Count)))
+            .ToList();
+        var independents = factions.Where(f => f.IsIndependent && (!skipEmpty || seats(f) > 0)).ToList();
+        if (independents.Count > 0)
+            lines.Add(Texts.Get("dashboard.independentsLine", ("seats", independents.Sum(seats)), ("factions", independents.Count)));
+        return lines;
     }
 
     private string EconomyField(GameState state)
@@ -368,7 +375,7 @@ public class Publisher
 
     public async Task<IUserMessage?> PostAsync(ChannelRole role, string text, string source, Embed? embed = null, MessageComponent? components = null)
     {
-        if (_data.GetChannel(role) is not { } channelId || _client.GetChannel(channelId) is not IMessageChannel channel)
+        if (_data.GetPostingChannel(role) is not { } channelId || _client.GetChannel(channelId) is not IMessageChannel channel)
         {
             Console.WriteLine($"[Publisher] No {role} channel is set; skipped a post from {source}.");
             return null;

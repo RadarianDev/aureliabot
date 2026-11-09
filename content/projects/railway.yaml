@@ -1,5 +1,6 @@
 id: railway
 title: Railway
+summary: "A rail line through the province of the minister's choosing, which lifts the economy and calms local discontent."
 ministerial: true
 purse: CommerceLabor
 price: 60

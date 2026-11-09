@@ -386,13 +386,6 @@ Due at the next resolution, Winter 1851 <t:…:R>
 3. Declare the strike unlawful · Against · free
 ```
 
-A condemnation, in #news at once:
-
-```
-@rival (Baroness Edel) condemns the handling of The Lanten Dock Strike, and stands For
-Social Reform.
-```
-
 After the resolution, a clean outcome:
 
 ```
@@ -705,22 +698,28 @@ All commands are slash commands. Long text, such as a roleplay response, is ente
 
 | Command | Who | Effect |
 | --- | --- | --- |
-| `/info thing` | Anyone | Shows any game object. One autocomplete lists factions, parties, issues, bills, projects, crises, provinces, the four ministries and the budget, each marked with its kind. What each shows is listed below. |
+| `/info thing` | Anyone | Shows any game object. One autocomplete lists the kingdom, the government, Parliament, the laws in force, the budget, parties, factions, bills, issues, provinces, projects, crises, the four ministries, conditions and past events, each marked with its kind. What each shows is listed below. |
 | `/map` | Anyone | Shows the province map from the latest election. |
 
 `/info` shows, by kind:
 
 - **Faction:** popularity across the kingdom and in each province, party, seats, home province and logged stances.
 - **Party:** colour, members with popularity and seats, programme, and whether it is in government.
-- **Issue:** *For* and *Against* texts, status (Open, Closed), its bills with their leans and status (Available, before the Assembly with the vote's due date, Cooldown with its end, Passed), and every party's programme stance on it.
-- **Bill:** issue, lean, motion and status, and its readings with their results.
-- **Project:** province, purse, progress against its price, spending per season, expected finish and bonus deadline.
-- **Crisis:** ministry, province, issue, answer labels with their leans and prices, and deadline.
-- **Province:** description, discontent in words, conditions (name and description), the units stationed there and the last election result.
+- **Issue:** summary, *For* and *Against* texts, status (Open, Closed), its bills with their leans and status (Available, before the Assembly with the vote's due date, Cooldown with its end, Passed), its live crises, and every party's programme stance on it.
+- **Bill:** issue, lean, status, summary, which side of the issue it takes, motion, its text and visible effects once passed, and its counted readings with their results.
+- **Project:** province, purse, progress against its price, spending per season, expected finish, bonus deadline and summary, and its visible effects once finished.
+- **Crisis:** ministry, province, issue, summary, what *For* and *Against* mean, answer labels with their leans and prices, and deadline. Your own sealed condemnation is shown only to you. Once resolved: the outcome, its visible effects and the condemnations.
+- **Province:** description, population, Senate seats once the Senate exists, discontent in words, the factions that call it home, works and crises under way, conditions (name and description), the units stationed there and the last election result.
 - **Ministry:** its holder, its purse (this year's allocation, money in and out, and balance), its spending this year line by line from the ledger, its units or projects, and its open crises and questions.
 - **Budget:** the year's available Budget, every purse with its allocation, spending and balance, the Navy contribution, the reserve with grants and interest, and the year's spending by kind across the government (upkeep, purchases, crises, projects, graft, laws and events). A `year` option shows an earlier year.
+- **Kingdom:** economy, tax rate, reserve, the year's Budget, Favour in words, and each province's discontent in words and conditions.
+- **Government:** the Chancellor, each minister, and the parties in government and in opposition.
+- **Parliament:** seats in the Assembly and the Senate by party and independents, and the next election.
+- **Laws:** every bill passed into law.
+- **Condition:** name, description and the provinces that have it; never its numbers.
+- **Event:** a past event's story and visible effects. Queued events never appear.
 
-With nothing chosen, `/info` lists what is live: open issues, available bills, active projects and live crises.
+With nothing chosen, `/info` lists what is live: open issues with their summaries, bills before the Assembly, parties, active projects and live crises.
 
 `/info commerce_labor` in Winter 1851:
 
@@ -803,7 +802,7 @@ The Franchise: *For*
 - **Preview:** the GM privately sees every open issue with its parsed stance, marking the ones with no stance and the ones that flip sign, with the popularity cost of the flips (section 5) for every member, the ignored lines, and Record and Cancel buttons.
 - **On record:** the party's ProgrammeStance rows are replaced, the change is logged, and the bot replies to the original message with the recorded programme, so the party sees exactly what was understood.
   - **During a pre-election,** the programme is the party's **manifesto**: it is posted to #news as such, and changes freely.
-  - **Outside a pre-election,** it is posted to #campaign-log. Every flipped stance is announced in #news ("The Liberal Union changes its line on Free Trade"), and the flip penalty applies.
+  - **Outside a pre-election,** it is posted to #campaign-log. Every flipped stance is announced in #campaign-log ("The Liberal Union changes its line on Free Trade"), and the flip penalty applies.
 - **Timing:** a programme takes effect as soon as it is recorded, including for the election's programme score. Issues opened later have no stance until a new programme is recorded.
 
 **Campaign actions** (`campaign.actionsPerTurn` per faction per turn, two by default, and `campaign.actionsPerPreElectionDay` per day during the pre-election, five by default)
@@ -821,7 +820,7 @@ A faction may have at most as many pending actions as the turn allows, of any ki
 | Command | Limit | Effect |
 | --- | --- | --- |
 | `/opposition question ministry` | The season's opposition action | Opens a modal for the question. It is posted publicly with an Answer button, which opens a modal for the responsible minister; the answer is posted under it. The minister must answer by the second resolution after it is asked. |
-| `/opposition condemn crisis side` | The season's opposition action | Publicly backs *For* or *Against* on a live crisis's issue, posted to #news at once, so the minister sees it before answering. Scored at the resolution (section 5). One per faction per crisis. |
+| `/opposition condemn crisis side` | The season's opposition action | Secretly backs *For* or *Against* on a live crisis's issue. Sealed like a whip count, and revealed and scored with the crisis outcome at the resolution (section 5), so the minister answers without seeing it. One per faction per crisis. |
 | `/opposition whipcount bill member vote` | The season's opposition action | Secretly predicts that a cabinet member will break from the line on a bill whose vote is open: *Against* a bill sponsored from the government, *For* any other. Predicting the expected vote is refused. Revealed in #assembly at the count and scored on the member's counted vote, party following included: `whipCountReward` if right, `whipCountPenalty` lost if wrong, nothing if the member abstains or casts no vote. A bill cancelled before its count is never scored. |
 
 **The Assembly**
@@ -869,7 +868,7 @@ The GM's commands are split in two groups: `/gm` runs the game, and `/content` (
 | `/gm party delete party` | Deletes a party. Its members become independent, its role is deleted and its chat and foreign affairs channel are archived. |
 | `/gm faction create player character home` | Registers a player as a faction: keyed on their Discord account, at starting popularity, independent, with a private channel. The home province is the character's safe borough (section 8); autocomplete shows each province's description. It holds no seats until the next election. Announced in #news as the character entering politics, and the player is greeted in their private channel. Refused if the player already has a faction, or if `senate.maxHomeFactions` active factions already have that home province. |
 | `/gm faction edit faction [character] [home]` | Edits a faction. Players can't change their character or home province; only the GM can. |
-| `/gm reward faction amount reason` | Rewards excellent roleplay (a propaganda poster, a manifesto, a speech) with popularity, applied at once. Posted to #news as a royal commendation naming the faction and the reason, so players see what earns favour. A negative amount is refused; use `/gm apply` for penalties. |
+| `/gm reward faction amount reason` | Rewards excellent roleplay (a propaganda poster, a manifesto, a speech) with popularity, applied at once. Posted to #notices as a royal commendation naming the faction and the reason, so players see what earns favour. A negative amount is refused; use `/gm apply` for penalties. |
 | `/gm faction retire faction` | Retires a faction: it leaves its party and any ministry, its pending actions are dropped, and its seats stay vacant until the next election. |
 | `/gm faction unretire faction` | Returns a retired faction to politics, after a Confirm. It becomes Active again as an independent, at the popularity it retired with. Its seats count again if no election has passed since it retired; an election in between left it with none. Its old party, cabinet post or nomination, pending actions and join applications are not restored. Announced in #news as the character returning to politics, and logged. Refused for a faction that is already active. |
 | `/gm channel set role target` | Sets a game channel, a category (faction, party or archive), the GM role or the Cabinet role. Game channels are added to the command whitelist automatically. |
@@ -972,11 +971,11 @@ At 08:00 (or when the GM triggers it), the bot first **snapshots** the database 
 
 Actions submitted after the resolution has started count towards the next one.
 
-**Campaign days.** On the first two days of a pre-election, and the first day of a Senate campaign turn, 08:00 runs a shorter step instead: snapshot, campaign actions (step 4), and posting, as **dispatches from the hustings** in #news. Nothing else changes, no events fire, and deadlines don't count it.
+**Campaign days.** On the first two days of a pre-election, and the first day of a Senate campaign turn, 08:00 runs a shorter step instead: snapshot, campaign actions (step 4), and posting, as **dispatches from the hustings** in #campaign-log. Nothing else changes, no events fire, and deadlines don't count it.
 
 ## 8. Election
 
-Every party with at least one active member stands. Independents and retired factions win no seats.
+Every party with at least one active member stands. Independents and retired factions win no Assembly seats.
 
 1. **Size and safe boroughs:** S is the Assembly size (`GameState.seats`, 180 unless reformed), and F is the number of factions in standing parties. Until the Senate is established, each of them holds a safe borough in its home province and is guaranteed 1 seat, which leaves `S − F` contested seats. Once it is established, all S seats are contested and safe boroughs belong to the Senate.
 2. **Apportionment:** split the contested seats among the ten provinces by population, using the largest remainder.
@@ -1037,12 +1036,12 @@ After the election the next term begins. The outgoing cabinet stays as caretaker
 Held at the end of every Senate campaign turn (section 2). All 90 seats are replaced at once, for a two-year term. The Senate starts switched off: the `senate` effect sets `GameState.senateEstablished`, and the Senate Bill (`content/bills/senate_bill.yaml`) carries that effect. Until the first election after that, no faction holds a Senate seat. A bill that establishes the Senate at the end of a campaign-season turn does not trigger an election that turn; the Senate waits for the next Senate campaign.
 
 1. **Seats:** each province has its `senateSeats` from `provinces.yaml`: 9.
-2. **Safe boroughs:** every faction in a standing party holds one in its home province. B is the number of them in province p, which leaves `max(0, senateSeats − B)` contested seats. If B exceeds the province's seats, every borough is still seated and the GM is alerted.
+2. **Safe boroughs:** every active faction, independents included, holds one in its home province. B is the number of them in province p, which leaves `max(0, senateSeats − B)` contested seats. If B exceeds the province's seats, every borough is still seated and the GM is alerted.
 3. **Strength:** as in steps 3 to 5 of the Assembly election.
 4. **Provincial seats:** D'Hondt on strengths over the contested seats, in each province, with the same tie-break. There is no threshold.
-5. **Faction seats:** add up each party's contested seats from every province, split them among its members as in step 7, then add each member's safe borough. Every other faction's `senateSeats` becomes 0.
-6. **Store** a SenateResult row per party and province.
-7. **Post** with the rest of the resolution: seats by party and province, a seat chart and a province map from these results. `/map` stays on the latest Assembly result.
+5. **Faction seats:** add up each party's contested seats from every province, split them among its members as in step 7, then add each member's safe borough. An independent holds its safe borough and nothing more, as it contests no seats. A retired faction's `senateSeats` becomes 0.
+6. **Store** a SenateResult row per party and province. Independents have none; their seats are on the faction alone.
+7. **Post** with the rest of the resolution: seats by party and province with independents on their own line, a seat chart with independents in grey after the parties, and a province map from these results. An independent's borough never makes it a province's winner on the map. `/map` stays on the latest Assembly result.
 
 A counted bill's result post shows both chambers' totals and a vote chart for each.
 
@@ -1055,8 +1054,8 @@ A counted bill's result post shows both chambers' totals and a vote chart for ea
 | Information | Players | Ministers | GM |
 | --- | --- | --- | --- |
 | Faction popularity, seats, parties, programmes | Yes | Yes | Yes |
-| Issues and their status, bills with their motions and status | Yes | Yes | Yes |
-| Projects: progress, spending, deadlines | Yes | Yes | Yes |
+| Issues with their summaries and status, bills with their summaries, motions and status | Yes | Yes | Yes |
+| Projects: summaries, progress, spending and deadlines | Yes | Yes | Yes |
 | Opinion and salience | In words, through polls; as a direction in effect summaries | Same | The numbers |
 | Condition biases and other condition numbers | No | No | Yes |
 | Province conditions (name and description) | Yes | Yes | Yes |
@@ -1065,7 +1064,7 @@ A counted bill's result post shows both chambers' totals and a vote chart for ea
 | Crisis title, ministry, province, answer labels, leans and prices, and deadline | Yes | Yes | Yes |
 | Crisis outcome texts and effect summaries | After the resolution | After the resolution | Yes |
 | Minister's crisis response | After the resolution | After the resolution | Yes |
-| Condemnations | Yes, at once | Yes, at once | Yes |
+| Condemnations | After the resolution | After the resolution | Yes |
 | Campaigns and attacks | After the resolution | After the resolution | Yes |
 | Economy, total Budget, each purse's allocation and balance, the reserve, the Navy contribution | Yes | Yes | Yes |
 | Ledger entries (what each purse and the reserve spent and received) | After the next resolution | At once for their own ministry, and for the Chancellor | Yes |
@@ -1093,10 +1092,11 @@ A poll reads, for example: "In North Arpal, Social Reform is *a burning question
 
 **Channels.** The GM sets each channel with `/gm channel set`. The ids are stored in the database, and every game channel is allowed by the command whitelist.
 
-- **#news:** the daily resolution summary, events, crises, condemnations, issues, royal proclamations, manifestos, programme flips, crackdown results and election results.
+- **#news:** the daily resolution summary, events (with a briefing on any new issue or bill), crises and their outcomes, laws, projects begun and finished, crackdown results, royal proclamations, resignations, parties founded and dissolved, manifestos and election results.
+- **#notices:** short notices that aren't news: factions registered or returning, GM commendations, withdrawn crises and corrected content. Until it is set, these go to #news.
 - **#dashboard:** one pinned embed, edited after every resolution: the calendar, parties and seats, economy, budget and purses, Favour in words, discontent in words and conditions by province, open issues and open crises.
-- **#assembly:** bills scheduled for next turn, readings of bills, votes (secret until counted), and no-confidence motions.
-- **#campaign-log:** campaign actions and attacks, posted with the resolution that resolves them (never on submission, since they resolve simultaneously), stance logs, and programmes recorded outside a pre-election.
+- **#assembly:** bills scheduled for next turn, readings of bills with their summary, votes (secret until counted), questions and unanswered questions, and no-confidence motions.
+- **#campaign-log:** campaign actions and attacks, posted with the resolution that resolves them (never on submission, since they resolve simultaneously), campaign-day dispatches, stance logs, and programmes and programme flips recorded outside a pre-election.
 - **#cabinet:** private to the Cabinet role, the GM role and the bot. Pending orders, projects, crisis deadlines, and the cabinet's own discussion. The Cabinet role has no colour, so party colours stay as they are. Showing it separately in the member list is the GM's choice: hoisted above the party roles, ministers are listed under the Cabinet instead of under their party. When a minister leaves office they lose the role, and with it the chat; its history stays for the next cabinet.
 - **One private channel per faction,** created by the bot under the faction category: poll results and reminders.
 - **One chat per party,** created by the bot under the party category: members' discussion, programme drafts and join applications (section 6).

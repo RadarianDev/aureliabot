@@ -1,5 +1,6 @@
 id: gruel_inquest
 title: The Sacsmoor Workhouse Inquest
+summary: "An inquest found that the master of the Sacsmoor workhouse sold the paupers' oatmeal and fed them thin gruel to keep down the rates. The Interior must decide who answers for it."
 ministry: Interior
 province: provencie_sacs
 issue: social_reform

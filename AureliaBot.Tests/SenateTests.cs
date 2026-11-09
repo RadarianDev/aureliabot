@@ -67,9 +67,22 @@ public class SenateTests : AssemblyTestBase
         Assert.Null(report.Election);
         var factions = Db.GetAllFactions();
         Assert.Equal(90, factions.Sum(f => f.SenateSeats));
-        Assert.Equal(0, factions.Single(f => f.UserId == Independent).SenateSeats);
-        Assert.All(factions.Where(f => f.UserId != Independent), f => Assert.True(f.SenateSeats >= 1));
+        Assert.Equal(1, factions.Single(f => f.UserId == Independent).SenateSeats);
+        Assert.All(factions, f => Assert.True(f.SenateSeats >= 1));
         Assert.Equal(assembly, factions.ToDictionary(f => f.UserId, f => f.Seats));
+    }
+
+    [Fact]
+    public void A_retired_independent_holds_no_senate_seat()
+    {
+        SetCalendar(Season.Summer, 1851);
+        Db.RetireFaction(Independent);
+
+        Resolve();
+
+        var factions = Db.GetAllFactions();
+        Assert.Equal(0, factions.Single(f => f.UserId == Independent).SenateSeats);
+        Assert.Equal(90, factions.Sum(f => f.SenateSeats));
     }
 
     [Fact]

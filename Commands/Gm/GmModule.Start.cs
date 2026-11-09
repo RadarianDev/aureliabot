@@ -67,7 +67,7 @@ public partial class GmModule
         var lines = EffectSummary.Lines(result.Applied, Publisher.Names(_data, config), config.Constants.Display);
 
         if (isPublic && lines.Count > 0)
-            await _publisher.PostAsync(ChannelRole.News, Publisher.FormatEffectPost(Texts.Get("gm.decreeHeading"), [], null, lines), "gm apply");
+            await _publisher.PostAsync(ChannelRole.News, Publisher.FormatEffectPost(Texts.Get("gm.decreeHeading"), [], null, lines, Briefing.ForEffects(_data, result.Applied)), "gm apply");
         await _publisher.PublishStartedAsync(result.Report, "gm apply", isPublic);
         await _publisher.UpdateDashboardAsync();
 

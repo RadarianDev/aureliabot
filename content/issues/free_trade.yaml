@@ -1,5 +1,6 @@
 id: free_trade
 title: Free Trade
+summary: "Whether Aurelia keeps her duties on foreign goods. Free trade means cheaper bread and busier ports, and it exposes the farms and workshops that the duties protect."
 for: Cheap bread, full harbours and no duties at the border.
 against: Protect Aurelian farms and workshops from foreign goods.
 opinion: 0.0

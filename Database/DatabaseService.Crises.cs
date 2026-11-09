@@ -26,6 +26,8 @@ public record Crisis(
 {
     public CrisisAnswer? Chosen => AnswerNumbered(ChosenAnswer);
 
+    public bool CondemnationsRevealed => Status == CrisisStatus.Resolved;
+
     public CrisisAnswer? AnswerNumbered(int? number) =>
         number is { } n && n >= 1 && n <= Answers.Count ? Answers[n - 1] : null;
 }
@@ -360,7 +362,7 @@ public partial class DatabaseService
             INSERT INTO condemnations (faction_id, crisis_id, side, made_at) VALUES ($faction, $crisis, $side, $now) RETURNING id;",
             ("$faction", factionId.ToString()), ("$crisis", crisisId), ("$side", (int)side), ("$now", Now())));
         RecordOppositionActionTx(conn, tx, factionId, OppositionActionKind.Condemn, crisisId);
-        LogTx(conn, tx, LogKinds.StateChange, "opposition condemn", $"{factionId} condemned crisis {crisisId}, standing {side}.", factionId, isPublic: true);
+        LogTx(conn, tx, LogKinds.StateChange, "opposition condemn", $"{factionId} condemned crisis {crisisId}, standing {side}.", factionId);
         var crisis = GetCrisisTx(conn, tx, crisisId);
         var condemnation = GetCondemnationsTx(conn, tx, crisisId).Single(c => c.Id == id);
         tx.Commit();
@@ -443,6 +445,8 @@ public partial class DatabaseService
                 var delta = rules.Condemnation(c, condemnation.Side, answer?.Lean, opinion);
                 PopularityChangeTx(conn, tx, condemnation.FactionId, delta, c.Popularity);
                 scores.Add(new CondemnationScore(condemnation.FactionId, condemnation.Side, delta));
+                LogTx(conn, tx, LogKinds.Resolution, "condemnation",
+                    $"{condemnation.FactionId} stood {condemnation.Side} on crisis {crisis.Id}: {delta:+0.##;-0.##;0}.", condemnation.FactionId, isPublic: true);
             }
 
             Exec(conn, tx, "UPDATE crises SET status = 'Resolved', outcome = $outcome WHERE id = $id;",

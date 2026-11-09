@@ -1,5 +1,6 @@
 id: fen_drainage
 title: The Tovrerie Fen Drainage
+summary: "Drains the fever marshes of Tovrerie, ending the province's Marshland condition and easing its discontent."
 purse: Interior
 province: tovrerie
 price: 40

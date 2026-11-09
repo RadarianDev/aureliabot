@@ -26,6 +26,35 @@ public class EffectSummaryTests
 
     private static string Single(string key, double? value) => Assert.Single(Lines((key, value)));
 
+    private static IReadOnlyList<string> Expected(string text) =>
+        EffectSummary.Expected(EffectParser.Parse(text), Names, Display);
+
+    [Fact]
+    public void Expected_effects_leave_out_hidden_ones()
+    {
+        var lines = Expected("economy -5, event.manor_yards 2, var.plague 1");
+
+        Assert.Equal(DownLine + " Economy −5", Assert.Single(lines));
+    }
+
+    [Fact]
+    public void Expected_effects_never_show_a_condition_or_formula()
+    {
+        var lines = Expected("economy -5, if {var.plague >= 3} [discontent.iracterie 1], reserve {0.5 * var.plague}");
+
+        Assert.Equal(2, lines.Count);
+        Assert.Equal(DownLine + " Economy −5", lines[0]);
+        Assert.DoesNotContain("plague", lines[1]);
+    }
+
+    [Fact]
+    public void Expected_effects_do_not_hint_at_a_block_of_hidden_effects()
+    {
+        var lines = Expected("economy -5, if {var.plague >= 3} [event.manor_yards]");
+
+        Assert.Single(lines);
+    }
+
     [Theory]
     [InlineData("economy", -5, DownLine + " Economy −5")]
     [InlineData("economy", 2.5, UpLine + " Economy +2.5")]

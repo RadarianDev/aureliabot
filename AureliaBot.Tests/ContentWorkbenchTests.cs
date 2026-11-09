@@ -163,7 +163,7 @@ public class ContentWorkbenchTests : IDisposable
         var problems = ContentRules.Problems(Db, Db.BuildEffectContext(Config), Db.GetGameState(), row);
 
         var issue = problems.First(p => p.Message.Contains("`integration`"));
-        Assert.Equal(3, issue.Line);
+        Assert.Equal(4, issue.Line);
         Assert.Equal("issue", YamlParts.KeyAtLine(row.Yaml, issue.Line!.Value));
     }
 

@@ -12,6 +12,11 @@ public class InfoAutocomplete : AutocompleteHandler
         var typed = autocompleteInteraction.Data.Current.Value?.ToString() ?? "";
 
         var entries = new List<(string Label, string Value)>();
+        entries.Add((Texts.Get("info.kind.kingdom"), "kingdom:"));
+        entries.Add((Texts.Get("info.kind.government"), "government:"));
+        entries.Add((Texts.Get("info.kind.parliament"), "parliament:"));
+        entries.Add((Texts.Get("info.kind.laws"), "laws:"));
+        entries.Add((Texts.Get("info.kind.budget"), "budget:"));
         foreach (var party in data.GetAllParties())
             entries.Add((Texts.Get("info.kind.party", ("name", party.Name)), $"party:{party.Id}"));
         foreach (var faction in data.GetActiveFactions())
@@ -29,7 +34,10 @@ public class InfoAutocomplete : AutocompleteHandler
             entries.Add((Texts.Get("info.crisis.kind", ("name", crisis.Title)), $"crisis:{crisis.Id}"));
         foreach (var ministry in GameEnumExtensions.CabinetMinistries)
             entries.Add((Texts.Get("info.kind.ministry", ("name", ministry.DisplayName())), $"ministry:{ministry}"));
-        entries.Add((Texts.Get("info.kind.budget"), "budget:"));
+        foreach (var condition in constants.Config.Conditions)
+            entries.Add((Texts.Get("info.kind.condition", ("name", condition.Name)), $"condition:{condition.Id}"));
+        foreach (var fired in data.GetFiredEvents())
+            entries.Add((Texts.Get("info.kind.event", ("name", fired.Title)), $"event:{fired.Id}"));
 
         var results = entries
             .Where(e => e.Label.Contains(typed, StringComparison.OrdinalIgnoreCase))
@@ -57,13 +65,16 @@ public partial class InfoModule : InteractionModuleBase<SocketInteractionContext
         _constants = constants;
     }
 
-    [SlashCommand("info", "Show anything: factions, parties, issues, bills, projects, crises, provinces, ministries, budget")]
+    [SlashCommand("info", "Show anything public: the kingdom, parties, factions, issues, bills, laws, crises, events and more")]
     public async Task InfoAsync(
         [Summary("thing", "What to show; leave empty for what is live"), Autocomplete(typeof(InfoAutocomplete))] string? thing = null,
         [Summary("year", "For the budget: an earlier year")] int? year = null)
     {
         var text = thing is null ? Live() : Describe(thing.Trim(), year);
-        await RespondAsync(Display.Truncate(text), ephemeral: true, allowedMentions: AllowedMentions.None);
+        var chunks = Publisher.Chunk(text.TrimEnd()).ToList();
+        await RespondAsync(chunks[0], ephemeral: true, allowedMentions: AllowedMentions.None);
+        foreach (var chunk in chunks.Skip(1))
+            await FollowupAsync(chunk, ephemeral: true, allowedMentions: AllowedMentions.None);
     }
 
     private string Describe(string thing, int? year)
@@ -83,6 +94,12 @@ public partial class InfoModule : InteractionModuleBase<SocketInteractionContext
             "project" when long.TryParse(id, out var projectId) => ProjectInfo(projectId),
             "ministry" when Enum.TryParse<Ministry>(id, out var ministry) && ministry.HoldsCrises() => MinistryInfo(ministry),
             "budget" => BudgetInfo(year),
+            "kingdom" => KingdomInfo(),
+            "government" => GovernmentInfo(),
+            "parliament" => ParliamentInfo(),
+            "laws" => LawsInfo(),
+            "condition" => ConditionInfo(id),
+            "event" when long.TryParse(id, out var eventId) => EventInfo(eventId),
             _ => _data.GetAllParties().FirstOrDefault(p => p.Name.Equals(thing, StringComparison.OrdinalIgnoreCase)) is { } party
                 ? PartyInfo(party.Id)
                 : _data.GetIssue(thing) is not null ? IssueInfo(thing)
@@ -102,7 +119,11 @@ public partial class InfoModule : InteractionModuleBase<SocketInteractionContext
         var issues = _data.GetOpenIssues();
         sb.AppendLine();
         sb.AppendLine(Texts.Get("info.live.openIssues"));
-        sb.AppendLine(issues.Count == 0 ? Texts.Get("info.live.noneYet") : string.Join("\n", issues.Select(i => $"- {i.Title}")));
+        sb.AppendLine(issues.Count == 0 ? Texts.Get("info.live.noneYet") : string.Join("\n", issues.Select(IssueLine)));
+        var readings = _data.GetLiveReadings();
+        sb.AppendLine();
+        sb.AppendLine(Texts.Get("info.live.business"));
+        sb.AppendLine(readings.Count == 0 ? Texts.Get("info.live.noBusiness") : string.Join("\n", readings.Select(ReadingLine)));
         var parties = _data.GetAllParties();
         sb.AppendLine();
         sb.AppendLine(Texts.Get("info.live.parties"));
@@ -117,7 +138,41 @@ public partial class InfoModule : InteractionModuleBase<SocketInteractionContext
         sb.AppendLine(Texts.Get("info.crisis.live"));
         sb.AppendLine(crises.Count == 0 ? Texts.Get("info.live.noneYet") : string.Join("\n", crises.Select(c =>
             Texts.Get("info.crisis.liveLine", ("crisis", c.Title), ("ministry", c.Ministry.DisplayName())))));
+        sb.AppendLine();
+        sb.AppendLine(Texts.Get("info.live.hint"));
         return sb.ToString();
+    }
+
+    private string IssueLine(Issue issue) =>
+        _data.SummaryOf(issue.TemplateId) is { } summary
+            ? Texts.Get("info.live.issueWithSummary", ("issue", issue.Title), ("summary", summary))
+            : Texts.Get("info.live.issue", ("issue", issue.Title));
+
+    private string ReadingLine(Reading reading)
+    {
+        var bill = _data.GetBill(reading.BillId);
+        (string, object?)[] values =
+        [
+            ("bill", bill?.Title ?? reading.BillId),
+            ("issue", bill is null ? "" : CrisisPublisher.IssueTitle(_data, bill.IssueId)),
+            ("lean", bill is null ? "" : AssemblyPublisher.LeanName(bill.Lean)),
+            ("sponsor", Display.Faction(_data, reading.SponsorId)),
+        ];
+        return reading.Status == ReadingStatus.Open ? Texts.Get("info.live.readingOpen", values) : Texts.Get("info.live.readingScheduled", values);
+    }
+
+    private IReadOnlyList<string> Expected(IReadOnlyList<Effect> effects)
+    {
+        var config = _constants.Config;
+        return EffectSummary.Expected(effects, Publisher.Names(_data, config), config.Constants.Display);
+    }
+
+    private static void AppendEffects(StringBuilder sb, string heading, IReadOnlyList<string> lines)
+    {
+        if (lines.Count == 0) return;
+        sb.AppendLine();
+        sb.AppendLine(heading);
+        foreach (var line in lines) sb.AppendLine(Texts.Get("news.effectPost.effectLine", ("line", line)));
     }
 
     private string CrisisInfo(long crisisId)
@@ -125,11 +180,12 @@ public partial class InfoModule : InteractionModuleBase<SocketInteractionContext
         if (_data.GetCrisis(crisisId) is not { } crisis) return Texts.Get("info.crisis.missing");
         var issueTitle = CrisisPublisher.IssueTitle(_data, crisis.IssueId);
         if (crisis.Status == CrisisStatus.Live)
-            return CrisisPublisher.CrisisPost(crisis, _data.GetGameState(), _constants.Config, issueTitle) + CondemnationsText(crisis);
+            return CrisisPublisher.CrisisPost(crisis, _data.GetGameState(), _constants.Config, issueTitle, Briefing.ForCrisis(_data, crisis)) + OwnCondemnationText(crisis);
 
         var sb = new StringBuilder();
         sb.AppendLine(Texts.Get("crisis.post.heading", ("crisis", crisis.Title)));
         sb.AppendLine(CrisisPublisher.MetaLine(crisis, _constants.Config, issueTitle));
+        foreach (var line in Briefing.ForCrisis(_data, crisis)) sb.AppendLine(line);
         sb.AppendLine();
         sb.AppendLine(string.Join("\n", crisis.Answers.Select((answer, index) => CrisisPublisher.AnswerLine(index + 1, answer))));
         sb.AppendLine();
@@ -155,9 +211,23 @@ public partial class InfoModule : InteractionModuleBase<SocketInteractionContext
                 sb.AppendLine(Texts.Get("info.crisis.cancelled"));
                 break;
         }
+        AppendEffects(sb, Texts.Get("info.crisis.effects"), Expected(ResolvedEffects(crisis)));
         sb.Append(CondemnationsText(crisis));
         return sb.ToString();
     }
+
+    private static IReadOnlyList<Effect> ResolvedEffects(Crisis crisis) => crisis.Outcome switch
+    {
+        CrisisOutcome.Clean when crisis.Chosen is { } chosen => chosen.Effects,
+        CrisisOutcome.Complicated when crisis.Chosen is { } chosen => [.. chosen.Effects, .. crisis.Complication?.Effects ?? []],
+        CrisisOutcome.Default => crisis.Default.Effects,
+        _ => [],
+    };
+
+    private string OwnCondemnationText(Crisis crisis) =>
+        _data.GetCondemnations(crisis.Id).FirstOrDefault(c => c.FactionId == Context.User.Id) is { } own
+            ? "\n\n" + Texts.Get("info.crisis.ownCondemnation", ("side", AssemblyPublisher.LeanName(own.Side)))
+            : "";
 
     private static void AppendResponse(StringBuilder sb, Crisis crisis)
     {
@@ -167,7 +237,7 @@ public partial class InfoModule : InteractionModuleBase<SocketInteractionContext
 
     private string CondemnationsText(Crisis crisis)
     {
-        var condemnations = _data.GetCondemnations(crisis.Id);
+        var condemnations = crisis.CondemnationsRevealed ? _data.GetCondemnations(crisis.Id) : [];
         if (condemnations.Count == 0) return "";
         return "\n\n" + Texts.Get("info.crisis.condemnations") + "\n" + string.Join("\n", condemnations.Select(c =>
             Texts.Get("info.crisis.condemnation", ("faction", Display.Faction(_data, c.FactionId)), ("side", AssemblyPublisher.LeanName(c.Side)))));
@@ -247,6 +317,7 @@ public partial class InfoModule : InteractionModuleBase<SocketInteractionContext
         if (_data.GetIssue(issueId) is not { } issue) return Texts.Get("info.issue.missing");
         var sb = new StringBuilder();
         sb.AppendLine($"## {issue.Title}");
+        if (_data.SummaryOf(issue.TemplateId) is { } summary) sb.AppendLine(summary);
         sb.AppendLine(Texts.Get("info.issue.for", ("text", issue.ForText)));
         sb.AppendLine(Texts.Get("info.issue.against", ("text", issue.AgainstText)));
         sb.AppendLine(Texts.Get("info.issue.status", ("status", issue.Status)));
@@ -260,7 +331,17 @@ public partial class InfoModule : InteractionModuleBase<SocketInteractionContext
                 sb.AppendLine($"{bill.Title} · {bill.Lean} · {BillStatusText(bill)}");
         }
 
+        var crises = _data.GetCrises(CrisisStatus.Live).Where(c => c.IssueId == issueId).ToList();
+        if (crises.Count > 0)
+        {
+            sb.AppendLine();
+            sb.AppendLine(Texts.Get("info.crisis.live"));
+            foreach (var crisis in crises)
+                sb.AppendLine(Texts.Get("info.crisis.liveLine", ("crisis", crisis.Title), ("ministry", crisis.Ministry.DisplayName())));
+        }
+
         sb.AppendLine();
+        sb.AppendLine(Texts.Get("info.issue.stances"));
         foreach (var party in _data.GetAllParties())
         {
             var stance = _data.GetProgramme(party.Id).TryGetValue(issueId, out var s) ? s : Stance.Silent;
@@ -291,9 +372,44 @@ public partial class InfoModule : InteractionModuleBase<SocketInteractionContext
         var sb = new StringBuilder();
         sb.AppendLine($"## {bill.Title}");
         sb.AppendLine($"{issue?.Title ?? bill.IssueId} · {bill.Lean} · {BillStatusText(bill)}");
+        if (_data.SummaryOf(bill.TemplateId) is { } summary) sb.AppendLine(summary);
+        if (issue is not null)
+            sb.AppendLine(Texts.Get("info.bill.side", ("side", AssemblyPublisher.LeanName(bill.Lean)), ("text", bill.Lean == Lean.For ? issue.ForText : issue.AgainstText)));
         sb.AppendLine();
         sb.AppendLine($"*{bill.Motion}*");
+
+        var passed = bill.Status == BillStatus.Passed;
+        if (passed)
+        {
+            sb.AppendLine();
+            sb.AppendLine(Texts.Get("info.crisis.story", ("text", bill.PassText)));
+        }
+        if (passed) AppendEffects(sb, Texts.Get("info.bill.effects"), Expected(bill.ParsedPassEffects));
+
+        var readings = _data.GetReadingsOfBill(billId).Where(r => r.YesSeats is not null).ToList();
+        if (readings.Count > 0)
+        {
+            sb.AppendLine();
+            sb.AppendLine(Texts.Get("info.bill.votes"));
+            foreach (var reading in readings)
+                sb.AppendLine(VoteLine(reading));
+        }
         return sb.ToString();
+    }
+
+    private string VoteLine(Reading reading)
+    {
+        (string, object?)[] values =
+        [
+            ("yes", reading.YesSeats ?? 0), ("no", reading.NoSeats ?? 0), ("abstain", reading.AbstainSeats ?? 0),
+            ("sponsor", Display.Faction(_data, reading.SponsorId)),
+        ];
+        return reading.Status switch
+        {
+            ReadingStatus.Passed => Texts.Get("info.bill.votePassed", values),
+            ReadingStatus.ReturnedBySenate => Texts.Get("info.bill.voteReturned", values),
+            _ => Texts.Get("info.bill.voteRejected", values),
+        };
     }
 
     private string ProvinceInfo(string provinceId)
@@ -304,7 +420,15 @@ public partial class InfoModule : InteractionModuleBase<SocketInteractionContext
         var sb = new StringBuilder();
         sb.AppendLine($"## {definition.Name}");
         sb.AppendLine(definition.Description);
+        sb.AppendLine(Texts.Get("info.province.population", ("population", definition.Population.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))));
+        if (_data.GetGameState().SenateEstablished) sb.AppendLine(Texts.Get("info.senateSeats", ("seats", definition.SenateSeats)));
         if (live is not null) sb.AppendLine(Texts.Get("info.province.discontent", ("discontent", Wording.Discontent(live.Discontent))));
+        var home = _data.GetActiveFactions().Where(f => f.HomeProvinceId == provinceId).Select(Display.Faction).ToList();
+        if (home.Count > 0) sb.AppendLine(Texts.Get("info.province.home", ("factions", string.Join(", ", home))));
+        var projects = _data.GetLiveProjects().Where(p => p.ProvinceId == provinceId).Select(p => p.Title).ToList();
+        if (projects.Count > 0) sb.AppendLine(Texts.Get("info.province.projects", ("projects", string.Join(", ", projects))));
+        var crises = _data.GetCrises(CrisisStatus.Live).Where(c => c.ProvinceId == provinceId).Select(c => c.Title).ToList();
+        if (crises.Count > 0) sb.AppendLine(Texts.Get("info.province.crises", ("crises", string.Join(", ", crises))));
         sb.AppendLine();
         sb.AppendLine(Texts.Get("info.province.conditions"));
         foreach (var conditionId in conditionIds)

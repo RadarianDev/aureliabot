@@ -3,6 +3,8 @@ public abstract record Template(string Id, string Title)
     public abstract TemplateKind Kind { get; }
 
     public abstract IEnumerable<string> References { get; }
+
+    public string? Summary { get; init; }
 }
 
 public sealed record IssueTemplate(string Id, string Title, string For, string Against, double Opinion, double Salience)

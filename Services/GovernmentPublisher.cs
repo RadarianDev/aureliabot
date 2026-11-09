@@ -49,7 +49,7 @@ public class GovernmentPublisher
         foreach (var outcome in report.Questions)
         {
             if (outcome.Outcome == QuestionOutcomeKind.Unanswered)
-                await PostAsync(ChannelRole.News, UnansweredPost(outcome), source);
+                await PostAsync(ChannelRole.Assembly, UnansweredPost(outcome), source);
             if (_data.GetQuestion(outcome.QuestionId) is { } question)
                 await RefreshQuestionAsync(question);
         }

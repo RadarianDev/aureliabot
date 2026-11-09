@@ -40,7 +40,7 @@ public partial class GmModule
         _data.Log(LogKinds.GmOverride, "gm reward", $"{target.UserId}: {Display.Signed(gained)} popularity for {reason}.", target.UserId, isPublic: true);
 
         var post = await _publisher.PostAsync(
-            ChannelRole.News,
+            ChannelRole.Notices,
             Texts.Get("gm.reward.commendation", ("faction", Display.Faction(target)), ("reason", reason), ("gained", Display.Signed(gained))),
             "gm reward");
 

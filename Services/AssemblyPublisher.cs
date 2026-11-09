@@ -201,8 +201,12 @@ public class AssemblyPublisher
             Texts.Get("law.heading", ("bill", law.Title)),
             [Texts.Get("law.preamble", ("yes", law.YesSeats), ("no", law.NoSeats), ("sponsor", Display.Faction(_data, law.SponsorFactionId)))],
             law.PassText,
-            EffectSummary.Lines(law.Effects, Publisher.Names(_data, config), config.Constants.Display));
+            EffectSummary.Lines(law.Effects, Publisher.Names(_data, config), config.Constants.Display),
+            Briefing.ForEffects(_data, law.Effects));
     }
+
+    private string WithSummary(string post, Bill? bill) =>
+        bill is not null && _data.SummaryOf(bill.TemplateId) is { } summary ? post + "\n" + Texts.Get("briefing.summary", ("text", summary)) : post;
 
     public string AnnouncePost(Reading reading)
     {
@@ -213,8 +217,8 @@ public class AssemblyPublisher
         var sponsor = Display.Faction(_data, reading.SponsorId);
         return reading.Status switch
         {
-            ReadingStatus.Scheduled => Texts.Get("assembly.announce", ("bill", title), ("issue", issue), ("lean", lean),
-                ("kind", KindName(reading.Kind)), ("sponsor", sponsor), ("when", Display.NextResolution(_data.GetGameState()))),
+            ReadingStatus.Scheduled => WithSummary(Texts.Get("assembly.announce", ("bill", title), ("issue", issue), ("lean", lean),
+                ("kind", KindName(reading.Kind)), ("sponsor", sponsor), ("when", Display.NextResolution(_data.GetGameState()))), bill),
             ReadingStatus.Cancelled => Texts.Get("assembly.announceCancelled", ("bill", title), ("issue", issue), ("lean", lean),
                 ("kind", KindName(reading.Kind)), ("sponsor", sponsor)),
             _ => Texts.Get("assembly.announceOpened", ("bill", title), ("issue", issue), ("lean", lean),
@@ -234,6 +238,8 @@ public class AssemblyPublisher
             lines.Add(Texts.Get("assembly.reading.motion", ("motion", bill.Motion)));
             lines.Add(Texts.Get("assembly.reading.meta", ("issue", _data.GetIssue(bill.IssueId)?.Title ?? bill.IssueId),
                 ("lean", LeanName(bill.Lean)), ("kind", KindName(reading.Kind)), ("sponsor", Display.Faction(_data, reading.SponsorId))));
+            if (_data.SummaryOf(bill.TemplateId) is { } summary)
+                lines.Add(Texts.Get("briefing.summary", ("text", summary)));
         }
 
         switch (reading.Status)

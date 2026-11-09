@@ -78,6 +78,12 @@ public partial class DatabaseService
         return QueryEventsTx(conn, null, "status = 'Queued'");
     }
 
+    public GameEvent? GetFiredEvent(long id)
+    {
+        using var conn = Open();
+        return QueryEventsTx(conn, null, "id = $id AND status = 'Fired'", "id", ("$id", id)).FirstOrDefault();
+    }
+
     public List<GameEvent> GetFiredEvents(int limit = 25)
     {
         using var conn = Open();

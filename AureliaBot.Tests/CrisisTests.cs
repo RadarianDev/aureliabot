@@ -338,6 +338,17 @@ public class CrisisTests : AssemblyTestBase
     }
 
     [Fact]
+    public void Condemnations_StaySealedWhileTheCrisisIsLive_AndAreNotPublicInTheLog()
+    {
+        SeatCommerceMinister();
+        var crisis = Post("dock");
+        Assert.Null(Db.Condemn(Opposer, crisis.Id, Lean.For, C).Refusal);
+
+        Assert.False(Db.GetCrisis(crisis.Id)!.CondemnationsRevealed);
+        Assert.DoesNotContain(Db.GetLogEntries(LogKinds.StateChange, DateTimeOffset.UnixEpoch), entry => entry.Source == "opposition condemn" && entry.Public);
+    }
+
+    [Fact]
     public void ANeutralAnswer_CountsAsNotOnTheRightSide_ForCondemnations()
     {
         SeatCommerceMinister();

@@ -93,8 +93,8 @@ A party doesn't store a member list: a party's members are the **active** factio
 - Recording replaces the whole programme and writes a `Programme` entry to the stance log for each
   member and stance, so a programme is a faction's latest public stance until it campaigns or votes.
 - Outside a pre-election, every stance that changes sign costs every active member
-  `programme.flipPenalty` popularity, and each flip is announced in #news; the programme goes to
-  #campaign-log. During a pre-election it is a manifesto in #news and changes freely.
+  `programme.flipPenalty` popularity, and each flip is announced in #campaign-log, where the programme also goes.
+  During a pre-election it is a manifesto in #news and changes freely.
 
 ## Discord roles and chats
 

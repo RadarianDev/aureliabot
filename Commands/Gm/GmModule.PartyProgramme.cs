@@ -129,7 +129,7 @@ public partial class GmModule
                     await _publisher.PostAsync(ChannelRole.CampaignLog,
                         Texts.Get("gm.party.programme.programmePost", ("party", TheParty(party.Name)), ("programme", programme)), ProgrammeSource);
                     foreach (var issueId in result.FlippedIssueIds)
-                        await _publisher.PostAsync(ChannelRole.News,
+                        await _publisher.PostAsync(ChannelRole.CampaignLog,
                             Texts.Get("gm.party.programme.flipNews",
                                 ("party", Capitalise(TheParty(party.Name))), ("issue", titles.GetValueOrDefault(issueId, issueId))),
                             ProgrammeSource);

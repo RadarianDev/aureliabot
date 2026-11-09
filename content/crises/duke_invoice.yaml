@@ -1,5 +1,6 @@
 id: duke_invoice
 title: The Duke's Invoice
+summary: "The Duke of Corvasse has billed the Treasury for a royal visit, citing the old Anzarian charters. Paying honours the charters, and refusing upholds the Assembly's law."
 ministry: Treasury
 province: agrinenten
 issue: integration

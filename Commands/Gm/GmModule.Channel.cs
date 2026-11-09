@@ -9,7 +9,7 @@ public partial class GmModule
     {
         private static readonly HashSet<ChannelRole> TextChannels =
         [
-            ChannelRole.News, ChannelRole.Dashboard, ChannelRole.Assembly, ChannelRole.CampaignLog,
+            ChannelRole.News, ChannelRole.Notices, ChannelRole.Dashboard, ChannelRole.Assembly, ChannelRole.CampaignLog,
             ChannelRole.PartyRegistry, ChannelRole.Cabinet, ChannelRole.Gm,
         ];
 

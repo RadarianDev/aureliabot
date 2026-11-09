@@ -24,6 +24,19 @@ public static class EffectSummary
         return lines;
     }
 
+    public static IReadOnlyList<string> Expected(IReadOnlyList<Effect> effects, EffectNames names, DisplayConstants display)
+    {
+        var lines = effects.Where(IsFixed)
+            .Select(effect => effect.Kind?.SummaryLine(effect, names, display))
+            .OfType<string>()
+            .ToList();
+        var dependsOnCircumstances = EffectTree.Plain(effects.Where(effect => !IsFixed(effect))).Any(effect => effect.Kind is { Hidden: false });
+        if (dependsOnCircumstances) lines.Add(Texts.Get("effects.expected.conditional"));
+        return lines;
+    }
+
+    private static bool IsFixed(Effect effect) => effect.Block is null && effect.Formula is null && !effect.SetTo;
+
     private static void AddLines(IReadOnlyList<Effect> effects, EffectNames names, DisplayConstants display, bool preview, string depth, List<string> lines)
     {
         foreach (var effect in effects)

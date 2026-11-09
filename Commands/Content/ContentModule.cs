@@ -162,7 +162,7 @@ public partial class ContentModule : InteractionModuleBase<SocketInteractionCont
                 return;
             }
             if (result.News is { } news)
-                await _publisher.PostAsync(ChannelRole.News, news, $"content edit live {id}");
+                await _publisher.PostAsync(ChannelRole.Notices, news, $"content edit live {id}");
             if (result.AmendedCrisisId is { } amended)
             {
                 await _crises.RefreshPostAsync(amended);

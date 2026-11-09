@@ -1,5 +1,6 @@
 id: naval_harbour
 title: Naval harbour
+summary: "A dockyard in a coastal province, good for trade and pleasing to the Anzarian admirals who run the fleet."
 ministerial: true
 purse: CommerceLabor
 requires: coastal

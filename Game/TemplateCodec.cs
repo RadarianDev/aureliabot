@@ -259,19 +259,20 @@ public static partial class TemplateCodec
 
         private IssueTemplate ReadIssue(YamlMappingNode root)
         {
-            var map = new Map(this, root, "", "id", "title", "for", "against", "opinion", "salience");
+            var map = new Map(this, root, "", "id", "title", "summary", "for", "against", "opinion", "salience");
             return new IssueTemplate(
                 map.Slug("id", required: true) ?? "",
                 map.Text("title", required: true) ?? "",
                 map.Text("for", required: true) ?? "",
                 map.Text("against", required: true) ?? "",
                 map.Number("opinion", required: true, -1, 1) ?? 0,
-                map.Number("salience", required: true, 0, 5) ?? 0);
+                map.Number("salience", required: true, 0, 5) ?? 0)
+            { Summary = map.Text("summary", required: false) };
         }
 
         private BillTemplate ReadBill(YamlMappingNode root)
         {
-            var map = new Map(this, root, "", "id", "title", "issue", "lean", "motion", "pass");
+            var map = new Map(this, root, "", "id", "title", "summary", "issue", "lean", "motion", "pass");
             var id = map.Slug("id", required: true) ?? "";
             var title = map.Text("title", required: true) ?? "";
             var issue = map.Slug("issue", required: true);
@@ -283,12 +284,13 @@ public static partial class TemplateCodec
             return new BillTemplate(
                 id, title, issue ?? "", lean, motion,
                 pass?.Text("text", required: true) ?? "",
-                pass?.Effects("effects", allowHere: false, allowCrisis: false) ?? []);
+                pass?.Effects("effects", allowHere: false, allowCrisis: false) ?? [])
+            { Summary = map.Text("summary", required: false) };
         }
 
         private ProjectTemplate ReadProject(YamlMappingNode root)
         {
-            var map = new Map(this, root, "", "id", "title", "purse", "province", "price", "term", "effects", "bonus", "ministerial", "requires");
+            var map = new Map(this, root, "", "id", "title", "summary", "purse", "province", "price", "term", "effects", "bonus", "ministerial", "requires");
             var id = map.Slug("id", required: true) ?? "";
             var title = map.Text("title", required: true) ?? "";
             var purse = map.Ministry("purse", required: false) ?? Ministry.CommerceLabor;
@@ -305,7 +307,8 @@ public static partial class TemplateCodec
             if (province is null && !ministerial && EffectTree.Plain(effects.Concat(bonus?.Effects ?? [])).Any(e => e.Parts.Skip(1).Contains(EffectParser.Here)))
                 Error(map.KeyNode("effects") ?? map.KeyNode("bonus") ?? (YamlNode)root, Texts.Get("templates.hereNeedsProvince"));
 
-            return new ProjectTemplate(id, title, purse, province, price, term, effects, bonus, ministerial, requires);
+            return new ProjectTemplate(id, title, purse, province, price, term, effects, bonus, ministerial, requires)
+            { Summary = map.Text("summary", required: false) };
         }
 
         private ProjectBonus? ReadBonus(Map map)
@@ -354,7 +357,7 @@ public static partial class TemplateCodec
 
         private CrisisTemplate ReadCrisis(YamlMappingNode root)
         {
-            var map = new Map(this, root, "", "id", "title", "ministry", "province", "issue", "answers", "complication", "default");
+            var map = new Map(this, root, "", "id", "title", "summary", "ministry", "province", "issue", "answers", "complication", "default");
             var id = map.Slug("id", required: true) ?? "";
             var title = map.Text("title", required: true) ?? "";
             var ministry = map.Ministry("ministry", required: true) ?? Ministry.CommerceLabor;
@@ -395,7 +398,8 @@ public static partial class TemplateCodec
             var complication = ReadOutcome(map, "complication", required: false);
             var fallback = ReadOutcome(map, "default", required: true);
             return new CrisisTemplate(id, title, ministry, province, issue ?? "", answers, complication,
-                fallback ?? new CrisisOutcomeText("", []));
+                fallback ?? new CrisisOutcomeText("", []))
+            { Summary = map.Text("summary", required: false) };
         }
 
         private static CrisisOutcomeText? ReadOutcome(Map map, string name, bool required)
@@ -623,6 +627,7 @@ public static partial class TemplateCodec
             case IssueTemplate issue:
                 w.Field("", "id", issue.Id);
                 w.Field("", "title", issue.Title);
+                if (issue.Summary is not null) w.Field("", "summary", issue.Summary);
                 w.Field("", "for", issue.For);
                 w.Field("", "against", issue.Against);
                 w.Raw("", "opinion", Number(issue.Opinion));
@@ -631,6 +636,7 @@ public static partial class TemplateCodec
             case BillTemplate bill:
                 w.Field("", "id", bill.Id);
                 w.Field("", "title", bill.Title);
+                if (bill.Summary is not null) w.Field("", "summary", bill.Summary);
                 w.Field("", "issue", bill.Issue);
                 w.Raw("", "lean", bill.Lean.ToString());
                 w.Field("", "motion", bill.Motion);
@@ -641,6 +647,7 @@ public static partial class TemplateCodec
             case ProjectTemplate project:
                 w.Field("", "id", project.Id);
                 w.Field("", "title", project.Title);
+                if (project.Summary is not null) w.Field("", "summary", project.Summary);
                 if (project.Ministerial) w.Raw("", "ministerial", "true");
                 w.Raw("", "purse", project.Purse.ToString());
                 if (project.Province is not null) w.Field("", "province", project.Province);
@@ -672,6 +679,7 @@ public static partial class TemplateCodec
             case CrisisTemplate crisis:
                 w.Field("", "id", crisis.Id);
                 w.Field("", "title", crisis.Title);
+                if (crisis.Summary is not null) w.Field("", "summary", crisis.Summary);
                 w.Raw("", "ministry", crisis.Ministry.ToString());
                 w.Field("", "province", crisis.Province);
                 w.Field("", "issue", crisis.Issue);

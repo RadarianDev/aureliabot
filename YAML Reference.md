@@ -18,6 +18,12 @@ There are two kinds of file:
 
 Field names are camelCase. Ids are lowercase slugs (`north_arpal`, `ten_hours_bill`).
 
+A `summary` is always read from the template, so editing it takes effect at once, even for an issue, bill,
+crisis or project already in play. Change it in the file or with `/content edit`; a live edit ignores it.
+
+Effects stay private until they happen: a bill's until it passes, a project's until it finishes and a crisis
+answer's until the crisis resolves. After that, `/info` lists them as the post did, with hidden effects left out.
+
 ## Effects
 
 Bills, projects, events and crisis answers all carry an `effects` map: a key and a change.
@@ -173,6 +179,7 @@ salience: 3
 | --- | --- | --- |
 | `id` | yes | Slug, used in effects, bills and programmes. |
 | `title` | yes | Shown everywhere, and matched in party programmes. |
+| `summary` | no | In a sentence or two, what the issue is about. Shown in `/info` and when it opens. |
 | `for` | yes | The case for, shown to players. |
 | `against` | yes | The case against. |
 | `opinion` | yes | Starting base opinion, −1 (against) to 1 (for). Hidden. Only effects and crisis outcomes move it. |
@@ -201,6 +208,7 @@ pass:
 | --- | --- | --- |
 | `id` | yes | Slug. |
 | `title` | yes | Shown in #assembly and #news. |
+| `summary` | no | What it does and who it helps or hurts, in plain words. Shown in `/info`, in #assembly and when it becomes available. Don't give away follow-up events. |
 | `issue` | yes | The issue it belongs to. |
 | `lean` | yes | `For` or `Against` the issue. A Yes vote logs this as the voter's stance; the sponsor is judged by it. |
 | `motion` | yes | The law, as the Assembly votes on it. |
@@ -232,6 +240,7 @@ bonus:
 | --- | --- | --- |
 | `id` | yes | Slug. |
 | `title` | yes | Display name. |
+| `summary` | no | What the works are. Shown in `/info` and when it begins. |
 | `purse` | no | `War`, `Interior`, `CommerceLabor` or `Treasury`: who pays and runs it. Defaults to `CommerceLabor`. |
 | `province` | no | Where it is built; `here` in its effects stands for it. Leave it out for a ministerial project, where the minister chooses. |
 | `price` | yes | Total cost. |
@@ -314,6 +323,7 @@ default:
 | --- | --- | --- |
 | `id` | yes | Slug. |
 | `title` | yes | Shown to the minister and in #news. |
+| `summary` | no | What has happened and what the minister must decide. Shown on the crisis post and in `/info`. |
 | `ministry` | yes | `War`, `Interior`, `CommerceLabor` or `Treasury`. Goes to the Chancellor if vacant. |
 | `province` | yes | Whose people judge the answer. |
 | `issue` | yes | The issue the answers lean on. |
@@ -326,7 +336,7 @@ default:
 | `complication.text` / `.effects` | no | Added on top of the answer when the purse can't pay its price. Without one, the standard complication applies: discontent +1 in the crisis's province. |
 | `default.text` / `.effects` | yes | Applied when no answer is chosen in time. |
 
-Opposition factions can **condemn** a live crisis, publicly backing `For` or `Against`. That is a command, not part of the file.
+Opposition factions can **condemn** a live crisis, secretly backing `For` or `Against` until it resolves. That is a command, not part of the file.
 
 ## Config
 

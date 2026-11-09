@@ -28,10 +28,10 @@ public class ProjectPublisher
     public async Task PublishStartedAsync(long projectId, string source)
     {
         if (_data.GetProject(projectId) is not { } project) return;
-        await Safely(() => PostAsync(BegunPost(project, _data.GetGameState(), _constants.Config), source));
+        await Safely(() => PostAsync(BegunPost(project, _data.GetGameState(), _constants.Config, _data.SummaryOf(project.TemplateId)), source));
     }
 
-    public static string BegunPost(LiveProject project, GameState state, GameConfig config)
+    public static string BegunPost(LiveProject project, GameState state, GameConfig config, string? summary)
     {
         var preamble = new List<string>
         {
@@ -40,6 +40,7 @@ public class ProjectPublisher
         };
         if (project.BonusDueResolution is { } due)
             preamble.Add(Texts.Get("projects.post.bonus", ("deadline", TurnLabel(state, due))));
+        if (summary is not null) preamble.Add(summary);
         return Publisher.FormatEffectPost(Texts.Get("projects.post.begun", ("project", project.Title)), preamble, null, []);
     }
 

@@ -144,6 +144,9 @@ public partial class DatabaseService
         return cmd.ExecuteScalar() is string id ? ulong.Parse(id) : null;
     }
 
+    public ulong? GetPostingChannel(ChannelRole role) =>
+        GetChannel(role) ?? (role == ChannelRole.Notices ? GetChannel(ChannelRole.News) : null);
+
     public Dictionary<ChannelRole, ulong> GetChannels()
     {
         using var conn = Open();
