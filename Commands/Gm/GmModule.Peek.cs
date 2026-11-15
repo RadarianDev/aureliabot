@@ -9,6 +9,7 @@ public enum PeekMode
     [ChoiceDisplay("Senate election preview")] Senate,
     [ChoiceDisplay("Party strength working")] Strength,
     [ChoiceDisplay("Opinion by province")] Opinion,
+    [ChoiceDisplay("Popularity by province")] Popularity,
     [ChoiceDisplay("Pending actions")] Actions,
 }
 
@@ -17,7 +18,7 @@ public partial class GmModule
     [SlashCommand("peek", "Show the hidden state, previews and the working behind them, privately")]
     public async Task PeekAsync(
         [Summary("mode", "What to show (default: the hidden state)")] PeekMode mode = PeekMode.State,
-        [Summary("province", "Strength or opinion mode: only this province"), Autocomplete(typeof(ProvinceAutocomplete))] string? province = null)
+        [Summary("province", "Strength, opinion or popularity mode: only this province"), Autocomplete(typeof(ProvinceAutocomplete))] string? province = null)
     {
         await DeferAsync(ephemeral: true);
         if (mode == PeekMode.Election)
@@ -44,6 +45,7 @@ public partial class GmModule
             PeekMode.Strength => found is null ? StrengthOverview() : StrengthWorking(found),
             PeekMode.Opinion => OpinionByProvince(found),
             PeekMode.Actions => PendingActions(),
+            PeekMode.Popularity => PopularityByProvince(found),
             _ => HiddenState(),
         };
         foreach (var chunk in Publisher.Chunk(text))

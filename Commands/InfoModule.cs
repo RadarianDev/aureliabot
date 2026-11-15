@@ -16,6 +16,7 @@ public class InfoAutocomplete : AutocompleteHandler
         entries.Add((Texts.Get("info.kind.government"), "government:"));
         entries.Add((Texts.Get("info.kind.parliament"), "parliament:"));
         entries.Add((Texts.Get("info.kind.laws"), "laws:"));
+        entries.Add((Texts.Get("info.kind.standings"), "standings:"));
         entries.Add((Texts.Get("info.kind.budget"), "budget:"));
         foreach (var party in data.GetAllParties())
             entries.Add((Texts.Get("info.kind.party", ("name", party.Name)), $"party:{party.Id}"));
@@ -98,6 +99,7 @@ public partial class InfoModule : InteractionModuleBase<SocketInteractionContext
             "government" => GovernmentInfo(),
             "parliament" => ParliamentInfo(),
             "laws" => LawsInfo(),
+            "standings" => StandingsInfo(),
             "condition" => ConditionInfo(id),
             "event" when long.TryParse(id, out var eventId) => EventInfo(eventId),
             _ => _data.GetAllParties().FirstOrDefault(p => p.Name.Equals(thing, StringComparison.OrdinalIgnoreCase)) is { } party
@@ -250,7 +252,8 @@ public partial class InfoModule : InteractionModuleBase<SocketInteractionContext
         var sb = new StringBuilder();
         sb.AppendLine($"## {Display.Faction(faction)}");
         if (!faction.IsActive) sb.AppendLine(Texts.Get("info.faction.retired"));
-        sb.AppendLine(Texts.Get("info.faction.popularity", ("popularity", Display.Number(faction.Popularity))));
+        sb.AppendLine(Texts.Get("info.faction.popularity", ("popularity", Display.Number(faction.Popularity)),
+            ("change", Standings.Change(faction.Popularity, _data.GetPopularityMarks().TryGetValue(userId, out var mark) ? mark : null))));
         if (Display.RegionalPopularity(_data, _constants.Config, faction.UserId) is { } regional) sb.AppendLine(regional);
         sb.AppendLine(Texts.Get("info.faction.party", ("party", party is null ? Display.Independent : Display.Party(party))));
         sb.AppendLine(Texts.Get("info.seats", ("seats", faction.Seats)));
@@ -449,6 +452,14 @@ public partial class InfoModule : InteractionModuleBase<SocketInteractionContext
             if (units.Count == 0) sb.AppendLine();
             sb.AppendLine(Texts.Get("info.province.lastElection",
                 ("results", string.Join(", ", results.Select(r => Texts.Get("info.province.result", ("party", r.PartyName), ("seats", r.Seats)))))));
+        }
+
+        var popularity = Standings.InProvince(_data, _constants.Config, provinceId);
+        if (popularity.Count > 0)
+        {
+            sb.AppendLine();
+            sb.AppendLine(Texts.Get("info.province.popularity"));
+            sb.AppendLine(string.Join("\n", popularity));
         }
         return sb.ToString();
     }

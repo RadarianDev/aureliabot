@@ -309,7 +309,7 @@ public partial class DatabaseService
         var issue = snapshot.Issue(action.IssueId)!;
         double Noisy(double opinion) => Math.Clamp(opinion + Noise(random, poll.OpinionNoise), -1, 1);
         var noisySalience = Math.Clamp(issue.Salience + Noise(random, poll.SalienceNoise), salienceRange.Min, salienceRange.Max);
-        var lines = new List<string> { Wording.PollLine(null, issue.Title, Noisy(snapshot.National(action.IssueId)), noisySalience) };
+        var lines = new List<string> { Wording.PollHeadline(issue.Title, noisySalience) };
         lines.AddRange(snapshot.Provinces.Select(p => Wording.PollProvinceLine(p.Name, Noisy(snapshot.Provincial(action.IssueId, p.Id)))));
         return string.Join("\n", lines);
     }

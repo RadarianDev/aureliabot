@@ -6,34 +6,37 @@ timeZone: "Europe/Prague"
 minHoursBetweenResolutions: 12
 preElectionDays: 3
 seasonsPerTerm: 16
-popularity: { min: 0, max: 100, start: 10, drift: 0.05, spread: 0.2 }
-campaign: { factor: 4, baseline: 0.5, actionsPerTurn: 2, actionsPerPreElectionDay: 5, crowding: true }
-attack: { factor: 3, backfire: 2 }
-poll: { opinionNoise: 0.15, salienceNoise: 1 }
+popularity: { min: 0, max: 100, start: 10, drift: 0.07, spread: 0.1 }
+campaign: { factor: 4, baseline: 0.25, actionsPerTurn: 2, actionsPerPreElectionDay: 5, crowding: true }
+attack: { factor: 3, backfire: 3 }
+poll: { opinionNoise: 0.25, salienceNoise: 1 }
 strongStancePenalty: 0.5
 programme: { flipPenalty: 1 }
 opinion: { crisisShift: 0.05 }
+crisis: { factor: 2 }
 salience: { min: 0, max: 5, campaignRaise: 1, crisisRaise: 1, decay: 1, rejectDrop: 2 }
 rejectedCooldownSeasons: 4
 law: { sponsorFactor: 4 }
 government: { billsPerSeason: 1 }
 opposition: { actionsPerSeason: 1, privateBillsPerYear: 1,
-              unansweredQuestion: 2, questionReward: 1, condemnReward: 2, condemnPenalty: 1,
+              unansweredQuestion: 2, questionReward: 1, condemnReward: 1, condemnPenalty: 0.5,
               whipCountReward: 1, whipCountPenalty: 0.5 }
 assembly: { noConfidenceShare: 0.1666, noConfidenceGatherResolutions: 2, noConfidenceCooldownSeasons: 4 }
 election: { baseExponent: 0.85, homeMultiplier: 1.5, programmeWeight: 0.5,
             multiplierMin: 0.5, multiplierMax: 1.5, crowding: true, threshold: 0.08 }
+electionNight: { secondsPerProvince: 20 }
 senate: { campaignDays: 2, actionsPerCampaignDay: 4, maxHomeFactions: 4, overrideShare: 0.6 }
-economy: { start: 1000, growth: 0.01 }
-taxRate: 0.20
+economy: { start: 1000, growth: 0.005 }
+taxRate: 0.17
 reserve: { start: 100, interest: 0.03 }
 defaultAllocation: { War: 0.25, Interior: 0.15, CommerceLabor: 0.30, Treasury: 0.10, Navy: 0.20 }
 favour: { start: 60, baseline: 60, drift: 1, navyFactor: 75, alertBelow: 30 }
 threat: { start: 25, alerts: [60, 85] }
 discontent: { min: 0, max: 10, start: 3, rest: 3, drift: 0.25, alertAt: 6, growthDrag: 0.01 }
+unrest: { from: 4, cabinet: 0.3, backbench: 0.15 }
 division: { raise: 40, upkeep: 5, baseSides: 12, sidesStep: 2, maxSides: 18, trainCosts: [20, 30, 40] }
 gendarmerie: { raise: 20, upkeep: 2.5, baseSides: 8, sidesStep: 2, maxSides: 12, trainCosts: [10, 20] }
-crackdown: { cost: 10, reduction: 2, backlash: 1, failurePopularity: 2, dieBase: 4, diePerDiscontent: 1 }
+crackdown: { cost: 10, reduction: 2, backlash: 1, failurePopularity: 1, dieBase: 4, diePerDiscontent: 1 }
 project: { popularity: 2, graft: 0.5 }
 startingForces:
   divisions: { aurenten: 2, iracterie: 1, north_arpal: 1, provencie_gares: 1, ocidanten: 1 }

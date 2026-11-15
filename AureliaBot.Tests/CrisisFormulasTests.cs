@@ -11,9 +11,9 @@ public class CrisisFormulasTests
     [Fact]
     public void Constants_MatchTheValuesTheseTestsAssume()
     {
-        Assert.Equal(4, Constants.Campaign.Factor);
-        Assert.Equal(2, Constants.Opposition.CondemnReward);
-        Assert.Equal(1, Constants.Opposition.CondemnPenalty);
+        Assert.Equal(2, Constants.Crisis.Factor);
+        Assert.Equal(1, Constants.Opposition.CondemnReward);
+        Assert.Equal(0.5, Constants.Opposition.CondemnPenalty);
     }
 
     [Theory]
@@ -24,29 +24,29 @@ public class CrisisFormulasTests
         Assert.Equal(0, Formulas.CrisisGain(Constants, Lean.Neutral, opinion, salience), Tolerance);
 
     [Theory]
-    [InlineData(Lean.For, 0.5, 3, 2)]
-    [InlineData(Lean.For, -0.5, 3, -2)]
-    [InlineData(Lean.Against, 0.5, 3, -2)]
-    [InlineData(Lean.Against, -0.5, 3, 2)]
-    [InlineData(Lean.For, 0.5, 6, 4)]
-    [InlineData(Lean.Against, -0.75, 1, 1)]
+    [InlineData(Lean.For, 0.5, 3, 1)]
+    [InlineData(Lean.For, -0.5, 3, -1)]
+    [InlineData(Lean.Against, 0.5, 3, -1)]
+    [InlineData(Lean.Against, -0.5, 3, 1)]
+    [InlineData(Lean.For, 0.5, 6, 2)]
+    [InlineData(Lean.Against, -0.75, 1, 0.5)]
     public void CrisisGain_IsSignedByOpinionAndScaledBySalience(Lean answer, double opinion, double salience, double expected) =>
         Assert.Equal(expected, Formulas.CrisisGain(Constants, answer, opinion, salience), Tolerance);
 
     [Theory]
-    [InlineData(3, 4)]
-    [InlineData(6, 8)]
-    [InlineData(1.5, 2)]
+    [InlineData(3, 2)]
+    [InlineData(6, 4)]
+    [InlineData(1.5, 1)]
     public void CrisisDefaultLoss_IsAPositiveMagnitudeScaledBySalience(double salience, double expected) =>
         Assert.Equal(expected, Formulas.CrisisDefaultLoss(Constants, salience), Tolerance);
 
     [Theory]
-    [InlineData(Lean.For, Lean.Against, 0.4, 2)]
-    [InlineData(Lean.Against, Lean.For, -0.4, 2)]
+    [InlineData(Lean.For, Lean.Against, 0.4, 1)]
+    [InlineData(Lean.Against, Lean.For, -0.4, 1)]
     [InlineData(Lean.For, Lean.For, 0.4, 0)]
     [InlineData(Lean.Against, Lean.Against, -0.4, 0)]
-    [InlineData(Lean.Against, Lean.For, 0.4, -1)]
-    [InlineData(Lean.For, Lean.Against, -0.4, -1)]
+    [InlineData(Lean.Against, Lean.For, 0.4, -0.5)]
+    [InlineData(Lean.For, Lean.Against, -0.4, -0.5)]
     [InlineData(Lean.Against, Lean.Against, 0.4, 0)]
     [InlineData(Lean.For, Lean.For, -0.4, 0)]
     public void CondemnationChange_RewardsRightOverWrongAndPenalisesWrongOverRight(Lean side, Lean minister, double opinion, double expected) =>
@@ -55,14 +55,14 @@ public class CrisisFormulasTests
     [Fact]
     public void CondemnationChange_NeutralMinisterAnswer_IsNotOnTheRightSide()
     {
-        Assert.Equal(2, Formulas.CondemnationChange(Constants, Lean.For, Lean.Neutral, 0.4), Tolerance);
+        Assert.Equal(1, Formulas.CondemnationChange(Constants, Lean.For, Lean.Neutral, 0.4), Tolerance);
         Assert.Equal(0, Formulas.CondemnationChange(Constants, Lean.Against, Lean.Neutral, 0.4), Tolerance);
     }
 
     [Fact]
     public void CondemnationChange_NoMinisterResponse_IsNotOnTheRightSide()
     {
-        Assert.Equal(2, Formulas.CondemnationChange(Constants, Lean.Against, null, -0.4), Tolerance);
+        Assert.Equal(1, Formulas.CondemnationChange(Constants, Lean.Against, null, -0.4), Tolerance);
         Assert.Equal(0, Formulas.CondemnationChange(Constants, Lean.For, null, -0.4), Tolerance);
     }
 

@@ -353,34 +353,37 @@ timeZone: "Europe/Prague"
 minHoursBetweenResolutions: 12
 preElectionDays: 3
 seasonsPerTerm: 16
-popularity: { min: 0, max: 100, start: 10, drift: 0.05, spread: 0.2 }
-campaign: { factor: 4, baseline: 0.5, actionsPerTurn: 2, actionsPerPreElectionDay: 5, crowding: true }
-attack: { factor: 3, backfire: 2 }
-poll: { opinionNoise: 0.15, salienceNoise: 1 }
+popularity: { min: 0, max: 100, start: 10, drift: 0.07, spread: 0.1 }
+campaign: { factor: 4, baseline: 0.25, actionsPerTurn: 2, actionsPerPreElectionDay: 5, crowding: true }
+attack: { factor: 3, backfire: 3 }
+poll: { opinionNoise: 0.25, salienceNoise: 1 }
 strongStancePenalty: 0.5
 programme: { flipPenalty: 1 }
 opinion: { crisisShift: 0.05 }
+crisis: { factor: 2 }
 salience: { min: 0, max: 5, campaignRaise: 1, crisisRaise: 1, decay: 1, rejectDrop: 2 }
 rejectedCooldownSeasons: 4
 law: { sponsorFactor: 4 }
 government: { billsPerSeason: 1 }
 opposition: { actionsPerSeason: 1, privateBillsPerYear: 1,
-              unansweredQuestion: 2, questionReward: 1, condemnReward: 2, condemnPenalty: 1,
+              unansweredQuestion: 2, questionReward: 1, condemnReward: 1, condemnPenalty: 0.5,
               whipCountReward: 1, whipCountPenalty: 0.5 }
 assembly: { noConfidenceShare: 0.1667, noConfidenceGatherResolutions: 2, noConfidenceCooldownSeasons: 4 }
 election: { baseExponent: 0.85, homeMultiplier: 1.5, programmeWeight: 0.5,
             multiplierMin: 0.5, multiplierMax: 1.5, crowding: true, threshold: 0.08 }
+electionNight: { secondsPerProvince: 20 }
 senate: { campaignDays: 2, actionsPerCampaignDay: 4, maxHomeFactions: 4, overrideShare: 0.6 }
-economy: { start: 1000, growth: 0.01 }
-taxRate: 0.20
+economy: { start: 1000, growth: 0.005 }
+taxRate: 0.17
 reserve: { start: 100, interest: 0.03 }
 defaultAllocation: { War: 0.25, Interior: 0.15, CommerceLabor: 0.30, Treasury: 0.10, Navy: 0.20 }
 favour: { start: 60, baseline: 60, drift: 1, navyFactor: 75, alertBelow: 30 }
 threat: { start: 25, alerts: [60, 85] }
 discontent: { min: 0, max: 10, start: 3, rest: 3, drift: 0.25, alertAt: 6, growthDrag: 0.01 }
+unrest: { from: 4, cabinet: 0.3, backbench: 0.15 }
 division: { raise: 40, upkeep: 5, baseSides: 12, sidesStep: 2, maxSides: 18, trainCosts: [20, 30, 40] }
 gendarmerie: { raise: 20, upkeep: 2.5, baseSides: 8, sidesStep: 2, maxSides: 12, trainCosts: [10, 20] }
-crackdown: { cost: 10, reduction: 2, backlash: 1, failurePopularity: 2, dieBase: 4, diePerDiscontent: 1 }
+crackdown: { cost: 10, reduction: 2, backlash: 1, failurePopularity: 1, dieBase: 4, diePerDiscontent: 1 }
 project: { popularity: 2, graft: 0.5 }
 startingForces:
   divisions: { aurenten: 2, iracterie: 1, north_arpal: 1, agrinenten: 1, ocidanten: 1 }
@@ -429,6 +432,7 @@ startingForces:
 | Field | Meaning |
 | --- | --- |
 | `opinion.crisisShift` | Opinion move from a crisis answer. |
+| `crisis.factor` | Popularity scale of crisis answers: `factor × lean × provincial opinion × salience / 3` for an answer, and `factor × salience / 3` lost by a minister who lets the deadline pass. |
 | `salience.min`, `.max` | Salience range. |
 | `salience.campaignRaise` | Raise from a campaign, once per issue per season. |
 | `salience.crisisRaise` | Raise from a resolved crisis. |
@@ -463,6 +467,7 @@ startingForces:
 | `election.multiplierMin`, `.multiplierMax` | Clamp on the programme multiplier. |
 | `election.crowding` | Weaken stances many parties share. |
 | `election.threshold` | Share of the national vote a party needs for Assembly seats, once the Senate is established. |
+| `electionNight.secondsPerProvince` | Pause between provinces declaring on election night; 0 posts the results at once. |
 
 **Senate**
 
@@ -492,6 +497,9 @@ startingForces:
 | `discontent.rest`, `.drift` | Resting value and the move toward it each season. |
 | `discontent.alertAt` | GM alert threshold. |
 | `discontent.growthDrag` | Growth lost per point of discontent above rest, averaged over the seasons since the last budget. |
+| `unrest.from` | Discontent above which a province turns against the government. |
+| `unrest.cabinet` | Popularity each cabinet member loses in a province each season, per point of discontent above `unrest.from`. |
+| `unrest.backbench` | The same, for members of a governing party outside the cabinet. |
 | `project.popularity` | Popularity a project's minister gains when it finishes. |
 | `project.graft` | Share of spending above a project's pace that is lost. |
 
@@ -578,6 +586,29 @@ coup_stage:
 | `start` | no | Its value until something changes it (default 0). |
 | `min` / `max` | no | Clamps every change. |
 | `description` | no | A note for you, shown in `/gm peek`. |
+
+### `config/agendas.yaml`: secret agendas
+
+Optional; without it no agendas are dealt. The mechanic is in [Agendas.md](Agendas.md).
+
+```yaml
+reward: { perWish: 2, allBonus: 1 }
+margins: { economy: 5, reserve: 10, army: 1, discontent: 0.25, favour: 2, threat: 2 }
+agendas:
+  magnate:
+    name: The Magnate
+    description: Mills and railways, not barracks.
+    wants: { economy: up, army: down }
+```
+
+| Field | Meaning |
+|---|---|
+| `reward.perWish` | Popularity for each wish met at the election. |
+| `reward.allBonus` | Extra popularity when every wish is met. |
+| `margins.<track>` | How far a track must move the wanted way for a wish to count. Tracks: `economy`, `reserve`, `army`, `discontent`, `favour`, `threat`. |
+| `agendas.<id>` | One agenda. The id is stored with every hand dealt, so never rename it once dealt. |
+| `name`, `description` | Shown to the player when dealt, and in the reveal. |
+| `wants` | Track to `up` or `down`, one entry per wish. |
 
 ### `config/programme.yaml`: programme wording
 

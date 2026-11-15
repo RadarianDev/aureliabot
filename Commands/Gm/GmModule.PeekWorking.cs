@@ -128,7 +128,7 @@ public partial class GmModule
             }
             default:
                 return Texts.Get("gm.peek.actions.poll",
-                    ("issue", issue), ("opinion", SignedFixed(snapshot.National(action.IssueId))), ("salience", Fixed(salience)),
+                    ("issue", issue), ("salience", Fixed(salience)),
                     ("opinionNoise", Fixed(c.Poll.OpinionNoise)), ("salienceNoise", Fixed(c.Poll.SalienceNoise)));
         }
     }

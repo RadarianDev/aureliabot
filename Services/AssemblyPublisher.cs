@@ -127,9 +127,7 @@ public class AssemblyPublisher
         var rests = reading is not null && _data.GetBill(reading.BillId)?.CooldownUntil is { } until
             ? GameCalendar.Add(state.Season, state.Year, (int)(until - state.ResolutionNumber))
             : GameCalendar.Add(state.Season, state.Year, _constants.Current.RejectedCooldownSeasons);
-        var chart = VoteChart.Render(_data, result.YesSeats, result.NoSeats);
-        try
-        {
+        using (var chart = VoteChart.Render(_data, result.YesSeats, result.NoSeats))
             await PostAsync(ChannelRole.Assembly, result.ReturnedBySenate
                 ? Texts.Get("assembly.result.returned", ("bill", result.Title), ("yes", result.YesSeats), ("no", result.NoSeats), ("abstain", result.AbstainSeats),
                     ("percent", Display.Number(_constants.Current.Senate.OverrideShare * 100)))
@@ -137,23 +135,11 @@ public class AssemblyPublisher
                     ? Texts.Get("assembly.result.passed", ("bill", result.Title), ("yes", result.YesSeats), ("no", result.NoSeats), ("abstain", result.AbstainSeats))
                     : Texts.Get("assembly.result.rejected", ("bill", result.Title), ("yes", result.YesSeats), ("no", result.NoSeats), ("abstain", result.AbstainSeats),
                         ("season", GameCalendar.Label(rests.Season, rests.Year))), source, chart: chart);
-        }
-        finally
-        {
-            VoteChart.Discard(chart);
-        }
 
         if (result.Senate is not { } senate) return;
-        var senateChart = VoteChart.RenderSenate(_data, senate.YesSeats, senate.NoSeats);
-        try
-        {
-            await PostAsync(ChannelRole.Assembly,
-                Texts.Get("assembly.result.senate", ("yes", senate.YesSeats), ("no", senate.NoSeats), ("abstain", senate.AbstainSeats)), source, chart: senateChart);
-        }
-        finally
-        {
-            VoteChart.Discard(senateChart);
-        }
+        using var senateChart = VoteChart.RenderSenate(_data, senate.YesSeats, senate.NoSeats);
+        await PostAsync(ChannelRole.Assembly,
+            Texts.Get("assembly.result.senate", ("yes", senate.YesSeats), ("no", senate.NoSeats), ("abstain", senate.AbstainSeats)), source, chart: senateChart);
     }
 
     private async Task PublishMotionOutcomeAsync(NoConfidenceReport outcome, string source)
@@ -168,17 +154,10 @@ public class AssemblyPublisher
             NoConfidenceStatus.Passed => Texts.Get("noConfidence.result.passed", ("tabler", tabler), ("yes", outcome.YesSeats), ("no", outcome.NoSeats), ("filled", outcome.FilledSeats)),
             _ => Texts.Get("noConfidence.result.failed", ("tabler", tabler), ("yes", outcome.YesSeats), ("no", outcome.NoSeats), ("filled", outcome.FilledSeats)),
         };
-        var chart = outcome.Outcome is NoConfidenceStatus.Lapsed or NoConfidenceStatus.Cancelled
+        using var chart = outcome.Outcome is NoConfidenceStatus.Lapsed or NoConfidenceStatus.Cancelled
             ? null
             : VoteChart.Render(_data, outcome.YesSeats, outcome.NoSeats);
-        try
-        {
-            await PostAsync(ChannelRole.Assembly, text, source, chart: chart);
-        }
-        finally
-        {
-            VoteChart.Discard(chart);
-        }
+        await PostAsync(ChannelRole.Assembly, text, source, chart: chart);
     }
 
     private string WhipCountLine(WhipCountReport score)
@@ -376,7 +355,7 @@ public class AssemblyPublisher
 
     public Task AlertAsync(string message) => _alerts.PostAsync(message);
 
-    private async Task<IUserMessage?> PostAsync(ChannelRole role, string text, string source, MessageComponent? components = null, string? chart = null)
+    private async Task<IUserMessage?> PostAsync(ChannelRole role, string text, string source, MessageComponent? components = null, MemoryStream? chart = null)
     {
         if (_data.GetChannel(role) is not { } channelId || _client.GetChannel(channelId) is not IMessageChannel channel)
         {
@@ -391,7 +370,7 @@ public class AssemblyPublisher
             foreach (var chunk in chunks)
             {
                 var message = chart is not null && chunk == chunks[^1]
-                    ? await channel.SendFileAsync(chart, chunk, components: first is null ? components : null, allowedMentions: AllowedMentions.None)
+                    ? await channel.SendFileAsync(VoteChart.Rewound(chart), VoteChart.FileName, chunk, components: first is null ? components : null, allowedMentions: AllowedMentions.None)
                     : await channel.SendMessageAsync(chunk, components: first is null ? components : null, allowedMentions: AllowedMentions.None);
                 _data.LogPost(channelId, message.Id, source);
                 first ??= message;

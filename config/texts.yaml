@@ -9,6 +9,107 @@ common:
   needsPartyMember: "This needs a party member; you are an independent."
   unregisteredAlert: "{user} ({username}) tried a game command but has no faction. Register them with `/gm faction create`."
 
+unrest:
+  news: "Unrest turns the people against the government in {provinces}: every member of the government loses standing there, the cabinet most of all."
+
+chart:
+  noHistory: "There is nothing to graph yet: values are recorded at the start of the game and after every resolution."
+  legend: "{square} {name}: {first} → **{last}**"
+  footer: "{from} – {to} · gridlines every {step}, from {low} to {high} · dashed lines mark each Spring"
+  title:
+    economy: "The economy of Aurelia"
+    money: "The budget, the reserve and the purses"
+    popularity: "Popularity of the {count} most popular factions"
+    partyPopularity: "Popularity in {party}"
+    realm: "Anzarian Favour and Foreign Threat (hidden)"
+    discontent: "Discontent in the {count} most restless provinces (hidden)"
+    discontentIn: "Discontent in {province} (hidden)"
+  series:
+    economy: Economy
+    budget: Budget
+    reserve: Reserve
+    favour: Anzarian Favour
+    threat: Foreign Threat
+  square:
+    red: "🟥"
+    blue: "🟦"
+    yellow: "🟨"
+    green: "🟩"
+    purple: "🟪"
+    orange: "🟧"
+    brown: "🟫"
+
+secretAgenda:
+  track:
+    economy: the economy
+    reserve: the reserve
+    army: the army
+    discontent: discontent
+    favour: Anzarian Favour
+    threat: Foreign Threat
+  wish:
+    up: "{track} to rise"
+    down: "{track} to fall"
+    separator: " · "
+    and: " and "
+  result:
+    rose: "{track} rose ✓"
+    didNotRise: "{track} did not rise ✗"
+    fell: "{track} fell ✓"
+    didNotFall: "{track} did not fall ✗"
+  dealt: |-
+    ## Your secret agenda: {agenda}
+    *{description}*
+    You want {wishes} by the next Assembly election. Each wish met then is worth +{perWish} popularity, and meeting them all +{allBonus} more.
+    Nobody else knows your agenda. Keep it secret, share it or lie about it: that is up to you. Every agenda is revealed on election night.
+  reveal:
+    heading: |-
+      ## The secret agendas revealed
+      Every faction has been pulling the kingdom its own way this term. Now the truth comes out.
+    line: "- {faction} was **{agenda}**: {results} · {reward}"
+    reward: "**+{popularity}** popularity"
+    noReward: "nothing gained"
+  me: "Your secret agenda: **{agenda}**, wanting {wishes}. Revealed and scored at the next Assembly election."
+  gm:
+    heading: "## Secret agendas (hidden from players)"
+    line: "- {faction}: **{agenda}** since {season} · {progress}"
+    progress: "{track} {start} → {now} {mark}"
+    on: "✓"
+    off: "✗"
+    none: "No faction holds an agenda. `/gm agenda deal` deals one to every faction without."
+    noAgendas: "config/agendas.yaml defines no agendas, so there is nothing to deal."
+    notStarted: "The game has not started yet."
+    dealt: "Dealt {count} agendas privately: {factions}."
+    dealtNone: "Every active faction already holds an agenda."
+    redealt: "{faction} now holds **{agenda}**, sent to their office. Their old agenda is void."
+    redealFailed: "Could not deal {faction} a new agenda: they must be an active faction in a started game."
+    sendFailed: "⚠️ Could not post to the office of: {factions}. Tell them their agenda yourself."
+    assignedHeading: "**Chosen for the next deal**"
+    assignedLine: "- {faction}: **{agenda}**"
+    balance: "-# Held · chosen: {counts}"
+    count: "{agenda} {held} · {assigned}"
+    unknownAgenda: "There is no agenda `{agenda}` in config/agendas.yaml. Pick one from the list."
+    notActive: "{faction} is not an active faction."
+    assignedNow: "{faction} now holds **{agenda}**, sent to their office. Their old agenda is void."
+    assignedNext: "{faction} will be dealt **{agenda}** at the next deal: the next election, or `/gm agendas deal` if they hold none now. The other factions are dealt around it to keep the agendas balanced."
+    repeats: "⚠️ That is the agenda {faction} holds or held last. The no-repeat rule only binds the automatic deal."
+    cancelled: "{faction} will be dealt at random again."
+    nothingAssigned: "No agenda was chosen for {faction}."
+    unknownId: "{faction} held the secret agenda `{agenda}`, which config/agendas.yaml no longer defines. It was voided unscored, and a new one dealt."
+
+standings:
+  heading: "## Standings · {season}"
+  subheading: "-# National popularity, each province counting by its population. Arrows show the change since the last resolution."
+  line: "{rank}. {faction} · **{popularity}**{change} · {party} · {home}"
+  compactLine: "{rank}. {faction} **{popularity}**{change}"
+  up: " ▲{change}"
+  down: " ▼{change}"
+  steady: " ="
+  none: "No factions yet."
+  leadersHeading: "**Most popular in each province**"
+  leader: "- {province}: {faction} {popularity}"
+  provinceLine: "{rank}. {faction} {popularity}"
+
 display:
   none: "none"
   independent: "independent"
@@ -85,7 +186,7 @@ campaign:
     noStance: "with no stance"
     attack: "an attack on {target}'s stance on {issue} in {province}"
     nobody: "nobody"
-    poll: "a poll on {issue} across the kingdom"
+    poll: "a poll on {issue} in every province"
   resolves: "It resolves at the next resolution, {when}, simultaneously with everyone else's actions; results are revealed then."
   needStanceIndependent: "As an independent you must give a stance to campaign on *{issue}*."
   needStanceSilent: "Your party's programme takes no stance on *{issue}*, so you must give one. It will not count as off-programme."
@@ -104,7 +205,7 @@ campaign:
   recorded: "Recorded {action}."
   replaces: "This replaces your pending {action}, which is cancelled."
   loggedOffProgramme: "It will be logged publicly as **off-programme** in #campaign-log."
-  pollTiming: "The poll is taken at the next resolution, {when}, against the mood at its start, and the answer, for the kingdom and every province, comes to your private channel in words."
+  pollTiming: "The poll is taken at the next resolution, {when}, against the mood at its start, and the answer, how much the kingdom cares and how each province feels, comes to your private channel in words."
   postedWithResolution: "Campaigns and attacks are posted to #campaign-log with the resolution."
   pendingCount: "Pending actions: {count} of {max}."
   noOpenIssue: "There is no open issue \"{issue}\". Pick one from the list."
@@ -126,6 +227,7 @@ info:
     government: "The government"
     parliament: "Parliament: seats"
     laws: "Laws in force"
+    standings: "Standings: popularity of every faction"
     condition: "Condition · {name}"
     event: "Event · {name}"
   notFound: "Nothing called `{thing}` was found. Pick something from the list."
@@ -216,7 +318,7 @@ info:
   faction:
     missing: "That faction doesn't exist."
     retired: "*Retired from politics.*"
-    popularity: "Popularity: {popularity} across the kingdom"
+    popularity: "Popularity: {popularity} across the kingdom{change}"
     regional: "By province: {provinces}"
     regionalEntry: "{province} {popularity}"
     party: "Party: {party}"
@@ -266,6 +368,7 @@ info:
     lastElection: "Last election: {results}"
     result: "{party} {seats}"
     unit: "{name} · d{sides}"
+    popularity: "**Popularity here**"
   crisis:
     kind: "Crisis · {name}"
     missing: "That crisis doesn't exist."
@@ -299,7 +402,7 @@ me:
   oppositionUsed: "Your opposition action this season is used."
   status: "{season} · next resolution {when}"
   statusPreElection: "{season} · Pre-election · next resolution {when}"
-  summary: "Popularity {popularity} · {seats} seats · {party} · {role}"
+  summary: "Popularity {popularity}{change} · {seats} seats · {party} · {role}"
   senateSeats: "Senate seats: {seats}"
   youAccepted: "you accepted"
   youDeclined: "you declined"
@@ -313,8 +416,7 @@ me:
   campaignOff: "Campaign *{stance}* on {issue} (off-programme)"
   attack: "Attack {target} on {issue}"
   unknownTarget: "?"
-  pollNational: "Poll {issue} nationally"
-  pollProvince: "Poll {issue} in {province}"
+  poll: "Poll {issue} in every province"
   cancelButton: "Cancel {kind}"
   noActions: "You have {count} actions this turn: `/campaign` or `/attack` in a province, or `/poll` an issue."
   waiting: "**Waiting on you**"
@@ -328,7 +430,7 @@ help:
     ## How Aurelia works
     Each turn is one season and lasts one real day; it ends at the daily resolution. The pre-election turn lasts {preElectionDays} days and ends in an election.
     Money, popularity, seats and forces are public numbers. The people's mood is told in words.
-    `/me` shows what is waiting on you, `/info` shows anything in the game.
+    `/me` shows what is waiting on you, `/info` shows anything in the game, `/info standings` ranks every faction, and `/chart` graphs the economy, the money and popularity over time.
   parties: |-
     ## Parties
     The GM founds parties at the request of two or more factions. Only parties stand in elections.
@@ -341,7 +443,7 @@ help:
     Each turn you take up to {actionsPerTurn} actions, and {actionsPerDay} a day in the pre-election. Campaigns and attacks happen in one province, your home province unless you name another:
     - **Campaign** on an issue: talking about an issue people care about always wins you some popularity there, and more if the province agrees with you.
     - **Attack** a rival's stance: they lose popularity there if the province disagrees with them; otherwise it backfires on you.
-    - **Poll** an issue, for the kingdom and every province.
+    - **Poll** an issue: how much the kingdom cares, and how every province feels about it.
     You can run one campaign and one attack per province each turn; in the pre-election, campaigns are unlimited. Popularity is kept per province, and what you win in one province spreads to the rest of the kingdom over the following seasons.
     All actions are revealed together when the turn ends.
   opposition: |-
@@ -474,8 +576,8 @@ gm:
     nameTooLong: "The name is too long: Discord allows {max} characters."
     badColour: "`{colour}` is not a colour; write it as `#RRGGBB`, for example `#C0392B`."
     similarColour: "`{colour}` is close to {parties}; the seat chart and map may be hard to read. Change it with `/gm party edit` if needed."
-    similarColourEntry: "**{name}** (`{colour}`)"
     and: " and "
+    similarColourEntry: "**{name}** (`{colour}`)"
     problemsHeading: "Problems:"
     newsNotSet: "No #news channel is set, so the announcement was not posted."
     newsFailed: "Could not post to #news: {error}"
@@ -642,6 +744,14 @@ gm:
       Rewarded {faction}: popularity {from} → {to}{capped}.
       ⚠️ Neither #notices nor #news is set, so the commendation was not posted.
   peek:
+    popularity:
+      header: "## Popularity by province (current state)"
+      headerProvince: "## Popularity in {province} (current state)"
+      constants: "-# Every season national popularity drifts {drift} of the way to {start}, and each province moves {spread} of the way back to it · range {min}–{max} · ⌂ marks the home province"
+      faction: "**{faction}** · {party} · {popularity} (was {before} before the last resolution){change}"
+      noMark: "unknown"
+      cell: "{province} {popularity}"
+      homeCell: "⌂ {province} {popularity}"
     header: "## Hidden state · {label}"
     kingdom: "**Kingdom:** Favour {favour} (baseline {baseline}) · Threat {threat} · Economy {economy} · Tax rate {tax} · Reserve {reserve}"
     issuesHeading: "**Open issues** (base opinion · national opinion · salience)"
@@ -679,7 +789,7 @@ gm:
       offProgramme: " · off-programme"
       attackHits: "- Attack on {target}'s {stance} on {issue} in {province} (opinion there {opinion}, score {score}): lands, −{factor} × |score| × salience {salience}/3 = **{change}** to the target there"
       attackBackfires: "- Attack on {target}'s {stance} on {issue} in {province} (opinion there {opinion}, score {score}): backfires, **{change}** to the attacker there"
-      poll: "- Poll {issue} across the kingdom and every province: national opinion {opinion} · salience {salience} (noise ±{opinionNoise} and ±{salienceNoise})"
+      poll: "- Poll {issue} in every province: salience {salience} (noise ±{opinionNoise} on each province's opinion and ±{salienceNoise} on salience)"
       popularityHeading: "**Popularity** (now → after the actions)"
       popularityLine: "- {faction} in {province}: {before} {change} → **{after}**"
       noChange: "No popularity changes."
@@ -1263,11 +1373,10 @@ wording:
     unruly: unruly
     rioting: rioting
   poll:
-    kingdom: Across the kingdom
+    headline: "Across the kingdom, {issue} is *{salience}*. By province:"
     province: In {province}
     divided: the people are *divided* on it
     mood: the people are *{mood}* it
-    line: "{place}, {issue} is *{salience}*, and {people}."
     provinceLine: "- {place}, {people}."
 
 programme:
@@ -1348,6 +1457,20 @@ election:
   senateChartTitle: The new Senate
   senateProclamation: "His Majesty King Arthas II summons the newly elected Senate, {seats} members strong."
   provincesHeading: "**The provinces**"
+  night:
+    opening: |-
+      ## Election night
+      The polls have closed across Aurelia. The returns for the Assembly of term {term} come in province by province, the smallest first. Stay with us.
+    senateOpening: |-
+      ## Senate election night
+      The polls have closed. The provinces declare their senators one by one, the smallest first.
+    declares: |-
+      ### {province} declares
+      {seats}
+    carries: "**{party} carries {province}.**"
+    nobodyCarries: "No party carries {province}."
+    majority: "🔔 **{party} has won a majority!** It passes the {majority} seats needed to command the chamber on its own."
+    tally: "-# Running tally: {tally} · {declared} of {provinces} provinces declared · {majority} for a majority"
   provinceLine: "- **{province}**: {seats}"
   provinceSeat: "{party} {seats}"
   provinceIndependent: "Independent {seats}"
@@ -1403,6 +1526,9 @@ dashboard:
   crisisLine: "{crisis} · {ministry}"
   noCrises: None.
   footer: Updated after every resolution
+  popularityField: "Popularity (change since the last resolution)"
+  popularityMore: "…and {count} more: `/info standings`"
+  noFactions: No factions yet.
 
 alerts:
   election:

@@ -29,15 +29,15 @@ public class ArchGenerator
     private double circleRadius;
     private bool denseRows = false;
 
-    public void Generate(List<PartyData> partyData, string savePath)
+    public MemoryStream? Generate(List<PartyData> partyData)
     {
-        if (partyData.Count == 0) return;
+        if (partyData.Count == 0) return null;
 
         totalSeats = partyData.Sum(p => p.SeatCount);
-        if (totalSeats <= 0) return;
+        if (totalSeats <= 0) return null;
 
         rowCount = Array.FindIndex(Totals, el => el >= totalSeats) + 1;
-        if (rowCount <= 0) return;
+        if (rowCount <= 0) return null;
 
         circleRadius = 0.4 / rowCount;
         List<SeatPosition> seatPositions = GetSpotCentres();
@@ -72,14 +72,9 @@ public class ArchGenerator
                 }
             }
 
-            using (var image = SKImage.FromBitmap(bitmap))
-            using (var data = image.Encode(SKEncodedImageFormat.Png, 100))
-            using (var stream = File.OpenWrite(savePath))
-            {
-                data.SaveTo(stream);
-            }
+            canvas.Flush();
+            return Png.Encode(bitmap);
         }
-        Console.WriteLine($"Successfully saved to {savePath}");
     }
 
     private Tuple<int, double> OptimiseRows()

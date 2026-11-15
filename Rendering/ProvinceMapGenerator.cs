@@ -5,7 +5,7 @@ public class ProvinceMapGenerator
     private static readonly string MapDirectory = Path.Combine(AppContext.BaseDirectory, "assets", "map");
     private const float FillLevel = 128f;
 
-    public void Generate(IReadOnlyDictionary<string, string> partyColourByMapKey, string savePath)
+    public MemoryStream Generate(IReadOnlyDictionary<string, string> partyColourByMapKey)
     {
         var colourByKey = partyColourByMapKey.ToDictionary(
             entry => SKColor.Parse(entry.Key).WithAlpha(255),
@@ -36,10 +36,7 @@ public class ProvinceMapGenerator
             canvas.DrawImage(overlayImage, 0, 0, SKSamplingOptions.Default);
         }
 
-        using var image = SKImage.FromBitmap(map);
-        using var data = image.Encode(SKEncodedImageFormat.Png, 100);
-        using var stream = File.Create(savePath);
-        data.SaveTo(stream);
+        return Png.Encode(map);
     }
 
     private static SKColor Tint(SKColor pixel, SKColor partyColour) => new(

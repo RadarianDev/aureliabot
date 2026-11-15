@@ -3,7 +3,7 @@
 - The state is public in numbers: money (the **economy**, **budget**, every ministry's funds, what each ministry spent its money on, and every price), **popularity**, **seats** and the armed forces.
 - The mood of the people is told only in words, through **events**, **polls** and province **conditions**: public opinion, salience, **discontent** and **Anzarian Favour**. **Foreign Threat** is only ever hinted at.
 - Every **event** lists its effects with UP and DOWN arrows. Numbers are shown with an amount; the people's mood shows only the arrow. Some effects stay secret.
-- `/info` shows everything public: the kingdom, the government, parties, factions, issues, bills, laws, crises, events, projects, provinces and conditions.
+- `/info` shows everything public: the kingdom, the government, parties, factions, issues, bills, laws, crises, events, projects, provinces and conditions. `/info standings` ranks every faction by popularity, with the change since the last resolution and who leads each province; the dashboard shows the same ranking, with the economy, money and popularity charts. `/chart` graphs the economy, the money and popularity over the turns, and each Spring the economy and money charts are posted with the news.
 ## Turns
 - A **turn** lasts one real day and is one season (Spring, Summer, Autumn, Winter). Four turns make a **year**.
 - Every turn opens with the news: new **events**, the outcomes of last turn's **crises** and actions, and what the Assembly decided.
@@ -16,6 +16,7 @@
 - Popularity is kept **per province**. Campaigns and attacks change it only where they happen; everything else (crises, laws, rewards, penalties) moves it everywhere at once. A faction's national popularity is the average of its provinces, each counting by its population.
 - A lead or a loss in one province spreads out: every season each province moves part of the way back towards the faction's national popularity.
 - Popularity fades: every season it slides a little back towards 10, so standing has to be kept up, and a faction that fell low slowly recovers.
+- Unrest is blamed on the government: every season, in each province whose discontent runs high, every cabinet member loses popularity there, and every other member of a governing party loses half as much. The higher the discontent, the greater the loss.
 - The GM may reward excellent roleplay, such as a propaganda poster, a well-written manifesto or a stirring speech, with popularity. Rewards are announced publicly.
 ## Parties
 - **Parties** are founded by the GM, at the request of two or more factions.
@@ -49,7 +50,7 @@
 - Each turn, a faction takes two **actions** (five per day in the pre-election turn, four per day in a Senate campaign turn). Campaigns and attacks happen in one **province**, your home province unless you name another:
 	- **Campaign** on an issue: a politician talking about an issue people care about always wins some popularity there, the more the issue matters. On top of that you gain if the province agrees with you, and lose if it doesn't.
 	- **Attack** a rival's stance: if the province disagrees with them, they lose popularity there. Otherwise it backfires, and you lose some there.
-	- **Poll** an issue: the mood across the kingdom and in every province.
+	- **Poll** an issue: how much the kingdom cares about it, and how every province feels. There is no national mood to poll: campaigns, attacks and crises are all judged province by province.
 - You can run one campaign and one attack in each province per turn, and one poll per issue. In the pre-election there is no limit on campaigns: run as many as you like, in any provinces, even several on the same issue in the same place.
 - A faction campaigns on its party's stance by default. It may take a different one, but that is announced as going **off-programme**.
 - A faction's **stance** on an issue is the last one it took in public: its party's programme, a campaign, or a vote once counted (voting Yes on a bill takes the bill's side of the issue, No takes the other). That is the stance rivals can attack. Factions of the same party can't attack each other.
@@ -88,7 +89,12 @@
 - A party's strength in a province is its factions' combined popularity there, weighed by how well its programme fits the local mood: stances on salient issues the province agrees with count for most. A stance shared by many parties counts for less.
 - A faction counts for more in its **home province**.
 - Inside a party, seats go to factions by popularity.
-- Results are posted with a seat chart and a map coloured by the party that won each province: the one holding the most seats there, any safe boroughs included, with the vote breaking a tie.
+- Results come in live on election night, province by province, with a running tally, then are posted in full with a seat chart and a map coloured by the party that won each province: the one holding the most seats there, any safe boroughs included, with the vote breaking a tie.
+## Secret Agendas
+- At the start of each term every faction is secretly dealt an **agenda**: two things it wants to happen to the kingdom, such as the economy rising and the army shrinking. Nobody is dealt the same agenda twice in a row.
+- `/me` shows your agenda. Keep it secret, share it or lie about it.
+- On election night every agenda is revealed. Each wish that came true is worth popularity, and fulfilling both is worth more. Then new agendas are dealt.
+- A snap election scores agendas early.
 ## Cabinet
 - After an election, *His Majesty King Arthas II* (the GM) appoints a **chancellor**, who names a cabinet of four **ministers**: Treasury, War, Interior, and Commerce and Labor. A faction holds at most one post, and the chancellor holds none. The Assembly then votes on the cabinet. If it fails, the chancellor tries again.
 - Until a cabinet is confirmed, the previous one stays in office.

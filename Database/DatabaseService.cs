@@ -523,6 +523,43 @@ public partial class DatabaseService
                 PRIMARY KEY (faction_id, province_id)
             );");
 
+        Exec(connection, @"
+            CREATE TABLE IF NOT EXISTS popularity_marks (
+                faction_id TEXT PRIMARY KEY REFERENCES factions(user_id) ON DELETE CASCADE,
+                popularity REAL NOT NULL
+            );");
+
+        Exec(connection, @"
+            CREATE TABLE IF NOT EXISTS agendas (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                faction_id TEXT NOT NULL REFERENCES factions(user_id) ON DELETE CASCADE,
+                agenda_id TEXT NOT NULL,
+                dealt_resolution INTEGER NOT NULL,
+                dealt_season TEXT NOT NULL,
+                dealt_year INTEGER NOT NULL,
+                start_values TEXT NOT NULL,
+                status TEXT NOT NULL,
+                wishes_met INTEGER,
+                reward REAL,
+                scored_resolution INTEGER
+            );");
+
+        Exec(connection, @"
+            CREATE TABLE IF NOT EXISTS agenda_assignments (
+                faction_id TEXT PRIMARY KEY REFERENCES factions(user_id) ON DELETE CASCADE,
+                agenda_id TEXT NOT NULL
+            );");
+
+        Exec(connection, @"
+            CREATE TABLE IF NOT EXISTS stat_history (
+                resolution_number INTEGER NOT NULL,
+                season TEXT NOT NULL,
+                year INTEGER NOT NULL,
+                series TEXT NOT NULL,
+                value REAL NOT NULL,
+                PRIMARY KEY (resolution_number, series)
+            );");
+
         AddColumnIfMissing(connection, "readings", "senate_yes_seats", "INTEGER");
         AddColumnIfMissing(connection, "readings", "senate_no_seats", "INTEGER");
         AddColumnIfMissing(connection, "readings", "senate_abstain_seats", "INTEGER");

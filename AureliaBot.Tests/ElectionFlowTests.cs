@@ -55,8 +55,8 @@ public class ElectionFlowTests : IDisposable
             ElectionPublisher.WinnersFromResult(election.Result), Config, out var failure);
 
         Assert.Null(failure);
-        Assert.True(new FileInfo(images.SeatChartPath!).Length > 1000);
-        Assert.True(new FileInfo(images.MapPath!).Length > 1000);
+        Assert.True(images.SeatChart!.Length > 1000);
+        Assert.True(images.Map!.Length > 1000);
         Assert.Contains("Liberal Union", ElectionPublisher.ResultsText(election, Config));
     }
 

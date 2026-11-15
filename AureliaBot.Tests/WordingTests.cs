@@ -65,20 +65,20 @@ public class WordingTests
         Assert.Equal(expected, Wording.Discontent(discontent));
 
     [Fact]
-    public void PollLine_in_a_province() =>
+    public void PollHeadline_gives_only_the_national_salience() =>
         Assert.Equal(
-            "In North Arpal, The Condition of Labour is *a burning question*, and the people are *strongly for* it.",
-            Wording.PollLine("North Arpal", "The Condition of Labour", 0.7, 4.2));
+            "Across the kingdom, Free Trade is *discussed*. By province:",
+            Wording.PollHeadline("Free Trade", 2));
 
     [Fact]
-    public void PollLine_nationally() =>
+    public void PollProvinceLine_gives_the_local_mood() =>
         Assert.Equal(
-            "Across the kingdom, Free Trade is *discussed*, and the people are *against* it.",
-            Wording.PollLine(null, "Free Trade", -0.3, 2));
+            "- In North Arpal, the people are *strongly for* it.",
+            Wording.PollProvinceLine("North Arpal", 0.7));
 
     [Fact]
-    public void PollLine_divided() =>
+    public void PollProvinceLine_divided() =>
         Assert.Equal(
-            "Across the kingdom, Free Trade is *forgotten*, and the people are *divided* on it.",
-            Wording.PollLine(null, "Free Trade", 0.05, 0));
+            "- In North Arpal, the people are *divided* on it.",
+            Wording.PollProvinceLine("North Arpal", 0.05));
 }

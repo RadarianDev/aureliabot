@@ -2,7 +2,7 @@ using System.Globalization;
 using Discord;
 using Discord.WebSocket;
 
-public sealed record ElectionImages(string? SeatChartPath, string? MapPath) : IDisposable
+public sealed record ElectionImages(MemoryStream? SeatChart, MemoryStream? Map) : IDisposable
 {
     public const string SeatChartFile = "seats.png";
     public const string MapFile = "map.png";
@@ -10,16 +10,21 @@ public sealed record ElectionImages(string? SeatChartPath, string? MapPath) : ID
     public List<FileAttachment> Attachments()
     {
         var list = new List<FileAttachment>();
-        if (SeatChartPath is not null) list.Add(new FileAttachment(SeatChartPath, SeatChartFile));
-        if (MapPath is not null) list.Add(new FileAttachment(MapPath, MapFile));
+        if (SeatChart is not null) list.Add(Attach(SeatChart, SeatChartFile));
+        if (Map is not null) list.Add(Attach(Map, MapFile));
         return list;
+    }
+
+    public static FileAttachment Attach(MemoryStream image, string fileName)
+    {
+        image.Position = 0;
+        return new FileAttachment(image, fileName);
     }
 
     public void Dispose()
     {
-        foreach (var path in new[] { SeatChartPath, MapPath })
-            if (path is not null)
-                try { File.Delete(path); } catch (Exception) { }
+        SeatChart?.Dispose();
+        Map?.Dispose();
     }
 }
 
@@ -42,17 +47,17 @@ public class ElectionPublisher
     }
 
     public Task PublishAsync(ElectionReport report, string source) =>
-        PublishResultsAsync(report, ResultsText(report, _constants.Config), Texts.Get("election.chartTitle", ("term", report.TermNumber)), Proclamation(report), source);
+        PublishResultsAsync(report, Texts.Get("election.night.opening", ("term", report.TermNumber)), ResultsText(report, _constants.Config), Texts.Get("election.chartTitle", ("term", report.TermNumber)), Proclamation(report), source);
 
     public Task PublishSenateAsync(ElectionReport report, string source)
     {
         var config = _constants.Config;
         var results = Texts.Get("election.senateHeader") + "\n" + ResultsBody(report.Result, report.Parties, config);
         var proclamation = Texts.Get("election.senateProclamation", ("seats", report.Result.PartySeats.Values.Sum() + report.Result.IndependentSeats));
-        return PublishResultsAsync(report, results, Texts.Get("election.senateChartTitle"), proclamation, source);
+        return PublishResultsAsync(report, Texts.Get("election.night.senateOpening"), results, Texts.Get("election.senateChartTitle"), proclamation, source);
     }
 
-    private async Task PublishResultsAsync(ElectionReport report, string results, string chartTitle, string proclamation, string source)
+    private async Task PublishResultsAsync(ElectionReport report, string opening, string results, string chartTitle, string proclamation, string source)
     {
         if (_data.GetChannel(ChannelRole.News) is not { } channelId || _client.GetChannel(channelId) is not IMessageChannel channel)
         {
@@ -63,6 +68,7 @@ public class ElectionPublisher
         var config = _constants.Config;
         try
         {
+            await ElectionNightAsync(channel, channelId, source, report, opening);
             foreach (var chunk in Publisher.Chunk(results))
                 await SendAsync(channel, channelId, source, chunk);
 
@@ -95,6 +101,20 @@ public class ElectionPublisher
         }
     }
 
+    private async Task ElectionNightAsync(IMessageChannel channel, ulong channelId, string source, ElectionReport report, string opening)
+    {
+        var pause = TimeSpan.FromSeconds(_constants.Current.ElectionNight.SecondsPerProvince);
+        if (pause <= TimeSpan.Zero || report.Result.Provinces.Count == 0) return;
+
+        await SendAsync(channel, channelId, source, opening);
+        foreach (var declaration in NightReturns(report.Result, report.Parties, _constants.Config))
+        {
+            await Task.Delay(pause);
+            await SendAsync(channel, channelId, source, declaration);
+        }
+        await Task.Delay(pause);
+    }
+
     private async Task SendAsync(IMessageChannel channel, ulong channelId, string source, string text)
     {
         var message = await channel.SendMessageAsync(text, allowedMentions: AllowedMentions.None);
@@ -109,13 +129,13 @@ public class ElectionPublisher
         string chartTitle)
     {
         var embeds = new List<Embed>();
-        if (images.SeatChartPath is not null)
+        if (images.SeatChart is not null)
             embeds.Add(new EmbedBuilder()
                 .WithTitle(chartTitle)
                 .WithColor(EmbedColour)
                 .WithImageUrl($"attachment://{ElectionImages.SeatChartFile}")
                 .Build());
-        if (images.MapPath is not null)
+        if (images.Map is not null)
             embeds.Add(MapEmbed(winners, parties, config, Texts.Get("election.mapTitle")));
         return embeds.ToArray();
     }
@@ -136,8 +156,8 @@ public class ElectionPublisher
         out string? failure)
     {
         failure = null;
-        string? chart = null;
-        string? map = null;
+        MemoryStream? chart = null;
+        MemoryStream? map = null;
         if (result is not null)
         {
             try
@@ -160,38 +180,11 @@ public class ElectionPublisher
         return new ElectionImages(chart, map);
     }
 
-    private static string TempPng(string kind) => Path.Combine(Path.GetTempPath(), $"aurelia-{kind}-{Guid.NewGuid():N}.png");
+    public static MemoryStream? RenderSeatChart(List<PartyData> parties) =>
+        parties.Count == 0 ? null : new ArchGenerator().Generate(parties);
 
-    public static string? RenderSeatChart(List<PartyData> parties)
-    {
-        if (parties.Count == 0) return null;
-        var path = TempPng("seats");
-        try
-        {
-            new ArchGenerator().Generate(parties, path);
-        }
-        catch
-        {
-            try { File.Delete(path); } catch (Exception) { }
-            throw;
-        }
-        return File.Exists(path) ? path : null;
-    }
-
-    public static string RenderMap(IReadOnlyDictionary<string, string> colours)
-    {
-        var path = TempPng("map");
-        try
-        {
-            new ProvinceMapGenerator().Generate(colours, path);
-        }
-        catch
-        {
-            if (File.Exists(path)) File.Delete(path);
-            throw;
-        }
-        return path;
-    }
+    public static MemoryStream RenderMap(IReadOnlyDictionary<string, string> colours) =>
+        new ProvinceMapGenerator().Generate(colours);
 
     public static List<PartyData> SeatChartParties(ElectionResult result, IReadOnlyList<ElectionPartySnapshot> parties)
     {
@@ -336,25 +329,77 @@ public class ElectionPublisher
         lines.Add(Texts.Get("election.provincesHeading"));
         var outcomes = result.Provinces.ToDictionary(p => p.ProvinceId);
         foreach (var provinceId in OrderedProvinces(outcomes.Keys, config))
-        {
-            var outcome = outcomes[provinceId];
-            var seats = outcome.ContestedSeatsByParty.Keys.Union(outcome.BoroughSeatsByParty.Keys)
-                .Select(id => (Id: id, Seats: outcome.ContestedSeatsByParty.GetValueOrDefault(id) + outcome.BoroughSeatsByParty.GetValueOrDefault(id)))
-                .Where(x => x.Seats > 0)
-                .OrderByDescending(x => x.Id == outcome.WinnerPartyId)
-                .ThenByDescending(x => x.Seats)
-                .ThenByDescending(x => outcome.Strength.GetValueOrDefault(x.Id))
-                .ThenBy(x => x.Id)
-                .Select(x => Texts.Get("election.provinceSeat", ("party", PartyEmoji(byId, x.Id)), ("seats", x.Seats)))
-                .ToList();
-            if (outcome.IndependentBoroughSeats > 0)
-                seats.Add(Texts.Get("election.provinceIndependent", ("seats", outcome.IndependentBoroughSeats)));
             lines.Add(Texts.Get("election.provinceLine",
-                ("province", ProvinceName(config, provinceId)),
-                ("seats", seats.Count == 0 ? Texts.Get("election.provinceEmpty") : string.Join(Texts.Get("election.provinceSeparator"), seats))));
-        }
+                ("province", ProvinceName(config, provinceId)), ("seats", ProvinceSeats(outcomes[provinceId], byId))));
         return string.Join("\n", lines);
     }
+
+    public static int SeatsOf(ProvinceOutcome outcome, long partyId) =>
+        outcome.ContestedSeatsByParty.GetValueOrDefault(partyId) + outcome.BoroughSeatsByParty.GetValueOrDefault(partyId);
+
+    private static string ProvinceSeats(ProvinceOutcome outcome, IReadOnlyDictionary<long, ElectionPartySnapshot> byId)
+    {
+        var seats = outcome.ContestedSeatsByParty.Keys.Union(outcome.BoroughSeatsByParty.Keys)
+            .Select(id => (Id: id, Seats: SeatsOf(outcome, id)))
+            .Where(x => x.Seats > 0)
+            .OrderByDescending(x => x.Id == outcome.WinnerPartyId)
+            .ThenByDescending(x => x.Seats)
+            .ThenByDescending(x => outcome.Strength.GetValueOrDefault(x.Id))
+            .ThenBy(x => x.Id)
+            .Select(x => Texts.Get("election.provinceSeat", ("party", PartyEmoji(byId, x.Id)), ("seats", x.Seats)))
+            .ToList();
+        if (outcome.IndependentBoroughSeats > 0)
+            seats.Add(Texts.Get("election.provinceIndependent", ("seats", outcome.IndependentBoroughSeats)));
+        return seats.Count == 0 ? Texts.Get("election.provinceEmpty") : string.Join(Texts.Get("election.provinceSeparator"), seats);
+    }
+
+    public static IReadOnlyList<string> NightReturns(ElectionResult result, IReadOnlyList<ElectionPartySnapshot> parties, GameConfig config)
+    {
+        var byId = parties.ToDictionary(p => p.Id);
+        var total = result.PartySeats.Values.Sum() + result.IndependentSeats;
+        var majority = total / 2 + 1;
+        var running = new Dictionary<long, int>();
+        var independents = 0;
+        var declared = 0;
+        long? majorityWinner = null;
+        var returns = new List<string>();
+        foreach (var outcome in result.Provinces
+                     .OrderBy(o => o.ContestedSeatsByParty.Values.Sum() + o.BoroughSeatsByParty.Values.Sum() + o.IndependentBoroughSeats)
+                     .ThenBy(o => ProvinceName(config, o.ProvinceId)))
+        {
+            declared++;
+            foreach (var id in outcome.ContestedSeatsByParty.Keys.Union(outcome.BoroughSeatsByParty.Keys))
+                running[id] = running.GetValueOrDefault(id) + SeatsOf(outcome, id);
+            independents += outcome.IndependentBoroughSeats;
+
+            var province = ProvinceName(config, outcome.ProvinceId);
+            var lines = new List<string>
+            {
+                Texts.Get("election.night.declares", ("province", province), ("seats", ProvinceSeats(outcome, byId))),
+                outcome.WinnerPartyId is { } winner
+                    ? Texts.Get("election.night.carries", ("party", PartyLabel(byId, winner)), ("province", province))
+                    : Texts.Get("election.night.nobodyCarries", ("province", province)),
+            };
+            if (majorityWinner is null && running.FirstOrDefault(kv => kv.Value >= majority) is { Value: > 0 } crossed)
+            {
+                majorityWinner = crossed.Key;
+                lines.Add(Texts.Get("election.night.majority", ("party", PartyLabel(byId, crossed.Key)), ("majority", majority)));
+            }
+
+            var tally = running.Where(kv => kv.Value > 0).OrderByDescending(kv => kv.Value).ThenBy(kv => kv.Key)
+                .Select(kv => Texts.Get("election.provinceSeat", ("party", PartyEmoji(byId, kv.Key)), ("seats", kv.Value)))
+                .ToList();
+            if (independents > 0) tally.Add(Texts.Get("election.provinceIndependent", ("seats", independents)));
+            lines.Add(Texts.Get("election.night.tally",
+                ("tally", tally.Count == 0 ? Texts.Get("election.provinceEmpty") : string.Join(Texts.Get("election.provinceSeparator"), tally)),
+                ("declared", declared), ("provinces", result.Provinces.Count), ("majority", majority)));
+            returns.Add(string.Join("\n", lines));
+        }
+        return returns;
+    }
+
+    private static string PartyLabel(IReadOnlyDictionary<long, ElectionPartySnapshot> byId, long id) =>
+        byId.TryGetValue(id, out var party) ? PartyName(party) : Texts.Get("election.unknownParty", ("id", id));
 
     public static string Proclamation(ElectionReport report)
     {

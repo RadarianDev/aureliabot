@@ -48,6 +48,7 @@ Existing mechanic docs:
 - [Implementation.md](Implementation.md): code layout, build stages and how to split work across
   subagents, for building the spec.
 - [Parties.md](Parties.md): factions, parties, membership and seats, as currently implemented.
+- [Agendas.md](Agendas.md): secret agendas, dealt each term and scored on election night.
 - [YAML Reference.md](YAML%20Reference.md): every config and content YAML format with all its fields,
   collected from the spec. Keep it in step when a format changes.
 - [Content Workbench.md](Content%20Workbench.md): the `/content browse` panel for browsing,
@@ -134,8 +135,12 @@ constructor against a temp SQLite file.
 
 **Rendering (`Rendering/`)**
 - `ArchGenerator` (hemicycle) and `WestminsterGenerator` (facing benches) take `List<PartyData>`
-  (name, seat count, hex colour) and write a PNG **to a file path**. There is no stream overload yet.
-  To post a chart to Discord, render to a temp file and upload it, or add a stream overload.
+  (name, seat count, hex colour) and return the PNG as a `MemoryStream` (null when there is nothing
+  to draw). Every renderer encodes through `Png.Encode`, and nothing is written to disk. Upload
+  through `ElectionImages.Attach` or `VoteChart.Rewound`, which rewind the stream first: a stream left
+  at its end uploads as an empty file without any error. Dispose the stream after posting.
+- `LineChartGenerator` draws the `/chart` graphs from the `stat_history` table; `Charts` adds the
+  legend and scale as an embed, since the image has no text.
 - `PartyData.Position` (`left`/`right`/`center`/`head`) only affects Westminster; Arch draws in list
   order. `PartyData.EmptySeats` is Westminster's internal layout state, not an input.
 - `WestminsterGenerator` keeps per-run state that is never cleared, so use a **new instance per

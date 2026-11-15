@@ -68,6 +68,8 @@ public static class Formulas
             : new AttackResult(false, 0, -constants.Attack.Backfire);
     }
 
+    public static double UnrestCost(double discontent, double from, double perPoint) => Math.Max(0, discontent - from) * perPoint;
+
     public static double DriftToward(double value, double target, double share) => value + share * (target - value);
 
     public static double StepToward(double value, double target, double step)
@@ -80,10 +82,10 @@ public static class Formulas
         discontent.Rest + conditions.Sum(c => c.DiscontentRest);
 
     public static double CrisisGain(GameConstants constants, Lean answerLean, double provincialOpinion, double salience) =>
-        constants.Campaign.Factor * (int)answerLean * provincialOpinion * SalienceFactor(salience);
+        constants.Crisis.Factor * (int)answerLean * provincialOpinion * SalienceFactor(salience);
 
     public static double CrisisDefaultLoss(GameConstants constants, double salience) =>
-        constants.Campaign.Factor * SalienceFactor(salience);
+        constants.Crisis.Factor * SalienceFactor(salience);
 
     public static double WhipCountChange(GameConstants constants, VoteChoice predicted, VoteChoice? actual)
     {

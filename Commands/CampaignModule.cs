@@ -139,7 +139,7 @@ public class CampaignModule : InteractionModuleBase<SocketInteractionContext>
             ephemeral: true, allowedMentions: AllowedMentions.None);
     }
 
-    [SlashCommand("poll", "Poll an issue across the kingdom and in every province")]
+    [SlashCommand("poll", "Poll how much the kingdom cares about an issue and how every province feels")]
     [RequireFaction]
     public async Task PollAsync(
         [Summary("issue", "The open issue to poll"), Autocomplete(typeof(OpenIssueAutocomplete))] string issue)

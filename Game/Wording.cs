@@ -38,13 +38,8 @@ public static class Wording
         _ => Texts.Get("wording.discontent.rioting"),
     };
 
-    public static string PollLine(string? provinceName, string issueTitle, double opinion, double salience)
-    {
-        var place = provinceName is null
-            ? Texts.Get("wording.poll.kingdom")
-            : Texts.Get("wording.poll.province", ("province", provinceName));
-        return Texts.Get("wording.poll.line", ("place", place), ("issue", issueTitle), ("salience", Salience(salience)), ("people", People(opinion)));
-    }
+    public static string PollHeadline(string issueTitle, double salience) =>
+        Texts.Get("wording.poll.headline", ("issue", issueTitle), ("salience", Salience(salience)));
 
     public static string PollProvinceLine(string provinceName, double opinion) =>
         Texts.Get("wording.poll.provinceLine", ("place", Texts.Get("wording.poll.province", ("province", provinceName))), ("people", People(opinion)));

@@ -85,6 +85,8 @@ public partial class DatabaseService
         OpenFiscalYearTx(conn, tx, config, c.Start.Year, c.DefaultAllocation, report);
 
         FireDueEventsTx(conn, tx, config, report);
+        Exec(conn, tx, "DELETE FROM stat_history;");
+        RecordHistoryTx(conn, tx);
         LogTx(conn, tx, LogKinds.StateChange, "gm start", $"Started the game in {GameCalendar.Label(c.Start.Season, c.Start.Year)}.");
         tx.Commit();
         return new StartResult(null, report);

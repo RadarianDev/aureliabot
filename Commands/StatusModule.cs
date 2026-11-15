@@ -37,10 +37,13 @@ public class StatusModule : InteractionModuleBase<SocketInteractionContext>
         sb.AppendLine(state.IsPreElection
             ? Texts.Get("me.statusPreElection", ("season", state.Label), ("when", Display.NextResolution(state)))
             : Texts.Get("me.status", ("season", state.Label), ("when", Display.NextResolution(state))));
-        sb.AppendLine(Texts.Get("me.summary", ("popularity", Display.Number(faction.Popularity)), ("seats", faction.Seats),
+        sb.AppendLine(Texts.Get("me.summary", ("popularity", Display.Number(faction.Popularity)),
+            ("change", Standings.Change(faction.Popularity, _data.GetPopularityMarks().TryGetValue(faction.UserId, out var mark) ? mark : null)), ("seats", faction.Seats),
             ("party", party is null ? Display.Independent : Display.Party(party)), ("role", role.ToString().ToLowerInvariant())));
         if (state.SenateEstablished) sb.AppendLine(Texts.Get("me.senateSeats", ("seats", faction.SenateSeats)));
         if (Display.RegionalPopularity(_data, _constants.Config, faction.UserId) is { } regional) sb.AppendLine(regional);
+        if (_data.GetActiveAgenda(faction.UserId) is { } hand && _constants.Config.Agendas.Find(hand.AgendaId) is { } agenda)
+            sb.AppendLine(Texts.Get("secretAgenda.me", ("agenda", agenda.Name), ("wishes", AgendaWording.Wishes(agenda))));
 
         var buttons = new ComponentBuilder();
         var waiting = new List<string>();
@@ -149,9 +152,7 @@ public class StatusModule : InteractionModuleBase<SocketInteractionContext>
                         : Texts.Get("me.campaign", ("stance", action.Stance?.DisplayName()), ("issue", issue)),
                     ActionKind.Attack => Texts.Get("me.attack",
                         ("target", action.TargetFactionId is { } t ? Display.Faction(_data, t) : Texts.Get("me.unknownTarget")), ("issue", issue)),
-                    _ => action.ProvinceId is { } p
-                        ? Texts.Get("me.pollProvince", ("issue", issue), ("province", Display.Province(_constants.Config, p)))
-                        : Texts.Get("me.pollNational", ("issue", issue)),
+                    _ => Texts.Get("me.poll", ("issue", issue)),
                 };
                 sb.AppendLine($"- {text}");
                 if (row < 5)

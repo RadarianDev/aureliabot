@@ -94,6 +94,11 @@ public sealed record AssemblyConstants
     public int NoConfidenceCooldownSeasons { get; init; }
 }
 
+public sealed record ElectionNightConstants
+{
+    public double SecondsPerProvince { get; init; }
+}
+
 public sealed record ElectionConstants
 {
     public double BaseExponent { get; init; }
@@ -166,6 +171,18 @@ public sealed record UnitConstants
         sides >= MaxSides ? null : TrainCosts[Math.Clamp(StepOf(sides), 0, TrainCosts.Count - 1)];
 }
 
+public sealed record UnrestConstants
+{
+    public double From { get; init; }
+    public double Cabinet { get; init; }
+    public double Backbench { get; init; }
+}
+
+public sealed record CrisisConstants
+{
+    public double Factor { get; init; }
+}
+
 public sealed record CrackdownConstants
 {
     public decimal Cost { get; init; }
@@ -205,6 +222,7 @@ public sealed record GameConstants
     public double StrongStancePenalty { get; init; }
     public ProgrammeConstants Programme { get; init; } = new();
     public OpinionConstants Opinion { get; init; } = new();
+    public CrisisConstants Crisis { get; init; } = new();
     public SalienceConstants Salience { get; init; } = new();
     public int RejectedCooldownSeasons { get; init; }
     public LawConstants Law { get; init; } = new();
@@ -212,6 +230,7 @@ public sealed record GameConstants
     public OppositionConstants Opposition { get; init; } = new();
     public AssemblyConstants Assembly { get; init; } = new();
     public ElectionConstants Election { get; init; } = new();
+    public ElectionNightConstants ElectionNight { get; init; } = new();
     public SenateConstants Senate { get; init; } = new();
     public EconomyConstants Economy { get; init; } = new();
     public double TaxRate { get; init; }
@@ -220,6 +239,7 @@ public sealed record GameConstants
     public FavourConstants Favour { get; init; } = new();
     public ThreatConstants Threat { get; init; } = new();
     public DiscontentConstants Discontent { get; init; } = new();
+    public UnrestConstants Unrest { get; init; } = new();
     public UnitConstants Division { get; init; } = new();
     public UnitConstants Gendarmerie { get; init; } = new();
     public CrackdownConstants Crackdown { get; init; } = new();
@@ -278,6 +298,7 @@ public sealed class GameConfig
     public IReadOnlyList<ProvinceDefinition> Provinces { get; }
     public IReadOnlyList<ConditionDefinition> Conditions { get; }
     public IReadOnlyList<VariableDefinition> Variables { get; }
+    public AgendaConfig Agendas { get; }
 
     private readonly Dictionary<string, ProvinceDefinition> _provincesById;
     private readonly Dictionary<string, ConditionDefinition> _conditionsById;
@@ -285,9 +306,10 @@ public sealed class GameConfig
 
     public GameConfig(
         GameConstants constants, IReadOnlyList<ProvinceDefinition> provinces, IReadOnlyList<ConditionDefinition> conditions,
-        IReadOnlyList<VariableDefinition>? variables = null)
+        IReadOnlyList<VariableDefinition>? variables = null, AgendaConfig? agendas = null)
     {
         Variables = variables ?? [];
+        Agendas = agendas ?? AgendaConfig.None;
         _variablesById = Variables.ToDictionary(v => v.Id);
         Constants = constants;
         Provinces = provinces;
@@ -311,6 +333,7 @@ public sealed class ConstantsStore
     public const string ProvincesFile = "provinces.yaml";
     public const string ConditionsFile = "conditions.yaml";
     public const string VariablesFile = "variables.yaml";
+    public const string AgendasFile = "agendas.yaml";
 
     private readonly string _directory;
     private GameConfig _current;
@@ -362,11 +385,14 @@ public sealed class ConstantsStore
                 .Select(kv => kv.Value with { Id = kv.Key })
                 .ToList()
             : [];
+        var (agendas, agendaErrors) = File.Exists(Path.Combine(directory, AgendasFile))
+            ? AgendaConfig.From(Read<AgendasYaml>(deserializer, directory, AgendasFile))
+            : (AgendaConfig.None, new List<string>());
         var texts = TextCatalog.Load(directory);
         var programmeVocabulary = ProgrammeVocabulary.Load(directory);
 
-        var config = new GameConfig(constants, provinces, conditions, variables);
-        var errors = Validate(config);
+        var config = new GameConfig(constants, provinces, conditions, variables, agendas);
+        var errors = agendaErrors.Concat(Validate(config)).ToList();
         if (errors.Count > 0)
             throw new ConfigException("Config is invalid:\n" + string.Join("\n", errors.Select(e => $"- {e}")));
         Texts.Use(texts);

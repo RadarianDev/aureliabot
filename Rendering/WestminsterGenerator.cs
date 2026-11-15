@@ -43,7 +43,7 @@ public class WestminsterGenerator
         { "head", new List<Position2D>() }
     };
 
-    public void Generate(List<PartyData> partyData, Options options, string savePath)
+    public MemoryStream? Generate(List<PartyData> partyData, Options options)
     {
         var inputParties = partyData
             .Where(p => p.SeatCount > 0)
@@ -58,7 +58,7 @@ public class WestminsterGenerator
                 return p;
             }).ToList();
 
-        if (inputParties.Count == 0) return;
+        if (inputParties.Count == 0) return null;
 
         CalculateLayout(inputParties, options);
         BuildCoordinates(inputParties, options);
@@ -80,14 +80,9 @@ public class WestminsterGenerator
                 DrawPositionGroup(canvas, paint, inputParties, "center", options, renderScale);
             }
 
-            using (var image = SKImage.FromBitmap(bitmap))
-            using (var data = image.Encode(SKEncodedImageFormat.Png, 100))
-            using (var stream = File.OpenWrite(savePath))
-            {
-                data.SaveTo(stream);
-            }
+            canvas.Flush();
+            return Png.Encode(bitmap);
         }
-        Console.WriteLine($"Successfully saved Westminster layout to {savePath}");
     }
 
     private void CalculateLayout(List<PartyData> inputParties, Options options)

@@ -38,6 +38,7 @@ public class Bot
             .AddSingleton<PartySyncService>()
             .AddSingleton<CabinetSyncService>()
             .AddSingleton<FactionChannelService>()
+            .AddSingleton<AgendaService>()
             .AddSingleton<ResolutionService>()
             .AddSingleton<Confirmations>()
             .AddSingleton<WorkbenchSessions>()

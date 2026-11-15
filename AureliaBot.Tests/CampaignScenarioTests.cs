@@ -49,7 +49,7 @@ public class CampaignScenarioTests : IDisposable
     public void APreElectionTour_BuildsARegionalLead_ThatSpreadsAcrossTheKingdomAfterwards()
     {
         Db.StartGame(Config, DateTimeOffset.UtcNow);
-        Db.OpenIssue("labour", "labour", "The Condition of Labour", "For", "Against", 0.1, 3);
+        Db.OpenIssue("labour", "labour", "The Condition of Labour", "For", "Against", 0.5, 3);
         Db.CreateFaction(Strong, "Strong", "aurenten", 10);
         Db.CreateFaction(Plain, "Plain", "aurenten", 10);
         Db.CreateFaction(Idle, "Idle", "aurenten", 10);

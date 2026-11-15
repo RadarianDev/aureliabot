@@ -1,0 +1,37 @@
+# Secret agendas: one is dealt to every faction at the start of each term, never the same one twice in a row.
+# Each id (magnate, general, ...) is stored with every hand dealt: once agendas are dealt, change names,
+# descriptions and wishes freely, but never rename an id, or the hands holding it are lost.
+# They are revealed and scored on election night: a wish is met when its track moved the wanted way by more
+# than its margin, between the turn the agenda was dealt and the election.
+# Tracks: economy, reserve, army (total sides of every division), discontent (provinces' average, by
+# population), favour (Anzarian Favour), threat (Foreign Threat).
+
+reward: { perWish: 2, allBonus: 1 }
+
+margins: { economy: 5, reserve: 10, army: 1, discontent: 0.25, favour: 2, threat: 2 }
+
+agendas:
+  magnate:
+    name: The Magnate
+    description: Mills and railways, not barracks. Aurelia's future is built in its factories, and every crown spent on soldiers is a crown lost to progress.
+    wants: { economy: up, army: down }
+  general:
+    name: The General
+    description: Glory is won on the field. A strong army and a dangerous world make a nation that needs men like you.
+    wants: { army: up, threat: up }
+  diplomat:
+    name: The Diplomat
+    description: The union with Anzaria keeps Aurelia safe. Keep the nobles content and the borders quiet.
+    wants: { favour: up, threat: down }
+  patriot:
+    name: The Patriot
+    description: Aurelia owes Anzaria nothing. Loosen the union and let Aurelian arms stand on their own.
+    wants: { favour: down, army: up }
+  agitator:
+    name: The Agitator
+    description: The old order must fall before a new one can rise. Let the people grow angry, and let the masters' profits wither.
+    wants: { discontent: up, economy: down }
+  treasurer:
+    name: The Treasurer
+    description: A full treasury and a quiet country. Spend little, keep the peace, and let others chase grand schemes.
+    wants: { reserve: up, discontent: down }

@@ -1,7 +1,7 @@
 using Discord;
 using Discord.WebSocket;
 
-public class Publisher
+public partial class Publisher
 {
     private readonly DiscordSocketClient _client;
     private readonly DatabaseService _data;
@@ -53,9 +53,13 @@ public class Publisher
                 news.Add(Texts.Get("news.season.closes", ("when", Display.When(next))));
             news.AddRange(report.News);
             await PostAsync(ChannelRole.News, string.Join("\n", news), source);
+            await PostYearlyChartsAsync(report, source);
 
             if (report.Election is { } election)
                 await _elections.PublishAsync(election, source);
+            if (report.AgendaReveals.Count > 0)
+                await PostAsync(ChannelRole.News, Texts.Get("secretAgenda.reveal.heading") + "\n" + string.Join("\n",
+                    report.AgendaReveals.Select(r => AgendaWording.Reveal(r, Display.Faction(_data, r.FactionId)))), source);
             if (report.SenateElection is { } senateElection)
                 await _elections.PublishSenateAsync(senateElection, source);
 
@@ -294,6 +298,7 @@ public class Publisher
         }
 
         return embed
+            .AddField(Texts.Get("dashboard.popularityField"), PopularityField())
             .AddField(Texts.Get("dashboard.issuesField"), openIssues.Count == 0 ? Texts.Get("dashboard.noIssues") : Display.Truncate(string.Join("\n", openIssues.Select(i => i.Title)), 1024))
             .AddField(Texts.Get("dashboard.economyField"), EconomyField(state))
             .AddField(Texts.Get("dashboard.realmField"), RealmField(state))
@@ -318,6 +323,21 @@ public class Publisher
         if (independents.Count > 0)
             lines.Add(Texts.Get("dashboard.independentsLine", ("seats", independents.Sum(seats)), ("factions", independents.Count)));
         return lines;
+    }
+
+    private string PopularityField()
+    {
+        var lines = Standings.Lines(_data, _constants.Config, compact: true);
+        if (lines.Count == 0) return Texts.Get("dashboard.noFactions");
+        var shown = new List<string>();
+        foreach (var line in lines)
+        {
+            var more = Texts.Get("dashboard.popularityMore", ("count", lines.Count - shown.Count - 1));
+            if (string.Join("\n", [.. shown, line, more]).Length > 1024) break;
+            shown.Add(line);
+        }
+        if (shown.Count < lines.Count) shown.Add(Texts.Get("dashboard.popularityMore", ("count", lines.Count - shown.Count)));
+        return string.Join("\n", shown);
     }
 
     private string EconomyField(GameState state)
@@ -346,6 +366,33 @@ public class Publisher
         return Display.Truncate(string.Join("\n", lines), 1024);
     }
 
+    private const int EmbedCharacterLimit = 6000;
+
+    private List<RenderedChart> DashboardCharts(Embed dashboard)
+    {
+        var charts = new List<RenderedChart>();
+        var length = dashboard.Length;
+        foreach (var (what, file) in new[] { (PublicChart.Economy, "economy.png"), (PublicChart.Money, "money.png"), (PublicChart.Popularity, "popularity.png") })
+        {
+            try
+            {
+                if (ChartRequests.Public(_data, what, null, file) is not { } chart) continue;
+                if (length + chart.Embed.Length > EmbedCharacterLimit)
+                {
+                    chart.Dispose();
+                    break;
+                }
+                length += chart.Embed.Length;
+                charts.Add(chart);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Publisher] Dashboard {what} chart failed: {ex.Message}");
+            }
+        }
+        return charts;
+    }
+
     public async Task UpdateDashboardAsync()
     {
         try
@@ -353,19 +400,31 @@ public class Publisher
             if (_data.GetChannel(ChannelRole.Dashboard) is not { } channelId || _client.GetChannel(channelId) is not ITextChannel channel)
                 return;
             var embed = BuildDashboard();
-
-            if (ulong.TryParse(_data.GetSetting(DashboardMessageKey), out var messageId)
-                && await channel.GetMessageAsync(messageId) is IUserMessage existing
-                && existing.Author.Id == _client.CurrentUser.Id)
+            var charts = DashboardCharts(embed);
+            try
             {
-                await existing.ModifyAsync(p => { p.Embed = embed; p.Content = ""; });
-                if (!existing.IsPinned) await existing.PinAsync();
-                return;
-            }
+                var embeds = charts.Select(c => c.Embed).Prepend(embed).ToArray();
+                var attachments = charts.Select(c => c.Attachment()).ToList();
 
-            var message = await channel.SendMessageAsync(embed: embed);
-            _data.SetSetting(DashboardMessageKey, message.Id.ToString());
-            await message.PinAsync();
+                if (ulong.TryParse(_data.GetSetting(DashboardMessageKey), out var messageId)
+                    && await channel.GetMessageAsync(messageId) is IUserMessage existing
+                    && existing.Author.Id == _client.CurrentUser.Id)
+                {
+                    await existing.ModifyAsync(p => { p.Embeds = embeds; p.Attachments = attachments; p.Content = ""; });
+                    if (!existing.IsPinned) await existing.PinAsync();
+                    return;
+                }
+
+                var message = attachments.Count > 0
+                    ? await channel.SendFilesAsync(attachments, embeds: embeds)
+                    : await channel.SendMessageAsync(embeds: embeds);
+                _data.SetSetting(DashboardMessageKey, message.Id.ToString());
+                await message.PinAsync();
+            }
+            finally
+            {
+                foreach (var chart in charts) chart.Dispose();
+            }
         }
         catch (Exception ex)
         {

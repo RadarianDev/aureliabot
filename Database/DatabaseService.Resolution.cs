@@ -22,6 +22,7 @@ public partial class DatabaseService
 
         if (state.Started)
         {
+            MarkPopularityTx(conn, tx);
             CountDueReadingsTx(conn, tx, GetGameStateTx(conn, tx), config, report);
             CountDueNoConfidenceTx(conn, tx, GetGameStateTx(conn, tx), config, report);
             CountDueCabinetVotesTx(conn, tx, GetGameStateTx(conn, tx), config, report);
@@ -30,6 +31,7 @@ public partial class DatabaseService
             ResolveActionsTx(conn, tx, GetGameStateTx(conn, tx), config, random, report);
             ApplyOrdersTx(conn, tx, GetGameStateTx(conn, tx), config, random, report);
             PayProjectsTx(conn, tx, GetGameStateTx(conn, tx), config, report);
+            UnrestCostsGovernmentTx(conn, tx, config, report);
             SeasonalChangesTx(conn, tx, GetGameStateTx(conn, tx), config);
             FiscalStepTx(conn, tx, GetGameStateTx(conn, tx), config, report);
         }
@@ -39,6 +41,7 @@ public partial class DatabaseService
         {
             CancelAtElectionTx(conn, tx, report);
             RunElectionTx(conn, tx, state, config, report);
+            ScoreAndDealAgendasTx(conn, tx, config, seed, report);
         }
         if (state.Started && before.IsSenateElectionTurn && state.SenateEstablished)
             RunSenateElectionTx(conn, tx, state, config, report);
@@ -50,6 +53,7 @@ public partial class DatabaseService
             FireDueEventsTx(conn, tx, config, report);
             OpenScheduledReadingsTx(conn, tx, config, report);
             ThresholdAlertsTx(conn, tx, before, discontentBefore, config, report);
+            RecordHistoryTx(conn, tx);
         }
 
         LogTx(conn, tx, LogKinds.Resolution, "resolution", $"Resolved {GameCalendar.Label(report.FromSeason, report.FromYear)} with seed {seed}.");
@@ -74,6 +78,7 @@ public partial class DatabaseService
             CampaignDay = true,
         };
 
+        MarkPopularityTx(conn, tx);
         ResolveActionsTx(conn, tx, state, config, random, report);
         state = GetGameStateTx(conn, tx);
         SaveGameStateTx(conn, tx, state with { CampaignDaysRun = state.CampaignDaysRun + 1, RngSeed = null });

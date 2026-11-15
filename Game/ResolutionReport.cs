@@ -109,6 +109,7 @@ public sealed record ResolutionReport
     public Dictionary<ulong, List<string>> PrivateMessages { get; } = [];
     public List<string> CabinetReport { get; } = [];
     public List<string> Alerts { get; } = [];
+    public List<AgendaReveal> AgendaReveals { get; } = [];
 
     public void AddPrivate(ulong factionId, string message)
     {

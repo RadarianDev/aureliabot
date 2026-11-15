@@ -3,6 +3,13 @@ public static class VoteChart
     public const string YesColour = "#2E9E44";
     public const string AsideColour = "#9A9A9A";
     public const string NoColour = "#C0392B";
+    public const string FileName = "votes.png";
+
+    public static MemoryStream Rewound(MemoryStream image)
+    {
+        image.Position = 0;
+        return image;
+    }
 
     public static int ChamberSize(DatabaseService data) =>
         Math.Max(data.GetGameState().Seats, (int)data.GetAllFactions().Sum(f => f.Seats));
@@ -15,12 +22,12 @@ public static class VoteChart
             new PartyData { Name = "No", SeatCount = no, HexColor = NoColour },
         }.Where(b => b.SeatCount > 0).ToList();
 
-    public static string? Render(DatabaseService data, int yes, int no) => Render(yes, no, ChamberSize(data));
+    public static MemoryStream? Render(DatabaseService data, int yes, int no) => Render(yes, no, ChamberSize(data));
 
-    public static string? RenderSenate(DatabaseService data, int yes, int no) =>
+    public static MemoryStream? RenderSenate(DatabaseService data, int yes, int no) =>
         Render(yes, no, (int)data.GetAllFactions().Sum(f => f.SenateSeats));
 
-    private static string? Render(int yes, int no, int seats)
+    private static MemoryStream? Render(int yes, int no, int seats)
     {
         try
         {
@@ -31,11 +38,5 @@ public static class VoteChart
             Console.WriteLine($"[VoteChart] Rendering failed: {ex.Message}");
             return null;
         }
-    }
-
-    public static void Discard(string? path)
-    {
-        if (path is null) return;
-        try { File.Delete(path); } catch (IOException) { }
     }
 }

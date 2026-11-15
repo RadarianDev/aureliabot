@@ -21,17 +21,28 @@ public class VoteChartTests
     }
 
     [Fact]
-    public void Render_DrawsAPng()
+    public void Render_DrawsAPng_InMemory()
     {
-        var path = ElectionPublisher.RenderSeatChart(VoteChart.Blocs(90, 60, 180));
-        try
-        {
-            Assert.NotNull(path);
-            Assert.True(new FileInfo(path!).Length > 0);
-        }
-        finally
-        {
-            VoteChart.Discard(path);
-        }
+        using var image = ElectionPublisher.RenderSeatChart(VoteChart.Blocs(90, 60, 180));
+
+        Assert.NotNull(image);
+        Assert.Equal(0, image!.Position);
+        Assert.Equal(new byte[] { 0x89, 0x50, 0x4E, 0x47 }, image.ToArray()[..4]);
     }
+
+    [Fact]
+    public void AnImageAlreadyRead_IsRewoundBeforeEveryUpload()
+    {
+        using var image = ElectionPublisher.RenderSeatChart(VoteChart.Blocs(90, 60, 180))!;
+        image.CopyTo(Stream.Null);
+
+        Assert.Equal(0, VoteChart.Rewound(image).Position);
+        image.CopyTo(Stream.Null);
+        using var attachment = ElectionImages.Attach(image, "seats.png");
+        Assert.Equal(0, attachment.Stream.Position);
+    }
+
+    [Fact]
+    public void NothingToDraw_GivesNoImage() =>
+        Assert.Null(ElectionPublisher.RenderSeatChart([]));
 }

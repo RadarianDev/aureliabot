@@ -113,6 +113,8 @@ These are the main tables. Ids are short strings (slugs) for anything defined in
 | Action | id, factionId, kind (Campaign, Attack, Poll), issueId, provinceId (where a campaign or attack happens; null for a poll), stance, offProgramme, targetFactionId, submittedAt, resolved |
 | RegionalPopularity | factionId, provinceId, deviation (the faction's popularity in the province minus its national popularity; a missing row is 0) |
 | OppositionAction | id, factionId, kind (Question, Condemn, Bill, WhipCount), season, year |
+| Agenda | id, factionId, agendaId (from `config/agendas.yaml`), dealtResolution, dealtSeason, dealtYear, startValues (each track when dealt), status (Active, Scored, Void), wishesMet, reward, scoredResolution |
+| AgendaAssignment | factionId, agendaId: the GM's choice for that faction's next deal |
 | WhipCount | id, factionId, readingId, ministerFactionId, side (Yes, No), madeAt |
 | Question | id, askerFactionId, ministry, text, askedAt, dueResolution, answerText, answeredAt |
 | Condemnation | id, factionId, crisisId, side (For, Against), madeAt |
@@ -171,33 +173,35 @@ timeZone: "Europe/Prague"        # IANA id
 minHoursBetweenResolutions: 12
 preElectionDays: 3
 seasonsPerTerm: 16
-popularity: { min: 0, max: 100, start: 10, drift: 0.05, spread: 0.2 }   # spread: share of a regional lead lost each season
-campaign: { factor: 4, baseline: 0.5, actionsPerTurn: 2, actionsPerPreElectionDay: 5, crowding: true }
-attack: { factor: 3, backfire: 2 }
-poll: { opinionNoise: 0.15, salienceNoise: 1 }
+popularity: { min: 0, max: 100, start: 10, drift: 0.07, spread: 0.1 }   # spread: share of a regional lead lost each season
+campaign: { factor: 4, baseline: 0.25, actionsPerTurn: 2, actionsPerPreElectionDay: 5, crowding: true }
+attack: { factor: 3, backfire: 3 }
+poll: { opinionNoise: 0.25, salienceNoise: 1 }
 strongStancePenalty: 0.5
 programme: { flipPenalty: 1 }
 opinion: { crisisShift: 0.05 }
+crisis: { factor: 2 }
 salience: { min: 0, max: 5, campaignRaise: 1, crisisRaise: 1, decay: 1, rejectDrop: 2 }
 rejectedCooldownSeasons: 4
 law: { sponsorFactor: 4 }
 government: { billsPerSeason: 1 }
 opposition: { actionsPerSeason: 1, privateBillsPerYear: 1,
-              unansweredQuestion: 2, questionReward: 1, condemnReward: 2, condemnPenalty: 1,
+              unansweredQuestion: 2, questionReward: 1, condemnReward: 1, condemnPenalty: 0.5,
               whipCountReward: 1, whipCountPenalty: 0.5 }
 assembly: { noConfidenceShare: 0.1667, noConfidenceGatherResolutions: 2, noConfidenceCooldownSeasons: 4 }
 election: { baseExponent: 0.85, homeMultiplier: 1.5, programmeWeight: 0.5,
             multiplierMin: 0.5, multiplierMax: 1.5, crowding: true }
-economy: { start: 1000, growth: 0.01 }
-taxRate: 0.20
+economy: { start: 1000, growth: 0.005 }
+taxRate: 0.17
 reserve: { start: 100, interest: 0.03 }
 defaultAllocation: { War: 0.25, Interior: 0.15, CommerceLabor: 0.30, Treasury: 0.10, Navy: 0.20 }
 favour: { start: 60, baseline: 60, drift: 1, navyFactor: 75, alertBelow: 30 }
 threat: { start: 25, alerts: [60, 85] }
 discontent: { min: 0, max: 10, start: 3, rest: 3, drift: 0.25, alertAt: 6, growthDrag: 0.01 }
+unrest: { from: 4, cabinet: 0.3, backbench: 0.15 }
 division: { raise: 40, upkeep: 5, baseSides: 12, sidesStep: 2, maxSides: 18, trainCosts: [20, 30, 40] }
 gendarmerie: { raise: 20, upkeep: 2.5, baseSides: 8, sidesStep: 2, maxSides: 12, trainCosts: [10, 20] }
-crackdown: { cost: 10, reduction: 2, backlash: 1, failurePopularity: 2, dieBase: 4, diePerDiscontent: 1 }
+crackdown: { cost: 10, reduction: 2, backlash: 1, failurePopularity: 1, dieBase: 4, diePerDiscontent: 1 }
 project: { popularity: 2, graft: 0.5 }   # graft: share of spending above the pace that is lost
 startingForces:
   divisions: { aurenten: 2, iracterie: 1, north_arpal: 1, agrinenten: 1, ocidanten: 1 }   # province: count
@@ -504,7 +508,7 @@ Opinion has three layers. The stored `opinion_i` is the **base opinion**, the gr
 
 **National opinion**
 
-`O(i) = Σ_p population_p × o(i, p) / Σ_p population_p`, the population-weighted mean of provincial opinion. Laws and national polls use it; campaigns and attacks are regional and use `o(i, p)` of their province.
+`O(i) = Σ_p population_p × o(i, p) / Σ_p population_p`, the population-weighted mean of provincial opinion. Laws use it; campaigns, attacks and polls are regional and use `o(i, p)` of each province. No player ever reads `O(i)`.
 
 **Regional popularity**
 
@@ -541,7 +545,7 @@ The stance s defaults to the party's programme stance on the issue. A faction ma
 
 A faction cannot attack a member of its own party.
 
-**Poll:** the faction's private channel receives the mood on the issue, in words: nationally `O(i)` with salience, then `o(i, p)` for every province. Each opinion gets its own uniform noise of ±`poll.opinionNoise`, and salience noise of ±`poll.salienceNoise`, each turned into words (section 9). The numbers are never shown.
+**Poll:** the faction's private channel receives, in words, the issue's national salience, then `o(i, p)` for every province. There is no national opinion reading. Each opinion gets its own uniform noise of ±`poll.opinionNoise`, and salience noise of ±`poll.salienceNoise`, each turned into words (section 9). The numbers are never shown.
 
 **Actions per turn:** `campaign.actionsPerTurn` (2) in a normal turn, and `campaign.actionsPerPreElectionDay` (5) on each day of the pre-election, of any kinds. One campaign and one attack per province, and one poll per issue: a second one replaces the first. In the pre-election, campaigns never replace each other, so a faction can spend every action campaigning, several in one province if it likes; stacking one spot pays less each time (see Campaign above), and costs rivals nothing. The pre-election is the time to tour the provinces whose seats are in play.
 
@@ -573,9 +577,9 @@ A faction cannot attack a member of its own party.
 
 1. If the ministry's purse covers the answer's price, deduct it and apply the answer's effects. The outcome is **clean**.
 2. Otherwise, the purse is emptied, and the answer's effects and the complication (the crisis's own, or the standard one) both apply. The outcome is **complicated**.
-3. The minister's faction gets `Δpopularity = campaign.factor × L × o(i, p) × k(i)`. A Neutral answer neither gains nor loses.
+3. The minister's faction gets `Δpopularity = crisis.factor × L × o(i, p) × k(i)`. A Neutral answer neither gains nor loses.
 4. Opinion on i moves `+crisisShift × L` if clean, or `−crisisShift × L` if complicated. Salience of i rises by 1, whatever the lean.
-5. **No response by the deadline:** the default applies, and the minister's faction loses `campaign.factor × k(i)`.
+5. **No response by the deadline:** the default applies, and the minister's faction loses `crisis.factor × k(i)`.
 6. **Condemnations:** a condemnation backs *For* or *Against* on the crisis's issue. The right side is the sign of `o(i, p)`. A condemning faction on the right side gains `condemnReward` if the minister was not on it (a Neutral answer or no response counts as not on it). One on the wrong side loses `condemnPenalty` if the minister was on the right side. When `o(i, p)` is exactly 0, nobody gains or loses.
 
 The responsible minister is whoever holds the ministry at the deadline, or the Chancellor if it is vacant.
@@ -699,6 +703,7 @@ All commands are slash commands. Long text, such as a roleplay response, is ente
 | Command | Who | Effect |
 | --- | --- | --- |
 | `/info thing` | Anyone | Shows any game object. One autocomplete lists the kingdom, the government, Parliament, the laws in force, the budget, parties, factions, bills, issues, provinces, projects, crises, the four ministries, conditions and past events, each marked with its kind. What each shows is listed below. |
+| `/chart what [party] [public]` | Anyone | Graphs the turns so far as a line chart: the economy, the money (Budget, reserve and the four purses), or popularity (the seven most popular factions, or one party's members). The image carries no text: the embed gives the legend as coloured squares with the first and latest values, and the gridline scale. Only the asker sees it unless `public` is set. Charts are drawn in memory and uploaded; nothing is saved but the history rows. |
 | `/map` | Anyone | Shows the province map from the latest election. |
 
 `/info` shows, by kind:
@@ -709,13 +714,14 @@ All commands are slash commands. Long text, such as a roleplay response, is ente
 - **Bill:** issue, lean, status, summary, which side of the issue it takes, motion, its text and visible effects once passed, and its counted readings with their results.
 - **Project:** province, purse, progress against its price, spending per season, expected finish, bonus deadline and summary, and its visible effects once finished.
 - **Crisis:** ministry, province, issue, summary, what *For* and *Against* mean, answer labels with their leans and prices, and deadline. Your own sealed condemnation is shown only to you. Once resolved: the outcome, its visible effects and the condemnations.
-- **Province:** description, population, Senate seats once the Senate exists, discontent in words, the factions that call it home, works and crises under way, conditions (name and description), the units stationed there and the last election result.
+- **Province:** description, population, Senate seats once the Senate exists, discontent in words, the factions that call it home, works and crises under way, conditions (name and description), the units stationed there, the last election result and every faction ranked by its popularity there.
 - **Ministry:** its holder, its purse (this year's allocation, money in and out, and balance), its spending this year line by line from the ledger, its units or projects, and its open crises and questions.
 - **Budget:** the year's available Budget, every purse with its allocation, spending and balance, the Navy contribution, the reserve with grants and interest, and the year's spending by kind across the government (upkeep, purchases, crises, projects, graft, laws and events). A `year` option shows an earlier year.
 - **Kingdom:** economy, tax rate, reserve, the year's Budget, Favour in words, and each province's discontent in words and conditions.
 - **Government:** the Chancellor, each minister, and the parties in government and in opposition.
 - **Parliament:** seats in the Assembly and the Senate by party and independents, and the next election.
 - **Laws:** every bill passed into law.
+- **Standings:** every active faction ranked by national popularity, with its party, home province and the change since the last resolution (each resolution and campaign day records every faction's popularity as it starts), then the most popular faction in each province.
 - **Condition:** name, description and the provinces that have it; never its numbers.
 - **Event:** a past event's story and visible effects. Queued events never appear.
 
@@ -811,7 +817,7 @@ The Franchise: *For*
 | --- | --- |
 | `/campaign issue [province] [stance]` | Campaigns on an issue in one province, the faction's home province by default. The stance defaults to the programme stance; giving a different one is off-programme, and needs a Confirm. |
 | `/attack faction issue [province]` | Attacks a rival's stance in one province, the attacker's home province by default. |
-| `/poll issue` | Polls an issue across the kingdom and in every province. The answer comes back in words. |
+| `/poll issue` | Polls an issue: its national salience and its opinion in every province. The answer comes back in words. |
 
 A faction may have at most as many pending actions as the turn allows, of any kinds: two campaigns in different provinces are allowed, and during the pre-election any number of campaigns, anywhere. A campaign or attack in a province where the faction already has one of that kind replaces it, and so does a poll on an issue it is already polling; the reply names what was replaced. Pending actions are cancelled from `/me`. Both actions resolve simultaneously with everyone else's (section 5), so a poll never sees the effect of the same turn's campaign.
 
@@ -886,7 +892,13 @@ The GM's commands are split in two groups: `/gm` runs the game, and `/content` (
 | `/gm resolve action [hours]` | Controls the resolution schedule: `now` runs one at once, `delay` pushes the next one back by `hours`, and `pause` and `resume` stop and restart the schedule. |
 | `/gm reload` | Reloads `constants.yaml`. |
 | `/gm undo` | Restores the snapshot taken before the last resolution (section 10). |
-| `/gm peek [mode] [province]` | Shows the full hidden state privately, with numbers. `mode:election` runs the election on the current state instead and shows the result privately. `mode:strength` shows each party's strength and programme multiplier in every province; with `province`, the full working there: each member's weighted popularity, the base strength, every issue term of the programme score, the multiplier and the seats. `mode:opinion` shows every open issue's opinion in each province (or only `province`), with the bias of each condition behind it. `mode:actions` shows what every pending campaign, attack and poll would do if the turn ended now, with the working, and each faction's popularity before and after; votes, crises and questions resolve first and can still change it. All modes are ephemeral and `/gm` is hidden from players. |
+| `/gm agendas list` | Privately shows every faction's secret agenda with each wish's start and current value and whether it is met so far, the GM's choices waiting for the next deal, and how many factions hold each agenda. |
+| `/gm agendas deal` | Deals an agenda to every active faction without one, balanced around the GM's choices, each sent privately. Starts agendas in a running game. |
+| `/gm agendas assign faction agenda [now]` | Chooses a faction's agenda for its next deal, or with `now` replaces its current one at once. Warns, but allows, a repeat. |
+| `/gm agendas cancel faction` | Drops a choice waiting for the next deal. |
+| `/gm agendas redeal faction` | Voids a faction's agenda and deals another, or the GM's waiting choice. |
+| `/gm chart what [province]` | Graphs hidden values privately: Favour and Threat, or discontent (the seven most restless provinces, or one). |
+| `/gm peek [mode] [province]` | Shows the full hidden state privately, with numbers. `mode:election` runs the election on the current state instead and shows the result privately. `mode:strength` shows each party's strength and programme multiplier in every province; with `province`, the full working there: each member's weighted popularity, the base strength, every issue term of the programme score, the multiplier and the seats. `mode:opinion` shows every open issue's opinion in each province (or only `province`), with the bias of each condition behind it. `mode:actions` shows what every pending campaign, attack and poll would do if the turn ended now, with the working, and each faction's popularity before and after; votes, crises and questions resolve first and can still change it. `mode:popularity` shows every faction's popularity in every province (or ranked in only `province`) to two decimals, its home province, and its national popularity before the last resolution. All modes are ephemeral and `/gm` is hidden from players. |
 
 **Content management (`/content`)**
 
@@ -961,13 +973,16 @@ At 08:00 (or when the GM triggers it), the bot first **snapshots** the database 
 5. **Standing work:**
    - apply pending raises, training and stationing, then roll crackdowns;
    - pay each project's spending, add its progress after graft, and apply any that finish, with their bonus if they are on time.
-6. **Seasonal changes:** salience decay, discontent drift, Favour drift, then popularity drift.
+6. **Seasonal changes:** unrest costs the government (below), then salience decay, discontent drift, Favour drift and popularity drift.
+
+   **Unrest:** in every province whose discontent is above `unrest.from`, each cabinet member loses `unrest.cabinet` popularity there per point above it, and every other member of a governing party `unrest.backbench`, as a regional change. #news names the provinces where the government lost standing.
 7. **Fiscal steps,** only at the start of Winter or Spring (section 5).
 8. **Election,** only at the end of a pre-election: cancel open votes and drop pending join applications (section 5), then run section 8. At the end of a Senate campaign turn, drop pending join applications and run the Senate election (section 8), after the Assembly election if both are due. A Senate election cancels no votes.
 9. **Advance** the season, and the year after Winter. Lift cooldowns that have expired, returning those bills to Available. Increment `resolutionNumber` and schedule the next resolution.
 10. **Events:** the new turn starts, so every queued event whose `fireAtResolution` has come fires in the order it was queued, and its effects apply. Issues it opens are open from this turn, and crises it posts are due at the next resolution, so a minister always has the whole turn to answer. Then open the bills scheduled for this turn, due at the next resolution, or cancel them if this turn is a pre-election (section 5).
 11. **Alerts** to the GM (section 10).
-12. **Post:** a news summary to #news, the fired events, the new crises, the readings opened in #assembly, crackdown results, the crisis outcomes, minister responses and condemnation scores, the turn's campaigns and attacks to #campaign-log, an updated dashboard, and private reports to each faction and the cabinet. Rename the turn tracker (section 9).
+   Then record the turn's history: economy, Budget, reserve, purses, Favour, Threat, every faction's popularity and every province's discontent, kept in `stat_history` by resolution number for the charts. `/gm start` records the first point.
+12. **Post:** a news summary to #news, the fired events, the new crises, the readings opened in #assembly, crackdown results, the crisis outcomes, minister responses and condemnation scores, the turn's campaigns and attacks to #campaign-log, an updated dashboard, and private reports to each faction and the cabinet. In Spring, #news also gets the economy and money charts. Rename the turn tracker (section 9).
 
 Actions submitted after the resolution has started count towards the next one.
 
@@ -991,6 +1006,8 @@ Every party with at least one active member stands. Independents and retired fac
 7. **Faction seats:** add up each party's seats from every province, split them among its members by popularity using the largest remainder (equally if the members' total popularity is 0), then add each member's safe borough seat while the Assembly has them. Without one, a member can win no seats.
 8. **Store** each party's strength and seats in each province as ProvinceResult rows for the new term.
 9. **Post** the results with the rest of the resolution (section 7, step 12), never before the transaction commits: seats by party and province, the national vote share (step 6, naming any party below the threshold), a seat chart and the province map. The post closes with a royal proclamation summoning the new Assembly.
+
+   **Election night:** before the full results, #news hosts a live count. An opening post, then every `electionNight.secondsPerProvince` seconds one province declares, smallest first: its seats by party, which party carries it, and a running tally with the number of provinces declared and the seats needed for a majority. The province that takes a party past a majority announces it, once. A Senate election gets the same night. With 0 seconds the night is skipped. Publishing waits for the night to end, so the other posts of the resolution follow it.
 
 **Seat chart:** the hemicycle (`ArchGenerator`), with parties ordered by seats, largest first, and each in its party colour.
 
@@ -1019,13 +1036,15 @@ Each province is coloured after the party holding the most seats there, any safe
   | Iracterie | `iracterie` | `#FF9900` |
   | Tovrerie | `tovrerie` | `#00FFFF` |
 
-- **Rendering:** [Rendering/ProvinceMapGenerator.cs](Rendering/ProvinceMapGenerator.cs), alongside the seat charts. `Generate(partyColourByMapKey, savePath)` takes a map from a province's `mapKey` to its winning party's hex colour, and writes a PNG. Provinces left out keep the grey fill. The caller translates province ids to map keys through `provinces.yaml`.
+- **Rendering:** [Rendering/ProvinceMapGenerator.cs](Rendering/ProvinceMapGenerator.cs), alongside the seat charts. `Generate(partyColourByMapKey)` takes a map from a province's `mapKey` to its winning party's hex colour, and returns the PNG in memory. Provinces left out keep the grey fill. The caller translates province ids to map keys through `provinces.yaml`.
   1. It loads the three images and checks that they are the same size.
   2. Each province pixel is multiplied per channel by `partyColour / 128`. The flat fill becomes exactly the party colour, and any shading painted into a province darkens with it instead of turning grey.
   3. The overlay is drawn on top.
 - **Legend:** the embed carries the legend (party, colour emoji, provinces won), so the image needs no spare space for one.
 - **Where it is posted:** with the election results in #news, in `/gm peek mode:election` (from the preview's strengths), and on demand through `/map`, which redraws the latest term's ProvinceResult rows in each party's current colour. A province whose winning party was deleted since the election keeps the original fill.
 - **Maintaining the art:** the project copies everything under `assets/` to the build output. If the map is redrawn, keep the province fill at `#808080` (other shades inside a province tint proportionally), put text, cities and any effect that should not take the party colour in the overlay, keep all three images at the same size (or regenerate the index to match), and keep them aligned pixel for pixel. The index was made from a 718×335 cut-out of the provinces, placed at offset (100, 137) on the base map. Do not let anti-aliasing or colour-profile conversion touch the index colours, or province lookups will miss.
+
+**Secret agendas:** right after an Assembly election, snap elections included, every active agenda is scored and revealed in #news after the returns, then every active faction is dealt its next one privately: the GM's choice if one waits, otherwise a balanced draw that never repeats the faction's last agenda. Agendas dealt in the pre-election turn itself carry into the new term unscored. The full rules, tracks, scoring and edge cases are in [Agendas.md](Agendas.md), and the file format in [YAML Reference.md](YAML%20Reference.md). Senate elections leave agendas alone.
 
 After the election the next term begins. The outgoing cabinet stays as caretaker until the GM appoints a Chancellor and a new cabinet is approved (section 5).
 
@@ -1061,6 +1080,7 @@ A counted bill's result post shows both chambers' totals and a vote chart for ea
 | Province conditions (name and description) | Yes | Yes | Yes |
 | Fired events and their effect summaries | Yes | Yes | Yes |
 | Queued events | No | No | Yes |
+| Secret agendas | Your own, in `/me`; everyone's at the election, as directions only | Same | Yes, with the numbers |
 | Crisis title, ministry, province, answer labels, leans and prices, and deadline | Yes | Yes | Yes |
 | Crisis outcome texts and effect summaries | After the resolution | After the resolution | Yes |
 | Minister's crisis response | After the resolution | After the resolution | Yes |
@@ -1081,12 +1101,12 @@ A counted bill's result post shows both chambers' totals and a vote chart for ea
 
 **Words for hidden values.** The bot turns a number into a word at these thresholds. Noise is added before the word is chosen.
 
-- **Opinion** (`o(i, p)`, or `O(i)` for a national poll): 0.6 or more is *strongly for*, 0.2 to 0.6 *for*, −0.2 to 0.2 *divided*, −0.6 to −0.2 *against*, and below −0.6 *strongly against*.
+- **Opinion** (`o(i, p)`): 0.6 or more is *strongly for*, 0.2 to 0.6 *for*, −0.2 to 0.2 *divided*, −0.6 to −0.2 *against*, and below −0.6 *strongly against*.
 - **Salience** (rounded): 0 is *forgotten*, 1 *a minor matter*, 2 *discussed*, 3 *much discussed*, 4 *a burning question*, and 5 *the talk of the nation*.
 - **Favour:** 70 or more is *content*, 50–69 *calm*, 30–49 *restless*, 10–29 *resentful*, and below 10 *defiant*.
 - **Discontent:** below 2 is *quiet*, 2–4 *grumbling*, 4–6 *restless*, 6–8 *unruly*, and 8 or more *rioting*.
 
-A poll reads, for example: "In North Arpal, Social Reform is *a burning question*, and the people are *strongly for* it."
+A poll reads, for example: "Across the kingdom, Social Reform is *a burning question*. By province:", then one line per province such as "- In North Arpal, the people are *strongly for* it."
 
 **Voice.** Everything the bot posts publicly is written in the world's voice. The resolution summary reads as the news of the season. GM acts (appointing a Chancellor, imposing a cabinet, summoning the Assembly after an election, `/gm proclaim`) are posted as royal proclamations, under the heading "By His Majesty's Command". Campaign days are dispatches from the hustings. GM alerts and private errors stay plain.
 
@@ -1094,7 +1114,7 @@ A poll reads, for example: "In North Arpal, Social Reform is *a burning question
 
 - **#news:** the daily resolution summary, events (with a briefing on any new issue or bill), crises and their outcomes, laws, projects begun and finished, crackdown results, royal proclamations, resignations, parties founded and dissolved, manifestos and election results.
 - **#notices:** short notices that aren't news: factions registered or returning, GM commendations, withdrawn crises and corrected content. Until it is set, these go to #news.
-- **#dashboard:** one pinned embed, edited after every resolution: the calendar, parties and seats, economy, budget and purses, Favour in words, discontent in words and conditions by province, open issues and open crises.
+- **#dashboard:** one pinned embed, edited after every resolution: the calendar, parties and seats, every faction's popularity with its change since the last resolution, economy, budget and purses, Favour in words, discontent in words and conditions by province, open issues and open crises. Below it, in the same message, the economy, money and popularity charts (`/chart`), redrawn each time; charts are left off if the embeds would pass Discord's 6000-character limit.
 - **#assembly:** bills scheduled for next turn, readings of bills with their summary, votes (secret until counted), questions and unanswered questions, and no-confidence motions.
 - **#campaign-log:** campaign actions and attacks, posted with the resolution that resolves them (never on submission, since they resolve simultaneously), campaign-day dispatches, stance logs, and programmes and programme flips recorded outside a pre-election.
 - **#cabinet:** private to the Cabinet role, the GM role and the bot. Pending orders, projects, crisis deadlines, and the cabinet's own discussion. The Cabinet role has no colour, so party colours stay as they are. Showing it separately in the member list is the GM's choice: hoisted above the party roles, ministers are listed under the Cabinet instead of under their party. When a minister leaves office they lose the role, and with it the chat; its history stays for the next cabinet.

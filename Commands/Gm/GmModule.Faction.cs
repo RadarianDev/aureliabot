@@ -15,6 +15,7 @@ public partial class GmModule
         private readonly Confirmations _confirmations;
         private readonly Publisher _publisher;
         private readonly AlertService _alerts;
+        private readonly AgendaService _agendas;
 
         public FactionGroup(
             DatabaseService data,
@@ -24,7 +25,8 @@ public partial class GmModule
             CabinetSyncService cabinetSync,
             Confirmations confirmations,
             Publisher publisher,
-            AlertService alerts)
+            AlertService alerts,
+            AgendaService agendas)
         {
             _data = data;
             _constants = constants;
@@ -34,6 +36,7 @@ public partial class GmModule
             _confirmations = confirmations;
             _publisher = publisher;
             _alerts = alerts;
+            _agendas = agendas;
         }
 
         [SlashCommand("create", "Register a player as a faction, with a private channel")]
@@ -79,6 +82,7 @@ public partial class GmModule
             var greeted = channelId is not null && await _factionChannels.SendAsync(
                 player.Id,
                 Texts.Get("gm.faction.create.greeting", ("player", player.Mention), ("character", character), ("province", province.Name)));
+            if (greeted) await _agendas.DealAsync(player.Id);
 
             var lines = new List<string>
             {
@@ -248,6 +252,7 @@ public partial class GmModule
                 ChannelRole.Notices,
                 Texts.Get("gm.faction.unretire.news", ("character", faction.CharacterName), ("player", MentionUtils.MentionUser(userId))),
                 "gm faction unretire");
+            await _agendas.DealAsync(userId);
             return Texts.Get("gm.faction.unretire.returned", ("faction", Display.Faction(faction)));
         }
 

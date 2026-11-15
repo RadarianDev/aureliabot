@@ -67,7 +67,7 @@ public class ResolutionFlowTests : IDisposable
     }
 
     [Fact]
-    public void APoll_IsDeliveredPrivatelyInWords_ForTheKingdomAndEveryProvince()
+    public void APoll_IsDeliveredPrivatelyInWords_WithNationalSalienceAndEveryProvincesMood()
     {
         StartWithIssue();
         Db.CreateFaction(1, "Pollster", "aurenten", 10);
@@ -75,7 +75,7 @@ public class ResolutionFlowTests : IDisposable
 
         var report = Resolve();
 
-        var message = Assert.Single(report.PrivateMessages[1]);
+        var message = Assert.Single(report.PrivateMessages[1], m => !m.Contains("Your secret agenda"));
         Assert.Contains("Across the kingdom", message);
         Assert.All(Config.Provinces, p => Assert.Contains(p.Name, message));
         Assert.Contains("*", message);
@@ -148,7 +148,8 @@ public class ResolutionFlowTests : IDisposable
         StartWithIssue();
         Db.CreateFaction(1, "High", "aurenten", 50);
         Resolve();
-        Assert.Equal(48, Db.GetFaction(1)!.Popularity, 6);
+        var drift = Config.Constants.Popularity;
+        Assert.Equal(50 + drift.Drift * (drift.Start - 50), Db.GetFaction(1)!.Popularity, 6);
     }
 
     [Fact]

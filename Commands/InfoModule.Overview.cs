@@ -73,6 +73,24 @@ public partial class InfoModule
         return sb.ToString();
     }
 
+    private string StandingsInfo()
+    {
+        var config = _constants.Config;
+        var sb = new StringBuilder();
+        sb.AppendLine(Texts.Get("standings.heading", ("season", _data.GetGameState().Label)));
+        sb.AppendLine(Texts.Get("standings.subheading"));
+        var lines = Standings.Lines(_data, config);
+        sb.AppendLine(lines.Count == 0 ? Texts.Get("standings.none") : string.Join("\n", lines));
+        var leaders = Standings.ProvinceLeaders(_data, config);
+        if (leaders.Count > 0)
+        {
+            sb.AppendLine();
+            sb.AppendLine(Texts.Get("standings.leadersHeading"));
+            sb.AppendLine(string.Join("\n", leaders));
+        }
+        return sb.ToString();
+    }
+
     private string LawsInfo()
     {
         var laws = _data.GetBills().Where(b => b.Status == BillStatus.Passed).ToList();
