@@ -69,7 +69,7 @@
 - A bill proposed during a turn is voted on during the next turn, and counted when that turn ends. Only one bill per issue can be before the Assembly at a time.
 - Cabinet and no-confidence votes stay open until the end of the next turn. Each faction votes all its seats one way, and a bill passes when more seats vote for it than against.
 - On bills and cabinet votes, a party member who doesn't vote follows the first of the party's factions to vote Yes or No. Voting yourself, even to abstain, always keeps your own vote. Following a vote takes no stance. A vote of no confidence is never followed.
-- A faction whose seats are not cast on a vote, because it neither voted (abstaining counts as voting) nor had a party vote to follow, loses 2 popularity. It is told privately; the GM sees it too, but it is not published.
+- A faction whose seats are not cast on a vote, because it neither voted (abstaining counts as voting) nor had a party vote to follow, loses 2 popularity. A party member who doesn't vote and follows its party instead loses 0.5. Either way the faction is told privately; the GM sees it too, but it is not published.
 - Votes are **secret** until the count: nobody sees how many seats stand for or against, or who voted how, until the vote is resolved. Then the totals and each faction's vote are published. The one exception is that a member who hasn't voted can see which way their own party is voting so far.
 - A passed bill becomes **law**: its effects apply, and its proposer gains popularity if the people back the bill's side of the issue, or loses some if they don't. The issue stays open unless the law settles it.
 - Laws can change the rules themselves, from taxes to the number of seats.

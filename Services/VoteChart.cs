@@ -11,8 +11,7 @@ public static class VoteChart
         return image;
     }
 
-    public static int ChamberSize(DatabaseService data) =>
-        Math.Max(data.GetGameState().Seats, (int)data.GetAllFactions().Sum(f => f.Seats));
+    public static int ChamberSize(DatabaseService data) => (int)data.GetActiveFactions().Sum(f => f.Seats);
 
     public static List<PartyData> Blocs(int yes, int no, int seats) =>
         new[]
@@ -25,7 +24,7 @@ public static class VoteChart
     public static MemoryStream? Render(DatabaseService data, int yes, int no) => Render(yes, no, ChamberSize(data));
 
     public static MemoryStream? RenderSenate(DatabaseService data, int yes, int no) =>
-        Render(yes, no, (int)data.GetAllFactions().Sum(f => f.SenateSeats));
+        Render(yes, no, (int)data.GetActiveFactions().Sum(f => f.SenateSeats));
 
     private static MemoryStream? Render(int yes, int no, int seats)
     {

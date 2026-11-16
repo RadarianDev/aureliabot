@@ -93,6 +93,7 @@ public sealed record AssemblyConstants
     public int NoConfidenceGatherResolutions { get; init; }
     public int NoConfidenceCooldownSeasons { get; init; }
     public double MissedVotePenalty { get; init; }
+    public double FollowedVotePenalty { get; init; }
 }
 
 public sealed record ElectionNightConstants

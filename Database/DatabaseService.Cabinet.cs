@@ -338,7 +338,7 @@ public partial class DatabaseService
             var counted = CountedVotesTx(conn, tx, VoteSubject.Cabinet, nomination.Id);
             var tally = counter.Tally(counted, seats);
             var approved = counter.Passes(tally);
-            PenaliseMissedVotesTx(conn, tx, seats.Keys, counted, Texts.Get("vote.missedCabinet",
+            PenaliseMissedVotesTx(conn, tx, seats.Keys, VoteSubject.Cabinet, nomination.Id, Texts.Get("vote.missedCabinet",
                 ("chancellor", nomination.ChancellorId is { } nominee ? $"<@{nominee}>" : Texts.Get("cabinet.vacant"))), config.Constants, report);
             foreach (var (factionId, choice) in PartyFollowersTx(conn, tx, VoteSubject.Cabinet, nomination.Id))
                 if (seats.ContainsKey(factionId))

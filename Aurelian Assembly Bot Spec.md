@@ -189,7 +189,7 @@ opposition: { actionsPerSeason: 1, privateBillsPerYear: 1,
               unansweredQuestion: 2, questionReward: 1, condemnReward: 1, condemnPenalty: 0.5,
               whipCountReward: 1, whipCountPenalty: 0.5 }
 assembly: { noConfidenceShare: 0.1667, noConfidenceGatherResolutions: 2, noConfidenceCooldownSeasons: 4,
-            missedVotePenalty: 2 }
+            missedVotePenalty: 2, followedVotePenalty: 0.5 }
 election: { baseExponent: 0.85, homeMultiplier: 1.5, programmeWeight: 0.5,
             multiplierMin: 0.5, multiplierMax: 1.5, crowding: true }
 economy: { start: 1000, growth: 0.005 }
@@ -627,7 +627,7 @@ The responsible minister is whoever holds the ministry at the deadline, or the C
 
 **No confidence:** any active faction outside the cabinet can table a motion or co-sign one, members of governing parties included, so a party can bring down its own Chancellor. Neither costs an action. A motion goes to a vote once its tabler and co-signers together hold the tabling threshold, `noConfidenceShare` of the Assembly's seats rounded to the nearest seat (30 of 180). If they don't reach it within `noConfidenceGatherResolutions` resolutions, the motion lapses; a lapsed motion starts no cooldown. After a failed motion, no new one can be tabled for `noConfidenceCooldownSeasons`. A passed motion turns the sitting cabinet into a caretaker and calls a **snap election** (section 2): the season the resolution opens becomes the pre-election.
 
-**Missed votes:** when a bill, cabinet or no-confidence vote is counted, every active faction with seats in a chamber that votes on it, but whose seats were not cast, loses `missedVotePenalty` popularity. Seats are cast by voting, abstaining included, or by following a party vote (bills and cabinet votes only). The faction is told privately, and the GM digest lists it; it is not published.
+**Missed votes:** when a bill, cabinet or no-confidence vote is counted, every active faction with seats in a chamber that votes on it, but whose seats were not cast, loses `missedVotePenalty` popularity. A faction that did not vote but whose seats followed a party vote loses `followedVotePenalty` instead. Seats are cast by voting, abstaining included, or by following a party vote (bills and cabinet votes only). The faction is told privately, and the GM digest lists it; it is not published.
 
 **Election boundary:** no bill can be voted on and no no-confidence motion tabled during the pre-election, so bills can't be proposed during it or in the turn before a scheduled one. A bill scheduled for a turn that becomes a snap pre-election is cancelled when that turn opens. Any motion or cabinet nomination still open when the election runs is cancelled. A cancelled bill returns to Available with no cooldown, and a cancelled private bill no longer counts towards its proposer's `privateBillsPerYear`.
 

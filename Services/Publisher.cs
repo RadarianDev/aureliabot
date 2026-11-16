@@ -175,8 +175,11 @@ public partial class Publisher
         }
 
         foreach (var missed in report.MissedVotes)
-            lines.Add(Texts.Get("digest.missedVote", ("faction", factionName(missed.FactionId)), ("vote", missed.Vote),
-                ("change", Display.Signed(missed.PopularityChange))));
+            lines.Add(missed.Followed
+                ? Texts.Get("digest.followedVote", ("faction", factionName(missed.FactionId)), ("vote", missed.Vote),
+                    ("change", Display.Signed(missed.PopularityChange)))
+                : Texts.Get("digest.missedVote", ("faction", factionName(missed.FactionId)), ("vote", missed.Vote),
+                    ("change", Display.Signed(missed.PopularityChange))));
 
         foreach (var cancelled in report.ReadingsCancelled)
             lines.Add(Texts.Get("digest.readingCancelled", ("bill", cancelled.Title), ("reason", cancelled.Reason)));

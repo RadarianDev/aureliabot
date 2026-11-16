@@ -14,7 +14,7 @@ public class MissedVoteTests : AssemblyTestBase
     }
 
     [Fact]
-    public void SeatsLeftUncast_CostThePenalty_ButVotingAbstainingOrFollowingDoesNot()
+    public void SeatsLeftUncast_CostTheFullPenalty_FollowingCostsLess_AndVotingOrAbstainingNothing()
     {
         var reading = OpenGovernmentBill();
         Vote(VoteSubject.Reading, reading.Id, Chancellor, VoteChoice.Yes);
@@ -23,13 +23,19 @@ public class MissedVoteTests : AssemblyTestBase
 
         var report = Count();
 
-        Assert.Equal([SecondOpposer, Independent], report.MissedVotes.Select(m => m.FactionId).Order());
-        Assert.All(report.MissedVotes, m => Assert.Equal(-C.Assembly.MissedVotePenalty, m.PopularityChange));
+        var uncast = report.MissedVotes.Where(m => !m.Followed).ToList();
+        var followed = report.MissedVotes.Where(m => m.Followed).ToList();
+        Assert.Equal([SecondOpposer, Independent], uncast.Select(m => m.FactionId).Order());
+        Assert.Equal([Minister, Backbencher], followed.Select(m => m.FactionId).Order());
+        Assert.All(uncast, m => Assert.Equal(-C.Assembly.MissedVotePenalty, m.PopularityChange));
+        Assert.All(followed, m => Assert.Equal(-C.Assembly.FollowedVotePenalty, m.PopularityChange));
         Assert.Equal(before[SecondOpposer] - C.Assembly.MissedVotePenalty, Popularity(SecondOpposer));
         Assert.Equal(before[Independent] - C.Assembly.MissedVotePenalty, Popularity(Independent));
-        foreach (var voter in new[] { Minister, Backbencher, Opposer })
-            Assert.Equal(before[voter], Popularity(voter));
+        Assert.Equal(before[Minister] - C.Assembly.FollowedVotePenalty, Popularity(Minister));
+        Assert.Equal(before[Backbencher] - C.Assembly.FollowedVotePenalty, Popularity(Backbencher));
+        Assert.Equal(before[Opposer], Popularity(Opposer));
         Assert.Contains(report.PrivateMessages[Independent], m => m.Contains("ten_hours"));
+        Assert.Contains(report.PrivateMessages[Minister], m => m.Contains("ten_hours") && m.Contains(Display.Signed(-C.Assembly.FollowedVotePenalty)));
     }
 
     [Fact]

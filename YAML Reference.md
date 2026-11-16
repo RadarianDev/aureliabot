@@ -369,7 +369,7 @@ opposition: { actionsPerSeason: 1, privateBillsPerYear: 1,
               unansweredQuestion: 2, questionReward: 1, condemnReward: 1, condemnPenalty: 0.5,
               whipCountReward: 1, whipCountPenalty: 0.5 }
 assembly: { noConfidenceShare: 0.1667, noConfidenceGatherResolutions: 2, noConfidenceCooldownSeasons: 4,
-            missedVotePenalty: 2 }
+            missedVotePenalty: 2, followedVotePenalty: 0.5 }
 election: { baseExponent: 0.85, homeMultiplier: 1.5, programmeWeight: 0.5,
             multiplierMin: 0.5, multiplierMax: 1.5, crowding: true, threshold: 0.08 }
 electionNight: { secondsPerProvince: 20 }
@@ -458,6 +458,7 @@ startingForces:
 | `assembly.noConfidenceGatherResolutions` | Resolutions to gather those seats. |
 | `assembly.noConfidenceCooldownSeasons` | Seasons after a failed motion before another. |
 | `assembly.missedVotePenalty` | Popularity a faction loses for each vote it leaves its seats uncast on: it neither voted (abstaining counts) nor followed a party vote. 0 turns it off. |
+| `assembly.followedVotePenalty` | Popularity a party member loses for each bill or cabinet vote it doesn't cast itself, its seats following the party instead. 0 turns it off. |
 
 **Elections**
 

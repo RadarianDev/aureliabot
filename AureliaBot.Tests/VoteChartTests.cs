@@ -14,6 +14,21 @@ public class VoteChartTests
     }
 
     [Fact]
+    public void TheChamber_IsTheSeatsSittingNow_NotASizeAwaitingTheNextElection()
+    {
+        using var fixture = new DatabaseFixture();
+        var db = fixture.Db;
+        db.StartGame(DatabaseFixture.Config, DateTimeOffset.UtcNow);
+        db.SaveGameState(db.GetGameState() with { Seats = 210 });
+        db.CreateFaction(1, "A", "aurenten", 10);
+        db.CreateFaction(2, "B", "iracterie", 10);
+        db.SetFactionSeats(1, 100);
+        db.SetFactionSeats(2, 80);
+
+        Assert.Equal(180, VoteChart.ChamberSize(db));
+    }
+
+    [Fact]
     public void Blocs_LeaveOutEmptyOnes()
     {
         Assert.Equal([VoteChart.YesColour, VoteChart.NoColour], VoteChart.Blocs(100, 80, 180).Select(b => b.HexColor));

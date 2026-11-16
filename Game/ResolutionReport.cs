@@ -69,7 +69,7 @@ public sealed record WhipCountReport(string Title, ulong FactionId, ulong Minist
 
 public sealed record CabinetVoteReport(long CabinetId, ulong? ChancellorId, bool Approved, int YesSeats, int NoSeats, int AbstainSeats);
 
-public sealed record MissedVoteReport(ulong FactionId, string Vote, double PopularityChange);
+public sealed record MissedVoteReport(ulong FactionId, string Vote, double PopularityChange, bool Followed);
 
 public sealed record NoConfidenceReport(long MotionId, ulong TablerId, NoConfidenceStatus Outcome, int YesSeats, int NoSeats, int FilledSeats);
 
