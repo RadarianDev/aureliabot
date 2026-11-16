@@ -44,13 +44,14 @@ public partial class Publisher
         }
         else
         {
-            var news = new List<string> { Texts.Get("news.season.header", ("season", GameCalendar.Label(report.ToSeason, report.ToYear))) };
+            var news = new List<string> { SeasonHeader(report.ToSeason, report.ToYear) };
+            news.Add(_data.GetGameState().NextResolutionAt is { } next
+                ? Texts.Get("news.season.masthead", ("when", Display.When(next)))
+                : Texts.Get("news.season.mastheadOpen"));
             if (report.PreElectionOpened)
                 news.Add(Texts.Get("news.season.hustingsOpen"));
             if (report.SenateCampaignOpened)
                 news.Add(Texts.Get("news.season.senateCampaignOpen"));
-            if (_data.GetGameState().NextResolutionAt is { } next)
-                news.Add(Texts.Get("news.season.closes", ("when", Display.When(next))));
             news.AddRange(report.News);
             await PostAsync(ChannelRole.News, string.Join("\n", news), source);
             await PostYearlyChartsAsync(report, source);
@@ -88,6 +89,18 @@ public partial class Publisher
         }
 
         await UpdateDashboardAsync();
+    }
+
+    private static string SeasonHeader(Season season, int year)
+    {
+        var label = ("season", (object)GameCalendar.Label(season, year));
+        return season switch
+        {
+            Season.Spring => Texts.Get("news.season.header.spring", label),
+            Season.Summer => Texts.Get("news.season.header.summer", label),
+            Season.Autumn => Texts.Get("news.season.header.autumn", label),
+            _ => Texts.Get("news.season.header.winter", label),
+        };
     }
 
     public async Task PublishStartedAsync(ResolutionReport report, string source, bool announceProjects)
@@ -161,6 +174,10 @@ public partial class Publisher
             lines.Add(Texts.Get("digest.senateElection", ("seats", string.Join(", ", seats))));
         }
 
+        foreach (var missed in report.MissedVotes)
+            lines.Add(Texts.Get("digest.missedVote", ("faction", factionName(missed.FactionId)), ("vote", missed.Vote),
+                ("change", Display.Signed(missed.PopularityChange))));
+
         foreach (var cancelled in report.ReadingsCancelled)
             lines.Add(Texts.Get("digest.readingCancelled", ("bill", cancelled.Title), ("reason", cancelled.Reason)));
 
@@ -191,10 +208,14 @@ public partial class Publisher
     {
         var top = new List<string>();
         if (!string.IsNullOrWhiteSpace(heading)) top.Add(Texts.Get("news.effectPost.heading", ("heading", heading)));
-        top.AddRange(preamble.Where(line => !string.IsNullOrWhiteSpace(line)));
+        var preambleLines = preamble.Where(line => !string.IsNullOrWhiteSpace(line)).ToList();
+        top.AddRange(preambleLines);
+        if (!string.IsNullOrWhiteSpace(story) && preambleLines.Count > 0) top.Add("");
         if (!string.IsNullOrWhiteSpace(story))
-            top.Add(string.Join("\n\n", story.Split("\n\n", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                .Select(paragraph => Texts.Get("news.effectPost.story", ("text", paragraph)))));
+            top.Add(string.Join("\n" + Texts.Get("news.effectPost.storyBreak") + "\n",
+                story.Split("\n\n", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                    .Select(paragraph => string.Join("\n", paragraph.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                        .Select(line => Texts.Get("news.effectPost.story", ("text", line)))))));
 
         var post = string.Join("\n", top);
         if (effectLines.Count == 0) return post;

@@ -69,6 +69,8 @@ public sealed record WhipCountReport(string Title, ulong FactionId, ulong Minist
 
 public sealed record CabinetVoteReport(long CabinetId, ulong? ChancellorId, bool Approved, int YesSeats, int NoSeats, int AbstainSeats);
 
+public sealed record MissedVoteReport(ulong FactionId, string Vote, double PopularityChange);
+
 public sealed record NoConfidenceReport(long MotionId, ulong TablerId, NoConfidenceStatus Outcome, int YesSeats, int NoSeats, int FilledSeats);
 
 public sealed record ElectionPartySnapshot(long Id, string Name, string Colour, ulong? EmojiId);
@@ -106,6 +108,7 @@ public sealed record ResolutionReport
     public List<QuestionReport> Questions { get; } = [];
     public List<CabinetVoteReport> CabinetVotes { get; } = [];
     public List<NoConfidenceReport> NoConfidenceMotions { get; } = [];
+    public List<MissedVoteReport> MissedVotes { get; } = [];
     public Dictionary<ulong, List<string>> PrivateMessages { get; } = [];
     public List<string> CabinetReport { get; } = [];
     public List<string> Alerts { get; } = [];

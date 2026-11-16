@@ -26,6 +26,7 @@ public class WhipCountTests : AssemblyTestBase
         Predict(Opposer, reading, Minister, VoteChoice.No);
         Assert.False(Db.GetOppositionStanding(Opposer, C).CanAct);
         Vote(VoteSubject.Reading, reading.Id, Minister, VoteChoice.No);
+        Vote(VoteSubject.Reading, reading.Id, Opposer, VoteChoice.Abstain);
         var before = Popularity(Opposer);
 
         var score = Assert.Single(Count().WhipCounts);
@@ -41,6 +42,7 @@ public class WhipCountTests : AssemblyTestBase
         var reading = OpenGovernmentBill();
         Predict(Opposer, reading, Minister, VoteChoice.No);
         Vote(VoteSubject.Reading, reading.Id, Minister, VoteChoice.Yes);
+        Vote(VoteSubject.Reading, reading.Id, Opposer, VoteChoice.Abstain);
         var before = Popularity(Opposer);
 
         Assert.Equal(-C.Opposition.WhipCountPenalty, Assert.Single(Count().WhipCounts).PopularityChange);
@@ -67,6 +69,7 @@ public class WhipCountTests : AssemblyTestBase
         Predict(Opposer, abstained, Minister, VoteChoice.No);
         Predict(SecondOpposer, abstained, Chancellor, VoteChoice.No);
         Vote(VoteSubject.Reading, abstained.Id, Minister, VoteChoice.Abstain);
+        Vote(VoteSubject.Reading, abstained.Id, Opposer, VoteChoice.Abstain);
         var before = Popularity(Opposer);
 
         var scores = Count().WhipCounts;

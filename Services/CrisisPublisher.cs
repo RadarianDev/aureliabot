@@ -78,8 +78,13 @@ public class CrisisPublisher
     public static string IssueTitle(DatabaseService data, string issueId) => data.GetIssue(issueId)?.Title ?? issueId;
 
     public static string AnswerLine(int number, CrisisAnswer answer) =>
-        Texts.Get("crisis.answerLine", ("number", number), ("label", answer.Label), ("lean", AssemblyPublisher.LeanName(answer.Lean)),
-            ("price", answer.Price == 0 ? Texts.Get("crisis.free") : Display.Crowns(answer.Price)));
+        Texts.Get("crisis.answerLine", ("number", number), ("label", answer.Label), ("price", Price(answer)));
+
+    public static string RevealedAnswerLine(int number, CrisisAnswer answer) =>
+        Texts.Get("crisis.answerLineRevealed", ("number", number), ("label", answer.Label), ("lean", AssemblyPublisher.LeanName(answer.Lean)),
+            ("price", Price(answer)));
+
+    private static string Price(CrisisAnswer answer) => answer.Price == 0 ? Texts.Get("crisis.free") : Display.Crowns(answer.Price);
 
     public static string MetaLine(Crisis crisis, GameConfig config, string issueTitle) =>
         Texts.Get("crisis.post.meta", ("ministry", crisis.Ministry.DisplayName()), ("province", Display.Province(config, crisis.ProvinceId)), ("issue", issueTitle));
@@ -90,11 +95,12 @@ public class CrisisPublisher
         {
             Texts.Get("crisis.post.heading", ("crisis", crisis.Title)),
             MetaLine(crisis, config, issueTitle),
-            Texts.Get("crisis.post.due", ("due", GovernmentPublisher.Deadline(state, crisis.DueResolution))),
         };
         lines.AddRange(briefing);
         lines.Add("");
+        lines.Add(Texts.Get("crisis.post.options", ("ministry", crisis.Ministry.DisplayName())));
         lines.AddRange(crisis.Answers.Select((answer, index) => AnswerLine(index + 1, answer)));
+        lines.Add(Texts.Get("crisis.post.due", ("due", GovernmentPublisher.Deadline(state, crisis.DueResolution))));
         return string.Join("\n", lines);
     }
 
@@ -114,7 +120,11 @@ public class CrisisPublisher
         }
         else
         {
-            preamble.Add(Texts.Get("crisis.outcome.chose", ("minister", minister ?? Texts.Get("cabinet.vacant")), ("ministry", ministry), ("answer", outcome.AnswerLabel ?? "")));
+            var chooser = minister ?? Texts.Get("cabinet.vacant");
+            preamble.Add(_data.GetCrisis(outcome.CrisisId)?.Chosen is { } chosen
+                ? Texts.Get("crisis.outcome.choseLean", ("minister", chooser), ("ministry", ministry), ("answer", outcome.AnswerLabel ?? chosen.Label),
+                    ("lean", AssemblyPublisher.LeanName(chosen.Lean)))
+                : Texts.Get("crisis.outcome.chose", ("minister", chooser), ("ministry", ministry), ("answer", outcome.AnswerLabel ?? "")));
             if (!string.IsNullOrWhiteSpace(outcome.ResponseText))
                 preamble.Add(Texts.Get("crisis.outcome.response", ("text", outcome.ResponseText.ReplaceLineEndings("\n> "))));
             if (outcome.Outcome == CrisisOutcome.Complicated)

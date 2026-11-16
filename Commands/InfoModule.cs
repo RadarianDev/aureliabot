@@ -189,7 +189,7 @@ public partial class InfoModule : InteractionModuleBase<SocketInteractionContext
         sb.AppendLine(CrisisPublisher.MetaLine(crisis, _constants.Config, issueTitle));
         foreach (var line in Briefing.ForCrisis(_data, crisis)) sb.AppendLine(line);
         sb.AppendLine();
-        sb.AppendLine(string.Join("\n", crisis.Answers.Select((answer, index) => CrisisPublisher.AnswerLine(index + 1, answer))));
+        sb.AppendLine(string.Join("\n", crisis.Answers.Select((answer, index) => CrisisPublisher.RevealedAnswerLine(index + 1, answer))));
         sb.AppendLine();
         var chosen = crisis.Chosen;
         switch (crisis.Outcome)

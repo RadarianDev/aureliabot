@@ -22,3 +22,5 @@ obj/
 snapshots/
 # Deployment builds
 out/
+
+suggested-bills/

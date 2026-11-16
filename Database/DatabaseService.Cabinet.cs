@@ -313,29 +313,33 @@ public partial class DatabaseService
         return new ResignationResult(null, wasChancellor, ministry, cancelled);
     }
 
-    internal ResolutionReport CountDueCabinetVotes(CabinetVoteCounter counter)
+    internal ResolutionReport CountDueCabinetVotes(GameConfig config, CabinetVoteCounter counter)
     {
         using var conn = Open();
         using var tx = conn.BeginTransaction();
         var state = GetGameStateTx(conn, tx);
         var report = new ResolutionReport { ResolutionNumber = state.ResolutionNumber + 1 };
-        CountDueCabinetVotesTx(conn, tx, state, report, counter);
+        CountDueCabinetVotesTx(conn, tx, state, config, report, counter);
         tx.Commit();
         return report;
     }
 
     private static void CountDueCabinetVotesTx(SqliteConnection conn, SqliteTransaction tx, GameState state, GameConfig config, ResolutionReport report) =>
-        CountDueCabinetVotesTx(conn, tx, state, report, CabinetVoteCounter.Standard);
+        CountDueCabinetVotesTx(conn, tx, state, config, report, CabinetVoteCounter.Standard);
 
-    private static void CountDueCabinetVotesTx(SqliteConnection conn, SqliteTransaction tx, GameState state, ResolutionReport report, CabinetVoteCounter counter)
+    private static void CountDueCabinetVotesTx(
+        SqliteConnection conn, SqliteTransaction tx, GameState state, GameConfig config, ResolutionReport report, CabinetVoteCounter counter)
     {
         var resolution = state.ResolutionNumber + 1;
         var due = QueryCabinetsTx(conn, tx, "kind = 'Nominated' AND status = 'Voting' AND due_resolution <= $resolution", ("$resolution", resolution));
         foreach (var nomination in due)
         {
             var seats = VotingSeatsTx(conn, tx);
-            var tally = counter.Tally(CountedVotesTx(conn, tx, VoteSubject.Cabinet, nomination.Id), seats);
+            var counted = CountedVotesTx(conn, tx, VoteSubject.Cabinet, nomination.Id);
+            var tally = counter.Tally(counted, seats);
             var approved = counter.Passes(tally);
+            PenaliseMissedVotesTx(conn, tx, seats.Keys, counted, Texts.Get("vote.missedCabinet",
+                ("chancellor", nomination.ChancellorId is { } nominee ? $"<@{nominee}>" : Texts.Get("cabinet.vacant"))), config.Constants, report);
             foreach (var (factionId, choice) in PartyFollowersTx(conn, tx, VoteSubject.Cabinet, nomination.Id))
                 if (seats.ContainsKey(factionId))
                     report.AddPrivate(factionId, Texts.Get("vote.followedCabinet",

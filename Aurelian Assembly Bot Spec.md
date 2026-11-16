@@ -188,7 +188,8 @@ government: { billsPerSeason: 1 }
 opposition: { actionsPerSeason: 1, privateBillsPerYear: 1,
               unansweredQuestion: 2, questionReward: 1, condemnReward: 1, condemnPenalty: 0.5,
               whipCountReward: 1, whipCountPenalty: 0.5 }
-assembly: { noConfidenceShare: 0.1667, noConfidenceGatherResolutions: 2, noConfidenceCooldownSeasons: 4 }
+assembly: { noConfidenceShare: 0.1667, noConfidenceGatherResolutions: 2, noConfidenceCooldownSeasons: 4,
+            missedVotePenalty: 2 }
 election: { baseExponent: 0.85, homeMultiplier: 1.5, programmeWeight: 0.5,
             multiplierMin: 0.5, multiplierMax: 1.5, crowding: true }
 economy: { start: 1000, growth: 0.005 }
@@ -381,20 +382,24 @@ default:
 When the event posts it, in #news (`/info` shows the same):
 
 ```
-## Crisis: The Lanten Dock Strike
-Ministry of Commerce and Labor · Ocidanten · Social Reform
-Due at the next resolution, Winter 1851 <t:…:R>
+## ⚠️ Crisis: The Lanten Dock Strike
+-# Ministry of Commerce and Labor · Ocidanten · Social Reform
+(summary, then what *For* and *Against* mean)
 
-1. Meet the strikers' demands · For · 30 cr
-2. Commission a royal inquiry · Neutral · 40 cr
-3. Declare the strike unlawful · Against · free
+**Before the Ministry of Commerce and Labor:**
+1. Meet the strikers' demands · 30 cr
+2. Commission a royal inquiry · 40 cr
+3. Declare the strike unlawful · free
+-# The answer is due at the resolution that ends Winter 1851, <t:…:R>. Which way each answer leans stays sealed until the crisis resolves.
 ```
+
+The answers' leans are hidden from everyone but the GM, the minister included, until the crisis resolves: the minister has to judge from the wording which way each answer cuts. The outcome post names the chosen answer's lean, and `/info` on a resolved crisis lists every answer with its lean.
 
 After the resolution, a clean outcome:
 
 ```
 ## The Lanten Dock Strike
-@player (Lord Halvard), Minister of Commerce and Labor, chose: Meet the strikers' demands
+@player (Lord Halvard), for the Commerce and Labor, chose: **Meet the strikers' demands**, which leans *For*.
 > The Crown will not see Lanten starve for the sake of a shipowner's ledger.
 
 The docks reopen within the week, and the owners are furious.
@@ -622,6 +627,8 @@ The responsible minister is whoever holds the ministry at the deadline, or the C
 
 **No confidence:** any active faction outside the cabinet can table a motion or co-sign one, members of governing parties included, so a party can bring down its own Chancellor. Neither costs an action. A motion goes to a vote once its tabler and co-signers together hold the tabling threshold, `noConfidenceShare` of the Assembly's seats rounded to the nearest seat (30 of 180). If they don't reach it within `noConfidenceGatherResolutions` resolutions, the motion lapses; a lapsed motion starts no cooldown. After a failed motion, no new one can be tabled for `noConfidenceCooldownSeasons`. A passed motion turns the sitting cabinet into a caretaker and calls a **snap election** (section 2): the season the resolution opens becomes the pre-election.
 
+**Missed votes:** when a bill, cabinet or no-confidence vote is counted, every active faction with seats in a chamber that votes on it, but whose seats were not cast, loses `missedVotePenalty` popularity. Seats are cast by voting, abstaining included, or by following a party vote (bills and cabinet votes only). The faction is told privately, and the GM digest lists it; it is not published.
+
 **Election boundary:** no bill can be voted on and no no-confidence motion tabled during the pre-election, so bills can't be proposed during it or in the turn before a scheduled one. A bill scheduled for a turn that becomes a snap pre-election is cancelled when that turn opens. Any motion or cabinet nomination still open when the election runs is cancelled. A cancelled bill returns to Available with no cooldown, and a cancelled private bill no longer counts towards its proposer's `privateBillsPerYear`.
 
 **Every season**
@@ -713,7 +720,7 @@ All commands are slash commands. Long text, such as a roleplay response, is ente
 - **Issue:** summary, *For* and *Against* texts, status (Open, Closed), its bills with their leans and status (Available, before the Assembly with the vote's due date, Cooldown with its end, Passed), its live crises, and every party's programme stance on it.
 - **Bill:** issue, lean, status, summary, which side of the issue it takes, motion, its text and visible effects once passed, and its counted readings with their results.
 - **Project:** province, purse, progress against its price, spending per season, expected finish, bonus deadline and summary, and its visible effects once finished.
-- **Crisis:** ministry, province, issue, summary, what *For* and *Against* mean, answer labels with their leans and prices, and deadline. Your own sealed condemnation is shown only to you. Once resolved: the outcome, its visible effects and the condemnations.
+- **Crisis:** ministry, province, issue, summary, what *For* and *Against* mean, answer labels and prices, and deadline; the answers' leans only once resolved. Your own sealed condemnation is shown only to you. Once resolved: the outcome, its visible effects and the condemnations.
 - **Province:** description, population, Senate seats once the Senate exists, discontent in words, the factions that call it home, works and crises under way, conditions (name and description), the units stationed there, the last election result and every faction ranked by its popularity there.
 - **Ministry:** its holder, its purse (this year's allocation, money in and out, and balance), its spending this year line by line from the ledger, its units or projects, and its open crises and questions.
 - **Budget:** the year's available Budget, every purse with its allocation, spending and balance, the Navy contribution, the reserve with grants and interest, and the year's spending by kind across the government (upkeep, purchases, crises, projects, graft, laws and events). A `year` option shows an earlier year.
@@ -1081,7 +1088,8 @@ A counted bill's result post shows both chambers' totals and a vote chart for ea
 | Fired events and their effect summaries | Yes | Yes | Yes |
 | Queued events | No | No | Yes |
 | Secret agendas | Your own, in `/me`; everyone's at the election, as directions only | Same | Yes, with the numbers |
-| Crisis title, ministry, province, answer labels, leans and prices, and deadline | Yes | Yes | Yes |
+| Crisis title, ministry, province, answer labels and prices, and deadline | Yes | Yes | Yes |
+| Crisis answer leans | After the resolution | After the resolution, even for the responsible minister | Yes |
 | Crisis outcome texts and effect summaries | After the resolution | After the resolution | Yes |
 | Minister's crisis response | After the resolution | After the resolution | Yes |
 | Condemnations | After the resolution | After the resolution | Yes |

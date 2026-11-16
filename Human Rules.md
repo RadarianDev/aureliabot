@@ -43,7 +43,7 @@
 - **Events** are written by the GM and appear at the start of a turn. They change issues, variables and conditions, and can start a **crisis**.
 - A **crisis** is tied to an issue and goes to one **minister**. They have until the end of the turn to pick one of its answers.
 - An empty ministry's crises and questions go to the **chancellor**.
-- Each answer leans *For* or *Against* the issue, or is *Neutral*. A crisis is judged by the people of its province: leaning with them gains popularity, leaning against them costs it, and *Neutral* is the safe but usually expensive way to stall.
+- Each answer leans *For* or *Against* the issue, or is *Neutral*. A crisis is judged by the people of its province: leaning with them gains popularity, leaning against them costs it, and *Neutral* is the safe but usually expensive way to stall. Which way each answer leans is secret, even from the minister, until the crisis resolves: the minister has to read the answers and judge.
 - Answers cost money from the minister's ministry. If it can't pay, the answer still happens, with a *complication*.
 - No answer lets the crisis run its course, and the minister loses popularity.
 ## Actions
@@ -69,6 +69,7 @@
 - A bill proposed during a turn is voted on during the next turn, and counted when that turn ends. Only one bill per issue can be before the Assembly at a time.
 - Cabinet and no-confidence votes stay open until the end of the next turn. Each faction votes all its seats one way, and a bill passes when more seats vote for it than against.
 - On bills and cabinet votes, a party member who doesn't vote follows the first of the party's factions to vote Yes or No. Voting yourself, even to abstain, always keeps your own vote. Following a vote takes no stance. A vote of no confidence is never followed.
+- A faction whose seats are not cast on a vote, because it neither voted (abstaining counts as voting) nor had a party vote to follow, loses 2 popularity. It is told privately; the GM sees it too, but it is not published.
 - Votes are **secret** until the count: nobody sees how many seats stand for or against, or who voted how, until the vote is resolved. Then the totals and each faction's vote are published. The one exception is that a member who hasn't voted can see which way their own party is voting so far.
 - A passed bill becomes **law**: its effects apply, and its proposer gains popularity if the people back the bill's side of the issue, or loses some if they don't. The issue stays open unless the law settles it.
 - Laws can change the rules themselves, from taxes to the number of seats.

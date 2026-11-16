@@ -1061,8 +1061,8 @@ content:
     projectFinishes: "-# When it finishes, in #news:"
     projectFinished: "{title} is finished"
     withBonus: "-# With the bonus, on top:"
-    crisisTitle: "## Crisis: {title}"
-    crisisMeta: Ministry of {ministry} · {province} · {issue}
+    crisisTitle: "## ⚠️ Crisis: {title}"
+    crisisMeta: "-# Ministry of {ministry} · {province} · {issue}"
     crisisDue: Due at the next resolution
     answer: "{number}. {label} · {lean} · {price}"
     free: free
@@ -1415,15 +1415,21 @@ news:
       {season}
     quiet: A quiet day on the hustings.
   season:
-    header: "## {season}"
-    hustingsOpen: "The hustings open: this season ends in an election."
-    senateCampaignOpen: "The Senate campaign opens: this season ends in a Senate election, and the parties are taking applications."
-    closes: The season closes {when}.
+    header:
+      spring: "# 🌱 {season}"
+      summer: "# ☀️ {season}"
+      autumn: "# 🍂 {season}"
+      winter: "# ❄️ {season}"
+    masthead: "-# Royal Aurelian State Gazette · Published by Authority · the season closes {when}"
+    mastheadOpen: "-# Royal Aurelian State Gazette · Published by Authority"
+    hustingsOpen: "> 🗳️ **The hustings open.** This season ends in an election: the candidates take to the platforms, and every province is listening."
+    senateCampaignOpen: "> 🏛️ **The Senate campaign opens.** This season ends in a Senate election, and the parties are taking applications."
   campaignLog:
     header: "## The campaign, {season}"
   effectPost:
     heading: "## {heading}"
-    story: "*{text}*"
+    story: "> *{text}*"
+    storyBreak: ">"
     effectsHeader: "**-- EFFECTS --**"
     effectLine: "- {line}"
   action:
@@ -1687,6 +1693,7 @@ digest:
   electionProvince: "  - {province}: {strengths}"
   electionStrength: "{party} {strength}"
   readingCancelled: "- Cancelled: {bill} ({reason})"
+  missedVote: "- Missed vote: {faction} cast no seats on {vote}, popularity {change}"
   next: "- Next resolution: {when}"
   attention: "**Needs your attention**"
   alert: "- {alert}"
@@ -1877,6 +1884,9 @@ vote:
   closed: "That vote is not open."
   cabinetCast: "You voted {choice} on the cabinet's approval. Votes stay secret until the count, and you can change yours until the deadline."
   theMotion: "the motion of no confidence"
+  missedBill: "**{bill}**"
+  missedCabinet: "the cabinet of {chancellor}"
+  missed: "Your seats were not cast on {vote}, so your popularity {change}. Vote, even to abstain, to avoid this."
   recorded: "You vote **{choice}** on {what}."
   changed: "You change your vote on {what} from {previous} to **{choice}**."
   stanceLogged: "When the vote is counted, it logs your stance on {issue} as *{stance}*, publicly."
@@ -1976,7 +1986,8 @@ assembly:
     postFailed: "An Assembly post failed: {error}"
 
 crisis:
-  answerLine: "{number}. {label} · {lean} · {price}"
+  answerLine: "{number}. {label} · {price}"
+  answerLineRevealed: "{number}. {label} · *{lean}* · {price}"
   free: "free"
   ledger: "{crisis}: {answer}"
   standardComplication: "The money runs out, and the province pays for it."
@@ -1984,13 +1995,15 @@ crisis:
     awaiting: "{crisis} · {ministry} · awaiting your answer"
     answered: "{crisis} · {ministry} · answered, can be changed"
   post:
-    heading: "## Crisis: {crisis}"
-    meta: "Ministry of {ministry} · {province} · {issue}"
-    due: "Due {due}"
+    heading: "## ⚠️ Crisis: {crisis}"
+    meta: "-# Ministry of {ministry} · {province} · {issue}"
+    options: "**Before the Ministry of {ministry}:**"
+    due: "-# The answer is due {due}. Which way each answer leans stays sealed until the crisis resolves."
   private:
     awaits: "A crisis awaits your answer for the {ministry}: **{crisis}**. Choose an answer with `/crisis respond` before the deadline, {due}; with no answer, the crisis runs its course and you lose popularity."
   outcome:
-    chose: "{minister}, for the {ministry}, chose: {answer}"
+    chose: "{minister}, for the {ministry}, chose: **{answer}**"
+    choseLean: "{minister}, for the {ministry}, chose: **{answer}**, which leans *{lean}*."
     response: "> {text}"
     couldNotPay: "The ministry could not pay, and the plan went wrong."
     noAnswer: "No answer came from the {ministry}. {minister} loses popularity: {change}."

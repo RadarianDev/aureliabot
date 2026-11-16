@@ -132,11 +132,11 @@ public class CabinetTests : IDisposable
         Db.CastCabinetVote(nomination.Id, 8, VoteChoice.Yes);
         Db.CastCabinetVote(nomination.Id, 1, VoteChoice.No);
 
-        Assert.Empty(Db.CountDueCabinetVotes(Counter).CabinetVotes);
+        Assert.Empty(Db.CountDueCabinetVotes(Config, Counter).CabinetVotes);
         Assert.Equal(previous, Db.GetSittingCabinet()!.Id);
 
         AtResolution(1);
-        var report = Db.CountDueCabinetVotes(Counter);
+        var report = Db.CountDueCabinetVotes(Config, Counter);
 
         var vote = Assert.Single(report.CabinetVotes);
         Assert.True(vote.Approved);
@@ -162,7 +162,7 @@ public class CabinetTests : IDisposable
         Db.CastCabinetVote(nomination.Id, 7, VoteChoice.Yes);
 
         AtResolution(1);
-        var report = Db.CountDueCabinetVotes(Counter);
+        var report = Db.CountDueCabinetVotes(Config, Counter);
 
         Assert.False(Assert.Single(report.CabinetVotes).Approved);
         Assert.Single(report.Alerts);
@@ -186,7 +186,7 @@ public class CabinetTests : IDisposable
         Db.CastCabinetVote(nomination.Id, 7, VoteChoice.Abstain);
         AtResolution(1);
 
-        var vote = Assert.Single(Db.CountDueCabinetVotes(Counter).CabinetVotes);
+        var vote = Assert.Single(Db.CountDueCabinetVotes(Config, Counter).CabinetVotes);
 
         Assert.False(vote.Approved);
         Assert.Equal(10, vote.AbstainSeats);
@@ -209,7 +209,7 @@ public class CabinetTests : IDisposable
         Assert.Empty(Db.CabinetVotesAwaiting(8));
 
         AtResolution(1);
-        Db.CountDueCabinetVotes(Counter);
+        Db.CountDueCabinetVotes(Config, Counter);
         Assert.NotNull(Db.CastCabinetVote(nomination.Id, 6, VoteChoice.Yes).Refusal);
     }
 

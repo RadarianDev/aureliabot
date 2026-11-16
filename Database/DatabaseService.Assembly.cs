@@ -518,6 +518,8 @@ public partial class DatabaseService
             foreach (var (factionId, choice) in PartyFollowersTx(conn, tx, VoteSubject.Reading, reading.Id))
                 if (seats.ContainsKey(factionId) || (!isOverride && senateSeats.ContainsKey(factionId)))
                     report.AddPrivate(factionId, Texts.Get("vote.followedBill", ("bill", bill.Title), ("choice", AssemblyPublisher.ChoiceName(choice))));
+            PenaliseMissedVotesTx(conn, tx, isOverride ? seats.Keys : seats.Keys.Concat(senateSeats.Keys), counted,
+                Texts.Get("vote.missedBill", ("bill", bill.Title)), c, report);
             Exec(conn, tx, @"UPDATE readings SET yes_seats = $yes, no_seats = $no, abstain_seats = $abstain,
                 senate_yes_seats = $senateYes, senate_no_seats = $senateNo, senate_abstain_seats = $senateAbstain WHERE id = $id;",
                 ("$id", reading.Id), ("$yes", tally.YesSeats), ("$no", tally.NoSeats), ("$abstain", tally.AbstainSeats),
@@ -598,8 +600,10 @@ public partial class DatabaseService
 
         foreach (var motion in due)
         {
-            var tally = rules.Tally(CountedVotesTx(conn, tx, VoteSubject.NoConfidence, motion.Id), seats);
+            var counted = CountedVotesTx(conn, tx, VoteSubject.NoConfidence, motion.Id);
+            var tally = rules.Tally(counted, seats);
             var passed = rules.NoConfidencePasses(tally, filled);
+            PenaliseMissedVotesTx(conn, tx, seats.Keys, counted, Texts.Get("vote.theMotion"), c, report);
             var outcome = passed ? NoConfidenceStatus.Passed : NoConfidenceStatus.Failed;
             Exec(conn, tx, "UPDATE no_confidence SET status = $status, yes_seats = $yes, no_seats = $no WHERE id = $id;",
                 ("$id", motion.Id), ("$status", outcome.ToString()), ("$yes", tally.YesSeats), ("$no", tally.NoSeats));
