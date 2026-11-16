@@ -242,38 +242,11 @@ public class AssemblyPublisher
                 lines.Add(Texts.Get("assembly.reading.assemblyTally", ("yes", reading.YesSeats ?? 0), ("no", reading.NoSeats ?? 0), ("abstain", reading.AbstainSeats ?? 0)));
                 if (reading.SenateYesSeats is { } senateYes)
                     lines.Add(Texts.Get("assembly.reading.senateTally", ("yes", senateYes), ("no", reading.SenateNoSeats ?? 0), ("abstain", reading.SenateAbstainSeats ?? 0)));
-                if (DivisionLine(VoteSubject.Reading, reading.Id) is { } division) lines.Add(division);
+                if (Division.Line(_data, VoteSubject.Reading, reading.Id) is { } division) lines.Add(division);
                 break;
         }
         return string.Join("\n", lines);
     }
-
-    private string? DivisionLine(VoteSubject subject, long subjectId)
-    {
-        var votes = _data.GetVotes(subject, subjectId);
-        var followers = _data.GetPartyFollowers(subject, subjectId);
-        var groups = new List<string>();
-        foreach (var choice in new[] { VoteChoice.Yes, VoteChoice.No, VoteChoice.Abstain })
-        {
-            var side = DivisionName(choice);
-            var voters = string.Join(", ", votes.Where(v => v.Value == choice).Select(v => Display.Faction(_data, v.Key)));
-            var following = string.Join(", ", followers.Where(v => v.Value == choice).Select(v => Display.Faction(_data, v.Key)));
-            if (voters.Length > 0 && following.Length > 0)
-                groups.Add(Texts.Get("assembly.division.groupAndFollowing", ("side", side), ("voters", voters), ("following", following)));
-            else if (voters.Length > 0)
-                groups.Add(Texts.Get("assembly.division.group", ("side", side), ("voters", voters)));
-            else if (following.Length > 0)
-                groups.Add(Texts.Get("assembly.division.groupFollowing", ("side", side), ("following", following)));
-        }
-        return groups.Count == 0 ? null : Texts.Get("assembly.division.line", ("groups", string.Join(Texts.Get("assembly.division.separator"), groups)));
-    }
-
-    private static string DivisionName(VoteChoice choice) => choice switch
-    {
-        VoteChoice.Yes => Texts.Get("assembly.division.ayes"),
-        VoteChoice.No => Texts.Get("assembly.division.noes"),
-        _ => Texts.Get("assembly.division.abstaining"),
-    };
 
     public string MotionPost(NoConfidenceMotion motion)
     {
@@ -308,7 +281,7 @@ public class AssemblyPublisher
                 break;
             case NoConfidenceStatus.Passed or NoConfidenceStatus.Failed:
                 lines.Add(Texts.Get("noConfidence.post.tally", ("yes", motion.YesSeats ?? 0), ("no", motion.NoSeats ?? 0)));
-                if (DivisionLine(VoteSubject.NoConfidence, motion.Id) is { } division) lines.Add(division);
+                if (Division.Line(_data, VoteSubject.NoConfidence, motion.Id) is { } division) lines.Add(division);
                 break;
             case NoConfidenceStatus.Lapsed:
                 lines.Add(Texts.Get("noConfidence.post.lapsed", ("supporters", support.Supporters), ("threshold", support.Threshold)));

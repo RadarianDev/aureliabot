@@ -114,35 +114,31 @@ public class GovernmentPublisher
 
     public string NominationText(Cabinet cabinet)
     {
+        var voting = cabinet is { Kind: CabinetKind.Nominated, Status: CabinetStatus.Voting };
+        var counted = cabinet is { Kind: CabinetKind.Sitting } or { Status: CabinetStatus.Rejected };
         var lines = new List<string>
         {
-            Texts.Get("cabinet.post.heading", ("chancellor", Who(cabinet.ChancellorId))),
+            cabinet switch
+            {
+                _ when voting => Texts.Get("cabinet.post.heading"),
+                { Kind: CabinetKind.Sitting } => Texts.Get("cabinet.post.headingApproved"),
+                { Status: CabinetStatus.Rejected } => Texts.Get("cabinet.post.headingRejected"),
+                _ => Texts.Get("cabinet.post.headingWithdrawn"),
+            },
+            Texts.Get("cabinet.post.meta", ("chancellor", Who(cabinet.ChancellorId))),
             CabinetLines(cabinet),
         };
-        if (cabinet is { Kind: CabinetKind.Nominated, Status: CabinetStatus.Voting })
-            lines.Add(Texts.Get("cabinet.post.secret"));
-        else if (cabinet is { Kind: CabinetKind.Sitting } or { Status: CabinetStatus.Rejected })
-            lines.AddRange(CountedVoteLines(cabinet));
-        lines.Add(cabinet switch
+        if (voting)
+            lines.Add(Texts.Get("cabinet.post.due", ("due", Deadline(_data.GetGameState(), cabinet.DueResolution))));
+        if (counted)
         {
-            { Kind: CabinetKind.Nominated, Status: CabinetStatus.Voting } => Texts.Get("cabinet.post.due", ("due", Deadline(_data.GetGameState(), cabinet.DueResolution))),
-            { Kind: CabinetKind.Sitting } => Texts.Get("cabinet.post.approved"),
-            { Status: CabinetStatus.Rejected } => Texts.Get("cabinet.post.rejected"),
-            _ => Texts.Get("cabinet.post.withdrawn"),
-        });
+            var votes = _data.GetVotes(VoteSubject.Cabinet, cabinet.Id);
+            var followers = _data.GetPartyFollowers(VoteSubject.Cabinet, cabinet.Id);
+            var tally = VoteCounting.Tally(votes.Concat(followers).ToDictionary(), _data.GetVotingSeats());
+            lines.Add(Texts.Get("cabinet.post.tally", ("yes", tally.YesSeats), ("no", tally.NoSeats), ("abstain", tally.AbstainSeats)));
+            if (Division.Line(_data, VoteSubject.Cabinet, cabinet.Id) is { } division) lines.Add(division);
+        }
         return string.Join("\n", lines);
-    }
-
-    private IEnumerable<string> CountedVoteLines(Cabinet cabinet)
-    {
-        var votes = _data.GetVotes(VoteSubject.Cabinet, cabinet.Id);
-        var followers = _data.GetPartyFollowers(VoteSubject.Cabinet, cabinet.Id);
-        var tally = VoteCounting.Tally(votes.Concat(followers).ToDictionary(), _data.GetVotingSeats());
-        yield return Texts.Get("cabinet.post.tally", ("yes", tally.YesSeats), ("no", tally.NoSeats), ("abstain", tally.AbstainSeats));
-        if (votes.Count > 0)
-            yield return Texts.Get("cabinet.post.voters", ("votes", string.Join(", ", votes.Select(v => Texts.Get("cabinet.post.voter", ("faction", Who(v.Key)), ("choice", ChoiceName(v.Value)))))));
-        if (followers.Count > 0)
-            yield return Texts.Get("cabinet.post.followers", ("votes", string.Join(", ", followers.Select(v => Texts.Get("cabinet.post.voter", ("faction", Who(v.Key)), ("choice", ChoiceName(v.Value)))))));
     }
 
     public string CabinetLines(Cabinet cabinet) =>

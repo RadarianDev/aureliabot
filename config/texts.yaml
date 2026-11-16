@@ -1725,21 +1725,20 @@ cabinet:
     no: "No"
     abstain: "Abstain"
   post:
-    heading: |-
-      ## Approval of the cabinet
-      {chancellor} asks the Assembly to approve this cabinet:
-    tally: "**Yes** {yes} seats · **No** {no} · **Abstain** {abstain}"
-    secret: "Votes are secret until the count."
-    voters: "Votes: {votes}"
-    followers: "Following their party: {votes}"
-    voter: "{faction} {choice}"
-    due: "Counted {due}. Every faction with seats votes all its seats, and may change its vote until then."
-    approved: "**Approved.** This cabinet now sits."
-    rejected: "**Rejected.** The sitting cabinet stays in office."
-    withdrawn: "**Withdrawn.** This nomination was cancelled before the count."
+    heading: "## 🏛️ Approval of the cabinet"
+    headingApproved: "## 🏛️ Approval of the cabinet · ✅ Approved"
+    headingRejected: "## 🏛️ Approval of the cabinet · ❌ Rejected"
+    headingWithdrawn: "## 🏛️ ~~Approval of the cabinet~~ · Withdrawn"
+    meta: "-# Laid before the Assembly by {chancellor}, who asks it to approve this cabinet"
+    tally: "**Assembly** Ayes {yes} · Noes {no} · Abstaining {abstain}"
+    due: "-# 🗳️ The division is counted {due}. It carries with more Ayes than Noes. Every faction votes all its seats, party members who don't vote follow their party, and votes are secret until then."
   result:
-    approved: "The Assembly **approves** the cabinet of {chancellor}: Yes {yes} seats, No {no}, Abstain {abstain}."
-    rejected: "The Assembly **rejects** the cabinet of {chancellor}: Yes {yes} seats, No {no}, Abstain {abstain}. The sitting cabinet stays in office."
+    approved: |-
+      🏛️ **The cabinet is approved.** The Assembly approves the cabinet of {chancellor}, {yes} Ayes to {no} Noes.
+      -# Abstaining: {abstain} · the new cabinet takes office at once.
+    rejected: |-
+      🏛️ **The cabinet is rejected.** The Assembly rejects the cabinet of {chancellor}, {yes} Ayes to {no} Noes.
+      -# Abstaining: {abstain} · the sitting cabinet stays in office.
   proclaim:
     appointedSitting: "His Majesty King Arthas II appoints {faction} Chancellor of Aurelia, to take the vacant seat at the head of His Majesty's government at once."
     appointedDesignate: "His Majesty King Arthas II appoints {faction} Chancellor, and charges them to form a government and lay it before the Assembly."
