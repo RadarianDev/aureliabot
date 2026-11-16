@@ -279,11 +279,19 @@ public class AssemblyPublisher
     {
         var c = _constants.Current;
         var cabinet = _data.GetSittingCabinet();
+        var chancellor = cabinet?.ChancellorId is { } chancellorId ? Display.Faction(_data, chancellorId) : Texts.Get("noConfidence.post.noChancellor");
         var lines = new List<string>
         {
-            Texts.Get("noConfidence.post.heading"),
-            Texts.Get("noConfidence.post.tabled", ("tabler", Display.Faction(_data, motion.TablerId)),
-                ("chancellor", cabinet?.ChancellorId is { } chancellor ? Display.Faction(_data, chancellor) : Texts.Get("noConfidence.post.noChancellor"))),
+            motion.Status switch
+            {
+                NoConfidenceStatus.Passed => Texts.Get("noConfidence.post.headingPassed"),
+                NoConfidenceStatus.Failed => Texts.Get("noConfidence.post.headingFailed"),
+                NoConfidenceStatus.Lapsed => Texts.Get("noConfidence.post.headingLapsed"),
+                NoConfidenceStatus.Cancelled => Texts.Get("noConfidence.post.headingCancelled"),
+                _ => Texts.Get("noConfidence.post.heading"),
+            },
+            Texts.Get("noConfidence.post.meta", ("tabler", Display.Faction(_data, motion.TablerId))),
+            Texts.Get("noConfidence.post.motion", ("chancellor", chancellor)),
         };
         var support = _data.GetMotionSupport(motion.Id, c);
         var signers = string.Join(", ", support.Signers.Select(id => Display.Faction(_data, id)));
@@ -291,27 +299,19 @@ public class AssemblyPublisher
         {
             case NoConfidenceStatus.Gathering:
                 lines.Add(Texts.Get("noConfidence.post.support", ("supporters", support.Supporters), ("threshold", support.Threshold)));
-                lines.Add(Texts.Get("noConfidence.post.signers", ("signers", signers)));
-                lines.Add(Texts.Get("noConfidence.post.lapses", ("when", LapseTime(motion))));
+                lines.Add(Texts.Get("noConfidence.post.lapses", ("signers", signers), ("when", LapseTime(motion))));
                 break;
             case NoConfidenceStatus.Voting:
+                var filled = _data.GetVotingSeats().Values.Sum();
                 lines.Add(Texts.Get("noConfidence.post.signers", ("signers", signers)));
-                lines.Add(Texts.Get("noConfidence.post.voting", ("filled", _data.GetVotingSeats().Values.Sum()), ("when", DueTime(motion.DueResolution))));
-                lines.Add(Texts.Get("assembly.secret"));
+                lines.Add(Texts.Get("noConfidence.post.voting", ("filled", filled), ("needed", filled / 2 + 1), ("when", DueTime(motion.DueResolution))));
                 break;
-            case NoConfidenceStatus.Passed:
-                lines.Add(Texts.Get("noConfidence.post.passed", ("yes", motion.YesSeats ?? 0), ("no", motion.NoSeats ?? 0)));
-                lines.AddRange(VoterLines(VoteSubject.NoConfidence, motion.Id));
-                break;
-            case NoConfidenceStatus.Failed:
-                lines.Add(Texts.Get("noConfidence.post.failed", ("yes", motion.YesSeats ?? 0), ("no", motion.NoSeats ?? 0)));
-                lines.AddRange(VoterLines(VoteSubject.NoConfidence, motion.Id));
+            case NoConfidenceStatus.Passed or NoConfidenceStatus.Failed:
+                lines.Add(Texts.Get("noConfidence.post.tally", ("yes", motion.YesSeats ?? 0), ("no", motion.NoSeats ?? 0)));
+                if (DivisionLine(VoteSubject.NoConfidence, motion.Id) is { } division) lines.Add(division);
                 break;
             case NoConfidenceStatus.Lapsed:
                 lines.Add(Texts.Get("noConfidence.post.lapsed", ("supporters", support.Supporters), ("threshold", support.Threshold)));
-                break;
-            default:
-                lines.Add(Texts.Get("noConfidence.post.cancelled"));
                 break;
         }
         return string.Join("\n", lines);
@@ -333,20 +333,6 @@ public class AssemblyPublisher
         return due <= state.ResolutionNumber + 1 ? Display.When(next) : Texts.Get("assembly.afterNext", ("when", Display.When(next)));
     }
 
-    private IEnumerable<string> VoterLines(VoteSubject subject, long subjectId)
-    {
-        var votes = _data.GetVotes(subject, subjectId);
-        var followers = _data.GetPartyFollowers(subject, subjectId);
-        foreach (var choice in new[] { VoteChoice.Yes, VoteChoice.No, VoteChoice.Abstain })
-        {
-            var voters = votes.Where(v => v.Value == choice).Select(v => Display.Faction(_data, v.Key)).ToList();
-            if (voters.Count > 0)
-                yield return Texts.Get("assembly.voters", ("choice", ChoiceName(choice)), ("voters", string.Join(", ", voters)));
-            var following = followers.Where(v => v.Value == choice).Select(v => Display.Faction(_data, v.Key)).ToList();
-            if (following.Count > 0)
-                yield return Texts.Get("assembly.followers", ("choice", ChoiceName(choice)), ("voters", string.Join(", ", following)));
-        }
-    }
 
     public async Task<IUserMessage?> AnnounceAsync(Reading reading)
     {
