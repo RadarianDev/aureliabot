@@ -599,7 +599,7 @@ margins: { economy: 5, reserve: 10, army: 1, discontent: 0.25, favour: 2, threat
 agendas:
   magnate:
     name: The Magnate
-    description: Mills and railways, not barracks.
+    description: Prosperity is the surest defence a nation has.
     wants: { economy: up, army: down }
 ```
 

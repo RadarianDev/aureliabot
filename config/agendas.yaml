@@ -13,25 +13,25 @@ margins: { economy: 5, reserve: 10, army: 1, discontent: 0.25, favour: 2, threat
 agendas:
   magnate:
     name: The Magnate
-    description: Mills and railways, not barracks. Aurelia's future is built in its factories, and every crown spent on soldiers is a crown lost to progress.
+    description: Prosperity is the surest defence a nation has. Every crown kept out of the barracks can build a mill, a railway or a school, and a working, well-fed Aurelia will outlast any army.
     wants: { economy: up, army: down }
   general:
     name: The General
-    description: Glory is won on the field. A strong army and a dangerous world make a nation that needs men like you.
+    description: Peace is kept by those ready to defend it. The world beyond the borders grows more dangerous, and the sooner Aurelia admits it, the sooner it will give its army the strength it needs.
     wants: { army: up, threat: up }
   diplomat:
     name: The Diplomat
-    description: The union with Anzaria keeps Aurelia safe. Keep the nobles content and the borders quiet.
+    description: The union with Anzaria has kept Aurelia safe for generations. Patient goodwill with our partners and quiet borders serve the kingdom better than any show of strength.
     wants: { favour: up, threat: down }
   patriot:
     name: The Patriot
-    description: Aurelia owes Anzaria nothing. Loosen the union and let Aurelian arms stand on their own.
+    description: A kingdom should answer for its own safety. Aurelia has leaned on Anzaria long enough; it is time it stood on its own feet, with an army of its own to stand behind it.
     wants: { favour: down, army: up }
   agitator:
-    name: The Agitator
-    description: The old order must fall before a new one can rise. Let the people grow angry, and let the masters' profits wither.
+    name: The Radical
+    description: A peace bought with hunger wages is no peace at all. Until the people feel their grievances and the great fortunes stop growing at their expense, nothing will truly change.
     wants: { discontent: up, economy: down }
   treasurer:
     name: The Treasurer
-    description: A full treasury and a quiet country. Spend little, keep the peace, and let others chase grand schemes.
+    description: Sound money and a settled country. A kingdom that saves in good years and keeps its people content needs no grand schemes to weather the bad ones.
     wants: { reserve: up, discontent: down }

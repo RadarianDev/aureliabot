@@ -62,7 +62,7 @@ public enum TemplateStatus { Draft, Ready, Archived }
 public enum ChannelRole
 {
     News, Dashboard, Assembly, CampaignLog, PartyRegistry, Cabinet, Gm,
-    FactionCategory, PartyCategory, ArchiveCategory, TurnTracker, GmRole, CabinetRole, Notices
+    FactionCategory, PartyCategory, ArchiveCategory, TurnTracker, GmRole, CabinetRole, Notices, Senate
 }
 
 public static class GameEnumExtensions

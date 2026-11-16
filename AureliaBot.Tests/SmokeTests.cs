@@ -75,4 +75,16 @@ public class SmokeTests : IDisposable
         Db.SetChannel(ChannelRole.Notices, 456UL);
         Assert.Equal(456UL, Db.GetPostingChannel(ChannelRole.Notices));
     }
+
+    [Fact]
+    public void SenatePosts_FallBackToTheAssembly_UntilTheirOwnChannelIsSet()
+    {
+        Assert.Null(Db.GetPostingChannel(ChannelRole.Senate));
+
+        Db.SetChannel(ChannelRole.Assembly, 123UL);
+        Assert.Equal(123UL, Db.GetPostingChannel(ChannelRole.Senate));
+
+        Db.SetChannel(ChannelRole.Senate, 456UL);
+        Assert.Equal(456UL, Db.GetPostingChannel(ChannelRole.Senate));
+    }
 }

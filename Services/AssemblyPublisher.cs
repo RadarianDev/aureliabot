@@ -138,7 +138,7 @@ public class AssemblyPublisher
 
         if (result.Senate is not { } senate) return;
         using var senateChart = VoteChart.RenderSenate(_data, senate.YesSeats, senate.NoSeats);
-        await PostAsync(ChannelRole.Assembly,
+        await PostAsync(ChannelRole.Senate,
             Texts.Get("assembly.result.senate", ("yes", senate.YesSeats), ("no", senate.NoSeats), ("abstain", senate.AbstainSeats)), source, chart: senateChart);
     }
 
@@ -357,7 +357,7 @@ public class AssemblyPublisher
 
     private async Task<IUserMessage?> PostAsync(ChannelRole role, string text, string source, MessageComponent? components = null, MemoryStream? chart = null)
     {
-        if (_data.GetChannel(role) is not { } channelId || _client.GetChannel(channelId) is not IMessageChannel channel)
+        if (_data.GetPostingChannel(role) is not { } channelId || _client.GetChannel(channelId) is not IMessageChannel channel)
         {
             Console.WriteLine($"[AssemblyPublisher] No {role} channel is set; skipped a post from {source}.");
             return null;

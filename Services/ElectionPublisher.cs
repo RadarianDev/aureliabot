@@ -47,19 +47,34 @@ public class ElectionPublisher
     }
 
     public Task PublishAsync(ElectionReport report, string source) =>
-        PublishResultsAsync(report, Texts.Get("election.night.opening", ("term", report.TermNumber)), ResultsText(report, _constants.Config), Texts.Get("election.chartTitle", ("term", report.TermNumber)), Proclamation(report), source);
+        PublishResultsAsync(_data.GetChannel(ChannelRole.News), report, Texts.Get("election.night.opening", ("term", report.TermNumber)),
+            ResultsText(report, _constants.Config), Texts.Get("election.chartTitle", ("term", report.TermNumber)), Proclamation(report), source);
 
-    public Task PublishSenateAsync(ElectionReport report, string source)
+    public async Task PublishSenateAsync(ElectionReport report, string source)
     {
         var config = _constants.Config;
         var results = Texts.Get("election.senateHeader") + "\n" + ResultsBody(report.Result, report.Parties, config);
         var proclamation = Texts.Get("election.senateProclamation", ("seats", report.Result.PartySeats.Values.Sum() + report.Result.IndependentSeats));
-        return PublishResultsAsync(report, Texts.Get("election.night.senateOpening"), results, Texts.Get("election.senateChartTitle"), proclamation, source);
+        if (_data.GetChannel(ChannelRole.Senate) is { } senateId && _data.GetChannel(ChannelRole.News) is { } newsId
+            && _client.GetChannel(newsId) is IMessageChannel news)
+        {
+            try
+            {
+                await SendAsync(news, newsId, source, Texts.Get("election.senateElsewhere", ("channel", senateId)));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ElectionPublisher] {ex}");
+            }
+        }
+        await PublishResultsAsync(_data.GetChannel(ChannelRole.Senate) ?? _data.GetChannel(ChannelRole.News), report,
+            Texts.Get("election.night.senateOpening"), results, Texts.Get("election.senateChartTitle"), proclamation, source);
     }
 
-    private async Task PublishResultsAsync(ElectionReport report, string opening, string results, string chartTitle, string proclamation, string source)
+    private async Task PublishResultsAsync(
+        ulong? target, ElectionReport report, string opening, string results, string chartTitle, string proclamation, string source)
     {
-        if (_data.GetChannel(ChannelRole.News) is not { } channelId || _client.GetChannel(channelId) is not IMessageChannel channel)
+        if (target is not { } channelId || _client.GetChannel(channelId) is not IMessageChannel channel)
         {
             await _alerts.PostAsync(Texts.Get("election.alert.noNews", ("term", report.TermNumber)));
             return;

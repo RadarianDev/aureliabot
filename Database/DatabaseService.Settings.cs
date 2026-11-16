@@ -145,7 +145,12 @@ public partial class DatabaseService
     }
 
     public ulong? GetPostingChannel(ChannelRole role) =>
-        GetChannel(role) ?? (role == ChannelRole.Notices ? GetChannel(ChannelRole.News) : null);
+        GetChannel(role) ?? role switch
+        {
+            ChannelRole.Notices => GetChannel(ChannelRole.News),
+            ChannelRole.Senate => GetChannel(ChannelRole.Assembly),
+            _ => null,
+        };
 
     public Dictionary<ChannelRole, ulong> GetChannels()
     {

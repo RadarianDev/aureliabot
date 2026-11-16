@@ -10,6 +10,7 @@ public enum PeekMode
     [ChoiceDisplay("Party strength working")] Strength,
     [ChoiceDisplay("Opinion by province")] Opinion,
     [ChoiceDisplay("Popularity by province")] Popularity,
+    [ChoiceDisplay("Popularity global")] PopularityGlobal,
     [ChoiceDisplay("Pending actions")] Actions,
 }
 
@@ -46,6 +47,7 @@ public partial class GmModule
             PeekMode.Opinion => OpinionByProvince(found),
             PeekMode.Actions => PendingActions(),
             PeekMode.Popularity => PopularityByProvince(found),
+            PeekMode.PopularityGlobal => PopularityGlobal(),
             _ => HiddenState(),
         };
         foreach (var chunk in Publisher.Chunk(text))

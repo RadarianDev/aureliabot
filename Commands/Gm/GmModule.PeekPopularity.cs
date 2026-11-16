@@ -40,4 +40,36 @@ public partial class GmModule
         if (factions.Count == 0) lines.Add(Texts.Get("standings.none"));
         return string.Join("\n", lines);
     }
+
+    private string PopularityGlobal()
+    {
+        var config = _constants.Config;
+        var regional = _data.GetAllRegionalPopularity(config.Constants.Popularity);
+        var parties = _data.GetAllParties().ToDictionary(p => p.Id);
+        var lines = new List<string> { Texts.Get("gm.peek.popularity.globalHeader"), Texts.Get("gm.peek.popularity.globalNote") };
+
+        var rank = 0;
+        foreach (var faction in _data.GetActiveFactions().OrderByDescending(f => f.Popularity))
+        {
+            var byProvince = config.Provinces
+                .Select(p => (Province: p, Popularity: regional.GetValueOrDefault(faction.UserId)?.GetValueOrDefault(p.Id) ?? faction.Popularity))
+                .OrderBy(x => x.Popularity)
+                .ToList();
+            var lowest = byProvince[0];
+            var highest = byProvince[^1];
+            lines.Add(Texts.Get("gm.peek.popularity.globalLine",
+                ("rank", ++rank),
+                ("faction", Display.Faction(faction)),
+                ("party", faction.PartyId is { } id && parties.TryGetValue(id, out var party) ? Display.Party(party) : Display.Independent),
+                ("popularity", Fixed(faction.Popularity)),
+                ("median", Fixed(Median(byProvince.Select(x => x.Popularity).ToList()))),
+                ("highest", Fixed(highest.Popularity)), ("highestProvince", highest.Province.Name),
+                ("lowest", Fixed(lowest.Popularity)), ("lowestProvince", lowest.Province.Name)));
+        }
+        if (rank == 0) lines.Add(Texts.Get("standings.none"));
+        return string.Join("\n", lines);
+    }
+
+    private static double Median(IReadOnlyList<double> sorted) =>
+        sorted.Count % 2 == 1 ? sorted[sorted.Count / 2] : (sorted[sorted.Count / 2 - 1] + sorted[sorted.Count / 2]) / 2;
 }

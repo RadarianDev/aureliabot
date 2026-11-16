@@ -752,6 +752,9 @@ gm:
       noMark: "unknown"
       cell: "{province} {popularity}"
       homeCell: "⌂ {province} {popularity}"
+      globalHeader: "## Popularity across the kingdom (current state)"
+      globalNote: "-# National is weighted by population; the median, highest and lowest are taken across the provinces, each counting once."
+      globalLine: "{rank}. **{faction}** · {party} · national **{popularity}** · median {median} · highest {highest} ({highestProvince}) · lowest {lowest} ({lowestProvince})"
     header: "## Hidden state · {label}"
     kingdom: "**Kingdom:** Favour {favour} (baseline {baseline}) · Threat {threat} · Economy {economy} · Tax rate {tax} · Reserve {reserve}"
     issuesHeading: "**Open issues** (base opinion · national opinion · salience)"
@@ -851,6 +854,7 @@ setup:
     notices: "#notices"
     dashboard: "#dashboard"
     assembly: "#assembly"
+    senate: "#senate"
     campaignLog: "#campaign-log"
     cabinet: "#cabinet"
     gm: "#gm"
@@ -1462,6 +1466,7 @@ election:
     The returns are in for the Senate.
   senateChartTitle: The new Senate
   senateProclamation: "His Majesty King Arthas II summons the newly elected Senate, {seats} members strong."
+  senateElsewhere: "🏛️ **The provinces are electing their Senate.** The returns come in province by province in <#{channel}>."
   provincesHeading: "**The provinces**"
   night:
     opening: |-
@@ -1494,7 +1499,7 @@ election:
     The people of Aurelia have spoken. His Majesty King Arthas II summons the newly elected Assembly, {seats} members strong, to sit for term {term}.
     Let the members take their benches, and let the Crown be advised.
   alert:
-    noNews: "No #news channel is set, so the results of the election for term {term} were not posted."
+    noNews: "Neither #news nor, for a Senate election, #senate is set, so the results of the election for term {term} were not posted."
     renderFailed: "The election images for term {term} could not be drawn: {error}"
     postFailed: "Posting the election results for term {term} failed: {error}"
 
