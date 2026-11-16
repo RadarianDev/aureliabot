@@ -138,8 +138,14 @@ public class AssemblyPublisher
 
         if (result.Senate is not { } senate) return;
         using var senateChart = VoteChart.RenderSenate(_data, senate.YesSeats, senate.NoSeats);
-        await PostAsync(ChannelRole.Senate,
-            Texts.Get("assembly.result.senate", ("yes", senate.YesSeats), ("no", senate.NoSeats), ("abstain", senate.AbstainSeats)), source, chart: senateChart);
+        (string, object?)[] senateValues = [("bill", result.Title), ("yes", senate.YesSeats), ("no", senate.NoSeats), ("abstain", senate.AbstainSeats),
+            ("percent", Display.Number(_constants.Current.Senate.OverrideShare * 100))];
+        await PostAsync(ChannelRole.Senate, result.ReturnedBySenate
+                ? Texts.Get("assembly.result.senateReturns", senateValues)
+                : result.Passed
+                    ? Texts.Get("assembly.result.senateConcurs", senateValues)
+                    : Texts.Get("assembly.result.senateMoot", senateValues),
+            source, chart: senateChart);
     }
 
     private async Task PublishMotionOutcomeAsync(NoConfidenceReport outcome, string source)

@@ -64,9 +64,11 @@ secretAgenda:
     Nobody else knows your agenda. Keep it secret, share it or lie about it: that is up to you. Every agenda is revealed on election night.
   reveal:
     heading: |-
-      ## The secret agendas revealed
-      Every faction has been pulling the kingdom its own way this term. Now the truth comes out.
-    line: "- {faction} was **{agenda}**: {results} · {reward}"
+      ## 🎭 The secret agendas revealed
+      -# Every faction has been pulling the kingdom its own way this term. Now the truth comes out.
+    line: |-
+      {faction} was **{agenda}** · {reward}
+      -# {results}
     reward: "**+{popularity}** popularity"
     noReward: "nothing gained"
   me: "Your secret agenda: **{agenda}**, wanting {wishes}. Revealed and scored at the next Assembly election."
@@ -491,7 +493,7 @@ gm:
   warning: "⚠️ {warning}"
   royalAdjustment: "Royal adjustment"
   royalDecree: "By royal decree"
-  decreeHeading: "By His Majesty's Command"
+  decreeHeading: "👑 By His Majesty's Command"
   channel:
     set:
       needsRole: "{kind} needs the `role` option."
@@ -523,7 +525,7 @@ gm:
       refusedNoName: "The character needs a name."
       alreadyHas: "{player} already has a faction."
       alreadyRetired: "{player} already has a faction, now retired. A player can't register twice."
-      news: "**{character}** ({player}) enters politics, standing for {province}."
+      news: "🆕 **{character}** ({player}) enters politics, standing for {province}."
       greeting: "Welcome to politics, {player}. This is the private office of **{character}**, member for {province}. Poll results and reminders arrive here, and you can run your commands here."
       registered: "Registered {player} as **{character}**, home province {province}, at popularity {popularity}, independent, with no seats until the next election."
       privateChannel: "Private channel: <#{channel}>."
@@ -567,7 +569,7 @@ gm:
       nothingRestored: "- Their old party, cabinet post, nomination, pending actions and join applications are not restored."
       button: "Unretire"
       notRetired: "<@{user}> is not a retired faction; nothing was changed."
-      news: "**{character}** ({player}) returns to politics."
+      news: "↩️ **{character}** ({player}) returns to politics."
       returned: "{faction} has returned to politics."
   party:
     notFound: "That party does not exist."
@@ -590,7 +592,7 @@ gm:
       noForeign: " No foreign affairs channel yet."
     create:
       badEmoji: "`{emoji}` is not a custom emoji; pick one from this server's emoji list."
-      news: "**A new party takes the field.** {founders} have joined their fortunes together as the {party}, and will stand as one at the coming election."
+      news: "🎉 **A new party takes the field.** {founders} have joined their fortunes together as the {party}, and will stand as one at the coming election."
       founded: "Founded **{name}** (`{colour}`) with {founders}."
       tooFewFounders: "A party needs at least two different founders."
       founderNotRegistered: "<@{user}> is not a registered, active faction; register them with `/gm faction create` first."
@@ -615,7 +617,7 @@ gm:
     delete:
       confirm: "Delete **{name}**? Its {members} member(s) become independent and keep their seats, its role is deleted, its chat is archived, and the dissolution is announced in #news."
       gone: "That party no longer exists; nothing was changed."
-      news: "**The {name} is no more.** The party is struck from the register."
+      news: "🕯️ **The {name} is no more.** The party is struck from the register."
       newsOneMember: "**The {name} is no more.** The party is struck from the register, and {names} sits on as independent."
       newsMembers: "**The {name} is no more.** The party is struck from the register, and {names} sit on as independents."
       deleted: "Deleted **{name}**. {count} member(s) are now independent; its role was deleted and its chat archived (any Discord refusal was posted to #gm)."
@@ -643,12 +645,12 @@ gm:
       button: "Record"
       gone: "That party no longer exists. Nothing was recorded."
       manifestoPost: |-
-        ## Manifesto of {party}
-        {programme}
+        ## 📣 Manifesto of {party}
+        > {programme}
       programmePost: |-
-        ## Programme of {party}
-        {programme}
-      flipNews: "{party} changes its line on {issue}."
+        ## 📣 Programme of {party}
+        > {programme}
+      flipNews: "🔄 **{party} changes its line on {issue}.**"
       theParty: "the {name}"
       postFailed: "posting it publicly failed: {error}"
       recordedReply: |-
@@ -717,9 +719,9 @@ gm:
     openingEvents: "Events that fire at once: {events}."
     couldNotStart: "The game could not start."
     proclamation: |-
-      ## By His Majesty's Command
-      His Majesty King Arthas II summons the first Aurelian Assembly. The hustings are open across the ten provinces through {label}, and the nation goes to the polls when the season ends, {when}.
-      Let every party declare where it stands.
+      ## 👑 By His Majesty's Command
+      > His Majesty King Arthas II summons the first Aurelian Assembly. The hustings are open across the ten provinces through {label}, and the nation goes to the polls when the season ends, {when}.
+      > Let every party declare where it stands.
     started: "The game has started: {label}, the founding pre-election. {events} event(s) fired. The election runs at {when}, after {days} campaign day(s)."
     button: "Start the game"
     confirm: "Start the game in {season}? This loads the provinces, sets every starting value from `constants.yaml`, funds the purses, raises the starting forces and opens the founding pre-election ({days} days). It can only be done once."
@@ -735,9 +737,9 @@ gm:
     noReason: "Give a reason."
     noFaction: "No such faction."
     commendation: |-
-      ## By His Majesty's Command
-      His Majesty is pleased to commend {faction} for {reason}.
-      *Popularity {gained}*
+      ## 👑 By His Majesty's Command
+      > His Majesty is pleased to commend {faction} for {reason}.
+      -# 🏅 Popularity {gained}
     capped: " (capped at {max})"
     rewardedPosted: "Rewarded {faction}: popularity {from} → {to}{capped}. The commendation is in #notices."
     rewardedNotPosted: |-
@@ -837,12 +839,12 @@ gm:
     textLabel: "Text of the proclamation"
     empty: "A proclamation needs some text."
     post: |-
-      ## By His Majesty's Command
-      {text}
+      ## 👑 By His Majesty's Command
+      > {text}
     postTitled: |-
-      ## By His Majesty's Command
+      ## 👑 By His Majesty's Command
       **{title}**
-      {text}
+      > {text}
     posted: "The proclamation is in #news."
     noNews: "⚠️ No #news channel is set, so the proclamation was not posted."
 
@@ -1016,17 +1018,15 @@ content:
     idChanged: "The `id` of a live item can't change. Nothing was changed."
     issueGone: "The live issue `{id}` is gone. Nothing was changed."
     issueNews: |-
-      ## {title}
-      The question now reads:
-      For: {for}
-      Against: {against}
+      ✏️ **Correction: {title}** · the question now reads:
+      *For* means: {for}
+      *Against* means: {against}
     issueEdited: "Edited the live issue `{id}`."
     issueEditedPosted: "Edited the live issue `{id}`. The new For and Against text is posted to #notices."
     billKeeps: "A live bill keeps its `issue` and `lean`. Nothing was changed."
     billLocked: "The live bill `{id}` can only be edited while it is available or resting after a rejection. Nothing was changed."
     billNews: |-
-      ## {title}
-      The motion now reads:
+      ✏️ **Correction: {title}** · the motion now reads:
       > {motion}
     billEdited: "Edited the live bill `{id}`."
     billEditedPosted: "Edited the live bill `{id}`. The new motion is posted to #notices."
@@ -1444,8 +1444,8 @@ news:
     attackLanded: "{actor} attacks {target} on {issue} in {province}, and lands the blow: {target} popularity there {change}."
     attackBackfired: "{actor} attacks {target} on {issue} in {province}, but the people there side with {target}: {actor} popularity there {change}."
   party:
-    dissolvedEmpty: "**The {party} dissolves.** Its benches have emptied, and what remains of it sits on as independent."
-    dissolvedLast: "**The {party} dissolves.** With its ranks dwindled to {faction} alone, the party is no more. {faction} sits on as an independent and keeps {seats}."
+    dissolvedEmpty: "🕯️ **The {party} dissolves.** Its benches have emptied, and what remains of it sits on as independent."
+    dissolvedLast: "🕯️ **The {party} dissolves.** With its ranks dwindled to {faction} alone, the party is no more. {faction} sits on as an independent and keeps {seats}."
     oneSeat: its one seat
     seats: its {seats} seats
   turnTracker:
@@ -1455,29 +1455,31 @@ news:
 
 election:
   header: |-
-    ## The nation has voted
-    The returns are in for the Assembly of term {term}.
+    ## 🗳️ The nation has voted
+    -# The returns are in for the Assembly of term {term}.
   partiesHeading: "**Seats and votes**"
   partyLine: "- {party}: **{seats}** seats · {share}% of the vote"
   partyLineBelowThreshold: "- {party}: no seats · {share}% of the vote, below the {threshold}% needed to sit in the Assembly"
   independentLine: "- Independent: **1** seat"
   independentsLine: "- Independents: **{seats}** seats"
   senateHeader: |-
-    ## The provinces have voted
-    The returns are in for the Senate.
+    ## 🗳️ The provinces have voted
+    -# The returns are in for the Senate.
   senateChartTitle: The new Senate
-  senateProclamation: "His Majesty King Arthas II summons the newly elected Senate, {seats} members strong."
+  senateProclamation: |-
+    ## 👑 By His Majesty's Command
+    > His Majesty King Arthas II summons the newly elected Senate, {seats} members strong.
   senateElsewhere: "🏛️ **The provinces are electing their Senate.** The returns come in province by province in <#{channel}>."
   provincesHeading: "**The provinces**"
   night:
     opening: |-
-      ## Election night
+      ## 🗳️ Election night
       The polls have closed across Aurelia. The returns for the Assembly of term {term} come in province by province, the smallest first. Stay with us.
     senateOpening: |-
-      ## Senate election night
+      ## 🗳️ Senate election night
       The polls have closed. The provinces declare their senators one by one, the smallest first.
     declares: |-
-      ### {province} declares
+      ### 📣 {province} declares
       {seats}
     carries: "**{party} carries {province}.**"
     nobodyCarries: "No party carries {province}."
@@ -1496,9 +1498,9 @@ election:
   legendUnclaimed: "- Original fill: {provinces}"
   legendEmpty: "No province returned a winner."
   proclamation: |-
-    ## By His Majesty's Command
-    The people of Aurelia have spoken. His Majesty King Arthas II summons the newly elected Assembly, {seats} members strong, to sit for term {term}.
-    Let the members take their benches, and let the Crown be advised.
+    ## 👑 By His Majesty's Command
+    > The people of Aurelia have spoken. His Majesty King Arthas II summons the newly elected Assembly, {seats} members strong, to sit for term {term}.
+    > Let the members take their benches, and let the Crown be advised.
   alert:
     noNews: "Neither #news nor, for a Senate election, #senate is set, so the results of the election for term {term} were not posted."
     renderFailed: "The election images for term {term} could not be drawn: {error}"
@@ -1711,8 +1713,8 @@ cabinet:
   deadline: "at the resolution that ends {season}"
   deadlineNext: "at the resolution that ends {season}, {when}"
   proclamation: |-
-    ## By His Majesty's Command
-    {text}
+    ## 👑 By His Majesty's Command
+    > {text}
   line:
     chancellor: "**Chancellor:** {holder}"
     ministry: "**{ministry}:** {holder}"
@@ -1783,8 +1785,8 @@ ministry:
     confirmCancels: "The cabinet nomination now before the Assembly includes you, so it will be cancelled."
     button: "Resign"
     done: "You have resigned {office}."
-    newsChancellor: "{faction} has resigned the Chancellorship. The ministers remain in office until His Majesty appoints a successor."
-    newsMinister: "{faction} has resigned as head of the {ministry}. The post stands vacant."
+    newsChancellor: "🚪 **{faction} has resigned the Chancellorship.** The ministers remain in office until His Majesty appoints a successor."
+    newsMinister: "🚪 **{faction} has resigned as head of the {ministry}.** The post stands vacant."
     alertChancellor: "{faction} resigned the Chancellorship; appoint a successor with `/gm cabinet chancellor`. Nominations cancelled: {cancelled}."
     alertMinister: "{faction} resigned the {ministry}, now vacant; its crises and questions go to the Chancellor. Nominations cancelled: {cancelled}."
   status:
@@ -1809,8 +1811,8 @@ questions:
   asked: "Your question to the {ministry} is posted in #assembly. {minister} must answer it {due}. This spends your opposition action for the season."
   answered: "Your answer is posted under the question."
   answerPost: |-
-    **{minister}, for the {ministry}, answers:**
-    {text}
+    ↪️ **{minister}, for the Ministry of {ministry}, answers:**
+    > {text}
   button:
     answer: "Answer"
   modal:
@@ -1821,16 +1823,20 @@ questions:
     answerLabel: "Your answer"
   post:
     body: |-
-      ## Question to the {ministry}
-      {asker} asks:
+      {heading}
+      -# Asked by {asker}
       > {text}
       {status}
-    open: "{minister} must answer {due}."
-    answered: "**Answered** below."
-    unanswered: "**Unanswered.** The deadline passed without a reply."
-    dropped: "**Dropped.** Nobody held the ministry or the Chancellorship to answer it."
+    heading: "## 📨 Question to the Ministry of {ministry}"
+    headingAnswered: "## 📨 Question to the Ministry of {ministry} · ✅ Answered"
+    headingUnanswered: "## 📨 Question to the Ministry of {ministry} · ❌ Unanswered"
+    headingDropped: "## 📨 ~~Question to the Ministry of {ministry}~~ · Dropped"
+    open: "-# {minister} must answer {due}."
+    answered: "-# The answer is posted below."
+    unanswered: "-# The deadline passed without a reply."
+    dropped: "-# Nobody held the ministry or the Chancellorship to answer it."
   news:
-    unansweredHeading: "A question to the {ministry} goes unanswered"
+    unansweredHeading: "📨 A question to the Ministry of {ministry} goes unanswered"
     unanswered: "{minister} left a question on the {ministry} from {asker} unanswered, and the Assembly took note."
   private:
     dropped: "Your question to the {ministry} was dropped, since nobody holds the ministry or the Chancellorship. Nobody gains or loses popularity over it."
@@ -1913,8 +1919,8 @@ noConfidence:
   cosigned: "You co-sign the motion of no confidence. Its supporters now hold {supporters} of the {threshold} seats it needs."
   cosignedToVote: "You co-sign the motion of no confidence. Its supporters now hold {supporters} seats, reaching the {threshold} needed, so it goes to a vote in #assembly."
   dissolved: |-
-    ## Parliament is dissolved
-    *The Assembly has withdrawn its confidence from His Majesty's government. By His Majesty's Command, Parliament is dissolved, and the nation goes to the hustings this {season}. The ministers remain in office as caretakers until a new Assembly is summoned.*
+    ## 👑 Parliament is dissolved
+    > *The Assembly has withdrawn its confidence from His Majesty's government. By His Majesty's Command, Parliament is dissolved, and the nation goes to the hustings this {season}. The ministers remain in office as caretakers until a new Assembly is summoned.*
   refuse:
     notFound: "That motion no longer exists."
     inCabinet: "Members of the cabinet cannot table or co-sign a motion of no confidence. Any other active faction can."
@@ -1972,10 +1978,18 @@ assembly:
     no: "No"
     abstain: "Abstain"
   cancelledPreElection: "The turn became a pre-election, so no bill can be voted on."
-  cancelled: "The reading of **{bill}** is cancelled: {reason} The bill is available again."
-  announce: "**Next turn's business:** {bill} ({issue}, *{lean}*), a {kind} bill proposed by {sponsor}. Its vote opens {when}."
-  announceOpened: "**Before the Assembly:** {bill} ({issue}, *{lean}*), a {kind} bill proposed by {sponsor}."
-  announceCancelled: "~~{bill} ({issue}, *{lean}*), a {kind} bill proposed by {sponsor}~~: withdrawn."
+  cancelled: |-
+    📋 **The reading of {bill} is cancelled.**
+    -# {reason} The bill is available again.
+  announce: |-
+    📋 **Next turn's business: {bill}**
+    -# {issue} · leans {lean} · a {kind} bill moved by {sponsor} · the division opens {when}
+  announceOpened: |-
+    📋 **Before the Assembly: {bill}**
+    -# {issue} · leans {lean} · a {kind} bill moved by {sponsor}
+  announceCancelled: |-
+    📋 ~~**{bill}**~~ · withdrawn
+    -# {issue} · leans {lean} · a {kind} bill moved by {sponsor}
   afterNext: "at the resolution after next (the next one is {when})"
   reading:
     heading: "## 📜 {bill}"
@@ -1999,10 +2013,24 @@ assembly:
     noes: "Noes"
     abstaining: "Abstaining"
   result:
-    returned: "The Assembly passes **{bill}**, {yes} seats to {no} ({abstain} abstaining), but the Senate returns it. It comes back to the Assembly next turn and needs {percent}% of the votes cast to become law."
-    senate: "**In the Senate:** Yes {yes} seats, No {no}, Abstain {abstain}."
-    passed: "**{bill}** passes, {yes} seats to {no} ({abstain} abstaining)."
-    rejected: "**{bill}** is rejected, {yes} seats to {no} ({abstain} abstaining). It rests until {season}; other bills on its issue can still be proposed."
+    returned: |-
+      📜 **{bill} is returned by the Senate.** The Assembly carried it, {yes} Ayes to {no} Noes, but the Senate sends it back.
+      -# Abstaining: {abstain} · it comes back to the Assembly next turn and needs {percent}% of the votes cast to become law.
+    passed: |-
+      📜 **{bill} becomes law.** The Assembly carries it, {yes} Ayes to {no} Noes.
+      -# Abstaining: {abstain}
+    rejected: |-
+      📜 **{bill} is rejected.** The Assembly throws it out, {yes} Ayes to {no} Noes.
+      -# Abstaining: {abstain} · it rests until {season}; other bills on its issue can still be proposed.
+    senateConcurs: |-
+      🏛️ **The Senate concurs in {bill}**, {yes} Ayes to {no} Noes.
+      -# Abstaining: {abstain}
+    senateReturns: |-
+      🏛️ **The Senate returns {bill} to the Assembly**, {yes} Ayes to {no} Noes.
+      -# Abstaining: {abstain} · the Assembly votes on it again next turn, and needs {percent}% of the votes cast to override the Senate.
+    senateMoot: |-
+      🏛️ **The Senate on {bill}:** {yes} Ayes to {no} Noes.
+      -# Abstaining: {abstain} · the Assembly had already rejected it.
   alert:
     postFailed: "An Assembly post failed: {error}"
 
@@ -2058,10 +2086,10 @@ condemn:
   autocomplete: "{crisis} · {issue}"
   done: "Your condemnation of **{crisis}** is sealed. It spends this season's opposition action, and is revealed and scored when the crisis is resolved, {when}."
   score:
-    right: "Condemnation: {faction} was right where the minister was not: popularity {change}."
-    wrong: "Condemnation: {faction} was wrong where the minister was right: popularity {change}."
-    withMinister: "Condemnation: {faction} stood with the minister, and gains nothing."
-    nothing: "Condemnation: {faction} stood {side}, and neither gains nor loses."
+    right: "-# ✅ Condemnation · {faction} was right where the minister was not: popularity {change}."
+    wrong: "-# ❌ Condemnation · {faction} was wrong where the minister was right: popularity {change}."
+    withMinister: "-# ➖ Condemnation · {faction} stood with the minister, and gains nothing."
+    nothing: "-# ➖ Condemnation · {faction} stood {side}, and neither gains nor loses."
   refusal:
     notOpposition: "Only opposition factions can condemn a crisis: members of a party that holds no cabinet seat."
     actionUsed: "You have spent this season's opposition action. The next comes with {season}, after the resolution {when}."
@@ -2071,9 +2099,9 @@ condemn:
 whipCount:
   done: "Your whip count is sealed: {member} to vote **{choice}** on **{bill}**. It spends this season's opposition action, and is revealed and scored when the vote is counted, {when}."
   score:
-    right: "Whip count: {faction} called {member} to vote **{choice}** on **{bill}**, and was right: popularity {change}."
-    wrong: "Whip count: {faction} called {member} to vote **{choice}** on **{bill}**, and was wrong: popularity {change}."
-    void: "Whip count: {faction} called {member} to vote **{choice}** on **{bill}**, but {member} did not take a side. Nothing is gained or lost."
+    right: "✅ **Whip count** · {faction} called {member} to vote **{choice}** on **{bill}**, and was right: popularity {change}."
+    wrong: "❌ **Whip count** · {faction} called {member} to vote **{choice}** on **{bill}**, and was wrong: popularity {change}."
+    void: "➖ **Whip count** · {faction} called {member} to vote **{choice}** on **{bill}**, but {member} did not take a side. Nothing is gained or lost."
   refusal:
     notOpposition: "Only opposition factions can make a whip count: members of a party that holds no cabinet seat."
     actionUsed: "You have spent this season's opposition action. The next comes with {season}, after the resolution {when}."
@@ -2318,10 +2346,10 @@ gmCrisis:
     locked: "**{crisis}** is locked: its minister has already answered, and a crisis can't change under an answer."
     keeps: "A live crisis keeps its `ministry` and `issue`. Nothing was changed."
   post:
-    withdrawn: "**Withdrawn.** This crisis no longer needs an answer."
+    withdrawn: "-# 🕊️ Withdrawn: this crisis no longer needs an answer."
   news:
-    withdrawn: "## {crisis}\nThe matter has passed out of the government's hands, and the crisis is at an end."
-    withdrawnMessage: "## {crisis}\nThe matter has passed out of the government's hands, and the crisis is at an end.\n> {message}"
+    withdrawn: "🕊️ **{crisis} is over.** The matter has passed out of the government's hands, and the crisis is at an end."
+    withdrawnMessage: "🕊️ **{crisis} is over.** The matter has passed out of the government's hands, and the crisis is at an end.\n> {message}"
   private:
     amended: "The crisis **{crisis}** has been amended. Read its post in #news again before you answer."
 

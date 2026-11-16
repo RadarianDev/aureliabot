@@ -42,6 +42,8 @@ public static class Display
 
     public static string Independent => Texts.Get("display.independent");
 
+    public static string Quoted(string text) => text.ReplaceLineEndings("\n> ");
+
     public static string Truncate(string text, int limit = 2000) =>
         text.Length > limit ? text[..(limit - 3)] + "..." : text;
 }

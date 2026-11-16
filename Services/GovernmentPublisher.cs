@@ -62,7 +62,7 @@ public class GovernmentPublisher
     }
 
     public async Task<IUserMessage?> ProclaimAsync(string text, string source) =>
-        await PostAsync(ChannelRole.News, Texts.Get("cabinet.proclamation", ("text", text)), source);
+        await PostAsync(ChannelRole.News, Texts.Get("cabinet.proclamation", ("text", Display.Quoted(text))), source);
 
     public async Task PostNominationAsync(Cabinet nomination, string source)
     {
@@ -94,14 +94,14 @@ public class GovernmentPublisher
         if (message is not null) _data.SetQuestionMessageId(question.Id, message.Id);
         if (question.MinisterAtAsk is { } minister)
             await _factionChannels.SendAsync(minister, Texts.Get("questions.private.asked",
-                ("asker", Who(question.AskerId)), ("ministry", question.Ministry.DisplayName()), ("text", Quoted(question.Text)),
+                ("asker", Who(question.AskerId)), ("ministry", question.Ministry.DisplayName()), ("text", Display.Quoted(question.Text)),
                 ("due", Deadline(_data.GetGameState(), question.DueResolution))), AnswerButton(question.Id, false));
     }
 
     public async Task PostAnswerAsync(Question question, string source)
     {
         await RefreshQuestionAsync(question);
-        var text = Texts.Get("questions.answerPost", ("minister", Who(question.AnswererId)), ("ministry", question.Ministry.DisplayName()), ("text", question.AnswerText ?? ""));
+        var text = Texts.Get("questions.answerPost", ("minister", Who(question.AnswererId)), ("ministry", question.Ministry.DisplayName()), ("text", Display.Quoted(question.AnswerText ?? "")));
         await PostAsync(ChannelRole.Assembly, text, source, reference: question.MessageId is { } id ? new MessageReference(id, failIfNotExists: false) : null);
     }
 
@@ -148,19 +148,17 @@ public class GovernmentPublisher
 
     public string QuestionText(Question question)
     {
-        var status = question.Status switch
+        var ministry = ("ministry", (object?)question.Ministry.DisplayName());
+        var (heading, status) = question.Status switch
         {
-            QuestionStatus.Open => Texts.Get("questions.post.open", ("minister", Who(_data.ResponsibleMinister(question.Ministry))),
-                ("due", Deadline(_data.GetGameState(), question.DueResolution))),
-            QuestionStatus.Answered => Texts.Get("questions.post.answered"),
-            QuestionStatus.Unanswered => Texts.Get("questions.post.unanswered"),
-            _ => Texts.Get("questions.post.dropped"),
+            QuestionStatus.Open => (Texts.Get("questions.post.heading", ministry), Texts.Get("questions.post.open",
+                ("minister", Who(_data.ResponsibleMinister(question.Ministry))), ("due", Deadline(_data.GetGameState(), question.DueResolution)))),
+            QuestionStatus.Answered => (Texts.Get("questions.post.headingAnswered", ministry), Texts.Get("questions.post.answered")),
+            QuestionStatus.Unanswered => (Texts.Get("questions.post.headingUnanswered", ministry), Texts.Get("questions.post.unanswered")),
+            _ => (Texts.Get("questions.post.headingDropped", ministry), Texts.Get("questions.post.dropped")),
         };
-        return Texts.Get("questions.post.body",
-            ("asker", Who(question.AskerId)), ("ministry", question.Ministry.DisplayName()), ("text", Quoted(question.Text)), ("status", status));
+        return Texts.Get("questions.post.body", ("heading", heading), ("asker", Who(question.AskerId)), ("text", Display.Quoted(question.Text)), ("status", status));
     }
-
-    private static string Quoted(string text) => text.ReplaceLineEndings("\n> ");
 
     public static string CabinetVoteButtonId(VoteChoice choice, long cabinetId) => $"vote:cabinet:{choice.ToString().ToLowerInvariant()}:{cabinetId}";
 

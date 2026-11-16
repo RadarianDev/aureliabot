@@ -123,11 +123,11 @@ public partial class GmModule
             {
                 if (state.IsPreElection)
                     await _publisher.PostAsync(ChannelRole.News,
-                        Texts.Get("gm.party.programme.manifestoPost", ("party", TheParty(party.Name)), ("programme", programme)), ProgrammeSource);
+                        Texts.Get("gm.party.programme.manifestoPost", ("party", TheParty(party.Name)), ("programme", Display.Quoted(programme))), ProgrammeSource);
                 else
                 {
                     await _publisher.PostAsync(ChannelRole.CampaignLog,
-                        Texts.Get("gm.party.programme.programmePost", ("party", TheParty(party.Name)), ("programme", programme)), ProgrammeSource);
+                        Texts.Get("gm.party.programme.programmePost", ("party", TheParty(party.Name)), ("programme", Display.Quoted(programme))), ProgrammeSource);
                     foreach (var issueId in result.FlippedIssueIds)
                         await _publisher.PostAsync(ChannelRole.CampaignLog,
                             Texts.Get("gm.party.programme.flipNews",

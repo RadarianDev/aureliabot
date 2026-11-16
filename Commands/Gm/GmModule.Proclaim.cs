@@ -30,8 +30,8 @@ public partial class GmModule
 
         await DeferAsync(ephemeral: true);
         var post = await _publisher.PostAsync(ChannelRole.News, title.Length == 0
-            ? Texts.Get("gm.proclaim.post", ("text", text))
-            : Texts.Get("gm.proclaim.postTitled", ("title", title), ("text", text)), "gm proclaim");
+            ? Texts.Get("gm.proclaim.post", ("text", Display.Quoted(text)))
+            : Texts.Get("gm.proclaim.postTitled", ("title", title), ("text", Display.Quoted(text))), "gm proclaim");
         _data.Log(LogKinds.GmOverride, "gm proclaim", title.Length == 0 ? text : $"{title}: {text}", isPublic: true);
         await FollowupAsync(post is null ? Texts.Get("gm.proclaim.noNews") : Texts.Get("gm.proclaim.posted"), ephemeral: true);
     }
