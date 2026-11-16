@@ -768,6 +768,7 @@ gm:
     electionHeader: "## Election preview (current state, nothing saved)"
     senateHeader: "## Senate election preview (current state, nothing saved)"
     chartTitle: "Preview: the Assembly"
+    senateChartTitle: "Preview: the Senate"
     renderFailed: "⚠️ Could not draw the images: {error}"
     noProvince: "`{province}` is not a province. Pick one from the list."
     opinion:

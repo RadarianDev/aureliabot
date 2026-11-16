@@ -24,13 +24,13 @@ public partial class GmModule
         await DeferAsync(ephemeral: true);
         if (mode == PeekMode.Election)
         {
-            await PeekElectionAsync(ElectionCalculator.Run(_data.BuildElectionInput(_constants.Config)), Texts.Get("gm.peek.electionHeader"));
+            await PeekElectionAsync(ElectionCalculator.Run(_data.BuildElectionInput(_constants.Config)), Texts.Get("gm.peek.electionHeader"), Texts.Get("gm.peek.chartTitle"));
             return;
         }
         if (mode == PeekMode.Senate)
         {
             var config = _constants.Config;
-            await PeekElectionAsync(ElectionCalculator.RunSenate(_data.BuildElectionInput(config), ElectionCalculator.SenateSeats(config)), Texts.Get("gm.peek.senateHeader"));
+            await PeekElectionAsync(ElectionCalculator.RunSenate(_data.BuildElectionInput(config), ElectionCalculator.SenateSeats(config)), Texts.Get("gm.peek.senateHeader"), Texts.Get("gm.peek.senateChartTitle"));
             return;
         }
 
@@ -212,7 +212,7 @@ public partial class GmModule
         return string.Join("\n", lines);
     }
 
-    private async Task PeekElectionAsync(ElectionResult result, string header)
+    private async Task PeekElectionAsync(ElectionResult result, string header, string chartTitle)
     {
         var config = _constants.Config;
         var parties = _data.GetPartySnapshots();
@@ -229,7 +229,7 @@ public partial class GmModule
         if (attachments.Count == 0) return;
         try
         {
-            var embeds = ElectionPublisher.Embeds(images, winners, parties, config, Texts.Get("gm.peek.chartTitle"));
+            var embeds = ElectionPublisher.Embeds(images, winners, parties, config, chartTitle);
             await FollowupWithFilesAsync(attachments, embeds: embeds, ephemeral: true, allowedMentions: AllowedMentions.None);
         }
         finally
