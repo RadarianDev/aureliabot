@@ -1941,8 +1941,12 @@ noConfidence:
   result:
     lapsed: "The motion of no confidence tabled by {tabler} lapses without reaching the Assembly."
     cancelled: "The motion of no confidence tabled by {tabler} falls with the dissolution of the Assembly for the election."
-    passed: "**The motion of no confidence tabled by {tabler} passes**, {yes} seats to {no} of {filled} filled seats. The government falls to caretaker, and Parliament is dissolved."
-    failed: "The motion of no confidence tabled by {tabler} fails, {yes} seats to {no} of {filled} filled seats."
+    passed: |-
+      ⚖️ **The government falls.** The motion of no confidence tabled by {tabler} carries {yes} of the {filled} filled seats, past the {needed} it needed.
+      -# Against: {no} · abstaining or absent: {aside} · the cabinet stays on as caretaker, and Parliament is dissolved.
+    failed: |-
+      🛡️ **The government survives.** The motion of no confidence tabled by {tabler} carries {yes} of the {filled} filled seats, short of the {needed} it needed.
+      -# Against: {no} · abstaining or absent: {aside} · a motion needs more than half of all filled seats, so abstentions and absences count against it.
   alert:
     toVote: "No-confidence motion {id}, tabled by {tabler}, has reached its threshold and goes to a vote."
     snapElection: "A no-confidence motion passed: the cabinet is caretaker and {season} is now a snap pre-election."

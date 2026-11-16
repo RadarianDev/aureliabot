@@ -151,8 +151,10 @@ public class AssemblyPublisher
         {
             NoConfidenceStatus.Lapsed => Texts.Get("noConfidence.result.lapsed", ("tabler", tabler)),
             NoConfidenceStatus.Cancelled => Texts.Get("noConfidence.result.cancelled", ("tabler", tabler)),
-            NoConfidenceStatus.Passed => Texts.Get("noConfidence.result.passed", ("tabler", tabler), ("yes", outcome.YesSeats), ("no", outcome.NoSeats), ("filled", outcome.FilledSeats)),
-            _ => Texts.Get("noConfidence.result.failed", ("tabler", tabler), ("yes", outcome.YesSeats), ("no", outcome.NoSeats), ("filled", outcome.FilledSeats)),
+            NoConfidenceStatus.Passed => Texts.Get("noConfidence.result.passed", ("tabler", tabler), ("yes", outcome.YesSeats), ("no", outcome.NoSeats), ("filled", outcome.FilledSeats),
+                ("needed", outcome.FilledSeats / 2 + 1), ("aside", Math.Max(0, outcome.FilledSeats - outcome.YesSeats - outcome.NoSeats))),
+            _ => Texts.Get("noConfidence.result.failed", ("tabler", tabler), ("yes", outcome.YesSeats), ("no", outcome.NoSeats), ("filled", outcome.FilledSeats),
+                ("needed", outcome.FilledSeats / 2 + 1), ("aside", Math.Max(0, outcome.FilledSeats - outcome.YesSeats - outcome.NoSeats))),
         };
         using var chart = outcome.Outcome is NoConfidenceStatus.Lapsed or NoConfidenceStatus.Cancelled
             ? null
