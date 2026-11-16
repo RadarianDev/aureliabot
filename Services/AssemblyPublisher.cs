@@ -208,15 +208,23 @@ public class AssemblyPublisher
     public string ReadingPost(Reading reading)
     {
         var bill = _data.GetBill(reading.BillId);
+        var title = ("bill", (object?)(bill?.Title ?? reading.BillId));
         var lines = new List<string>
         {
-            Texts.Get("assembly.reading.heading", ("bill", bill?.Title ?? reading.BillId)),
+            reading.Status switch
+            {
+                ReadingStatus.Passed => Texts.Get("assembly.reading.headingPassed", title),
+                ReadingStatus.Rejected => Texts.Get("assembly.reading.headingRejected", title),
+                ReadingStatus.ReturnedBySenate => Texts.Get("assembly.reading.headingReturned", title),
+                ReadingStatus.Cancelled => Texts.Get("assembly.reading.headingCancelled", title),
+                _ => Texts.Get("assembly.reading.heading", title),
+            },
         };
         if (bill is not null)
         {
-            lines.Add(Texts.Get("assembly.reading.motion", ("motion", bill.Motion)));
             lines.Add(Texts.Get("assembly.reading.meta", ("issue", _data.GetIssue(bill.IssueId)?.Title ?? bill.IssueId),
                 ("lean", LeanName(bill.Lean)), ("kind", KindName(reading.Kind)), ("sponsor", Display.Faction(_data, reading.SponsorId))));
+            lines.Add(Texts.Get("assembly.reading.motion", ("motion", bill.Motion)));
             if (_data.SummaryOf(bill.TemplateId) is { } summary)
                 lines.Add(Texts.Get("briefing.summary", ("text", summary)));
         }
@@ -227,26 +235,43 @@ public class AssemblyPublisher
                 if (reading.Kind == ReadingKind.Override)
                     lines.Add(Texts.Get("assembly.reading.overrideNote", ("percent", Display.Number(_constants.Current.Senate.OverrideShare * 100))));
                 lines.Add(Texts.Get("assembly.reading.closes", ("when", Display.NextResolution(_data.GetGameState()))));
-                lines.Add(Texts.Get("assembly.secret"));
                 break;
             case ReadingStatus.Passed or ReadingStatus.Rejected or ReadingStatus.ReturnedBySenate:
-                (string, object?)[] seats = [("yes", reading.YesSeats ?? 0), ("no", reading.NoSeats ?? 0), ("abstain", reading.AbstainSeats ?? 0)];
-                lines.Add(reading.Status switch
-                {
-                    ReadingStatus.Passed => Texts.Get("assembly.reading.passed", seats),
-                    ReadingStatus.Rejected => Texts.Get("assembly.reading.rejected", seats),
-                    _ => Texts.Get("assembly.reading.returned", seats),
-                });
+                lines.Add(Texts.Get("assembly.reading.assemblyTally", ("yes", reading.YesSeats ?? 0), ("no", reading.NoSeats ?? 0), ("abstain", reading.AbstainSeats ?? 0)));
                 if (reading.SenateYesSeats is { } senateYes)
-                    lines.Add(Texts.Get("assembly.reading.senate", ("yes", senateYes), ("no", reading.SenateNoSeats ?? 0), ("abstain", reading.SenateAbstainSeats ?? 0)));
-                lines.AddRange(VoterLines(VoteSubject.Reading, reading.Id));
-                break;
-            case ReadingStatus.Cancelled:
-                lines.Add(Texts.Get("assembly.reading.cancelled"));
+                    lines.Add(Texts.Get("assembly.reading.senateTally", ("yes", senateYes), ("no", reading.SenateNoSeats ?? 0), ("abstain", reading.SenateAbstainSeats ?? 0)));
+                if (DivisionLine(VoteSubject.Reading, reading.Id) is { } division) lines.Add(division);
                 break;
         }
         return string.Join("\n", lines);
     }
+
+    private string? DivisionLine(VoteSubject subject, long subjectId)
+    {
+        var votes = _data.GetVotes(subject, subjectId);
+        var followers = _data.GetPartyFollowers(subject, subjectId);
+        var groups = new List<string>();
+        foreach (var choice in new[] { VoteChoice.Yes, VoteChoice.No, VoteChoice.Abstain })
+        {
+            var side = DivisionName(choice);
+            var voters = string.Join(", ", votes.Where(v => v.Value == choice).Select(v => Display.Faction(_data, v.Key)));
+            var following = string.Join(", ", followers.Where(v => v.Value == choice).Select(v => Display.Faction(_data, v.Key)));
+            if (voters.Length > 0 && following.Length > 0)
+                groups.Add(Texts.Get("assembly.division.groupAndFollowing", ("side", side), ("voters", voters), ("following", following)));
+            else if (voters.Length > 0)
+                groups.Add(Texts.Get("assembly.division.group", ("side", side), ("voters", voters)));
+            else if (following.Length > 0)
+                groups.Add(Texts.Get("assembly.division.groupFollowing", ("side", side), ("following", following)));
+        }
+        return groups.Count == 0 ? null : Texts.Get("assembly.division.line", ("groups", string.Join(Texts.Get("assembly.division.separator"), groups)));
+    }
+
+    private static string DivisionName(VoteChoice choice) => choice switch
+    {
+        VoteChoice.Yes => Texts.Get("assembly.division.ayes"),
+        VoteChoice.No => Texts.Get("assembly.division.noes"),
+        _ => Texts.Get("assembly.division.abstaining"),
+    };
 
     public string MotionPost(NoConfidenceMotion motion)
     {
