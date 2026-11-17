@@ -68,7 +68,7 @@ public class CampaignScenarioTests : IDisposable
             plainTired *= fade;
             var strongEach = Formulas.CampaignGain(Config.Constants, Stance.StronglyFor, opinion, salience, 2 * max, strongTired);
             var plainOnce = Formulas.CampaignGain(Config.Constants, Stance.For, opinion, salience, 2, plainTired);
-            strongTired += max;
+            strongTired += 1;
             plainTired += 1;
             _output.WriteLine($"Day {day}: salience {salience}; expected Strong {max} × {strongEach:0.000} = {max * strongEach:0.000}, Plain {plainOnce:0.000}");
             for (var i = 0; i < max; i++)

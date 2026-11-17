@@ -424,7 +424,7 @@ startingForces:
 | `campaign.crowding` | Divide a campaign's gain by √(factions on the same side of the issue in the same province × that faction's own campaigns there). |
 | `campaign.fresh` | Multiplier on a winning campaign with no tiredness, on programme. Set so the average campaign earns what it did before tiredness and the off-programme cut (see the spec's Campaign formula). Default 1. |
 | `campaign.offProgramme` | Multiplier on a winning off-programme campaign, 0 to 1. Default 1. |
-| `campaign.fatigue.weight` | How much tiredness cuts a winning campaign: it is divided by 1 + weight × tiredness. Each campaign adds 1 tiredness for its faction, issue and province. Default 0 (off). |
+| `campaign.fatigue.weight` | How much tiredness cuts a winning campaign: it is divided by 1 + weight × tiredness. Campaigning adds 1 tiredness for the faction, issue and province each time actions resolve, however many campaigns were stacked there. Default 0 (off). |
 | `campaign.fatigue.fade` | What every tiredness is multiplied by each time actions resolve (each turn and each campaign day), 0 to 1. |
 | `attack.factor` | Popularity a successful attack takes. |
 | `attack.backfire` | Popularity the attacker loses when it backfires. |

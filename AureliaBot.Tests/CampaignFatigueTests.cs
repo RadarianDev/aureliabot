@@ -70,6 +70,20 @@ public class CampaignFatigueTests : IDisposable
     }
 
     [Fact]
+    public void StackedCampaignsInOneDay_TireTheProvinceNoMoreThanOne()
+    {
+        Db.StartGame(Config, DateTimeOffset.UtcNow);
+        Db.CreateFaction(1, "A", "aurenten", 10);
+        Db.OpenIssue("labour", "labour", "The Condition of Labour", "For", "Against", 0.5, 3);
+        for (var i = 0; i < 3; i++)
+            Db.SubmitAction(1, ActionKind.Campaign, "labour", 5, Stance.For, "aurenten");
+
+        Db.ResolveCampaignDay(Config, new ScriptedRandomSource(), 1, DateTimeOffset.UtcNow);
+
+        Assert.Equal(1, Db.GetCampaignFatigue()[(1UL, "aurenten", "labour")], 6);
+    }
+
+    [Fact]
     public void TheMultiplier_RewardsFreshCampaigns_AndCutsTiredAndOffProgrammeOnes()
     {
         Assert.Equal(Campaign.Fresh, Formulas.CampaignMultiplier(Campaign, 0, false), Tolerance);

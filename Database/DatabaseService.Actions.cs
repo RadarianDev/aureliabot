@@ -327,7 +327,7 @@ public partial class DatabaseService
     {
         Exec(conn, tx, "UPDATE campaign_fatigue SET level = level * $fade;", ("$fade", fatigue.Fade));
         Exec(conn, tx, "DELETE FROM campaign_fatigue WHERE level < 0.001;");
-        foreach (var campaign in campaigns)
+        foreach (var campaign in campaigns.DistinctBy(c => (c.FactionId, c.ProvinceId, c.IssueId)))
             Exec(conn, tx, @"
                 INSERT INTO campaign_fatigue (faction_id, province_id, issue_id, level) VALUES ($faction, $province, $issue, 1)
                 ON CONFLICT (faction_id, province_id, issue_id) DO UPDATE SET level = level + 1;",
