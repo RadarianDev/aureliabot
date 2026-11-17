@@ -14,6 +14,8 @@ public sealed record WishResult(AgendaWish Wish, bool Met);
 
 public sealed record AgendaReveal(ulong FactionId, string AgendaName, IReadOnlyList<WishResult> Results, double Reward);
 
+public sealed record FutureAgenda(AgendaDefinition Agenda, bool HasCurrent);
+
 public enum AssignAgendaRefusal { UnknownAgenda, NotActive, NotStarted }
 
 public sealed record AssignAgendaResult(AssignAgendaRefusal? Refusal, AgendaHand? Dealt = null, bool Repeats = false, string? Future = null);
@@ -160,18 +162,47 @@ public partial class DatabaseService
         if (agendas.Agendas.Count == 0) return;
         var random = new Random(seed + 1);
         foreach (var faction in QueryFactionsTx(conn, tx, "status = 'Active'"))
-        {
-            if (FuturesTx(conn, tx).ContainsKey(faction.UserId)) continue;
-            var assigned = AssignmentsTx(conn, tx).GetValueOrDefault(faction.UserId);
-            Exec(conn, tx, "DELETE FROM agenda_assignments WHERE faction_id = $faction;", ("$faction", faction.UserId.ToString()));
-            var current = ActiveAgendaTx(conn, tx, faction.UserId)?.AgendaId ?? LastAgendaIdTx(conn, tx, faction.UserId);
-            var agenda = assigned is not null && agendas.Find(assigned) is { } chosen
-                ? chosen
-                : AgendaRules.Pick(agendas.Agendas, current, FutureHeldTx(conn, tx), random);
-            if (agenda is null) continue;
-            SetFutureTx(conn, tx, faction.UserId, agenda.Id);
-            report.AddPrivate(faction.UserId, AgendaWording.Future(agenda, agendas.Reward));
-        }
+            if (DrawFutureTx(conn, tx, config, faction.UserId, random) is { } future)
+                report.AddPrivate(faction.UserId, AgendaWording.Future(future.Agenda, agendas.Reward, future.HasCurrent));
+    }
+
+    public FutureAgenda? DealFutureAgenda(ulong factionId, GameConfig config, Random random)
+    {
+        using var conn = Open();
+        using var tx = conn.BeginTransaction();
+        if (GetGameStateTx(conn, tx) is not { Started: true, IsPreElection: true }) return null;
+        if (GetFactionTx(conn, tx, factionId) is not { IsActive: true }) return null;
+        var future = DrawFutureTx(conn, tx, config, factionId, random);
+        tx.Commit();
+        return future;
+    }
+
+    public Dictionary<ulong, FutureAgenda> DealMissingFutureAgendas(GameConfig config, Random random)
+    {
+        using var conn = Open();
+        using var tx = conn.BeginTransaction();
+        if (GetGameStateTx(conn, tx) is not { Started: true, IsPreElection: true }) return [];
+        var dealt = new Dictionary<ulong, FutureAgenda>();
+        foreach (var faction in QueryFactionsTx(conn, tx, "status = 'Active'"))
+            if (ActiveAgendaTx(conn, tx, faction.UserId) is null && DrawFutureTx(conn, tx, config, faction.UserId, random) is { } future)
+                dealt[faction.UserId] = future;
+        tx.Commit();
+        return dealt;
+    }
+
+    private static FutureAgenda? DrawFutureTx(SqliteConnection conn, SqliteTransaction tx, GameConfig config, ulong factionId, Random random)
+    {
+        var agendas = config.Agendas;
+        if (FuturesTx(conn, tx).ContainsKey(factionId)) return null;
+        var assigned = AssignmentsTx(conn, tx).GetValueOrDefault(factionId);
+        Exec(conn, tx, "DELETE FROM agenda_assignments WHERE faction_id = $faction;", ("$faction", factionId.ToString()));
+        var current = ActiveAgendaTx(conn, tx, factionId)?.AgendaId;
+        var agenda = assigned is not null && agendas.Find(assigned) is { } chosen
+            ? chosen
+            : AgendaRules.Pick(agendas.Agendas, current ?? LastAgendaIdTx(conn, tx, factionId), FutureHeldTx(conn, tx), random);
+        if (agenda is null) return null;
+        SetFutureTx(conn, tx, factionId, agenda.Id);
+        return new FutureAgenda(agenda, current is not null);
     }
 
     public Dictionary<ulong, string> GetFutureAgendas()

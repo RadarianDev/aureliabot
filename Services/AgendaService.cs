@@ -11,16 +11,29 @@ public sealed class AgendaService
         _factionChannels = factionChannels;
     }
 
-    public async Task<bool> DealAsync(ulong factionId) =>
-        _data.DealAgenda(factionId, _constants.Config, Random.Shared) is { } hand && await SendAsync(hand);
-
-    public async Task<(List<AgendaHand> Dealt, List<ulong> Unsent)> DealMissingAsync()
+    public async Task<bool> DealAsync(ulong factionId)
     {
-        var dealt = _data.DealMissingAgendas(_constants.Config, Random.Shared);
+        if (!_data.GetGameState().IsPreElection)
+            return _data.DealAgenda(factionId, _constants.Config, Random.Shared) is { } hand && await SendAsync(hand);
+        return _data.DealFutureAgenda(factionId, _constants.Config, Random.Shared) is { } future
+            && await SendAsync(factionId, AgendaWording.Future(future.Agenda, _constants.Config.Agendas.Reward, future.HasCurrent));
+    }
+
+    public async Task<(List<ulong> Dealt, List<ulong> Unsent)> DealMissingAsync()
+    {
         var unsent = new List<ulong>();
+        if (_data.GetGameState().IsPreElection)
+        {
+            var futures = _data.DealMissingFutureAgendas(_constants.Config, Random.Shared);
+            foreach (var (factionId, future) in futures)
+                if (!await SendAsync(factionId, AgendaWording.Future(future.Agenda, _constants.Config.Agendas.Reward, future.HasCurrent)))
+                    unsent.Add(factionId);
+            return ([.. futures.Keys], unsent);
+        }
+        var dealt = _data.DealMissingAgendas(_constants.Config, Random.Shared);
         foreach (var hand in dealt)
             if (!await SendAsync(hand)) unsent.Add(hand.FactionId);
-        return (dealt, unsent);
+        return ([.. dealt.Select(h => h.FactionId)], unsent);
     }
 
     public async Task<(AgendaHand? Hand, bool Sent)> RedealAsync(ulong factionId)
@@ -36,7 +49,7 @@ public sealed class AgendaService
         var sent = result switch
         {
             { Dealt: { } hand } => await SendAsync(hand),
-            { Future: { } future } when config.Find(future) is { } agenda => await SendAsync(factionId, AgendaWording.Future(agenda, config.Reward)),
+            { Future: { } future } when config.Find(future) is { } agenda => await SendAsync(factionId, AgendaWording.Future(agenda, config.Reward, _data.GetActiveAgenda(factionId) is not null)),
             _ => false,
         };
         return (result, sent);

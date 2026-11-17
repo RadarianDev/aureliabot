@@ -84,7 +84,7 @@ public partial class GmModule
             {
                 dealt.Count == 0
                     ? Texts.Get("secretAgenda.gm.dealtNone")
-                    : Texts.Get("secretAgenda.gm.dealt", ("count", dealt.Count), ("factions", string.Join(", ", dealt.Select(h => Display.Faction(_data, h.FactionId))))),
+                    : Texts.Get("secretAgenda.gm.dealt", ("count", dealt.Count), ("factions", string.Join(", ", dealt.Select(id => Display.Faction(_data, id))))),
             };
             if (unsent.Count > 0)
                 lines.Add(Texts.Get("secretAgenda.gm.sendFailed", ("factions", string.Join(", ", unsent.Select(id => Display.Faction(_data, id))))));

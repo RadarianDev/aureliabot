@@ -307,6 +307,38 @@ public class AgendaTests : IDisposable
     }
 
     [Fact]
+    public void AFactionCreatedInThePreElection_IsDealtAFuture_WhichBeginsAtTheElection()
+    {
+        var config = WithAgendas(Grower);
+        Db.StartGame(config, DateTimeOffset.UtcNow);
+        Db.CreateFaction(1, "A", "aurenten", 10);
+        Db.CreateFaction(2, "B", "aurenten", 10);
+
+        var future = Db.DealFutureAgenda(1, config, new Random(1))!;
+        Assert.False(future.HasCurrent);
+        Assert.Null(Db.DealFutureAgenda(1, config, new Random(1)));
+        Assert.Equal([2UL], Db.DealMissingFutureAgendas(config, new Random(1)).Keys);
+        Assert.Empty(Db.GetActiveAgendas());
+
+        var election = Resolve(config);
+
+        Assert.Empty(election.AgendaReveals);
+        Assert.Equal("grower", Db.GetActiveAgenda(1)!.AgendaId);
+        Assert.Equal("grower", Db.GetActiveAgenda(2)!.AgendaId);
+        Assert.Empty(Db.GetFutureAgendas());
+    }
+
+    [Fact]
+    public void OutsideThePreElection_NoFutureIsDealt()
+    {
+        Db.StartGame(Config, DateTimeOffset.UtcNow);
+        Db.CreateFaction(1, "A", "aurenten", 10);
+        Resolve(Config);
+        Assert.Null(Db.DealFutureAgenda(1, Config, new Random(1)));
+        Assert.Empty(Db.DealMissingFutureAgendas(Config, new Random(1)));
+    }
+
+    [Fact]
     public void AFactionWithAFuture_HasAnAgendaDealtDuringThePreElectionVoided_ForItsFuture()
     {
         var config = WithAgendas(Grower, Grower with { Id = "other", Name = "The Other" });

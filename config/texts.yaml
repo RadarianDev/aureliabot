@@ -76,6 +76,11 @@ secretAgenda:
     *{description}*
     The election is coming. From election night you will want {wishes}, by the Assembly election after it. Each wish met then is worth +{perWish} popularity, and meeting them all +{allBonus} more.
     Your current agenda still counts until this election. You learn the next one now, while parties are open, so you can choose your allies with it in mind.
+  futureFirst: |-
+    ## Your secret agenda for the next term: {agenda}
+    *{description}*
+    The election is coming. From election night you will want {wishes}, by the Assembly election after it. Each wish met then is worth +{perWish} popularity, and meeting them all +{allBonus} more.
+    You learn it now, while parties are open, so you can choose your allies with it in mind. Nobody else knows it: keep it secret, share it or lie about it.
   futureBegins: "🎭 Your agenda for the new term, **{agenda}**, starts now: you want {wishes} by the next Assembly election."
   me: "Your secret agenda: **{agenda}**, wanting {wishes}. Revealed and scored at the next Assembly election."
   meFuture: "Your agenda for the next term: **{agenda}**, wanting {wishes}. It starts counting on election night."

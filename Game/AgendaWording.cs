@@ -30,10 +30,15 @@ public static class AgendaWording
             ("agenda", agenda.Name), ("description", agenda.Description), ("wishes", Wishes(agenda)),
             ("perWish", Display.Number(reward.PerWish)), ("allBonus", Display.Number(reward.AllBonus)));
 
-    public static string Future(AgendaDefinition agenda, AgendaRewardFile reward) =>
-        Texts.Get("secretAgenda.future",
+    public static string Future(AgendaDefinition agenda, AgendaRewardFile reward, bool hasCurrent)
+    {
+        (string, object?)[] values =
+        [
             ("agenda", agenda.Name), ("description", agenda.Description), ("wishes", Wishes(agenda)),
-            ("perWish", Display.Number(reward.PerWish)), ("allBonus", Display.Number(reward.AllBonus)));
+            ("perWish", Display.Number(reward.PerWish)), ("allBonus", Display.Number(reward.AllBonus)),
+        ];
+        return hasCurrent ? Texts.Get("secretAgenda.future", values) : Texts.Get("secretAgenda.futureFirst", values);
+    }
 
     public static string FutureBegins(AgendaDefinition agenda) =>
         Texts.Get("secretAgenda.futureBegins", ("agenda", agenda.Name), ("wishes", Wishes(agenda)));

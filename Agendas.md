@@ -21,7 +21,7 @@ the board game *The King's Dilemma*: the mechanic, not its content.
   It is drawn by the same rules (the GM's waiting choice, otherwise balanced among the futures, never the
   agenda the faction holds now), and kept as the faction's future agenda; `/me` shows both.
 - Then, on election night, every active faction is dealt its future agenda, measured from the election. A
-  faction with no future (one created during the pre-election) is dealt at random as before.
+  faction with no future (its message could not be sent, say) is dealt at random.
 - Only Assembly elections count, snap elections included: an early election scores agendas early. Senate
   elections do not.
 
@@ -40,9 +40,11 @@ The reveal shows only whether each track moved the wanted way, never a hidden nu
 
 ## Edge cases
 
-- **Dealt in a pre-election turn** (new factions, or the founding pre-election): the agenda is not scored at
-  that election. It carries into the new term, measured from the election, unless the faction holds a
-  future agenda: then it is voided and the future one dealt.
+- **New factions in a pre-election** (created, unretired, or dealt by `/gm agendas deal`, the founding
+  pre-election included): they are dealt a future agenda on the spot, which begins at the election.
+- **A current agenda dealt in a pre-election turn** (`/gm agendas redeal`, or `assign` with `now`): it is not
+  scored at that election. It carries into the new term, measured from the election, unless the faction
+  holds a future agenda: then it is voided and the future one dealt.
 - **Mid-term deals** (`/gm agendas deal`, a new or unretired faction): scored at the next election, from the
   turn of dealing.
 - **Retired factions:** their agenda is voided unscored at the next election.
