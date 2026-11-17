@@ -14,7 +14,7 @@ public class SideplotTests : IDisposable
     {
         var outcomes = ContentRules.Import(Db, ContentRules.ImportContext(Db, Config), TemplateCodecTests.StartingFiles());
         Assert.All(outcomes, o => Assert.True(o.Imported, string.Join("; ", o.Errors)));
-        for (var pass = 0; pass < 6 && Db.GetTemplates(status: TemplateStatus.Draft).Count > 0; pass++)
+        for (var pass = 0; pass < 100 && Db.GetTemplates(status: TemplateStatus.Draft).Count > 0; pass++)
             foreach (var row in Db.GetTemplates(status: TemplateStatus.Draft))
                 ContentRules.MakeReady(Db, Config, row.Id);
         Assert.Empty(Db.GetTemplates(status: TemplateStatus.Draft));
@@ -123,11 +123,10 @@ public class SideplotTests : IDisposable
     {
         var content = TemplateCodecTests.StartingFiles().Select(f => f.Yaml).ToList();
         var releasedByTheGm = new[] { "senate_bill" };
-        var introducedByTheSouthArpalArc = new[] { "tariff_act" };
         foreach (var bill in TemplateCodecTests.StartingFiles().Where(f => f.Name.StartsWith("bills/")))
         {
             var id = Path.GetFileNameWithoutExtension(bill.Name);
-            Assert.True(releasedByTheGm.Contains(id) || introducedByTheSouthArpalArc.Contains(id) || content.Any(yaml => yaml.Contains($"bill.{id}:")), $"{id} is never introduced");
+            Assert.True(releasedByTheGm.Contains(id) || content.Any(yaml => yaml.Contains($"bill.{id}:")), $"{id} is never introduced");
         }
     }
 }

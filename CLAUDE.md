@@ -54,8 +54,14 @@ Existing mechanic docs:
 - [Content Workbench.md](Content%20Workbench.md): the `/content browse` panel for browsing,
   previewing and editing templates inside Discord.
 - [Lore.md](Lore.md): the world, its history and Aurelia's provinces, agreed with the GM.
-- [Arcs.md](Arcs.md): the GM's term-by-term roadmap of story arcs. Each arc gets its own outline, such as
-  [South Arpal Arc.md](South%20Arpal%20Arc.md), before it becomes content.
+- [Arcs.md](Arcs.md): the GM's term-by-term roadmap of story arcs. Each arc gets its own outline before it
+  becomes content: [South Arpal Arc.md](South%20Arpal%20Arc.md), [Garaztian War Arc.md](Garaztian%20War%20Arc.md),
+  [Colonial Arc.md](Colonial%20Arc.md) and [Meridia Arc.md](Meridia%20Arc.md). Arcs read each other only through
+  the variables in `config/variables.yaml` (`south_arpal_ending`, `garaztia_war`, `arrosia_goodwill`, …), never
+  by referencing each other's templates.
+- [Sideplots.md](Sideplots.md): the small self-contained stories between the arcs, each an event leading to a
+  crisis, bill or project, with a suggested calendar for queuing them.
+- The first-term content was retired; it survives only as test fixtures in `AureliaBot.Tests/LegacyContent/`.
 - [Deployment.md](Deployment.md): running the bot 24/7 on a Linux server, with `deploy/` (service file, deploy
   and backup scripts).
 

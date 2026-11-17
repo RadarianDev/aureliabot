@@ -15,7 +15,7 @@ public class ColonialArcTests : IDisposable
             .Select(path => new ImportFile(Path.GetFileName(path), File.ReadAllText(path)))
             .ToList();
         ContentRules.Import(Db, ContentRules.ImportContext(Db, Config), files);
-        for (var pass = 0; pass < 6 && Db.GetTemplates(status: TemplateStatus.Draft).Count > 0; pass++)
+        for (var pass = 0; pass < 100 && Db.GetTemplates(status: TemplateStatus.Draft).Count > 0; pass++)
             foreach (var row in Db.GetTemplates(status: TemplateStatus.Draft))
                 ContentRules.MakeReady(Db, Config, row.Id);
         Assert.Empty(Db.GetTemplates(status: TemplateStatus.Draft));

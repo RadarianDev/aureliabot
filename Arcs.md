@@ -1,14 +1,15 @@
 # Story Arcs
 
 The GM's roadmap of the long story arcs, term by term. The lore they rest on is in [Lore.md](Lore.md).
-Nothing here is content yet: each arc gets its own outline, like [South Arpal Arc.md](South%20Arpal%20Arc.md),
-before its beats become events, crises, bills and issues under `content/`.
+Every arc below has its own outline and is built as content under `content/`. The sections below are the
+original sketches; the outlines are the reference now. Smaller self-contained stories between the arcs
+are in [Sideplots.md](Sideplots.md).
 
 | Term | Main arc | Running underneath |
 | --- | --- | --- |
-| Second (1854–1858) | The South Arpal arc: the tariff war with Mugi | Colonial seeds; the King of Garaztia's visit (1857) |
-| Third (1858–1862) | The Garaztian war | The colonial foothold in Bhartunia |
-| Fourth (1862–) | The dispute over Meridia | |
+| Second (1854–1858) | [The South Arpal arc](South%20Arpal%20Arc.md): the tariff war with Mugi | [Colonial seeds](Colonial%20Arc.md); the King of Garaztia's visit (1857) |
+| Third (1858–1862) | [The Garaztian war](Garaztian%20War%20Arc.md) | [The colonial foothold](Colonial%20Arc.md) in Bhartunia |
+| Fourth (1862–) | [The dispute over Meridia](Meridia%20Arc.md) | |
 
 ## The Garaztian war (third term)
 
