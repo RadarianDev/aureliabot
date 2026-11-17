@@ -83,8 +83,10 @@ it is the natural host of any peace conference, and its word on the old treaty c
 ## The machinery
 
 Built: both variables, the `mugian_quarter` condition, the frontier bias, the Arpal Question issue
-(`content/issues/arpal_question.yaml`) and the Tariff Act's conditional pass effects. The new bills and
-every event and crisis below are still to be written.
+(`content/issues/arpal_question.yaml`) and the Tariff Act's conditional pass effects. **The content is
+written too:** every event, crisis and bill below is under `content/`, as listed in "Files to write", and
+`SouthArpalArcTests` plays its branches. "Content as built" near the end records where the files settle
+details the outline left open.
 
 **`var.tariff_war`**, 0 to 6: how far relations have broken down. A new entry in `config/variables.yaml`.
 
@@ -489,6 +491,55 @@ with `/gm set`, so the peace event can choose its ending).
 - The colonial seeds in [Arcs.md](Arcs.md) hook into this arc: the Cotton Famine Petition after the
   duty-for-duty answer, and the Admirals' Memorandum after the Squadron or the war.
 
+## Content as built
+
+Where the files settle what the outline left open:
+
+- **Timing.** The Diet fires in Spring 1855 and queues both decree events for the next turn; exactly one
+  fires. The decrees queue the rest of the arc on a clock: Empty Berths in 2 turns, Mugian Gold in
+  Corvasse in 3, the Kolgasi market in 4 (Spring 1856, the second year), the Exchange grumbling in 5, the
+  Remonstrance in 6 (winter 1856/57) and the Long Tariff War in 10 (Winter 1857). Duty for duty brings the
+  market closure forward to the next turn, the default to two turns. The flavour events and the long war
+  skip themselves (`when`) if their situation no longer holds.
+- **The Ultimatum at `tariff_war` 5.** Nothing fires on a variable reaching a value, so every beat that
+  raises `tariff_war` (the market closure, receiving the petitioners, the Tsar's note, the Arpal
+  Guarantee, the failed or refused Bon talks, the Squadron and its default) ends with
+  `if: "var.tariff_war >= 5 and posted.mugi_ultimatum == 0 and posted.arpal_war == 0"`. The Tariff Act
+  itself does not check, since its file is shared with the rest of the game.
+- **The Commercial Treaty needs the Tsar.** Passed while `mugi_pressure` is below 3, the Tsar returns it
+  unsealed (`tsar_refuses_treaty`, pressure +1). Since a passed bill cannot be offered again, the way back
+  to peace is then the Bon treaty (`mugian_commercial_treaty_bon`, titled *The Treaty of Bon*), which
+  always succeeds. Either one queues the ending event `treaty_of_bon`, which carries the economic effects.
+- **The Rising** is queued two turns after the Arpal Guarantee passes and fires only if `tariff_war` is 3
+  or more then. A rising the GM queues by hand obeys the same rule, so raise `tariff_war` first.
+- **The war.** `arpal_war` opens Rearmament if needed, makes the War Loan (and, if never offered, the Army
+  Bill and Militia Act) available, blockades Ocidanten, and rolls the colonial regiments one time in three.
+  It queues the Battle of the Passes for the next turn and the blockade for the turn after. The battle
+  queues the Siege of Kolgasi for the next turn, which only fires if `passes_held` is 1, and the peace talks
+  two to four turns later. So the GM's job is: during the Passes turn, `/gm roll battle` and
+  `/gm set var.passes_held 1` on a win; during the Siege turn, roll again and `/gm set var.kolgasi_taken 1`
+  on a win. The siege raises `mugi_pressure`, and at 5 or more it brings the peace talks forward to the
+  next turn. The blockade repeats each season until the Anzarian fleet sails (Favour 50 or more when it
+  comes due) or peace is made; the fleet sailing adds pressure but never forces the peace on its own,
+  since that could end the war before the Passes are fought.
+- **Endings and `south_arpal_ending`.** The peace talks (`arpal_peace_talks`) choose victory, stalemate or
+  defeat from the two battle records. Every ending event sets `south_arpal_ending`; the rising crushed sets
+  3 and the long tariff war 7, and both stay "unresolved", so the treaty, the Settlement or the war can
+  still follow. Treaty, Settlement and peace events cancel every pending beat of the arc.
+- **Refugees.** Opening the border, the rising's default and the Exiles give North Arpal the `refugees`
+  condition. `arpal_refugees_settle`, eight turns later, clears it; the Treaty of Bon and victory clear it at
+  once.
+- **Additions to the outline:** `mugi_decrees_grievance`, `tsar_refuses_treaty`, `arpal_duties_ease` (the
+  yearly easing after the crushed rising), `arpal_peace_talks` and `arpal_refugees_settle`.
+- **The Kolgasi Charter** is made available after victory only if Integration is still open, since a bill
+  can't be offered on a closed issue.
+
 ## Open questions for the GM
 
 1. What is the independence treaty called? It was signed about five hundred years ago.
+2. Should a victory also cost something lasting, say a higher threat baseline from a Mugi that wants
+   revenge? Today it only lowers threat.
+3. Integration may already be closed by the time South Arpal is annexed. Should the Kolgasi Charter move to
+   another issue so it can always be offered?
+4. The peace of defeat keeps Mugian troops in North Arpal only in its story. Do you want a mechanical cost
+   (a garrison condition, or the indemnity paid in instalments)?

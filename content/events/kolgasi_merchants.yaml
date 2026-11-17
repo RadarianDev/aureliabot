@@ -1,0 +1,6 @@
+id: kolgasi_merchants
+title: The Merchants of Kolgasi
+text: >-
+  The Mugian merchants of Kolgasi send a deputation to Aurelle. They will stay, they say, if their courts,
+  their contracts and their church are left alone. Some have already sold up and gone west.
+effects: { economy: 10, discontent.south_arpal: 1 }

@@ -1,0 +1,7 @@
+id: south_arpal_petition
+title: The Petition of the Arpal Villages
+text: >-
+  Thirty thousand marks and signatures, smuggled over the passes in a cheese cart, ask the King of
+  Aurelia to take the villages of South Arpal under his protection.
+when: "issue.arpal_question.open"
+effects: { salience.arpal_question: 1, crisis.arpal_petition: true }

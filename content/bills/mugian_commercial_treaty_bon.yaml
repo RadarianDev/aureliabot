@@ -1,0 +1,14 @@
+id: mugian_commercial_treaty_bon
+title: The Treaty of Bon
+summary: "The commercial treaty agreed with Count Senarstei at Bon: both sides lift their duties, and the Arpal road reopens. Good for trade, the ports and North Arpal, hard on the Iracterie weavers."
+issue: free_trade
+lean: For
+motion: Ratify the treaty agreed at Bon, by which Aurelia and Mugi each lift their duties on the other's goods and the Arpal road is opened to all carters.
+pass:
+  text: >-
+    The Treaty of Bon is ratified to cheers from the merchants' gallery. Count Senarstei's couriers are
+    already on the road to Anpurgi, where the seal is waiting.
+  effects:
+    - { reserve: -10, var.tariff_war: "=0", prestige.sponsor: 2, event.treaty_of_bon: true }
+    - if: "var.arpal_market_rights >= 1"
+      then: { discontent.north_arpal: -1 }

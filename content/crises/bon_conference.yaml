@@ -1,0 +1,47 @@
+id: bon_conference
+title: The Bon Conference
+summary: "Count Senarstei waits at Bon with the Tsar's authority to treat: every Mugian duty lifted if Aurelia lifts hers, and quiet in South Arpal. Commerce and Labor must accept, bargain for the Arpal villages, or refuse."
+ministry: CommerceLabor
+province: north_arpal
+issue: free_trade
+answers:
+  - lean: For
+    label: Accept the Count's terms
+    price: 20
+    text: >-
+      The Aurelian commissioners accept, and the clerks of Bon draw up a treaty in two languages and very
+      small handwriting. It needs only the Assembly's vote.
+    effects:
+      - if: "posted.mugian_commercial_treaty_bon == 0"
+        then: { bill.mugian_commercial_treaty_bon: true }
+  - lean: Neutral
+    label: Ask market rights in Kolgasi for the Arpal villages too
+    price: 30
+    text: >-
+      The commissioners ask that the Arpal villages may sell in Kolgasi market without Mugian papers. The
+      Count writes to Anpurgi, and the conference waits on the Tsar's answer.
+    effects:
+      - random:
+          - weight: 1
+            effects:
+              - { var.arpal_market_rights: "=1" }
+              - if: "posted.mugian_commercial_treaty_bon == 0"
+                then: { bill.mugian_commercial_treaty_bon: true }
+          - weight: 1
+            effects:
+              - { var.tariff_war: 1 }
+              - if: "var.tariff_war >= 5 and posted.mugi_ultimatum == 0 and posted.arpal_war == 0"
+                then: { event.mugi_ultimatum: true }
+  - lean: Against
+    label: Refuse
+    text: >-
+      The Aurelian commissioners refuse to bargain while Mugian duties stand. Count Senarstei is recalled
+      to Anpurgi, and his enemies at court are delighted.
+    effects:
+      - { var.tariff_war: 2, event.squadron_off_lanten: true }
+      - if: "var.tariff_war >= 5 and posted.mugi_ultimatum == 0 and posted.arpal_war == 0"
+        then: { event.mugi_ultimatum: true }
+default:
+  text: >-
+    No instructions reach the Aurelian commissioners. Count Senarstei waits a month at Bon, then goes home.
+  effects: { var.tariff_war: 1 }

@@ -1,0 +1,6 @@
+id: senarstei_mission
+title: The Senarstei Mission
+text: >-
+  The Tsar sends his beaten rival to the Union of Bon with authority to treat. Count Senarstei offers to
+  lift every Mugian duty if Aurelia lifts hers, and asks that agitation in South Arpal cease.
+effects: { var.tariff_war: -1, crisis.bon_conference: true }

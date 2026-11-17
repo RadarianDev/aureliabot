@@ -1,0 +1,34 @@
+id: arpal_petition
+title: The Arpal Petition
+summary: "A deputation from the Aurelian villages of South Arpal has crossed the passes with a petition asking the King's protection. The Interior must receive them, pass the petition on, or turn them back."
+ministry: Interior
+province: north_arpal
+issue: arpal_question
+answers:
+  - lean: For
+    label: Receive the petitioners at court
+    price: 10
+    text: >-
+      The petitioners are received at court in their Sunday coats, and the crowds outside cheer them to
+      their lodgings. The Mugian envoy leaves early.
+    effects:
+      - { discontent.north_arpal: -2, threat: 5, var.tariff_war: 1, event.tsars_note: true }
+      - if: "var.tariff_war >= 5 and posted.mugi_ultimatum == 0 and posted.arpal_war == 0"
+        then: { event.mugi_ultimatum: true }
+  - lean: Neutral
+    label: Forward the petition to the Mugian envoy
+    text: >-
+      The petition is sent on to the Mugian envoy with the Crown's compliments. The envoy acknowledges
+      it, and nobody expects to hear of it again.
+    effects: { discontent.north_arpal: 1 }
+  - lean: Against
+    label: Turn the petitioners back at the border
+    text: >-
+      The gendarmes meet the deputation at the top of the pass and send it home. In Kolgasi the governor
+      is pleased; in Carden they burn an effigy of the Interior.
+    effects: { discontent.north_arpal: 2, var.tariff_war: -1 }
+default:
+  text: >-
+    Nobody receives them and nobody sends them home. The petitioners camp on the green at Carden, and the
+    camp grows.
+  effects: { discontent.north_arpal: 2, condition.north_arpal.lawless: 1 }

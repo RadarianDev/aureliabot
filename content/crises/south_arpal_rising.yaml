@@ -1,0 +1,36 @@
+id: south_arpal_rising
+title: The Rising in South Arpal
+summary: "The Aurelian villages of South Arpal have risen against the governor of Kolgasi, and Mugian dragoons are riding against them. The War Office must march to their aid, open the border to those who flee, or seal it."
+ministry: War
+province: north_arpal
+issue: arpal_question
+answers:
+  - lean: For
+    label: March to the villages' aid
+    price: 30
+    text: >-
+      General Sir Hannibal Strake leads the North Arpal divisions over the passes. Mugi calls it an
+      invasion, and is not wrong.
+    effects:
+      - { var.tariff_war: "=6" }
+      - if: "posted.arpal_war == 0"
+        then: { event.arpal_war: true }
+  - lean: Neutral
+    label: Open the border to refugees
+    price: 20
+    text: >-
+      The border posts are told to let the families through. They come over the passes with their carts
+      and cattle, and the rising behind them is put down.
+    effects: { discontent.north_arpal: 2, purse.Interior: -10, condition.north_arpal.refugees: 1,
+               event.rising_crushed: true }
+  - lean: Against
+    label: Seal the border
+    text: >-
+      The border is sealed and the passes are held against all comers. On the far side the dragoons
+      finish their work without hurry.
+    effects: { discontent.north_arpal: 3, event.rising_crushed: true }
+default:
+  text: >-
+    No orders come. The rising is crushed, and the families who escape the dragoons cross into North
+    Arpal anyway, by paths nobody guards.
+  effects: { condition.north_arpal.refugees: 1, condition.north_arpal.lawless: 1, event.rising_crushed: true }

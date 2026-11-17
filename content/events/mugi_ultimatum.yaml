@@ -1,0 +1,12 @@
+id: mugi_ultimatum
+title: The Mugian Ultimatum
+text: >-
+  The Mugian envoy hands the Foreign Office an ultimatum. Aurelia must repeal its Arpal Guarantee and hand
+  over the Arpal petitioners within the season, or Mugi will take what it is owed. Only a full
+  renunciation of South Arpal can now keep the peace.
+effects:
+  - { threat: 10 }
+  - if: "posted.kolgasi_settlement == 0"
+    then: { bill.kolgasi_settlement: true }
+  - if: "posted.arpal_war == 0"
+    then: { event.arpal_war: true }

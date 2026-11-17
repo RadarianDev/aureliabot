@@ -1,0 +1,11 @@
+id: mugi_electoral_diet
+title: The Electoral Diet Chooses
+text: >-
+  In Anpurgi the Electoral Diet has chosen its Tsar for the next ten years. Count Senarstei and his house
+  are beaten, and Admiral Prince Gerau Tamasian is crowned Gerau I. He tells the Diet that Mugi has fed
+  Aurelia's looms for nothing long enough, and that the Arpal valleys will be reminded whose they are.
+schedule: { season: Spring, year: 1855 }
+effects:
+  - { threat: 5, event.mugi_decrees: true, event.mugi_decrees_grievance: true }
+  - if: "law.tariff_act"
+    then: { var.tariff_war: "=1" }

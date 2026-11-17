@@ -1,0 +1,13 @@
+id: squadron_off_lanten
+title: The Squadron off Lanten
+text: >-
+  The Tsar turns the Senarstei men out of the Board of Trade, gives their places to his own cousins, and
+  sends a squadron to cruise off Lanten "in the interests of commerce".
+effects:
+  - if: "not issue.rearmament.open"
+    then: { open.rearmament: true }
+  - { threat: 10, var.tariff_war: 1, crisis.squadron_crisis: true }
+  - if: "posted.admirals_memorandum == 0"
+    then: { event.admirals_memorandum: 2 }
+  - if: "var.tariff_war >= 5 and posted.mugi_ultimatum == 0 and posted.arpal_war == 0"
+    then: { event.mugi_ultimatum: true }

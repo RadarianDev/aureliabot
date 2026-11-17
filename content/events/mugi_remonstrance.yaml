@@ -1,0 +1,13 @@
+id: mugi_remonstrance
+title: The Diet Remonstrates
+text: >-
+  The Senarstei and the lesser houses that trade through their ships send the Tsar a remonstrance from
+  the Electoral Diet: Mugi's warehouses are full, her ships half empty, and Aurelia still will not bend.
+  The Tsar answers it in person.
+when: "(var.south_arpal_ending == 0 or var.south_arpal_ending == 3) and posted.arpal_war == 0"
+effects:
+  - random:
+      - weight: "max(1, 1 + var.mugi_pressure)"
+        effects: { event.senarstei_mission: true }
+      - weight: "max(1, var.tariff_war)"
+        effects: { event.squadron_off_lanten: true }

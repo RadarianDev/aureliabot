@@ -1,0 +1,12 @@
+id: war_loan
+title: The War Loan
+summary: "Fills the War purse at once from the reserve and a higher tax. The army gets its money now; the taxpayer pays for it for years."
+issue: rearmament
+lean: For
+motion: Raise a loan for the prosecution of the war, paid from the reserve and secured on a further point of tax.
+pass:
+  text: >-
+    The War Loan is subscribed in a week, mostly by the banks that will be repaid from the new tax. The
+    War Office buys boots, powder and horses, in that order.
+  effects: { purse.War: 60, reserve: -30, taxRate: 0.01,
+             discontent.agrinenten: 1, discontent.provencie_sacs: 1 }

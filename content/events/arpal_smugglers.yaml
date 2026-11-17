@@ -1,0 +1,10 @@
+id: arpal_smugglers
+title: Smugglers in the Passes
+text: >-
+  The Arpal road trade has gone underground. Mule trains cross the passes by night, and the inns of
+  North Arpal are full of men with no luggage and a great deal of money. Unless the gendarmes hold the
+  roads, the smugglers will soon hold them instead.
+effects:
+  - { economy: 5 }
+  - if: "gendarmerie.north_arpal < 1"
+    then: { condition.north_arpal.lawless: 1 }

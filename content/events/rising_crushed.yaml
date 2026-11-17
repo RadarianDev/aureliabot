@@ -1,0 +1,13 @@
+id: rising_crushed
+title: The Rising Crushed
+text: >-
+  The rising in South Arpal is over. Kolgasi is garrisoned to the rooftops, the governor's papers are
+  back in force, and the Mugian duties stand. There is no war and no peace, and North Arpal fills with
+  families who have seen the dragoons.
+effects:
+  - { discontent.north_arpal: 1, threat: 5, cancel.arpal_rising: true,
+      event.arpal_duties_ease: 4, event.arpal_refugees_settle: 8 }
+  - if: "var.south_arpal_ending == 0"
+    then: { var.south_arpal_ending: "=3" }
+  - if: "condition.north_arpal.refugees and gendarmerie.north_arpal < 1 and not condition.north_arpal.lawless"
+    then: { condition.north_arpal.lawless: 1 }

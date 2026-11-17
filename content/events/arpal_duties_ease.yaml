@@ -1,0 +1,7 @@
+id: arpal_duties_ease
+title: The Mugian Duties Ease
+text: >-
+  A year after the rising, the governor of Kolgasi is quietly letting a few Aurelian carts through
+  again, and the Mugian customs men have stopped measuring every bale twice.
+when: "var.south_arpal_ending == 3 and var.tariff_war >= 1"
+effects: { var.tariff_war: -1, economy: 5, event.arpal_duties_ease: 4 }

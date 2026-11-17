@@ -1,0 +1,15 @@
+id: kolgasi_settlement_signed
+title: South Arpal Is Given Up
+text: >-
+  The Kolgasi Settlement is sealed in Anpurgi. Mugi lifts its duties, its soldiers go back to barracks,
+  and the Arpal road reopens to anyone with Mugian papers. In the South Arpal villages the bonfires of the
+  Guarantee are not lit again, and some families begin to pack.
+effects:
+  - { economy: 20, threat: -10, var.tariff_war: "=0", var.south_arpal_ending: "=2",
+      event.exiles_from_kolgasi: 2,
+      cancel.long_tariff_war: true, cancel.arpal_duties_ease: true, cancel.mugi_remonstrance: true,
+      cancel.arpal_rising: true, cancel.mugi_ultimatum: true, cancel.arpal_war: true,
+      cancel.senarstei_mission: true, cancel.squadron_off_lanten: true, cancel.lanten_blockade: true,
+      cancel.battle_of_the_passes: true, cancel.siege_of_kolgasi: true, cancel.arpal_peace_talks: true }
+  - if: "condition.ocidanten.blockaded"
+    then: { condition.ocidanten.blockaded: -1 }

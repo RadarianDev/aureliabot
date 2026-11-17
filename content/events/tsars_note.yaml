@@ -1,0 +1,9 @@
+id: tsars_note
+title: A Note from the Tsar
+text: >-
+  The Mugian envoy delivers a sharp note: Aurelia has received rebels against a lawful sovereign, and Mugi
+  will draw its own conclusions. The Kolgasi garrison is doubled within the month.
+effects:
+  - { threat: 5, var.tariff_war: 1 }
+  - if: "var.tariff_war >= 5 and posted.mugi_ultimatum == 0 and posted.arpal_war == 0"
+    then: { event.mugi_ultimatum: true }

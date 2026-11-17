@@ -1,0 +1,11 @@
+id: siege_of_kolgasi
+title: The Siege of Kolgasi
+text: >-
+  The passes are Aurelia's, and the divisions are camped below the walls of Kolgasi. The garrison has
+  been reinforced, the governor has sworn to hold, and in Anpurgi the Diet is asking what the war is
+  costing.
+when: "var.passes_held >= 1 and posted.arpal_war >= 1 and (var.south_arpal_ending == 0 or var.south_arpal_ending == 3 or var.south_arpal_ending == 7)"
+effects:
+  - { var.mugi_pressure: 1 }
+  - if: "var.mugi_pressure >= 5"
+    then: { cancel.arpal_peace_talks: true, event.arpal_peace_talks: true }

@@ -1,0 +1,14 @@
+id: arpal_guarantee
+title: The Arpal Guarantee
+summary: "Pledges the Crown to protect the Aurelians of South Arpal. North Arpal would be delighted, and Mugi would take it as a claim on its land."
+issue: arpal_question
+lean: For
+motion: Pledge the protection of the Crown to the Aurelian people of the South Arpal valleys, wherever they live and under whatever flag.
+pass:
+  text: >-
+    The Arpal Guarantee passes, and the bells of Carden ring all night. Over the passes the villagers
+    light bonfires on the hills, where the Kolgasi garrison can see them.
+  effects:
+    - { discontent.north_arpal: -2, threat: 10, var.tariff_war: 1, event.arpal_rising: 2 }
+    - if: "var.tariff_war >= 5 and posted.mugi_ultimatum == 0 and posted.arpal_war == 0"
+      then: { event.mugi_ultimatum: true }

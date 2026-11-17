@@ -1,0 +1,31 @@
+id: arpal_war
+title: War with Mugi
+text: >-
+  Mugi and Aurelia are at war. Mugian dragoons hold the far side of the passes, General Sir Hannibal
+  Strake holds the near side, and a Mugian squadron has closed the mouth of Lanten harbour. The Union of
+  Bon offers its good offices to both sides, and neither is listening yet.
+when: "issue.arpal_question.open"
+effects:
+  - if: "not issue.rearmament.open"
+    then: { open.rearmament: true }
+  - { threat: 20, economy: -30, var.tariff_war: "=6",
+      event.battle_of_the_passes: true, event.lanten_blockade: 2,
+      cancel.long_tariff_war: true, cancel.arpal_duties_ease: true, cancel.mugi_remonstrance: true,
+      cancel.arpal_rising: true, cancel.senarstei_mission: true, cancel.squadron_off_lanten: true }
+  - if: "not condition.ocidanten.blockaded"
+    then: { condition.ocidanten.blockaded: 1 }
+  - if: "posted.war_loan == 0"
+    then: { bill.war_loan: true }
+  - if: "posted.army_bill == 0"
+    then: { bill.army_bill: true }
+  - if: "posted.militia_act == 0"
+    then: { bill.militia_act: true }
+  - random:
+      - weight: 1
+        effects: { var.colonial_regiments: "=1" }
+      - weight: 2
+        effects: { var.colonial_regiments: "=0" }
+  - if: "posted.cotton_famine_petition == 0"
+    then: { event.cotton_famine_petition: 3 }
+  - if: "posted.admirals_memorandum == 0"
+    then: { event.admirals_memorandum: 2 }

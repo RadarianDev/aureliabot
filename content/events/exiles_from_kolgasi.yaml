@@ -1,0 +1,9 @@
+id: exiles_from_kolgasi
+title: Exiles from Kolgasi
+text: >-
+  Aurelian families who will not live under Mugi for good are coming over the passes with everything they
+  can carry. Carden finds them barns and church halls, and a grievance that will outlast them.
+effects:
+  - { discontent.north_arpal: 1, event.arpal_refugees_settle: 8 }
+  - if: "not condition.north_arpal.refugees"
+    then: { condition.north_arpal.refugees: 1 }

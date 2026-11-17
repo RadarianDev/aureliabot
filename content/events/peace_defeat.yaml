@@ -1,0 +1,9 @@
+id: peace_defeat
+title: The Peace of Defeat
+text: >-
+  The passes are lost, and Mugi dictates the peace at Bon. Aurelia pays an indemnity, renounces South
+  Arpal for good, and Mugian soldiers stay in the North Arpal valleys until the last instalment is paid.
+  In the Assembly, members are counting heads.
+effects:
+  - { reserve: -60, discontent.north_arpal: 2, threat: 5, popularity.government: -3,
+      var.tariff_war: "=0", var.south_arpal_ending: "=5", close.arpal_question: true }
