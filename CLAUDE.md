@@ -53,6 +53,9 @@ Existing mechanic docs:
   collected from the spec. Keep it in step when a format changes.
 - [Content Workbench.md](Content%20Workbench.md): the `/content browse` panel for browsing,
   previewing and editing templates inside Discord.
+- [Lore.md](Lore.md): the world, its history and Aurelia's provinces, agreed with the GM.
+- [Arcs.md](Arcs.md): the GM's term-by-term roadmap of story arcs. Each arc gets its own outline, such as
+  [South Arpal Arc.md](South%20Arpal%20Arc.md), before it becomes content.
 - [Deployment.md](Deployment.md): running the bot 24/7 on a Linux server, with `deploy/` (service file, deploy
   and backup scripts).
 
