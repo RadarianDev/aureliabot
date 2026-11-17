@@ -1,0 +1,12 @@
+id: passes_sketchers_return
+title: The Walking Gentlemen Return
+text: >-
+  The foreign gentlemen are back in the North Arpal passes. This time they sketch the fords as well as
+  the bridges, count the carts on the Carden road, and pay in Mugian silver. One of them leaves a pencil
+  behind at an inn, stamped with the arms of the Kolgasi garrison. General Sir Hannibal Strake sends it
+  to the Assembly, wrapped in a strongly worded letter.
+schedule: { season: Winter, year: 1853 }
+effects:
+  - if: "not issue.rearmament.open"
+    then: { open.rearmament: true }
+  - { threat: 5, salience.rearmament: 1, discontent.north_arpal: 1 }

@@ -47,8 +47,8 @@ merchants and the market every Arpal valley sells into.
   into a Union of princes. The Union of Bon, still the Empire in law, is the one power both sides could
   accept as judge.
 - *(extrapolated)* The "foreign gentlemen" sketching bridges in the North Arpal passes (the
-  `passes_sketchers` event) were Mugian officers from the Kolgasi garrison. Queued a season or two before
-  the election, that event foreshadows the arc.
+  `passes_sketchers` event) were Mugian officers from the Kolgasi garrison. It fired in the first term; a second round,
+  `passes_sketchers_return` (Winter 1853), brings them back the season before the 1854 election.
 
 **The Anzarian angle.** Aurelia's Navy purse is a contribution to the Anzarian fleet. Against a strong
 Mugian navy, Aurelia's sea defence depends on Anzarian goodwill, so **Favour** matters throughout the arc.
@@ -131,7 +131,8 @@ The Tariff Act's pass effects get a condition, so it behaves as before outside t
 **Event: The Electoral Diet Chooses** (`mugi_electoral_diet`, `schedule: { season: Spring, year: 1855 }`)
 
 The first Assembly term ends with the 1854 election, so the new Assembly has barely sat before Mugi
-moves. Queuing `passes_sketchers` in 1854 foreshadows it during that campaign.
+moves. The sketchers already came once in the first term; `passes_sketchers_return`, scheduled for Winter
+1853, brings them back on the eve of the 1854 election, a year before the Diet.
 
 > In Anpurgi the Electoral Diet has chosen its Tsar for the next ten years. Count Senarstei and
 > his house are beaten, and Admiral Prince Gerau Tamasian is crowned Gerau I. He tells the
@@ -419,7 +420,8 @@ What it takes to turn Acts I to IV into files under `content/`, checked against 
 - **Ready order.** A template can be marked Ready only once every template it references is Ready. Mark
   the arc from its leaves back to the Diet: endings, then Act III, II, I, prologue. The arc has no
   reference cycles, and a template may reference itself.
-- **`passes_sketchers`** already exists; queue it during the 1854 campaign as foreshadowing.
+- **`passes_sketchers`** fired in the first term. Its second round, `passes_sketchers_return`, is scheduled
+  for Winter 1853 and needs no queuing.
 
 ### Files to write
 
