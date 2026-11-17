@@ -144,7 +144,8 @@ public class AgendaTests : IDisposable
     {
         Db.StartGame(Config, DateTimeOffset.UtcNow);
         Db.CreateFaction(1, "A", "aurenten", 10);
-        Db.DealAgenda(1, Config, new Random(1));
+        Resolve(Config);
+        Assert.NotNull(Db.GetActiveAgenda(1));
 
         var result = Db.AssignAgenda(1, "treasurer", Config, now: true);
 
@@ -298,6 +299,7 @@ public class AgendaTests : IDisposable
         Assert.Equal("general", Db.GetFutureAgendas()[1]);
         Assert.Empty(Db.GetAgendaAssignments());
 
+        Assert.Equal(AssignAgendaRefusal.NowInPreElection, Db.AssignAgenda(1, "magnate", Config, now: true).Refusal);
         var result = Db.AssignAgenda(1, "magnate", Config, now: false);
         Assert.Equal("magnate", result.Future);
         Assert.Empty(Db.GetAgendaAssignments());

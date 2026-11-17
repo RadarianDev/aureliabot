@@ -139,6 +139,7 @@ public partial class GmModule
                     AssignAgendaRefusal.UnknownAgenda => Texts.Get("secretAgenda.gm.unknownAgenda", ("agenda", agenda)),
                     AssignAgendaRefusal.NotActive => Texts.Get("secretAgenda.gm.notActive", ("faction", name)),
                     AssignAgendaRefusal.NotStarted => Texts.Get("secretAgenda.gm.notStarted"),
+                    AssignAgendaRefusal.NowInPreElection => Texts.Get("secretAgenda.gm.nowInPreElection", ("faction", name)),
                     _ when now => Texts.Get("secretAgenda.gm.assignedNow", ("faction", name), ("agenda", agendaName)),
                     _ when result.Future is not null => Texts.Get("secretAgenda.gm.assignedFuture", ("faction", name), ("agenda", agendaName)),
                     _ => Texts.Get("secretAgenda.gm.assignedNext", ("faction", name), ("agenda", agendaName)),

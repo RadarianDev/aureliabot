@@ -19,9 +19,21 @@ public partial class GmModule
     [SlashCommand("peek", "Show the hidden state, previews and the working behind them, privately")]
     public async Task PeekAsync(
         [Summary("mode", "What to show (default: the hidden state)")] PeekMode mode = PeekMode.State,
-        [Summary("province", "Strength, opinion or popularity mode: only this province"), Autocomplete(typeof(ProvinceAutocomplete))] string? province = null)
+        [Summary("province", "Strength, opinion or popularity mode: only this province"), Autocomplete(typeof(ProvinceAutocomplete))] string? province = null,
+        [Summary("issue", "Opinion on only this issue in every province, most in favour first"), Autocomplete(typeof(OpenIssueAutocomplete))] string? issue = null)
     {
         await DeferAsync(ephemeral: true);
+        if (issue is not null)
+        {
+            if (OpenIssueAutocomplete.Find(_data, issue) is not { } foundIssue)
+            {
+                await FollowupAsync(Texts.Get("gm.peek.noIssue", ("issue", issue)), ephemeral: true, allowedMentions: AllowedMentions.None);
+                return;
+            }
+            foreach (var chunk in Publisher.Chunk(OpinionOnIssue(foundIssue)))
+                await FollowupAsync(chunk, ephemeral: true, allowedMentions: AllowedMentions.None);
+            return;
+        }
         if (mode == PeekMode.Election)
         {
             await PeekElectionAsync(ElectionCalculator.Run(_data.BuildElectionInput(_constants.Config)), Texts.Get("gm.peek.electionHeader"), Texts.Get("gm.peek.chartTitle"));

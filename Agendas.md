@@ -42,7 +42,7 @@ The reveal shows only whether each track moved the wanted way, never a hidden nu
 
 - **New factions in a pre-election** (created, unretired, or dealt by `/gm agendas deal`, the founding
   pre-election included): they are dealt a future agenda on the spot, which begins at the election.
-- **A current agenda dealt in a pre-election turn** (`/gm agendas redeal`, or `assign` with `now`): it is not
+- **A current agenda dealt in a pre-election turn** (`/gm agendas redeal`): it is not
   scored at that election. It carries into the new term, measured from the election, unless the faction
   holds a future agenda: then it is voided and the future one dealt.
 - **Mid-term deals** (`/gm agendas deal`, a new or unretired faction): scored at the next election, from the
@@ -60,7 +60,8 @@ The reveal shows only whether each track moved the wanted way, never a hidden nu
 - `/gm agendas redeal faction` voids a faction's agenda and deals a different one (or the GM's choice, if one
   is waiting).
 - `/gm agendas assign faction agenda [now]` chooses a faction's agenda, for the next deal or at once. During
-  the pre-election, without `now`, it replaces the faction's future agenda and tells the faction.
+  the pre-election it replaces the faction's future agenda and tells the faction; `now` is refused then,
+  since a current agenda dealt so late would never be scored.
 - `/gm agendas cancel faction` drops a choice that is waiting.
 - `/gm agendas list` also shows the choices waiting, the future agendas, and how many factions hold each
   agenda.

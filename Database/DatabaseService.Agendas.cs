@@ -16,7 +16,7 @@ public sealed record AgendaReveal(ulong FactionId, string AgendaName, IReadOnlyL
 
 public sealed record FutureAgenda(AgendaDefinition Agenda, bool HasCurrent);
 
-public enum AssignAgendaRefusal { UnknownAgenda, NotActive, NotStarted }
+public enum AssignAgendaRefusal { UnknownAgenda, NotActive, NotStarted, NowInPreElection }
 
 public sealed record AssignAgendaResult(AssignAgendaRefusal? Refusal, AgendaHand? Dealt = null, bool Repeats = false, string? Future = null);
 
@@ -240,8 +240,9 @@ public partial class DatabaseService
         using var tx = conn.BeginTransaction();
         if (config.Agendas.Find(agendaId) is null) return new AssignAgendaResult(AssignAgendaRefusal.UnknownAgenda);
         if (GetFactionTx(conn, tx, factionId) is not { IsActive: true }) return new AssignAgendaResult(AssignAgendaRefusal.NotActive);
-        var started = GetGameStateTx(conn, tx).Started;
-        if (now && !started) return new AssignAgendaResult(AssignAgendaRefusal.NotStarted);
+        var state = GetGameStateTx(conn, tx);
+        if (now && !state.Started) return new AssignAgendaResult(AssignAgendaRefusal.NotStarted);
+        if (now && state.IsPreElection) return new AssignAgendaResult(AssignAgendaRefusal.NowInPreElection);
 
         var current = ActiveAgendaTx(conn, tx, factionId);
         var previous = current?.AgendaId ?? LastAgendaIdTx(conn, tx, factionId);

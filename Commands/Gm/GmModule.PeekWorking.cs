@@ -2,8 +2,7 @@ public partial class GmModule
 {
     private string OpinionByProvince(ProvinceDefinition? only)
     {
-        var config = _constants.Config;
-        var snapshot = _data.LoadOpinionSnapshot(config);
+        var snapshot = _data.LoadOpinionSnapshot(_constants.Config);
         var conditions = _data.GetProvinceConditions();
         var provinces = snapshot.Provinces.Where(p => only is null || p.Id == only.Id).ToList();
         var issues = _data.GetOpenIssues();
@@ -15,28 +14,43 @@ public partial class GmModule
         };
 
         foreach (var issue in issues)
-        {
-            lines.Add("");
-            lines.Add(Texts.Get("gm.peek.opinion.issue",
-                ("issue", issue.Title), ("base", SignedFixed(issue.Opinion)),
-                ("national", SignedFixed(snapshot.National(issue.Id))), ("salience", Fixed(issue.Salience))));
-            foreach (var province in provinces)
-            {
-                var biases = conditions.GetValueOrDefault(province.Id, [])
-                    .Select(id => (Id: id, Definition: config.Condition(id)))
-                    .Where(c => c.Definition is not null && c.Definition.BiasOn(issue.Id) != 0)
-                    .Select(c => Texts.Get("gm.peek.opinion.bias", ("condition", c.Definition!.Name), ("bias", SignedFixed(c.Definition.BiasOn(issue.Id)))))
-                    .ToList();
-                var opinion = SignedFixed(snapshot.Provincial(issue.Id, province.Id));
-                lines.Add(biases.Count == 0
-                    ? Texts.Get("gm.peek.opinion.provinceBase", ("province", province.Name), ("opinion", opinion))
-                    : Texts.Get("gm.peek.opinion.provinceBiased",
-                        ("province", province.Name), ("opinion", opinion), ("biases", string.Join(" ", biases))));
-            }
-        }
+            AddIssueOpinion(lines, issue, provinces, snapshot, conditions);
         if (issues.Count == 0) lines.Add(Texts.Get("gm.peek.noIssues"));
         else lines.Add(Texts.Get("gm.peek.opinion.footer"));
         return string.Join("\n", lines);
+    }
+
+    private string OpinionOnIssue(Issue issue)
+    {
+        var snapshot = _data.LoadOpinionSnapshot(_constants.Config);
+        var provinces = snapshot.Provinces.OrderByDescending(p => snapshot.Provincial(issue.Id, p.Id)).ToList();
+        var lines = new List<string> { Texts.Get("gm.peek.opinion.headerIssue", ("issue", issue.Title)) };
+        AddIssueOpinion(lines, issue, provinces, snapshot, _data.GetProvinceConditions());
+        lines.Add(Texts.Get("gm.peek.opinion.footer"));
+        return string.Join("\n", lines);
+    }
+
+    private void AddIssueOpinion(List<string> lines, Issue issue, IEnumerable<Province> provinces,
+        OpinionSnapshot snapshot, IReadOnlyDictionary<string, List<string>> conditions)
+    {
+        var config = _constants.Config;
+        lines.Add("");
+        lines.Add(Texts.Get("gm.peek.opinion.issue",
+            ("issue", issue.Title), ("base", SignedFixed(issue.Opinion)),
+            ("national", SignedFixed(snapshot.National(issue.Id))), ("salience", Fixed(issue.Salience))));
+        foreach (var province in provinces)
+        {
+            var biases = conditions.GetValueOrDefault(province.Id, [])
+                .Select(id => (Id: id, Definition: config.Condition(id)))
+                .Where(c => c.Definition is not null && c.Definition.BiasOn(issue.Id) != 0)
+                .Select(c => Texts.Get("gm.peek.opinion.bias", ("condition", c.Definition!.Name), ("bias", SignedFixed(c.Definition.BiasOn(issue.Id)))))
+                .ToList();
+            var opinion = SignedFixed(snapshot.Provincial(issue.Id, province.Id));
+            lines.Add(biases.Count == 0
+                ? Texts.Get("gm.peek.opinion.provinceBase", ("province", province.Name), ("opinion", opinion))
+                : Texts.Get("gm.peek.opinion.provinceBiased",
+                    ("province", province.Name), ("opinion", opinion), ("biases", string.Join(" ", biases))));
+        }
     }
 
     private string PendingActions()
