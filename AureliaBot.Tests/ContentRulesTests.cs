@@ -89,7 +89,7 @@ public class ContentRulesTests : IDisposable
         foreach (var row in Db.GetTemplates(status: TemplateStatus.Draft))
             Assert.Fail($"{row.Id}: {ContentRules.MakeReady(Db, Config, row.Id).Message}");
 
-        Assert.Empty(Db.GetQueuedEvents());
+        Assert.All(Db.GetQueuedEvents(), e => Assert.True(e.FromSchedule, e.TemplateId));
         Assert.Equal("at /gm start", ContentRules.DescribeFireAt(Db.GetGameState(), 0));
     }
 

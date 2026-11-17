@@ -582,7 +582,7 @@ lawless:
 
 **Standing** conditions describe a province and are set in `provinces.yaml`: urban, industrial, farmland,
 frontier, anzarian_border, crossroads, rugged, forested, marshland, remote, coastal, mugian_quarter. **Event**
-conditions come and go through effects: lawless, epidemic, striking, famine, booming, blockaded.
+conditions come and go through effects: lawless, epidemic, striking, famine, booming, blockaded, refugees.
 
 ### `config/variables.yaml`: your own variables
 

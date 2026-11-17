@@ -63,6 +63,11 @@ blockaded:
   biases: { rearmament: 0.3, free_trade: 0.2 }
   discontentRest: 1
   growth: -0.03
+refugees:
+  name: Refugees
+  description: Camps of families from over the border line the roads, and the parish rates run dry.
+  biases: { social_reform: 0.2, rearmament: 0.2, garaztian_question: 0.3, arpal_question: 0.2 }
+  discontentRest: 1
 epidemic:
   name: Epidemic
   description: Fever spreads through the crowded quarters.

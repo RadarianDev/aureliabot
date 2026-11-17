@@ -1,0 +1,8 @@
+id: arrosian_note
+title: An Arrosian Note
+text: >-
+  The Arrosian envoy calls at the Foreign Office with a note, polite and slightly amused. The Republic,
+  it says, takes an interest in the southern trade, and trusts that its friends in Aurelle take an
+  interest in their own affairs.
+schedule: { season: Winter, year: 1857 }
+effects: { threat: 2 }

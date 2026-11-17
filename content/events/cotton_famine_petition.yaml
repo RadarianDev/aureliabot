@@ -1,0 +1,7 @@
+id: cotton_famine_petition
+title: The Cotton Famine Petition
+text: >-
+  The mill owners of Iracterie petition the Assembly. Ukulwian cotton reaches their looms only through
+  Mugi, and Mugi has made it dear. They ask the Crown to look for cotton "beyond the Mugian sea", where
+  no Tsar can tax it.
+effects: { var.colonial_push: 2, salience.free_trade: 1 }

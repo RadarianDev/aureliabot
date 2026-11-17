@@ -1,0 +1,8 @@
+id: voyage_to_bhartunia
+title: The Voyage to Bhartunia
+text: >-
+  The brig Constance, sent south by a company of Lanten merchants, is home from the coast of Bhartunia
+  with bales of cotton, a parrot and a captain who will talk to any newspaper that buys him dinner. The
+  newspapers buy him a great many dinners.
+schedule: { season: Autumn, year: 1856 }
+effects: { var.colonial_push: 1, economy: 5 }

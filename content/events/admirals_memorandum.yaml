@@ -1,0 +1,10 @@
+id: admirals_memorandum
+title: The Admirals' Memorandum
+text: >-
+  The Anzarian admirals send the Assembly a memorandum. A fleet that can only defend its own harbours,
+  they write, cannot protect Aurelian trade, and a fleet without coal cannot leave them. They ask for a
+  coaling and supply station in the south.
+effects:
+  - { var.colonial_push: 1, salience.rearmament: 1 }
+  - if: "var.admirals_demand >= 1"
+    then: { var.colonial_push: 1 }

@@ -8,3 +8,78 @@ mugi_pressure:
   min: 0
   max: 6
   description: "The South Arpal arc: how hard the tariff war hits the Mugian merchant nobles, and so how hard the Diet pushes the Tsar to make peace."
+arpal_market_rights:
+  start: 0
+  min: 0
+  max: 1
+  description: "The South Arpal arc: 1 once the Bon Conference won the Arpal villages their market rights in Kolgasi."
+colonial_regiments:
+  start: 0
+  min: 0
+  max: 1
+  description: "The South Arpal arc: 1 once the Tsar has shipped his Ukulwian regiments home. The Kolgasi garrison rolls 5d12 at the Passes instead of 3d12."
+passes_held:
+  start: 0
+  min: 0
+  max: 1
+  description: "The South Arpal arc: the GM sets 1 with /gm set after Aurelia wins the Battle of the Passes."
+kolgasi_taken:
+  start: 0
+  min: 0
+  max: 1
+  description: "The South Arpal arc: the GM sets 1 with /gm set after Aurelia wins the Siege of Kolgasi."
+south_arpal_ending:
+  start: 0
+  min: 0
+  max: 7
+  description: "How the South Arpal arc ended, for later arcs: 0 still running, 1 Treaty of Bon, 2 Kolgasi Settlement, 3 rising crushed, 4 victory, 5 defeat, 6 stalemate, 7 long tariff war."
+colonial_push:
+  start: 0
+  min: 0
+  max: 6
+  description: "The colonial arc: how hard the mills, the admirals and the public push for colonies. Set by the second-term seeds, read in the third term."
+admirals_demand:
+  start: 0
+  min: 0
+  max: 1
+  description: "The colonial arc: 1 once the Anzarian fleet has sailed against Mugi and held. The admirals' request for a southern station becomes a demand."
+colonial_foothold:
+  start: 0
+  min: 0
+  max: 3
+  description: "The colonial arc: Aurelia-Anzaria's hold in Bhartunia. 0 none, 1 a merchants' post, 2 a treaty post, 3 a fortified post under the flag."
+garaztia_war:
+  start: 0
+  min: 0
+  max: 5
+  description: "The Garaztian war: 0 peace, 1 Garaztia defaults, 2 the Arrosian ultimatum, 3 Arrosian troops in the customs houses, 4 war in the valleys, 5 Arrosian columns on the Gares border. 3 or more means Arrosia is tied down."
+garaztia_goodwill:
+  start: 0
+  min: -3
+  max: 3
+  description: "The Garaztian war: how Garaztia regards Aurelia-Anzaria, -3 bitter to 3 grateful."
+arrosia_goodwill:
+  start: 0
+  min: -3
+  max: 3
+  description: "How the Arrosian Republic regards Aurelia-Anzaria, -3 hostile to 3 friendly. Set by the Garaztian war, read by the Meridia dispute."
+garaztia_loan:
+  start: 0
+  min: 0
+  max: 1
+  description: "The Garaztian war: 1 once Aurelia lent the King of Garaztia his interest in 1857, which puts the default off a year."
+valleys:
+  start: 0
+  min: 0
+  max: 2
+  description: "The Garaztian war: what the Garaztian valleys did. 0 undecided, 1 rallied to their king, 2 welcomed the Arrosians for their charters."
+garaztia_ending:
+  start: 0
+  min: 0
+  max: 5
+  description: "How the Garaztian war ended, for later arcs: 0 still running, 1 debt paid in time, 2 bailiffs paid off, 3 the collection, 4 Aurelia the creditors' partner, 5 Garaztia an Arrosian client."
+meridia_tension:
+  start: 0
+  min: 0
+  max: 6
+  description: "The Meridia dispute: how close Aurelia-Anzaria and Arrosia are to blows over Meridia. 0 calm to 6 war."
