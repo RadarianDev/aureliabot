@@ -1,0 +1,13 @@
+id: valleys_welcome
+title: The Valleys Open the Passes
+text: >-
+  The Arrosians offer the valleys their old charters back, their own laws and their own taxes, in return
+  for the customs. The valleys accept, and open the passes. The royal army falls back on the capital,
+  and Arrosian columns march east of it, along the Gares border.
+when: "var.garaztia_ending == 0"
+effects:
+  - { var.garaztia_war: "=5", var.valleys: "=2", threat: 10, discontent.provencie_gares: 1,
+      crisis.arrosian_border: true, event.charters_echo: 1 }
+  - random:
+      - effects: { event.garaztian_war_ends: 1 }
+      - effects: { event.garaztian_war_ends: 2 }

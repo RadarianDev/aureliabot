@@ -1,0 +1,17 @@
+id: bailiffs_paid_off
+title: The Bailiffs Paid Off
+text: >-
+  Aurelian gold buys back the Garaztian customs houses one by one, with interest, costs and a fee for the
+  trouble of marching. Colonel-Paymaster Ferrol signs the receipts, shakes hands with the Aurelian agent
+  and takes his regiments home. Garaztia is free and grateful, and Aurelia has paid for an Arrosian war.
+effects:
+  - { cancel.arrosian_ultimatum: true, cancel.the_collection: true, cancel.refugees_in_gares: true,
+      cancel.gares_border_lords: true, cancel.bon_princes_nervous: true, cancel.valleys_choose: true,
+      cancel.valleys_rally: true, cancel.valleys_welcome: true, cancel.charters_echo: true,
+      cancel.garaztian_war_ends: true }
+  - { var.garaztia_ending: "=2", var.garaztia_war: "=0", var.garaztia_goodwill: 1,
+      reserve: -40, threat: -5 }
+  - if: "issue.garaztian_question.open"
+    then: { close.garaztian_question: true }
+  - if: "condition.provencie_gares.refugees"
+    then: { event.gares_camps_close: 2 }

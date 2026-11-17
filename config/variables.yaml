@@ -67,7 +67,7 @@ garaztia_loan:
   start: 0
   min: 0
   max: 1
-  description: "The Garaztian war: 1 once Aurelia lent the King of Garaztia his interest in 1857, which puts the default off a year."
+  description: "The Garaztian war: 1 once Aurelia lent the King of Garaztia his interest in 1857, which puts the default off two seasons, to Winter 1858."
 valleys:
   start: 0
   min: 0
@@ -76,8 +76,8 @@ valleys:
 garaztia_ending:
   start: 0
   min: 0
-  max: 5
-  description: "How the Garaztian war ended, for later arcs: 0 still running, 1 debt paid in time, 2 bailiffs paid off, 3 the collection, 4 Aurelia the creditors' partner, 5 Garaztia an Arrosian client."
+  max: 6
+  description: "How the Garaztian war ended, for later arcs: 0 still running, 1 debt paid in time, 2 bailiffs paid off, 3 the collection, 4 Aurelia the creditors' partner, 5 Garaztia an Arrosian client, 6 the King holds with Aurelian help."
 meridia_tension:
   start: 0
   min: 0

@@ -1,0 +1,14 @@
+id: king_holds
+title: The King Holds
+text: >-
+  With the valleys behind him and Aurelian muskets in their hands, King Antso holds the roads, and the
+  Arrosian houses decide that half a debt is better than a long war. By the Treaty of Bon they take a
+  reduced sum and sail home. The King rides through his capital to the cheers of men who were his rebels
+  a generation ago, and he drinks the health of Aurelia.
+effects:
+  - { var.garaztia_ending: "=6", var.garaztia_war: "=0", var.garaztia_goodwill: 1,
+      var.arrosia_goodwill: -1, threat: -5, discontent.provencie_gares: -1 }
+  - if: "issue.garaztian_question.open"
+    then: { close.garaztian_question: true }
+  - if: "condition.provencie_gares.refugees"
+    then: { event.gares_camps_close: 2 }

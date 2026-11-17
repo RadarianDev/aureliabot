@@ -1,0 +1,16 @@
+id: garaztian_loan
+title: The Garaztian Guarantee
+summary: "The Crown guarantees the interest on Garaztia's Arrosian debts from the reserve. A heavy cost to the Treasury, a grateful neighbour, and a cold shoulder from the Arrosian Republic."
+issue: garaztian_question
+lean: For
+motion: Guarantee from the reserve the interest owed by the Kingdom of Garaztia to the merchant houses of Arrosia.
+pass:
+  text: >-
+    The Treasury signs the guarantee, and a courier rides for the Arrosian exchange with the first
+    instalment. In Escas they ring the church bells, and in the Arrosian legation they draw the blinds.
+  effects:
+    - { reserve: -60, economy: -10, var.garaztia_goodwill: 2, var.arrosia_goodwill: -1 }
+    - if: "var.garaztia_war < 3"
+      then: { cancel.arrosian_ultimatum: true, cancel.the_collection: true, event.debt_paid: true,
+              prestige.sponsor: 2 }
+      else: { event.bailiffs_paid_off: true }

@@ -1,0 +1,13 @@
+id: valleys_choose
+title: The Valleys Take Counsel
+text: >-
+  In the high valleys of Garaztia the old councils meet again for the first time in two generations,
+  under the oaks where their charters used to be read. The Arrosians have sent them an offer. So has
+  their King.
+when: "var.garaztia_ending == 0"
+effects:
+  - random:
+      - weight: "max(0, 2 + var.garaztia_goodwill)"
+        effects: { event.valleys_rally: true }
+      - weight: "max(0, 2 - var.garaztia_goodwill)"
+        effects: { event.valleys_welcome: true }

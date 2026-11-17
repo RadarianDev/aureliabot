@@ -1,0 +1,12 @@
+id: the_collection
+title: The Arrosians Collect
+text: >-
+  Arrosian regiments land at the Garaztian ports and march on the customs houses, paymasters riding
+  behind them with ledgers. Colonel-Paymaster Jaume Ferrol posts a notice: duties are now payable to the
+  creditors. Arrosia calls it a collection. Garaztia calls it an invasion, and the carts on the Escas road
+  are already full of families going west.
+when: "var.garaztia_ending == 0"
+effects: { var.garaztia_war: "=3", threat: 10, economy: -10, discontent.provencie_gares: 1,
+           salience.garaztian_question: 1,
+           event.refugees_in_gares: 0, event.gares_border_lords: 1, event.bon_princes_nervous: 1,
+           event.valleys_choose: 2 }

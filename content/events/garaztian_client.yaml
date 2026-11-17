@@ -1,0 +1,13 @@
+id: garaztian_client
+title: Garaztia Under the Creditors
+text: >-
+  By the Treaty of Bon the valleys keep their charters, the Arrosians keep the customs, and King Antso
+  keeps a crown that answers to an Arrosian resident at his court. An Arrosian garrison stays on the Gares
+  border "to secure the roads". Aurelia has a new neighbour, and it keeps ledgers.
+effects:
+  - { var.garaztia_ending: "=5", var.garaztia_war: "=0", var.garaztia_goodwill: -1,
+      threat: 10, discontent.provencie_gares: 1 }
+  - if: "issue.garaztian_question.open"
+    then: { close.garaztian_question: true }
+  - if: "condition.provencie_gares.refugees"
+    then: { event.gares_camps_close: 2 }

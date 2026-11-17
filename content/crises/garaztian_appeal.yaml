@@ -1,0 +1,33 @@
+id: garaztian_appeal
+title: King Antso's Appeal
+summary: "With the valleys risen for him, the King of Garaztia asks Aurelia for arms and officers to drive the Arrosian collectors out. The War Office must send them, sell them, or refuse."
+ministry: War
+province: provencie_gares
+issue: garaztian_question
+answers:
+  - lean: For
+    label: Send arms and officers
+    price: 30
+    text: >-
+      Wagons of Aurelian muskets and a dozen officers on long leave cross at Escas. The Arrosians call it
+      an act of war. The valleys call it a promise kept.
+    effects: { var.garaztia_goodwill: 2, var.arrosia_goodwill: -2, threat: 5 }
+  - lean: Neutral
+    label: Sell them arms at a fair price
+    text: >-
+      The arsenals sell King Antso old muskets for new gold. Both kingdoms think they have had the better
+      of the bargain.
+    effects: { reserve: 15, var.garaztia_goodwill: 1, var.arrosia_goodwill: -1 }
+  - lean: Against
+    label: Refuse, and seal the arsenals
+    text: >-
+      The King is told, with regret, that Aurelia's arsenals are for Aurelia. The Arrosian envoy dines
+      out on the story.
+    effects: { var.garaztia_goodwill: -1, var.arrosia_goodwill: 1 }
+complication:
+  text: The War purse is empty, and half the wagons never leave the depot.
+  effects: { var.garaztia_goodwill: -1 }
+default:
+  text: >-
+    The King's letter lies unanswered on a War Office desk. In Garaztia they draw their own conclusions.
+  effects: { var.garaztia_goodwill: -1 }

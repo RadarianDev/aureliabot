@@ -20,7 +20,7 @@ public class OpeningContentTests : IDisposable
         var outcomes = ContentRules.Import(Db, ContentRules.ImportContext(Db, Config), files);
         Assert.All(outcomes, o => Assert.True(o.Imported, string.Join("; ", o.Errors)));
 
-        for (var pass = 0; pass < 5 && Db.GetTemplates(status: TemplateStatus.Draft).Count > 0; pass++)
+        for (var pass = 0; pass < 50 && Db.GetTemplates(status: TemplateStatus.Draft).Count > 0; pass++)
             foreach (var row in Db.GetTemplates(status: TemplateStatus.Draft))
                 ContentRules.MakeReady(Db, Config, row.Id);
 

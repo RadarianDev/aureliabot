@@ -1,0 +1,11 @@
+id: garaztian_king_visit
+title: The King of Garaztia in Aurelle
+text: >-
+  King Antso V of Garaztia drives through Aurelle in an open carriage, waving his hat to the crowds and
+  kissing the hands of fishwives. He dances at the Admiralty, praises the railway and is cheered at the
+  opera. In private, between the fish and the ices, he asks the Treasury for a loan.
+schedule: { season: Summer, year: 1857 }
+effects:
+  - if: "not issue.garaztian_question.open"
+    then: { open.garaztian_question: true }
+  - { crisis.garaztian_kings_request: true }

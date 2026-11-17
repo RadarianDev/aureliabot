@@ -1,0 +1,13 @@
+id: arrosian_convention
+title: The Escas Convention
+summary: "Opens the port of Escas and the Gares roads to the Arrosian creditors, for a share of the Garaztian customs. Money for the reserve and a friend in Arrosia, at the cost of Garaztia's goodwill and Provencie Gares's temper."
+issue: garaztian_question
+lean: Against
+motion: Open the port of Escas and the roads of Provencie Gares to the agents of the Arrosian creditors, in return for a share of the Garaztian customs.
+pass:
+  text: >-
+    Arrosian supply ships tie up at Escas, and Arrosian carts take the Gares roads east under Aurelian
+    escort. The Treasury opens a ledger headed "Garaztian receipts". In the villages along the border,
+    men spit when the carts go by.
+  effects: { reserve: 40, threat: -5, var.arrosia_goodwill: 2, var.garaztia_goodwill: -3,
+             discontent.provencie_gares: 2 }

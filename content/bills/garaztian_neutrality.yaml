@@ -1,0 +1,12 @@
+id: garaztian_neutrality
+title: The Neutrality Proclamation
+summary: "Declares Aurelia neutral between Garaztia and its creditors, and forbids Aurelian subjects to arm or fight for either. It keeps Aurelia out of the quarrel, and pleases nobody on the Gares border."
+issue: garaztian_question
+lean: Against
+motion: Declare the Crown neutral in the quarrel between Garaztia and the Arrosian Republic, and forbid its subjects to bear arms for either side.
+pass:
+  text: >-
+    The proclamation is read in every market square of Provencie Gares. The Arrosian envoy calls it
+    statesmanlike. King Antso calls it nothing, and stops writing to Aurelle.
+  effects: { threat: -3, var.arrosia_goodwill: 1, var.garaztia_goodwill: -1,
+             discontent.provencie_gares: 1 }

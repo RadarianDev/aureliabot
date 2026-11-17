@@ -1,0 +1,13 @@
+id: creditors_partner
+title: The Creditors' Partner
+text: >-
+  The Treaty of Bon names Aurelia among the parties to the collection. A share of the Garaztian customs
+  is paid into the Aurelian reserve each quarter, and Arrosian carts use the Escas road at Aurelian
+  rates. The Republic is warm in its thanks. The Garaztians on both sides of the Gares border are not.
+effects:
+  - { var.garaztia_ending: "=4", var.garaztia_war: "=0", var.garaztia_goodwill: -1,
+      var.arrosia_goodwill: 1, reserve: 30, discontent.provencie_gares: 1 }
+  - if: "issue.garaztian_question.open"
+    then: { close.garaztian_question: true }
+  - if: "condition.provencie_gares.refugees"
+    then: { event.gares_camps_close: 2 }

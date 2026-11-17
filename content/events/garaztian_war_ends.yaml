@@ -1,0 +1,16 @@
+id: garaztian_war_ends
+title: The Powers Meet at Bon
+text: >-
+  Envoys from Garaztia and the Arrosian Republic meet at Bon, under the Emperor's roof and at the Diet's
+  expense, to settle the debt and the war it started. An Aurelian observer sits at the end of the table.
+when: "var.garaztia_ending == 0"
+effects:
+  - if: "law.arrosian_convention"
+    then: { event.creditors_partner: true }
+    else:
+      - if: "var.valleys == 2"
+        then: { event.garaztian_client: true }
+        else:
+          - if: "var.valleys == 1 and var.garaztia_goodwill >= 2"
+            then: { event.king_holds: true }
+            else: { event.garaztia_collected: true }
