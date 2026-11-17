@@ -1,0 +1,8 @@
+id: arpal_passes_petition
+title: The Carden Petition for Forts
+text: >-
+  The burgesses of Carden petition the War Office. Mugian dragoons ride along the far side of the passes
+  every morning, and the old towers above the Arpal road have no roofs. General Sir Hannibal Strake
+  endorses the petition in red ink, and adds a sketch of his own.
+when: "var.tariff_war >= 3"
+effects: { threat: 2, project.arpal_pass_forts: true }

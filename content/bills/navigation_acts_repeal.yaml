@@ -1,0 +1,11 @@
+id: navigation_acts_repeal
+title: The Repeal of the Navigation Acts
+summary: "Lets ships of any flag carry goods between Aurelian ports and into them. Freight grows cheap and Lanten busy, and the Anzarian shipbuilders and their admirals lose a monopoly."
+issue: free_trade
+lean: For
+motion: Repeal the Navigation Acts, and let ships of every nation carry cargo between and into the ports of the kingdom.
+pass:
+  text: >-
+    Foreign flags appear in Lanten harbour by the dozen, and the price of freight falls by a third. In
+    Istralan the Anzarian shipwrights burn a copy of the act on the slipway.
+  effects: { economy: 25, favour: -5, discontent.ocidanten: -2, discontent.tovrerie: -1 }

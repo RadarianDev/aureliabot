@@ -1,0 +1,31 @@
+id: burial_club_losses
+title: The Burial Club Losses
+summary: "The Sorales burial club's secretary has run off with the members' savings. The Treasury must decide whether the Crown makes good the losses."
+ministry: Treasury
+province: soralenten
+issue: social_reform
+answers:
+  - lean: For
+    label: Make good the members' savings
+    price: 20
+    text: >-
+      The Treasury pays every member back his pennies. The border hills are grateful, and every other
+      burial club in the kingdom notes that the Crown pays when the secretary runs.
+    effects: { discontent.soralenten: -2, reserve: -10 }
+  - lean: Neutral
+    label: Pursue the secretary through the courts
+    price: 10
+    text: >-
+      Lawyers are sent to Mugi after the secretary. The Mugian courts are polite and slow, and the members
+      are promised a share of whatever is found.
+    effects: { discontent.soralenten: -1 }
+  - lean: Against
+    label: Recommend more care in choosing a club
+    text: >-
+      The Treasury regrets the loss and recommends prudence. The members of the Sorales club are buried
+      by the parish after all.
+    effects: { discontent.soralenten: 2 }
+default:
+  text: >-
+    No word comes from the Treasury. The members march on the club's empty office and break its windows.
+  effects: { discontent.soralenten: 2 }

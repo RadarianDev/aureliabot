@@ -1,0 +1,7 @@
+id: sagtias_toll_gates
+title: The Toll Gates of Provencie Sacs
+text: >-
+  The Crown road from Sagtias to the western frontier has fallen into ruts, and the farmers will not pay
+  the toll to drive their carts through the mud. Last night men with blackened faces, dressed in their
+  wives' petticoats, broke down six toll gates and burned the toll houses.
+effects: { discontent.provencie_sacs: 1, crisis.toll_gate_riots: true, bill.turnpike_trusts_act: true }

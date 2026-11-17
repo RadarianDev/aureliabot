@@ -1,0 +1,31 @@
+id: toll_gate_riots
+title: The Petticoat Riots
+summary: "Farmers in petticoats are breaking the toll gates on the ruined Crown road through Provencie Sacs. The Interior must mend the road, catch the rioters, or both."
+ministry: Interior
+province: provencie_sacs
+issue: public_works
+answers:
+  - lean: For
+    label: Mend the road and lift the tolls
+    price: 25
+    text: >-
+      Crown labourers fill the ruts, and the tolls are lifted until the road is fit to pay for. The
+      petticoats go back into the wardrobes.
+    effects: { discontent.provencie_sacs: -2, economy: 5 }
+  - lean: Neutral
+    label: Send the gendarmes to guard the gates
+    price: 10
+    text: >-
+      Gendarmes sit beside the gates by night, and the gates stand. The carts still sink in the ruts, and
+      the farmers pay the toll with very bad grace.
+    effects: { discontent.provencie_sacs: -1 }
+  - lean: Against
+    label: Lease the road to a private trust
+    text: >-
+      The road is leased to the Sagtias Turnpike Trust, which raises the toll to pay for the repairs. The
+      repairs come slowly. The toll comes at once.
+    effects: { discontent.provencie_sacs: 1, purse.Interior: 5 }
+default:
+  text: >-
+    No order comes. The riots spread down the road towards Aurenten, and a toll keeper is beaten.
+  effects: { discontent.provencie_sacs: 2, discontent.aurenten: 1 }

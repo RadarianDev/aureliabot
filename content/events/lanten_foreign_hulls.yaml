@@ -1,0 +1,7 @@
+id: lanten_foreign_hulls
+title: The Hulls at Lanten
+text: >-
+  The shipowners of Lanten complain that the law lets only Aurelian and Anzarian hulls carry goods between
+  Aurelian ports. Foreign ships, they say, are cheaper to buy and cheaper to crew, and a cargo of Lanten
+  wheat goes round to Tovres for twice what it would cost under any other flag.
+effects: { salience.free_trade: 1, discontent.ocidanten: 1, bill.navigation_acts_repeal: true }

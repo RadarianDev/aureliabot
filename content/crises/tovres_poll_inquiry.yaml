@@ -1,0 +1,32 @@
+id: tovres_poll_inquiry
+title: The Tovres Poll Inquiry
+summary: "A contractor marched his navvies to vote at the Tovres by-election. The Interior must decide what to do with the result."
+ministry: Interior
+province: tovrerie
+issue: electoral_reform
+answers:
+  - lean: For
+    label: Let the result stand and fine the treating
+    price: 15
+    text: >-
+      The navvies' votes stand, and the contractor is fined for the shillings and the beer. The navvies
+      are delighted to have voted, and say they would have voted that way anyway.
+    effects: { discontent.tovrerie: -1 }
+  - lean: Neutral
+    label: Hold the election again
+    price: 20
+    text: >-
+      The by-election is held again, after the navvies have moved on to the next cutting. Tovres returns
+      the losing candidate, and nobody is entirely satisfied.
+    effects: { discontent.tovrerie: -1 }
+  - lean: Against
+    label: Strike the navvies off the poll
+    text: >-
+      The navvies' votes are struck off as those of strangers. The losing candidate takes his seat, and the
+      navvies tear up a mile of their own rails.
+    effects: { discontent.tovrerie: 1, economy: -5 }
+default:
+  text: >-
+    The Interior says nothing. Both candidates claim the seat, and their supporters fight it out on the
+    Tovres quay.
+  effects: { discontent.tovrerie: 2 }

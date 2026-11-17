@@ -1,0 +1,8 @@
+id: tovres_navvy_poll
+title: The Navvies Go to the Poll
+text: >-
+  At the Tovres by-election a railway contractor marched four hundred navvies from his cutting to the
+  hustings, gave each of them a shilling and a quart, and told them how to vote. The navvies had lived in
+  the parish three weeks. The losing candidate demands an inquiry.
+effects: { discontent.tovrerie: 1, crisis.tovres_poll_inquiry: true,
+           bill.residence_qualification_act: true }

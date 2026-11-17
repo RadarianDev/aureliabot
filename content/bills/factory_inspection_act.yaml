@@ -1,0 +1,12 @@
+id: factory_inspection_act
+title: The Dangerous Trades Act
+summary: "Bans white phosphorus and other poisons from the works, and pays for Crown inspectors in every dangerous trade. The workers gain; the masters and Commerce and Labor pay."
+issue: social_reform
+lean: For
+motion: Forbid white phosphorus, lead glaze and other named poisons in manufacture, and send Crown inspectors into every dangerous trade.
+pass:
+  text: >-
+    The phosphorus vats are emptied into the Iracten canal, which the fishermen complain of. The match
+    girls keep their teeth, and the masters keep a list of the inspectors' names.
+  effects: { economy: -15, purse.CommerceLabor: -15,
+             discontent.iracterie: -2, discontent.aurenten: -1 }

@@ -1,0 +1,12 @@
+id: friendly_societies_act
+title: The Friendly Societies Act
+summary: "Registers and audits the workers' own savings and burial clubs, and lets parishes refuse relief to any able man who belongs to none. The clubs are safer and the rates fall; the poorest go without."
+issue: social_reform
+lean: Against
+motion: Register and audit every friendly society and burial club, and allow parishes to refuse outdoor relief to any able man who belongs to none.
+pass:
+  text: >-
+    Auditors walk into the back rooms of a thousand public houses and count the pennies. The clubs are
+    safer, the rates are lower, and the parish relieving officers have a new question to ask.
+  effects: { purse.Interior: 10, economy: 5,
+             discontent.soralenten: -1, discontent.iracterie: 1, discontent.aurenten: 1 }

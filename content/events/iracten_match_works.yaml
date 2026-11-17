@@ -1,0 +1,8 @@
+id: iracten_match_works
+title: The Iracten Match Girls
+text: >-
+  A surgeon at the Iracten infirmary writes to the newspapers about the girls from Pellow's match works.
+  The white phosphorus rots their jaws, and Mr Pellow docks a day's pay from any girl who complains of
+  the toothache. The girls have walked out, and stand outside the works in their aprons.
+effects: { discontent.iracterie: 1, salience.social_reform: 1,
+           crisis.phossy_jaw_inquiry: true, bill.factory_inspection_act: true }

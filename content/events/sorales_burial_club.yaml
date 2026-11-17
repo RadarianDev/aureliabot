@@ -1,0 +1,7 @@
+id: sorales_burial_club
+title: The Sorales Burial Club Absconds
+text: >-
+  The secretary of the Sorales Mutual Burial Club has sailed for Mugi with eleven years of members'
+  pennies. Three thousand families in the border hills, who paid a penny a week so as not to be buried by
+  the parish, now have nothing. The vicar of Sorales asks who will bury them.
+effects: { discontent.soralenten: 1, crisis.burial_club_losses: true, bill.friendly_societies_act: true }

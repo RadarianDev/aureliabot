@@ -1,0 +1,36 @@
+id: phossy_jaw_inquiry
+title: The Match Girls' Strike
+summary: "The girls of Pellow's match works in Iracten have struck over phosphorus poisoning and fines. Commerce and Labor must side with the girls, the masters, or neither."
+ministry: CommerceLabor
+province: iracterie
+issue: social_reform
+answers:
+  - lean: For
+    label: Close the works until they are made safe
+    price: 20
+    text: >-
+      Crown inspectors close Pellow's works for a month and order the phosphorus vats covered. Mr Pellow
+      pays the girls for the month under protest, and the newspapers take up a subscription for the worst
+      cases.
+    effects: { discontent.iracterie: -2, economy: -5 }
+  - lean: Neutral
+    label: Ask Mr Pellow to drop the fines
+    price: 10
+    text: >-
+      Mr Pellow agrees to drop the fines and keep the phosphorus. The girls go back, and the surgeon goes
+      on writing letters.
+    effects: { discontent.iracterie: -1 }
+  - lean: Against
+    label: Leave the masters to their own works
+    text: >-
+      The ministry declines to interfere in a private bargain. Mr Pellow hires new girls from the
+      countryside, and the old ones are not taken back.
+    effects: { discontent.iracterie: 1, economy: 5 }
+complication:
+  text: The inspectors' fees go unpaid, the works reopen early, and the girls walk out again.
+  effects: { discontent.iracterie: 1 }
+default:
+  text: >-
+    Nobody in the capital answers. The strike spreads to two other match works, and the surgeon's letters
+    are read aloud in the Assembly.
+  effects: { discontent.iracterie: 2, salience.social_reform: 1 }

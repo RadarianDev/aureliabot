@@ -1,0 +1,12 @@
+id: turnpike_trusts_act
+title: The Turnpike Trusts Act
+summary: "Hands every Crown road to private turnpike trusts, which may charge tolls and must keep the roads in repair. The Crown saves a great deal; the farmers and carriers pay the tolls."
+issue: public_works
+lean: Against
+motion: Lease every Crown road to a turnpike trust, empowered to charge tolls and bound to keep the road in repair.
+pass:
+  text: >-
+    The Crown's roads pass to two hundred trusts, and a new toll gate goes up every five miles. Some trusts
+    mend their roads. The rest pay dividends.
+  effects: { purse.Interior: 20, purse.CommerceLabor: 10, economy: -10,
+             discontent.provencie_sacs: 1, discontent.agrinenten: 1, discontent.ocidanten: 1 }

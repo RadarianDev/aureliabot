@@ -1,0 +1,11 @@
+id: manorial_courts_act
+title: The Manorial Courts Act
+summary: "Recognises the Anzarian lords' manor courts in law, with an appeal to the Crown in cases of transportation or death. It pleases the Anzarian nobles and angers the border provinces."
+issue: integration
+lean: Against
+motion: Recognise the manor courts of the Anzarian nobility as courts of the realm, with appeal to the Crown only in cases of transportation or death.
+pass:
+  text: >-
+    The manor courts of Anzaria are written into the statute book, with a right of appeal that the
+    stewards promise to mention. Tom Wedder's appeal is heard, and he gets five years instead of seven.
+  effects: { favour: 8, discontent.agrinenten: 2, discontent.soralenten: 1 }

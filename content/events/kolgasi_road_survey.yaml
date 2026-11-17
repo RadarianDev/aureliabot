@@ -1,0 +1,8 @@
+id: kolgasi_road_survey
+title: The Road to Kolgasi
+text: >-
+  The engineers who surveyed the Arpal passes for the army report that a carriage road from Carden to
+  Kolgasi could be built in two summers. The villages of South Arpal would have an Aurelian road to an
+  Aurelian market, and the Mugian merchants of Kolgasi would have Aurelian customers.
+when: "var.south_arpal_ending == 4"
+effects: { project.kolgasi_road: true }

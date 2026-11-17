@@ -1,0 +1,12 @@
+id: lanten_shore_batteries
+title: The Lanten Shore Batteries
+summary: "Earthwork batteries and heavy guns covering the harbour mouths of Lanten and Saltmouth."
+purse: War
+province: ocidanten
+price: 40
+term: 2
+effects: { threat: -5, discontent.here: -1 }
+bonus:
+  within: 2
+  text: The batteries fire their first salute within the year, and the Lanten shipowners stand the gunners a dinner.
+  effects: { economy: 5 }
