@@ -2,6 +2,8 @@ id: south_arpal_petition
 title: The Petition of the Arpal Villages
 text: >-
   Thirty thousand marks and signatures, smuggled over the passes in a cheese cart, ask the King of
-  Aurelia to take the villages of South Arpal under his protection.
+  Aurelia to take the villages of South Arpal under his protection. Pinned to the first sheet is a copy
+  of the Severance of Carden, with one clause underlined twice: the south of the Arpal country stays
+  with the Empire. The villages say they were never the Empire's to give to Mugi.
 when: "issue.arpal_question.open"
 effects: { salience.arpal_question: 1, crisis.arpal_petition: true }
