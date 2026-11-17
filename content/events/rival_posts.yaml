@@ -1,0 +1,8 @@
+id: rival_posts
+title: A Second Flag at Seravad
+text: >-
+  The Iratic Company has landed a hundred soldiers up the coast from Seravad and raised the Arrosian
+  flag over a customs shed. Its agents are at the Lord of Seravad's court with chests of silver, and an
+  envoy of the Makan has arrived to watch both companies bid.
+when: "issue.colonies.open and var.meridia_ending == 0"
+effects: { var.meridia_tension: 1, crisis.court_of_seravad: true, event.incident_at_sea: 2 }

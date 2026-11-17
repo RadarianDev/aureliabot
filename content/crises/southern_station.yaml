@@ -1,0 +1,30 @@
+id: southern_station
+title: The Southern Station
+summary: "The Anzarian admirals demand a coaling and supply station for the southern route, fitted out from Lanten. The War Office can build it, put them off, or refuse."
+ministry: War
+province: ocidanten
+issue: colonies
+answers:
+  - lean: For
+    label: Fit out the southern station
+    price: 20
+    text: >-
+      The War Office orders colliers, stores and a dockyard party fitted out at Lanten for the southern
+      station. The admirals shake hands all round.
+    effects: { favour: 2, project.southern_coaling_station: true }
+  - lean: Neutral
+    label: Promise it once the Company pays its way
+    text: The admirals are told the station will come when the Company shows a profit. They take this as a no.
+    effects: { favour: -2 }
+  - lean: Against
+    label: Refuse, the fleet's place is at home
+    text: >-
+      The War Office answers that the fleet exists to guard Aurelian harbours, not Company warehouses. In
+      Sulmar the admirals are heard to wonder what Aurelia pays them for.
+    effects: { favour: -6, favourBaseline: -2 }
+complication:
+  text: The War Office cannot pay for the colliers, and the dockyard party sits idle at Lanten all season.
+  effects: { favour: -2, discontent.ocidanten: 1 }
+default:
+  text: The admirals' demand sits unanswered on a War Office desk, and Sulmar notices.
+  effects: { favour: -4 }

@@ -1,0 +1,30 @@
+id: meridian_note
+title: The Arrosian Note on Meridia
+summary: "Arrosia and Mugi mean to divide Meridia between them, and Aurelia-Anzaria has not been invited. The Treasury, which pays the envoys, must decide what answer goes back."
+ministry: Treasury
+province: iracterie
+issue: colonies
+answers:
+  - lean: For
+    label: Demand a seat at the table
+    price: 10
+    text: >-
+      The answer goes back that no treaty on Meridia will be recognised in Aurelle or Sulmar unless the
+      Union signs it too. The Arrosian envoy reads it twice.
+    effects: { var.meridia_tension: 1, var.arrosia_goodwill: -1 }
+  - lean: Neutral
+    label: Ask the Union of Bon to call a conference
+    price: 15
+    text: >-
+      An envoy rides to Bon with a letter for the Emperor. The princes of the Diet, who love a conference
+      above all things, begin at once to argue over the seating.
+    effects:
+      - { cancel.bon_meridia_offer: true }
+      - { event.bon_meridia_offer: 4 }
+  - lean: Against
+    label: Let the note lie unanswered
+    text: The note is filed. The Republic takes the silence for good manners, and is pleased.
+    effects: { var.meridia_tension: -1, var.arrosia_goodwill: 1 }
+default:
+  text: No answer goes back. In Arrosia the silence is taken for weakness, and the Iratic Company's ships sail on.
+  effects: { var.meridia_tension: 1 }

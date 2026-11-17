@@ -1,0 +1,14 @@
+id: arrosian_meridia
+title: An Arrosian Meridia
+text: >-
+  The powers sign at Bon, and the Bhartunian coast goes to Arrosia, cape to river and beyond. The
+  Southern Company may keep a warehouse at Seravad, on Arrosian sufferance and paying Arrosian duties.
+  In Sulmar the admirals ask what the fleet was for.
+when: "var.meridia_ending == 0"
+effects:
+  - { var.meridia_ending: "=2", var.meridia_tension: "=1",
+      var.colonial_foothold: "=min(var.colonial_foothold, 1)", favour: -5, threat: 5 }
+  - if: "issue.colonies.open"
+    then: { close.colonies: true }
+  - if: "condition.ocidanten.blockaded"
+    then: { condition.ocidanten.blockaded: -1 }

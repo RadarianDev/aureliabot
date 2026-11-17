@@ -1,0 +1,14 @@
+id: iratic_expedition
+title: The Iratic Company Sails South
+text: >-
+  Free of Garaztia at last, the Arrosian Republic turns its eyes south. Six ships of the Iratic Company
+  sail from the Holdings for the Bhartunian coast, carrying soldiers, surveyors and a bishop. The
+  Company's directors tell the Arrosian exchange that Meridia is the one continent left, and that
+  Arrosia means to have the best of it.
+schedule: { season: Summer, year: 1862 }
+effects:
+  - if: "not issue.colonies.open"
+    then: { open.colonies: true }
+  - { threat: 5, salience.colonies: 2,
+      var.meridia_tension: "=clamp(var.meridia_tension + var.colonial_foothold + 1 - var.arrosia_goodwill, 0, 4)",
+      event.meridian_treaty_note: 2 }

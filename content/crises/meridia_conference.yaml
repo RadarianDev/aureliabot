@@ -1,0 +1,44 @@
+id: meridia_conference
+title: The Conference of Bon on Meridia
+summary: "Arrosia and Aurelia-Anzaria meet at Bon to settle the Bhartunian coast. The delegates can hold out for the whole coast, accept a line at the Seravad river, or sell the Company's claims."
+ministry: Treasury
+province: iracterie
+issue: colonies
+answers:
+  - lean: For
+    label: Hold out for the whole coast
+    price: 20
+    text: >-
+      The Aurelian delegates refuse every line short of the cape. The princes of Bon look at the ceiling,
+      the Arrosians look at their watches, and the conference waits to see who blinks first.
+    effects:
+      - random:
+          - weight: "max(1, 1 + var.colonial_foothold + var.mugi_stance + (favour >= 50))"
+            effects: { event.partition_of_bon: true }
+          - weight: "max(1, 2 + var.meridia_tension / 2 - var.mugi_stance)"
+            effects:
+              - { var.meridia_tension: 2 }
+              - if: "var.meridia_tension >= 5"
+                then: { event.meridian_war: 1 }
+                else: { event.arrosian_meridia: true }
+  - lean: Neutral
+    label: Accept a line at the Seravad river
+    price: 10
+    text: >-
+      The delegates accept a line along the Seravad river, north to Aurelia-Anzaria and south to Arrosia.
+      What it is worth depends on what the Company actually holds north of it.
+    effects:
+      - if: "var.colonial_foothold >= 2"
+        then: { event.partition_of_bon: true }
+        else: { event.arrosian_meridia: true }
+  - lean: Against
+    label: Sell the Company's claims to Arrosia
+    text: >-
+      The Southern Company's claims are sold to the Iratic Company for a sum the Treasury describes as
+      handsome and the admirals describe in other words.
+    effects: { reserve: 30, var.arrosia_goodwill: 2, event.arrosian_meridia: true }
+default:
+  text: >-
+    The Aurelian delegates wait for instructions that never come. The conference settles the coast
+    without them.
+  effects: { event.arrosian_meridia: true }

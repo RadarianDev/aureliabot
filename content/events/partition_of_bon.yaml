@@ -1,0 +1,15 @@
+id: partition_of_bon
+title: The Partition of Bon
+text: >-
+  At Bon the powers sign a partition of the Bhartunian coast. North of the Seravad river is recognised
+  as the sphere of Aurelia-Anzaria, Port Valerie and all; the south goes to Arrosia. The Southern
+  Company's shares double, and the King gives a dinner for the admirals.
+when: "var.meridia_ending == 0"
+effects:
+  - { var.meridia_ending: "=1", var.meridia_tension: "=0",
+      var.colonial_foothold: "=max(var.colonial_foothold, 2)", var.arrosia_goodwill: 1,
+      economy: 20, favour: 5, discontent.iracterie: -1, prestige.chancellor: 2 }
+  - if: "issue.colonies.open"
+    then: { close.colonies: true }
+  - if: "condition.ocidanten.blockaded"
+    then: { condition.ocidanten.blockaded: -1 }

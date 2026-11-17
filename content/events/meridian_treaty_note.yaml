@@ -1,0 +1,11 @@
+id: meridian_treaty_note
+title: The Treaty Is to Be Extended
+text: >-
+  The Arrosian envoy informs the Foreign Office, as a courtesy, that the Republic has invited Mugi to
+  extend their treaty of spheres to Meridia. Aurelia-Anzaria, never having signed the treaty, is not
+  invited to the talks. The envoy is sure it will understand.
+when: "issue.colonies.open"
+effects: { var.meridia_tension: 1, salience.colonies: 1,
+           bill.meridian_claim: true, bill.meridian_renunciation: true,
+           crisis.meridian_note: true,
+           event.rival_posts: 2, event.mugi_chooses: 4, event.bon_meridia_offer: 8 }

@@ -1,0 +1,14 @@
+id: meridian_peace
+title: Bon Offers Peace
+text: >-
+  The Union of Bon offers its good offices, and both sides, having spent a great deal of money on a
+  coast neither can afford, accept. The plenipotentiaries meet at Bon to put on paper what the guns
+  have already decided.
+when: "var.meridia_ending == 0"
+effects:
+  - if: "var.sea_battle_won >= 1"
+    then: { event.meridian_victory: true }
+    else:
+      - if: "favour >= 50"
+        then: { event.arrosian_meridia: true }
+        else: { event.meridian_defeat: true }

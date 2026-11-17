@@ -1,0 +1,13 @@
+id: meridian_renunciation
+title: The Meridian Accession
+summary: "Accedes to the Mugi–Arrosia treaty of spheres and gives up every claim in Meridia. It ends the quarrel with Arrosia, and bitterly disappoints the admirals and the Southern Company."
+issue: colonies
+lean: Against
+motion: Accede to the treaty of spheres between Mugi and the Arrosian Republic, and renounce every claim of the Crown in Meridia.
+pass:
+  text: >-
+    Aurelia-Anzaria signs the treaty it never signed. The Arrosian envoy gives a ball, the Southern
+    Company's flag comes down over its warehouses, and in Sulmar the admirals wear black armbands to
+    dinner.
+  effects: { favour: -8, var.arrosia_goodwill: 2, var.meridia_tension: "=0",
+             close.colonies: true, event.meridia_renounced: true }

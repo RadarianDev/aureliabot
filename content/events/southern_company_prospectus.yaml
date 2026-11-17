@@ -1,0 +1,16 @@
+id: southern_company_prospectus
+title: The Southern Company Prospectus
+text: >-
+  While the Arrosian Republic is busy at the Garaztian customs houses, a company of Lanten shipowners,
+  Iracten mill masters and Anzarian naval men publishes a prospectus. It proposes a Southern Company of
+  Aurelia and Anzaria, chartered by the Crown, to trade on the coast of Bhartunia under its own flag. The
+  shares are sold out by dinner, on paper.
+schedule: { season: Autumn, year: 1859 }
+effects:
+  - if: "not issue.colonies.open"
+    then: { open.colonies: true }
+  - { opinion.colonies: "0.05 * var.colonial_push",
+      salience.colonies: "=min(5, 1 + round(var.colonial_push / 2))",
+      bill.southern_company_charter: true, bill.foreign_ventures_resolution: true }
+  - if: "var.admirals_demand >= 1"
+    then: { event.admirals_press_station: 2 }

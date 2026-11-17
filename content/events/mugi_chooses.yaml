@@ -1,0 +1,15 @@
+id: mugi_chooses
+title: Anpurgi Considers Meridia
+text: >-
+  The Mugian Diet debates the Arrosian invitation to divide Meridia. The houses that trade with Aurelia
+  speak one way, the Admiralty another, and the newspapers report that the Tsar has not yet said which
+  of them he is listening to.
+when: "issue.colonies.open and var.meridia_ending == 0"
+effects:
+  - random:
+      - weight: "max(1, 1 + 3 * (var.south_arpal_ending == 1) + (var.south_arpal_ending == 2) - (var.colonial_foothold >= 3))"
+        effects: { event.mugi_backs_aurelia: true }
+      - weight: "max(1, 1 + 2 * (var.south_arpal_ending == 4) + 2 * (var.south_arpal_ending == 7) + (var.south_arpal_ending == 5) + (var.colonial_foothold >= 3))"
+        effects: { event.mugi_backs_arrosia: true }
+      - weight: 2
+        effects: { event.mugi_stands_aside: true }

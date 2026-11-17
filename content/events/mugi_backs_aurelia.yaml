@@ -1,0 +1,7 @@
+id: mugi_backs_aurelia
+title: Mugi Declines the Invitation
+text: >-
+  Mugi declines to extend its treaty with Arrosia to Meridia. The Board of Trade in Anpurgi, whose
+  cloth sells best in Aurelian markets, lets it be known that Mugi would rather see two powers on the
+  southern coast than one.
+effects: { var.mugi_stance: "=1", threat: -5, var.meridia_tension: -1 }

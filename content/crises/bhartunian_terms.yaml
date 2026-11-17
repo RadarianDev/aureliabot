@@ -1,0 +1,39 @@
+id: bhartunian_terms
+title: The Terms at Seravad
+summary: "The Southern Company's factor has landed at Seravad and awaits instructions. He can raise the flag and fortify a post, treat with the Bhartunian court, or keep to a merchants' warehouse."
+ministry: CommerceLabor
+province: iracterie
+issue: colonies
+answers:
+  - lean: For
+    label: Raise the flag and fortify the post
+    price: 30
+    text: >-
+      A stockade goes up above the harbour, with four guns and the flag of the Union over the gate. The
+      Company names it Port Valerie. The Lord of Seravad watches it rise and says nothing at all.
+    effects:
+      - { var.colonial_foothold: "=3", threat: 3, favour: 2, var.arrosia_goodwill: -1, var.meridia_tension: 1 }
+      - if: "posted.southern_station == 0 and posted.admirals_press_station == 0"
+        then: { event.admirals_press_station: 2 }
+  - lean: Neutral
+    label: Treat with the Bhartunian court
+    price: 20
+    text: >-
+      After a month of gifts and translations, the Lord of Seravad grants the Company a lease on the
+      harbour front, the right to buy cotton, and a promise that no other foreigner will be favoured above
+      it.
+    effects: { var.colonial_foothold: "=max(var.colonial_foothold, 2)", economy: 5 }
+  - lean: Against
+    label: Keep to a merchants' warehouse
+    text: >-
+      The factor rents a warehouse, hangs out a sign and buys cotton at the market price. No flag, no
+      guns, no treaty. The newspapers call it a shop.
+    effects: { var.colonial_foothold: "=max(var.colonial_foothold, 1)" }
+complication:
+  text: The money runs out with the work half done, and the factor has to borrow from the Lord of Seravad.
+  effects: { discontent.iracterie: 1 }
+default:
+  text: >-
+    No instructions come from Aurelle. The factor rents a warehouse, waits, and writes letters home that
+    grow shorter each month.
+  effects: { var.colonial_foothold: "=max(var.colonial_foothold, 1)", economy: -5 }
