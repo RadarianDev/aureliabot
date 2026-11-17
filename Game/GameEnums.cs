@@ -106,3 +106,5 @@ public static class GameEnumExtensions
     public static Ministry MinistryOf(this UnitType type) =>
         type == UnitType.Division ? Ministry.War : Ministry.Interior;
 }
+
+public enum RewardKind { Popularity, Prestige }

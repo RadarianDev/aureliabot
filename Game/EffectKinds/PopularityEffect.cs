@@ -13,19 +13,22 @@ public sealed class PopularityEffect : EffectKind
     public override string? Parse(string[] parts, string? rawValue, EffectParseOptions options, out double? value)
     {
         value = null;
-        var valid = parts switch
-        {
-            [_, var id] when ulong.TryParse(id, out _) => true,
-            [_, Chancellor or Government or Opposition or Sponsor] => true,
-            [_, Minister, var ministry] => Enum.TryParse<Ministry>(ministry, out var parsed) && parsed.HoldsCrises(),
-            [_, Party, var party] => long.TryParse(party, out _),
-            [_, Home, var province] => HereCheck(province, options) is null,
-            _ => false,
-        };
-        return valid ? RequireNumber(rawValue, out value) : Texts.Get("effects.errors.popularityShape");
+        return IsTarget(parts, options) ? RequireNumber(rawValue, out value) : Texts.Get("effects.errors.popularityShape");
     }
 
-    public override string? CheckIds(Effect effect, EffectContext context) => effect.Parts switch
+    public static bool IsTarget(string[] parts, EffectParseOptions options) => parts switch
+    {
+        [_, var id] when ulong.TryParse(id, out _) => true,
+        [_, Chancellor or Government or Opposition or Sponsor] => true,
+        [_, Minister, var ministry] => Enum.TryParse<Ministry>(ministry, out var parsed) && parsed.HoldsCrises(),
+        [_, Party, var party] => long.TryParse(party, out _),
+        [_, Home, var province] => HereCheck(province, options) is null,
+        _ => false,
+    };
+
+    public override string? CheckIds(Effect effect, EffectContext context) => CheckTarget(effect, context);
+
+    public static string? CheckTarget(Effect effect, EffectContext context) => effect.Parts switch
     {
         [_, var id] when ulong.TryParse(id, out _) && !context.Factions.Contains(id) => Texts.Get("effects.errors.noFaction", ("id", id)),
         [_, Home, var province] when province != EffectParser.Here && !context.Provinces.Contains(province) => Texts.Get("effects.errors.unknownProvince", ("id", province)),

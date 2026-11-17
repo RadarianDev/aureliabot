@@ -14,7 +14,7 @@ farmland:
 frontier:
   name: Frontier
   description: A border with a foreign power, watched from both sides.
-  biases: { rearmament: 0.3, free_trade: -0.1 }
+  biases: { rearmament: 0.3, free_trade: -0.1, arpal_question: 0.3 }
 anzarian_border:
   name: Anzarian Border
   description: Anzarian lords, kin and markets lie just across the line.
@@ -46,6 +46,11 @@ coastal:
   name: Coastal
   description: A harbour province, open to the sea.
   biases: { free_trade: 0.3 }
+mugian_quarter:
+  name: Mugian Quarter
+  description: A Mugian town of garrison, merchants and officials, among Aurelian villages.
+  biases: { integration: -0.3, rearmament: -0.3, free_trade: 0.3 }
+  discontentRest: 1
 lawless:
   name: Lawless
   description: Gangs rule the back streets, and the watch looks away.

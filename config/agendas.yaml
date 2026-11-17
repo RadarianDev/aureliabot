@@ -6,7 +6,8 @@
 # Tracks: economy, reserve, army (total sides of every division), discontent (provinces' average, by
 # population), favour (Anzarian Favour), threat (Foreign Threat).
 
-reward: { perWish: 2, allBonus: 1 }
+# Rewards are prestige: it never fades and ranks the leaderboard (/info prestige).
+reward: { perWish: 4, allBonus: 2 }
 
 margins: { economy: 5, reserve: 10, army: 1, discontent: 0.25, favour: 2, threat: 2 }
 

@@ -88,7 +88,7 @@ public class ElectionPublisher
                 await SendAsync(channel, channelId, source, chunk);
 
             var winners = WinnersFromResult(report.Result);
-            using var images = Render(report.Result, report.Parties, winners, config, out var failure);
+            using var images = Render(report.Result, report.Parties, winners, config, _data.MapVariant(config), out var failure);
             if (failure is not null)
                 await _alerts.PostAsync(Texts.Get("election.alert.renderFailed", ("term", report.TermNumber), ("error", failure)));
 
@@ -168,6 +168,7 @@ public class ElectionPublisher
         IReadOnlyList<ElectionPartySnapshot> parties,
         IReadOnlyDictionary<string, long?> winners,
         GameConfig config,
+        string? mapVariant,
         out string? failure)
     {
         failure = null;
@@ -186,7 +187,7 @@ public class ElectionPublisher
         }
         try
         {
-            map = RenderMap(MapColours(winners, parties, config));
+            map = RenderMap(MapColours(winners, parties, config), mapVariant);
         }
         catch (Exception ex)
         {
@@ -198,8 +199,8 @@ public class ElectionPublisher
     public static MemoryStream? RenderSeatChart(List<PartyData> parties) =>
         parties.Count == 0 ? null : new ArchGenerator().Generate(parties);
 
-    public static MemoryStream RenderMap(IReadOnlyDictionary<string, string> colours) =>
-        new ProvinceMapGenerator().Generate(colours);
+    public static MemoryStream RenderMap(IReadOnlyDictionary<string, string> colours, string? variant) =>
+        new ProvinceMapGenerator().Generate(colours, variant);
 
     public static List<PartyData> SeatChartParties(ElectionResult result, IReadOnlyList<ElectionPartySnapshot> parties)
     {

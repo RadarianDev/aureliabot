@@ -128,8 +128,8 @@ public static class ElectionCalculator
         return new ElectionResult(outcomes, partySeats, factionSeats, voteShare, IndependentSeats: independents.Count);
     }
 
-    public static IReadOnlyDictionary<string, int> SenateSeats(GameConfig config) =>
-        config.Provinces.ToDictionary(p => p.Id, p => p.SenateSeats);
+    public static IReadOnlyDictionary<string, int> SenateSeats(GameConfig config, ElectionInput input) =>
+        input.Provinces.ToDictionary(p => p.Id, p => config.Province(p.Id)?.SenateSeats ?? 0);
 
     private sealed record Contest(
         List<ElectionParty> Parties,

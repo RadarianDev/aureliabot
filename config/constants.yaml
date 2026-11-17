@@ -24,6 +24,7 @@ opposition: { actionsPerSeason: 1, privateBillsPerYear: 1,
               whipCountReward: 1, whipCountPenalty: 0.5 }
 assembly: { noConfidenceShare: 0.1666, noConfidenceGatherResolutions: 2, noConfidenceCooldownSeasons: 4,
             missedVotePenalty: 2, followedVotePenalty: 0.5 }
+prestige: { noConfidenceLeader: 2, noConfidenceSupporter: 1, renown: [0.15, 0.1, 0.05] }
 election: { baseExponent: 0.85, homeMultiplier: 1.5, programmeWeight: 0.5,
             multiplierMin: 0.5, multiplierMax: 1.5, crowding: true, threshold: 0.08 }
 electionNight: { secondsPerProvince: 20 }

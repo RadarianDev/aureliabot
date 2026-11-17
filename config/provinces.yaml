@@ -68,3 +68,12 @@ provencie_gares:
   mapKey: "#32FF00"
   description: Windswept cliffs at the far eastern edge of the kingdom.
   conditions: [frontier, remote, coastal]
+south_arpal:
+  name: South Arpal
+  population: 0.9
+  senateSeats: 9
+  mapKey: "#996633"
+  description: The Arpal valleys below the passes, Aurelian fields around a Mugian town.
+  conditions: [frontier, rugged, farmland, mugian_quarter]
+  discontent: 6
+  annexed: false

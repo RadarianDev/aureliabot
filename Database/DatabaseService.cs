@@ -88,6 +88,7 @@ public partial class DatabaseService
         AddColumnIfMissing(connection, "factions", "status", "TEXT NOT NULL DEFAULT 'Active'");
         AddColumnIfMissing(connection, "factions", "created_at", "INTEGER NOT NULL DEFAULT 0");
         AddColumnIfMissing(connection, "factions", "senate_seats", "INTEGER NOT NULL DEFAULT 0");
+        AddColumnIfMissing(connection, "factions", "prestige", "REAL NOT NULL DEFAULT 0");
 
         Exec(connection, @"
             CREATE TABLE IF NOT EXISTS game_state (

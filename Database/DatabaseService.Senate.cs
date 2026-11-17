@@ -13,7 +13,7 @@ public partial class DatabaseService
     {
         DropPendingJoinRequestsTx(conn, tx);
         var input = BuildElectionInputTx(conn, tx, config);
-        var seatsByProvince = ElectionCalculator.SenateSeats(config);
+        var seatsByProvince = ElectionCalculator.SenateSeats(config, input);
         var result = ElectionCalculator.RunSenate(input, seatsByProvince);
 
         foreach (var province in result.Provinces)

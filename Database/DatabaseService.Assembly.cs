@@ -607,6 +607,10 @@ public partial class DatabaseService
             var outcome = passed ? NoConfidenceStatus.Passed : NoConfidenceStatus.Failed;
             Exec(conn, tx, "UPDATE no_confidence SET status = $status, yes_seats = $yes, no_seats = $no WHERE id = $id;",
                 ("$id", motion.Id), ("$status", outcome.ToString()), ("$yes", tally.YesSeats), ("$no", tally.NoSeats));
+            var (leader, supporters) = NoConfidenceWinnersTx(conn, tx, motion, passed);
+            if (leader is { } leaderId) AddPrestigeTx(conn, tx, leaderId, c.Prestige.NoConfidenceLeader);
+            foreach (var supporter in supporters)
+                AddPrestigeTx(conn, tx, supporter, c.Prestige.NoConfidenceSupporter);
 
             if (passed)
             {
@@ -623,10 +627,26 @@ public partial class DatabaseService
                     ("$until", resolution + c.Assembly.NoConfidenceCooldownSeasons));
             }
 
-            report.NoConfidenceMotions.Add(new NoConfidenceReport(motion.Id, motion.TablerId, outcome, tally.YesSeats, tally.NoSeats, filled));
+            report.NoConfidenceMotions.Add(new NoConfidenceReport(motion.Id, motion.TablerId, outcome, tally.YesSeats, tally.NoSeats, filled)
+            {
+                PrestigeLeader = leader,
+                PrestigeSupporters = supporters,
+            });
             LogTx(conn, tx, LogKinds.Resolution, "noconfidence",
                 $"No-confidence motion {motion.Id} {outcome}: {tally.YesSeats} of {filled} filled seats for.", isPublic: true);
         }
+    }
+
+    private static (ulong? Leader, List<ulong> Supporters) NoConfidenceWinnersTx(
+        SqliteConnection conn, SqliteTransaction tx, NoConfidenceMotion motion, bool passed)
+    {
+        var active = QueryFactionsTx(conn, tx, "status = 'Active'").Select(f => f.UserId).ToHashSet();
+        if (passed)
+            return (active.Contains(motion.TablerId) ? motion.TablerId : null,
+                MotionSignersTx(conn, tx, motion).Where(id => id != motion.TablerId && active.Contains(id)).ToList());
+        var chancellor = GetSittingCabinetTx(conn, tx)?.ChancellorId;
+        var government = active.Where(id => id != chancellor && RoleOfTx(conn, tx, id) == FactionRole.Government).OrderBy(id => id).ToList();
+        return (chancellor is { } id && active.Contains(id) ? id : null, government);
     }
 
     private static void OpenScheduledReadingsTx(SqliteConnection conn, SqliteTransaction tx, GameConfig config, ResolutionReport report)

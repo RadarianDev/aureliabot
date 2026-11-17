@@ -29,11 +29,36 @@ public static class Standings
         }).ToList();
     }
 
+    public static IReadOnlyList<Faction> ByPrestige(DatabaseService data) =>
+        data.GetActiveFactions().OrderByDescending(f => f.Prestige).ThenByDescending(f => f.Popularity).ThenBy(f => f.UserId).ToList();
+
+    public static List<string> PrestigeLines(DatabaseService data, bool compact = false)
+    {
+        var parties = data.GetAllParties().ToDictionary(p => p.Id);
+        var ranked = ByPrestige(data);
+        return ranked.Select(f =>
+        {
+            (string, object?)[] values =
+            [
+                ("rank", Formulas.PrestigePlace(f.Prestige, ranked.Select(r => r.Prestige)) + 1),
+                ("faction", Display.Faction(f)),
+                ("prestige", Display.Number(f.Prestige)),
+                ("party", f.PartyId is { } id && parties.TryGetValue(id, out var party) ? Display.Party(party) : Display.Independent),
+            ];
+            return compact ? Texts.Get("prestige.compactLine", values) : Texts.Get("prestige.line", values);
+        }).ToList();
+    }
+
+    public static int PrestigeRank(DatabaseService data, ulong factionId) =>
+        ByPrestige(data) is var ranked && ranked.FirstOrDefault(f => f.UserId == factionId) is { } faction
+            ? Formulas.PrestigePlace(faction.Prestige, ranked.Select(r => r.Prestige)) + 1
+            : 0;
+
     public static List<string> ProvinceLeaders(DatabaseService data, GameConfig config)
     {
         var regional = data.GetAllRegionalPopularity(config.Constants.Popularity);
         if (regional.Count == 0) return [];
-        return config.Provinces.Select(p =>
+        return data.ProvincesInPlay(config).Select(p =>
         {
             var (leader, popularity) = regional
                 .Select(kv => (Id: kv.Key, Popularity: kv.Value.GetValueOrDefault(p.Id)))

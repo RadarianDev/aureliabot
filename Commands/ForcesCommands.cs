@@ -39,7 +39,7 @@ public static class ForcesCommands
 
     public static string Raise(DatabaseService data, GameConfig config, UnitType type, ulong userId, string name, string province)
     {
-        if (ProvinceAutocomplete.Find(config, province) is not { } target) return Texts.Get("forces.refusal.noProvince", ("province", province));
+        if (ProvinceAutocomplete.Find(data, config, province) is not { } target) return Texts.Get("forces.refusal.noProvince", ("province", province));
         var result = data.OrderRaise(type, userId, name, target.Id, config);
         if (result is not { Order: { } order }) return result.Refusal ?? Texts.Get("forces.refusal.noUnit");
         var ministry = DatabaseService.MinistryOf(type);
@@ -64,7 +64,7 @@ public static class ForcesCommands
     public static string Station(DatabaseService data, GameConfig config, UnitType type, ulong userId, string unitText, string province)
     {
         if (UnitAutocomplete.Find(data, type, unitText) is not { } unit) return Texts.Get("forces.refusal.noUnit");
-        if (ProvinceAutocomplete.Find(config, province) is not { } target) return Texts.Get("forces.refusal.noProvince", ("province", province));
+        if (ProvinceAutocomplete.Find(data, config, province) is not { } target) return Texts.Get("forces.refusal.noProvince", ("province", province));
         var result = data.OrderStation(type, userId, unit.Id, target.Id, config);
         if (result.Refusal is not null || result.Order is null) return result.Refusal ?? Texts.Get("forces.refusal.noUnit");
         var ministry = DatabaseService.MinistryOf(type);
@@ -79,7 +79,7 @@ public static class ForcesCommands
 
     public static string Crackdown(DatabaseService data, GameConfig config, ulong userId, string province)
     {
-        if (ProvinceAutocomplete.Find(config, province) is not { } target) return Texts.Get("forces.refusal.noProvince", ("province", province));
+        if (ProvinceAutocomplete.Find(data, config, province) is not { } target) return Texts.Get("forces.refusal.noProvince", ("province", province));
         var result = data.OrderCrackdown(userId, target.Id, config);
         if (result is not { Order: { } order }) return result.Refusal ?? Texts.Get("forces.refusal.noUnit");
         var c = config.Constants.Crackdown;

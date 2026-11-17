@@ -54,8 +54,10 @@ effects: { economy: -20, discontent.north_arpal: 1, open.social_reform: true, bi
 | `popularity.party.{party}` | number | Every member of a party (its number, as `/info` shows it). |
 | `popularity.home.{province}` | number | Every faction whose home is that province. |
 | `popularity.sponsor` | number | Whoever the effect belongs to: a law's sponsor, the minister who answered a crisis or runs a finished project. |
+| `prestige.{faction}`, `prestige.chancellor`, `prestige.party.{party}`, … | number | Prestige, with the same targets as `popularity`: a faction, the Chancellor, a minister, the sponsor, the government, the opposition, a party or a home province. Positive only: prestige is never lost, so a negative number is refused and a formula or `=` that would lower it is skipped with a GM alert. Never fades, has no cap and wins no votes; it ranks the leaderboard (`/info prestige`). |
 | `discontent.all` | number | Discontent in every province at once. |
 | `condition.all.{condition}` | `1` or `-1` | Gives or removes a condition in every province. |
+| `annex.{province}` | `true` | Brings a province listed in `provinces.yaml` with `annexed: false` into the running game, with its starting discontent and conditions. From then on it has seats, Senate seats, polls and everything else a province has. A province already in play is skipped with a GM alert. |
 | `event.{eventTemplate}` | `true` or a number | Queues a follow-up event from a Ready template: at the start of the next turn, or that many turns later. Players don't see it in the summary. |
 | `cancel.{eventTemplate}` | `true` | Cancels every queued copy of that event, so an answer or a law can avert it. Players don't see it in the summary. |
 | `division.{province}` / `gendarmerie.{province}` | whole number | Raises that many units there at their base die, or with a negative number destroys that many, the weakest first. |
@@ -98,6 +100,7 @@ else 0). They can read:
 | --- | --- |
 | any numeric effect key | its current value: `economy`, `favour`, `threat`, `reserve`, `purse.War`, `discontent.north_arpal`, `opinion.social_reform`, `salience.social_reform`, `division.north_arpal`, … |
 | `popularity.{faction}`, `popularity.chancellor`, `popularity.government`, … | popularity; for a group, its average |
+| `prestige.{faction}`, `prestige.government`, … | prestige; for a group, its average |
 | `var.{variable}` | one of your variables |
 | `condition.{province}.{condition}` | 1 if the province has it, else 0 |
 | `vacant.chancellor`, `vacant.{ministry}` | 1 if the office is empty |
@@ -464,6 +467,9 @@ startingForces:
 | `assembly.noConfidenceCooldownSeasons` | Seasons after a failed motion before another. |
 | `assembly.missedVotePenalty` | Popularity a faction loses for each vote it leaves its seats uncast on: it neither voted (abstaining counts) nor followed a party vote. 0 turns it off. |
 | `assembly.followedVotePenalty` | Popularity a party member loses for each bill or cabinet vote it doesn't cast itself, its seats following the party instead. 0 turns it off. |
+| `prestige.noConfidenceLeader` | Prestige for the winner of a no-confidence vote: the tabler if it carries, the Chancellor if it fails. |
+| `prestige.noConfidenceSupporter` | Prestige for each faction on the winning side: the co-signers if it carries, every other government faction if it fails. |
+| `prestige.renown` | Popularity added every season to the first places on the prestige leaderboard, one number per place (`[0.15, 0.1, 0.05]` boosts the top three). Factions with equal prestige share a place; factions with no prestige get nothing. |
 
 **Elections**
 
@@ -526,7 +532,8 @@ startingForces:
 
 ### `config/provinces.yaml`: provinces
 
-Keyed by province id. Copied into the database at game start; after that, only effects change them.
+Keyed by province id. Copied into the database at game start (except provinces with `annexed: false`);
+after that, only effects change them.
 
 ```yaml
 north_arpal:
@@ -542,9 +549,11 @@ north_arpal:
 | `name` | yes | Display name. |
 | `population` | yes | Millions; only the proportions matter (seats, national opinion, unrest drag). |
 | `senateSeats` | yes | The province's seats in the Senate, safe boroughs included. |
-| `mapKey` | yes | The province's flat colour in the map's index image. Unique. |
+| `mapKey` | yes | The province's flat colour in the map's index image. Unique. An unannexed province can bring its own map set in `assets/map/{province}/` (`base.png`, `provinces.png`, `overlay.png`, every province drawn); once it is annexed, maps use that set instead. |
 | `description` | yes | One public line, shown in `/info` and autocomplete. |
 | `conditions` | no | Starting conditions, ids from `conditions.yaml`. Harbours need `coastal`. |
+| `discontent` | no | Starting discontent; default `discontent.start` from `constants.yaml`. |
+| `annexed` | no | `false` keeps the province out of the game until an `annex.{province}` effect brings it in (default `true`). Until then it has no seats, Senate seats, polls or autocomplete entry, and effects aimed at it do nothing, but content can already name it. |
 
 ### `config/conditions.yaml`: conditions
 
@@ -568,7 +577,7 @@ lawless:
 | `growth` | no | Added to the yearly growth, weighted by the province's share of the population. |
 
 **Standing** conditions describe a province and are set in `provinces.yaml`: urban, industrial, farmland,
-frontier, anzarian_border, crossroads, rugged, forested, marshland, remote, coastal. **Event**
+frontier, anzarian_border, crossroads, rugged, forested, marshland, remote, coastal, mugian_quarter. **Event**
 conditions come and go through effects: lawless, epidemic, striking, famine, booming.
 
 ### `config/variables.yaml`: your own variables
@@ -611,8 +620,8 @@ agendas:
 
 | Field | Meaning |
 |---|---|
-| `reward.perWish` | Popularity for each wish met at the election. |
-| `reward.allBonus` | Extra popularity when every wish is met. |
+| `reward.perWish` | Prestige for each wish met at the election. |
+| `reward.allBonus` | Extra prestige when every wish is met. |
 | `margins.<track>` | How far a track must move the wanted way for a wish to count. Tracks: `economy`, `reserve`, `army`, `discontent`, `favour`, `threat`. |
 | `agendas.<id>` | One agenda. The id is stored with every hand dealt, so never rename it once dealt. |
 | `name`, `description` | Shown to the player when dealt, and in the reveal. |

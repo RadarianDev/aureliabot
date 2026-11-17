@@ -77,6 +77,9 @@ public static class Formulas
 
     public static double DriftToward(double value, double target, double share) => value + share * (target - value);
 
+    public static int PrestigePlace(double prestige, IEnumerable<double> everyone) =>
+        everyone.Where(p => p > prestige).Distinct().Count();
+
     public static double StepToward(double value, double target, double step)
     {
         var distance = target - value;

@@ -91,6 +91,16 @@ public partial class InfoModule
         return sb.ToString();
     }
 
+    private string PrestigeInfo()
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine(Texts.Get("prestige.heading", ("season", _data.GetGameState().Label)));
+        sb.AppendLine(Texts.Get("prestige.subheading"));
+        var lines = Standings.PrestigeLines(_data);
+        sb.AppendLine(lines.Count == 0 ? Texts.Get("standings.none") : string.Join("\n", lines));
+        return sb.ToString();
+    }
+
     private string LawsInfo()
     {
         var laws = _data.GetBills().Where(b => b.Status == BillStatus.Passed).ToList();

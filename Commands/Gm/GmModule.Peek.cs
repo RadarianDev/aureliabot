@@ -42,12 +42,13 @@ public partial class GmModule
         if (mode == PeekMode.Senate)
         {
             var config = _constants.Config;
-            await PeekElectionAsync(ElectionCalculator.RunSenate(_data.BuildElectionInput(config), ElectionCalculator.SenateSeats(config)), Texts.Get("gm.peek.senateHeader"), Texts.Get("gm.peek.senateChartTitle"));
+            var input = _data.BuildElectionInput(config);
+            await PeekElectionAsync(ElectionCalculator.RunSenate(input, ElectionCalculator.SenateSeats(config, input)),Texts.Get("gm.peek.senateHeader"), Texts.Get("gm.peek.senateChartTitle"));
             return;
         }
 
         ProvinceDefinition? found = null;
-        if (province is not null && (found = ProvinceAutocomplete.Find(_constants.Config, province)) is null)
+        if (province is not null && (found = ProvinceAutocomplete.Find(_data, _constants.Config, province)) is null)
         {
             await FollowupAsync(Texts.Get("gm.peek.noProvince", ("province", province)), ephemeral: true, allowedMentions: AllowedMentions.None);
             return;
@@ -233,7 +234,7 @@ public partial class GmModule
             await FollowupAsync(chunk, ephemeral: true, allowedMentions: AllowedMentions.None);
 
         var winners = ElectionPublisher.WinnersFromResult(result);
-        using var images = ElectionPublisher.Render(result, parties, winners, config, out var failure);
+        using var images = ElectionPublisher.Render(result, parties, winners, config, _data.MapVariant(config), out var failure);
         if (failure is not null)
             await FollowupAsync(Texts.Get("gm.peek.renderFailed", ("error", failure)), ephemeral: true);
 

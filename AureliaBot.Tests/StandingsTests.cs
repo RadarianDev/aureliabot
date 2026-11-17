@@ -66,7 +66,7 @@ public class StandingsTests : IDisposable
 
         var leaders = Standings.ProvinceLeaders(Db, Config);
 
-        Assert.Equal(Config.Provinces.Count, leaders.Count);
+        Assert.Equal(Config.ProvincesInPlay([]).Count, leaders.Count);
         Assert.All(leaders, l => Assert.Contains("<@2>", l));
     }
 }

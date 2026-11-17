@@ -1,5 +1,10 @@
-plague:
+tariff_war:
   start: 0
   min: 0
-  max: 10
-  description: An example variable; rename or delete it. How far a plague has spread.
+  max: 6
+  description: "The South Arpal arc: how far relations with Mugi have broken down. 0 normal trade, 1 Mugian duties, 2 Kolgasi market closed, 3 South Arpal agitating, 4 ships off Lanten, 5-6 war or one incident from it."
+mugi_pressure:
+  start: 0
+  min: 0
+  max: 6
+  description: "The South Arpal arc: how hard the tariff war hits the Mugian merchant nobles, and so how hard the Diet pushes the Tsar to make peace."

@@ -166,7 +166,7 @@ public class MinistryModule : InteractionModuleBase<SocketInteractionContext>
         [Summary("province", "Where to build it"), Autocomplete(typeof(ProvinceAutocomplete))] string province)
     {
         var config = _constants.Config;
-        if (ProvinceAutocomplete.Find(config, province) is not { } where)
+        if (ProvinceAutocomplete.Find(_data, config, province) is not { } where)
         {
             await RespondAsync(Texts.Get("projects.refusal.unknownProvince", ("province", province)), ephemeral: true);
             return;

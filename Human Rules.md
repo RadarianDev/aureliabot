@@ -98,8 +98,14 @@
 - At the start of each term every faction is secretly dealt an **agenda**: two things it wants to happen to the kingdom, such as the economy rising and the army shrinking. Nobody is dealt the same agenda twice in a row.
 - `/me` shows your agenda. Keep it secret, share it or lie about it.
 - When the pre-election opens, every faction is secretly told its agenda for the next term, so it can choose its party with it in mind. The current agenda still counts until the election.
-- On election night every agenda is revealed. Each wish that came true is worth popularity, and fulfilling both is worth more. Then the next term's agendas begin.
+- On election night every agenda is revealed. Each wish that came true is worth **prestige**, and fulfilling both is worth more. Then the next term's agendas begin.
 - A snap election scores agendas early.
+## Prestige
+- **Prestige** is lasting renown for steering the kingdom where you wanted it. It is the measure of who is winning the game.
+- Unlike popularity it is never lost: it never fades, nothing takes it away, it has no cap, and elections never count it.
+- `/info prestige` shows the leaderboard; the dashboard shows the top five, `/me` your own place, and it is posted after the agendas on election night.
+- Most prestige comes from secret agendas. A no-confidence vote also earns some for the winners: the tabler and co-signers if it carries, the chancellor and the rest of the government if it fails. The GM may award it for excellent roleplay or great deeds in the story.
+- Being near the top pays: every season the first three places on the leaderboard gain a little popularity, the first most. Equal prestige shares a place.
 ## Cabinet
 - After an election, *His Majesty King Arthas II* (the GM) appoints a **chancellor**, who names a cabinet of four **ministers**: Treasury, War, Interior, and Commerce and Labor. A faction holds at most one post, and the chancellor holds none. The Assembly then votes on the cabinet. If it fails, the chancellor tries again.
 - Until a cabinet is confirmed, the previous one stays in office.

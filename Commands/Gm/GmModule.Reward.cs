@@ -3,11 +3,12 @@ using Discord.Interactions;
 
 public partial class GmModule
 {
-    [SlashCommand("reward", "Reward excellent roleplay with popularity, announced as a royal commendation")]
+    [SlashCommand("reward", "Reward excellent roleplay or great deeds, announced as a royal commendation")]
     public async Task RewardAsync(
         [Summary("faction", "The faction"), Autocomplete(typeof(FactionAutocomplete))] string faction,
-        [Summary("amount", "Popularity to add (positive)")] double amount,
-        [Summary("reason", "What earned it, e.g. \"a stirring speech at Carden\""), MaxLength(300)] string reason)
+        [Summary("amount", "Popularity or prestige to add (positive)")] double amount,
+        [Summary("reason", "What earned it, e.g. \"a stirring speech at Carden\""), MaxLength(300)] string reason,
+        [Summary("kind", "Popularity (fades, wins votes) or prestige (lasting, ranks the leaderboard); default popularity")] RewardKind kind = RewardKind.Popularity)
     {
         if (amount < 0)
         {
@@ -31,6 +32,14 @@ public partial class GmModule
             return;
         }
 
+        if (kind == RewardKind.Prestige)
+            await RewardPrestigeAsync(target, amount, reason);
+        else
+            await RewardPopularityAsync(target, amount, reason);
+    }
+
+    private async Task RewardPopularityAsync(Faction target, double amount, string reason)
+    {
         if (_data.AddPopularity(target.UserId, amount, _constants.Current.Popularity) is not { } updated)
         {
             await RespondAsync(Texts.Get("gm.reward.noFaction"), ephemeral: true);
@@ -51,6 +60,30 @@ public partial class GmModule
         };
         await RespondAsync(
             post is null ? Texts.Get("gm.reward.rewardedNotPosted", values) : Texts.Get("gm.reward.rewardedPosted", values),
+            ephemeral: true,
+            allowedMentions: AllowedMentions.None);
+    }
+
+    private async Task RewardPrestigeAsync(Faction target, double amount, string reason)
+    {
+        if (_data.AddPrestige(target.UserId, amount) is not { } updated)
+        {
+            await RespondAsync(Texts.Get("gm.reward.noFaction"), ephemeral: true);
+            return;
+        }
+        _data.Log(LogKinds.GmOverride, "gm reward", $"{target.UserId}: {Display.Signed(amount)} prestige for {reason}.", target.UserId, isPublic: true);
+
+        var post = await _publisher.PostAsync(
+            ChannelRole.Notices,
+            Texts.Get("gm.reward.prestigeCommendation", ("faction", Display.Faction(target)), ("reason", reason), ("gained", Display.Signed(amount))),
+            "gm reward");
+
+        var values = new (string, object?)[]
+        {
+            ("faction", Display.Faction(target)), ("from", Display.Number(target.Prestige)), ("to", Display.Number(updated)),
+        };
+        await RespondAsync(
+            post is null ? Texts.Get("gm.reward.prestigeNotPosted", values) : Texts.Get("gm.reward.prestigePosted", values),
             ephemeral: true,
             allowedMentions: AllowedMentions.None);
     }

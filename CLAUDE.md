@@ -149,7 +149,8 @@ constructor against a temp SQLite file.
 - `WestminsterGenerator` keeps per-run state that is never cleared, so use a **new instance per
   render**.
 - `ProvinceMapGenerator` colours the province map from three aligned PNGs in `assets/map/` (base,
-  province index, text overlay), keyed by each province's index colour. The assets, method and art
+  province index, text overlay), keyed by each province's index colour. A province with
+  `annexed: false` may have its own full set in `assets/map/{province}/`, used once it is annexed. The assets, method and art
   rules are in the "Province map" part of the spec's Election section.
 - The bot is hosted on Windows, where SkiaSharp's native library comes with the base package. There
   is no Linux native package: running on Linux needs `SkiaSharp.NativeAssets.Linux.NoDependencies`

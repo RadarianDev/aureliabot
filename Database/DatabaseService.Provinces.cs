@@ -68,6 +68,32 @@ public partial class DatabaseService
 
     public Province? GetProvince(string id) => GetProvinces().FirstOrDefault(p => p.Id == id);
 
+    public IReadOnlyList<ProvinceDefinition> ProvincesInPlay(GameConfig config) =>
+        config.ProvincesInPlay(GetProvinces().Select(p => p.Id).ToHashSet());
+
+    public string? MapVariant(GameConfig config) => config.MapVariant(GetProvinces().Select(p => p.Id).ToHashSet());
+
+    private static void InsertProvinceTx(SqliteConnection conn, SqliteTransaction tx, GameConfig config, ProvinceDefinition province, Season season, int year)
+    {
+        Exec(conn, tx, "INSERT INTO provinces (id, name, population, discontent) VALUES ($id, $name, $population, $discontent);",
+            ("$id", province.Id), ("$name", province.Name), ("$population", province.Population),
+            ("$discontent", province.Discontent ?? config.Constants.Discontent.Start));
+        foreach (var condition in province.Conditions)
+            Exec(conn, tx, @"
+                INSERT INTO province_conditions (province_id, condition_id, since_season, since_year)
+                VALUES ($province, $condition, $season, $year);",
+                ("$province", province.Id), ("$condition", condition), ("$season", season.ToString()), ("$year", year));
+    }
+
+    private static string? AnnexProvinceTx(SqliteConnection conn, SqliteTransaction tx, GameConfig config, GameState state, string provinceId)
+    {
+        if (config.Province(provinceId) is not { } province) return Texts.Get("data.effect.noProvince", ("id", provinceId));
+        if (GetProvincesTx(conn, tx).Any(p => p.Id == provinceId)) return Texts.Get("data.effect.alreadyAnnexed", ("id", provinceId));
+        InsertProvinceTx(conn, tx, config, province, state.Season, state.Year);
+        LogTx(conn, tx, LogKinds.StateChange, "annex", $"Annexed {province.Name} in {GameCalendar.Label(state.Season, state.Year)}.");
+        return null;
+    }
+
     public Dictionary<string, List<string>> GetProvinceConditions()
     {
         using var conn = Open();
@@ -120,8 +146,9 @@ public partial class DatabaseService
         Dictionary<string, List<string>> conditionIds;
         if (provinces.Count == 0)
         {
-            provinces = config.Provinces.Select(p => new Province(p.Id, p.Name, p.Population, config.Constants.Discontent.Start)).ToList();
-            conditionIds = config.Provinces.ToDictionary(p => p.Id, p => p.Conditions.ToList());
+            var starting = config.ProvincesInPlay([]);
+            provinces = starting.Select(p => new Province(p.Id, p.Name, p.Population, p.Discontent ?? config.Constants.Discontent.Start)).ToList();
+            conditionIds = starting.ToDictionary(p => p.Id, p => p.Conditions.ToList());
         }
         else
         {

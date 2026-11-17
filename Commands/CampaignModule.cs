@@ -178,7 +178,7 @@ public class CampaignModule : InteractionModuleBase<SocketInteractionContext>
     {
         provinceId = null;
         if (text is null) return true;
-        if (ProvinceAutocomplete.Find(_constants.Config, text) is not { } found) return false;
+        if (ProvinceAutocomplete.Find(_data, _constants.Config, text) is not { } found) return false;
         provinceId = found.Id;
         return true;
     }

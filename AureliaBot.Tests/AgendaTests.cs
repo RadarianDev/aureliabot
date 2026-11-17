@@ -206,7 +206,7 @@ public class AgendaTests : IDisposable
 
         Apply(config, "economy 50");
         CallElection();
-        var popularityBefore = Db.GetFaction(1)!.Popularity;
+        var prestigeBefore = Db.GetFaction(1)!.Prestige;
         var report = Resolve(config);
 
         var reveal = Assert.Single(report.AgendaReveals);
@@ -216,7 +216,7 @@ public class AgendaTests : IDisposable
         Assert.Equal(AgendaStatus.Scored, Db.GetAgendaHistory(1).Single(h => h.Id == carried.Id).Status);
         Assert.NotEqual(carried.Id, Db.GetActiveAgenda(1)!.Id);
         Assert.Contains(report.PrivateMessages[1], m => m.Contains("Your secret agenda"));
-        Assert.True(Db.GetFaction(1)!.Popularity > popularityBefore);
+        Assert.Equal(prestigeBefore + 5, Db.GetFaction(1)!.Prestige);
     }
 
     [Fact]

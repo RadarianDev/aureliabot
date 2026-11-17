@@ -70,6 +70,10 @@ public static class FormulaReferences
                 var targets = PopularityEffect.Targets(new Effect(reference, null), store);
                 var popular = store.ActiveFactions.Where(f => targets.Contains(f.UserId)).ToList();
                 return popular.Count == 0 ? 0 : popular.Average(f => f.Popularity);
+            case ["prestige", ..]:
+                var holders = PopularityEffect.Targets(new Effect(reference, null), store);
+                var prestigious = store.ActiveFactions.Where(f => holders.Contains(f.UserId)).ToList();
+                return prestigious.Count == 0 ? 0 : prestigious.Average(f => f.Prestige);
         }
 
         if (EffectKinds.Find(parts[0]) is { IsAction: false } kind && kind.CurrentValue(new Effect(reference, null), store) is { } current)

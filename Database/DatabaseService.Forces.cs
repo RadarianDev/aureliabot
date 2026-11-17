@@ -202,7 +202,7 @@ public partial class DatabaseService
         if (ForcesRefusalTx(conn, tx, ministry, factionId) is { } refusal) return new OrderResult(refusal);
         if (name.Length == 0) return new OrderResult(Texts.Get("forces.refusal.noName"));
         if (name.Length > UnitNameLimit) return new OrderResult(Texts.Get("forces.refusal.longName", ("limit", UnitNameLimit)));
-        if (config.Province(provinceId) is null) return new OrderResult(Texts.Get("forces.refusal.noProvince", ("province", provinceId)));
+        if (config.Province(provinceId) is null || GetProvincesTx(conn, tx).All(p => p.Id != provinceId)) return new OrderResult(Texts.Get("forces.refusal.noProvince", ("province", provinceId)));
         if (TakenUnitNamesTx(conn, tx, type).Contains(name)) return new OrderResult(Texts.Get("forces.refusal.nameTaken", ("name", name)));
 
         var cost = config.Constants.UnitsOf(type).Raise;
@@ -247,7 +247,7 @@ public partial class DatabaseService
         using var tx = conn.BeginTransaction();
         if (ForcesRefusalTx(conn, tx, ministry, factionId) is { } refusal) return new OrderResult(refusal);
         if (GetUnitTx(conn, tx, unitId) is not { } unit || unit.Type != type) return new OrderResult(Texts.Get("forces.refusal.noUnit"));
-        if (config.Province(provinceId) is null) return new OrderResult(Texts.Get("forces.refusal.noProvince", ("province", provinceId)));
+        if (config.Province(provinceId) is null || GetProvincesTx(conn, tx).All(p => p.Id != provinceId)) return new OrderResult(Texts.Get("forces.refusal.noProvince", ("province", provinceId)));
 
         var pending = GetPendingOrdersTx(conn, tx).FirstOrDefault(o => o.UnitId == unitId && o.Kind == OrderKind.Station);
         if (unit.ProvinceId == provinceId)
@@ -279,7 +279,7 @@ public partial class DatabaseService
         using var conn = Open();
         using var tx = conn.BeginTransaction();
         if (ForcesRefusalTx(conn, tx, ministry, factionId) is { } refusal) return new OrderResult(refusal);
-        if (config.Province(provinceId) is not { } province) return new OrderResult(Texts.Get("forces.refusal.noProvince", ("province", provinceId)));
+        if (config.Province(provinceId) is not { } province || GetProvincesTx(conn, tx).All(p => p.Id != provinceId)) return new OrderResult(Texts.Get("forces.refusal.noProvince", ("province", provinceId)));
         if (!GetUnitsTx(conn, tx, UnitType.Gendarmerie).Any(u => u.ProvinceId == provinceId))
             return new OrderResult(Texts.Get("crackdown.refusal.noGendarmerie", ("province", province.Name)));
         if (GetPendingOrdersTx(conn, tx).Any(o => o.Kind == OrderKind.Crackdown && o.ProvinceId == provinceId))

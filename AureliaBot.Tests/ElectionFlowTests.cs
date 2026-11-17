@@ -52,7 +52,7 @@ public class ElectionFlowTests : IDisposable
         var election = Db.Resolve(Config, new ScriptedRandomSource(), 1, DateTimeOffset.UtcNow).Election!;
 
         using var images = ElectionPublisher.Render(election.Result, election.Parties,
-            ElectionPublisher.WinnersFromResult(election.Result), Config, out var failure);
+            ElectionPublisher.WinnersFromResult(election.Result), Config, Db.MapVariant(Config), out var failure);
 
         Assert.Null(failure);
         Assert.True(images.SeatChart!.Length > 1000);

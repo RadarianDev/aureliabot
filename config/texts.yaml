@@ -60,7 +60,7 @@ secretAgenda:
   dealt: |-
     ## Your secret agenda: {agenda}
     *{description}*
-    You want {wishes} by the next Assembly election. Each wish met then is worth +{perWish} popularity, and meeting them all +{allBonus} more.
+    You want {wishes} by the next Assembly election. Each wish met then is worth +{perWish} prestige, and meeting them all +{allBonus} more.
     Nobody else knows your agenda. Keep it secret, share it or lie about it: that is up to you. Every agenda is revealed on election night.
   reveal:
     heading: |-
@@ -69,17 +69,17 @@ secretAgenda:
     line: |-
       {faction} was **{agenda}** · {reward}
       -# {results}
-    reward: "**+{popularity}** popularity"
+    reward: "**+{prestige}** prestige"
     noReward: "nothing gained"
   future: |-
     ## Your secret agenda for the next term: {agenda}
     *{description}*
-    The election is coming. From election night you will want {wishes}, by the Assembly election after it. Each wish met then is worth +{perWish} popularity, and meeting them all +{allBonus} more.
+    The election is coming. From election night you will want {wishes}, by the Assembly election after it. Each wish met then is worth +{perWish} prestige, and meeting them all +{allBonus} more.
     Your current agenda still counts until this election. You learn the next one now, while parties are open, so you can choose your allies with it in mind.
   futureFirst: |-
     ## Your secret agenda for the next term: {agenda}
     *{description}*
-    The election is coming. From election night you will want {wishes}, by the Assembly election after it. Each wish met then is worth +{perWish} popularity, and meeting them all +{allBonus} more.
+    The election is coming. From election night you will want {wishes}, by the Assembly election after it. Each wish met then is worth +{perWish} prestige, and meeting them all +{allBonus} more.
     You learn it now, while parties are open, so you can choose your allies with it in mind. Nobody else knows it: keep it secret, share it or lie about it.
   futureBegins: "🎭 Your agenda for the new term, **{agenda}**, starts now: you want {wishes} by the next Assembly election."
   me: "Your secret agenda: **{agenda}**, wanting {wishes}. Revealed and scored at the next Assembly election."
@@ -126,6 +126,13 @@ standings:
   leadersHeading: "**Most popular in each province**"
   leader: "- {province}: {faction} {popularity}"
   provinceLine: "{rank}. {faction} {popularity}"
+
+prestige:
+  heading: "## Prestige · {season}"
+  subheading: "-# Lasting renown, for steering the kingdom where you wanted it. It is never lost and elections never count it: it is the measure of who leads the game. The first places gain a little popularity every season."
+  line: "{rank}. {faction} · **{prestige}** · {party}"
+  compactLine: "{rank}. {faction} **{prestige}**"
+  revealHeading: "**🏆 Prestige**"
 
 display:
   none: "none"
@@ -245,6 +252,7 @@ info:
     parliament: "Parliament: seats"
     laws: "Laws in force"
     standings: "Standings: popularity of every faction"
+    prestige: "Prestige: the leaderboard"
     condition: "Condition · {name}"
     event: "Event · {name}"
   notFound: "Nothing called `{thing}` was found. Pick something from the list."
@@ -336,6 +344,7 @@ info:
     missing: "That faction doesn't exist."
     retired: "*Retired from politics.*"
     popularity: "Popularity: {popularity} across the kingdom{change}"
+    prestige: "Prestige: {prestige}"
     regional: "By province: {provinces}"
     regionalEntry: "{province} {popularity}"
     party: "Party: {party}"
@@ -420,6 +429,7 @@ me:
   status: "{season} · next resolution {when}"
   statusPreElection: "{season} · Pre-election · next resolution {when}"
   summary: "Popularity {popularity}{change} · {seats} seats · {party} · {role}"
+  prestige: "Prestige {prestige} · {rank} of {count} on the leaderboard"
   senateSeats: "Senate seats: {seats}"
   youAccepted: "you accepted"
   youDeclined: "you declined"
@@ -759,6 +769,14 @@ gm:
     rewardedPosted: "Rewarded {faction}: popularity {from} → {to}{capped}. The commendation is in #notices."
     rewardedNotPosted: |-
       Rewarded {faction}: popularity {from} → {to}{capped}.
+      ⚠️ Neither #notices nor #news is set, so the commendation was not posted.
+    prestigeCommendation: |-
+      ## 👑 By His Majesty's Command
+      > His Majesty is pleased to commend {faction} for {reason}.
+      -# 🏆 Prestige {gained}
+    prestigePosted: "Rewarded {faction}: prestige {from} → {to}. The commendation is in #notices."
+    prestigeNotPosted: |-
+      Rewarded {faction}: prestige {from} → {to}.
       ⚠️ Neither #notices nor #news is set, so the commendation was not posted.
   peek:
     popularity:
@@ -1299,6 +1317,8 @@ effects:
     senateValue: senate takes 1 (establishes it) or -1 (abolishes it).
     issueShape: write it as `{prefix}.<issue>`.
     popularityShape: write it as `popularity.<faction user id>`.
+    prestigeShape: write it as `prestige.<faction user id>`, or a group as for popularity.
+    prestigeNegative: prestige is never lost; give a positive amount.
     noBaseline: issue opinion has no baseline; use `opinion.<issue>`, which lasts.
     unknownKey: is not an effect key.
     hereOnlyInProjects: "`here` only works in a project's effects."
@@ -1342,6 +1362,7 @@ effects:
     conditionLost: "{province} is no longer *{condition}*"
     conditionGainedAll: "Every province is now *{condition}*"
     conditionLostAll: "No province is *{condition}* any more"
+    annex: "{province} joins the kingdom"
     economy: Economy
     reserve: Reserve
     seats: Assembly seats
@@ -1358,6 +1379,14 @@ effects:
     popularityMinister: "Popularity of the {ministry} minister"
     popularityParty: "Popularity of every {party} member"
     popularityHome: "Popularity of every faction from {province}"
+    prestige: "{faction} prestige"
+    prestigeChancellor: "The Chancellor's prestige"
+    prestigeSponsor: "The sponsor's prestige"
+    prestigeGovernment: "Prestige of every government faction"
+    prestigeOpposition: "Prestige of every opposition faction"
+    prestigeMinister: "Prestige of the {ministry} minister"
+    prestigeParty: "Prestige of every {party} member"
+    prestigeHome: "Prestige of every faction from {province}"
     discontent: Discontent in {province}
     discontentAll: Discontent across the kingdom
     divisions: "Divisions in {province}"
@@ -1562,6 +1591,8 @@ dashboard:
   footer: Updated after every resolution
   popularityField: "Popularity (change since the last resolution)"
   popularityMore: "…and {count} more: `/info standings`"
+  prestigeField: "Prestige (the leaderboard)"
+  prestigeMore: "…and {count} more: `/info prestige`"
   noFactions: No factions yet.
 
 alerts:
@@ -1661,7 +1692,9 @@ data:
     tooMany: "{source}: the effects ran too deep or too long and were stopped; check for a block that repeats without end."
     cannotSet: "this value can't be set with `=`; change it by an amount instead."
     noPopularityTarget: "nobody holds that role or matches `{target}` right now"
+    prestigeNegative: prestige is never lost, so a negative amount is skipped
     noProvince: no province {id}
+    alreadyAnnexed: "{id} is already part of the kingdom"
     noCondition: no condition {id}
     issueNotOpen: issue {id} is not open
     issueAlreadyOpen: issue {id} is already open
@@ -1975,6 +2008,8 @@ noConfidence:
     failed: |-
       🛡️ **The government survives.** The motion of no confidence tabled by {tabler} carries {yes} of the {filled} filled seats, short of the {needed} it needed.
       -# Against: {no} · abstaining or absent: {aside} · a motion needs more than half of all filled seats, so abstentions and absences count against it.
+    prestigeLeader: "-# 🏆 {faction} gains {amount} prestige."
+    prestigeSupporters: "-# 🏆 {factions} gain {amount} prestige each."
   alert:
     toVote: "No-confidence motion {id}, tabled by {tabler}, has reached its threshold and goes to a vote."
     snapElection: "A no-confidence motion passed: the cabinet is caretaker and {season} is now a snap pre-election."

@@ -86,7 +86,7 @@ public partial class GmModule
             [Summary("province", "The rioting province"), Autocomplete(typeof(ProvinceAutocomplete))] string province)
         {
             var config = _constants.Config;
-            if (ProvinceAutocomplete.Find(config, province) is not { } definition || _data.GetProvince(definition.Id) is not { } target)
+            if (ProvinceAutocomplete.Find(_data, config, province) is not { } definition || _data.GetProvince(definition.Id) is not { } target)
             {
                 await Reply(Texts.Get("roll.riot.noProvince", ("province", province)));
                 return;

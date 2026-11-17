@@ -71,7 +71,11 @@ public sealed record CabinetVoteReport(long CabinetId, ulong? ChancellorId, bool
 
 public sealed record MissedVoteReport(ulong FactionId, string Vote, double PopularityChange, bool Followed);
 
-public sealed record NoConfidenceReport(long MotionId, ulong TablerId, NoConfidenceStatus Outcome, int YesSeats, int NoSeats, int FilledSeats);
+public sealed record NoConfidenceReport(long MotionId, ulong TablerId, NoConfidenceStatus Outcome, int YesSeats, int NoSeats, int FilledSeats)
+{
+    public ulong? PrestigeLeader { get; init; }
+    public IReadOnlyList<ulong> PrestigeSupporters { get; init; } = [];
+}
 
 public sealed record ElectionPartySnapshot(long Id, string Name, string Colour, ulong? EmojiId);
 

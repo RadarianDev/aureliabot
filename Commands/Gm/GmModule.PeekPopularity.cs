@@ -7,7 +7,7 @@ public partial class GmModule
         var regional = _data.GetAllRegionalPopularity(c);
         var marks = _data.GetPopularityMarks();
         var parties = _data.GetAllParties().ToDictionary(p => p.Id);
-        var provinces = only is null ? config.Provinces : [only];
+        var provinces = only is null ? _data.ProvincesInPlay(config) : [only];
         var lines = new List<string>
         {
             only is null ? Texts.Get("gm.peek.popularity.header") : Texts.Get("gm.peek.popularity.headerProvince", ("province", only.Name)),
@@ -51,7 +51,7 @@ public partial class GmModule
         var rank = 0;
         foreach (var faction in _data.GetActiveFactions().OrderByDescending(f => f.Popularity))
         {
-            var byProvince = config.Provinces
+            var byProvince = _data.ProvincesInPlay(config)
                 .Select(p => (Province: p, Popularity: regional.GetValueOrDefault(faction.UserId)?.GetValueOrDefault(p.Id) ?? faction.Popularity))
                 .OrderBy(x => x.Popularity)
                 .ToList();

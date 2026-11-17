@@ -18,16 +18,8 @@ public partial class DatabaseService
         Exec(conn, tx, "DELETE FROM unrest_samples;");
         Exec(conn, tx, "DELETE FROM province_conditions;");
         Exec(conn, tx, "DELETE FROM provinces;");
-        foreach (var province in config.Provinces)
-        {
-            Exec(conn, tx, "INSERT INTO provinces (id, name, population, discontent) VALUES ($id, $name, $population, $discontent);",
-                ("$id", province.Id), ("$name", province.Name), ("$population", province.Population), ("$discontent", c.Discontent.Start));
-            foreach (var condition in province.Conditions)
-                Exec(conn, tx, @"
-                    INSERT INTO province_conditions (province_id, condition_id, since_season, since_year)
-                    VALUES ($province, $condition, $season, $year);",
-                    ("$province", province.Id), ("$condition", condition), ("$season", c.Start.Season.ToString()), ("$year", c.Start.Year));
-        }
+        foreach (var province in config.ProvincesInPlay([]))
+            InsertProvinceTx(conn, tx, config, province, c.Start.Season, c.Start.Year);
 
         var started = state with
         {

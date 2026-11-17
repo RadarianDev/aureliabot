@@ -178,6 +178,8 @@ public partial class DatabaseService
         public bool SetCondition(string provinceId, string conditionId, bool present) =>
             SetConditionTx(conn, tx, State, provinceId, conditionId, present);
 
+        public string? AnnexProvince(string provinceId) => AnnexProvinceTx(conn, tx, config, State, provinceId);
+
         public Issue? Issue(string issueId) => GetIssueTx(conn, tx, issueId);
 
         public void SetIssueOpinion(string issueId, double value) =>
@@ -198,6 +200,8 @@ public partial class DatabaseService
         public FactionRole RoleOf(ulong factionId) => RoleOfTx(conn, tx, factionId);
 
         public void AddPopularity(ulong factionId, double delta) => AddPopularityTx(conn, tx, factionId, delta, config.Constants.Popularity);
+
+        public void AddPrestige(ulong factionId, double delta) => AddPrestigeTx(conn, tx, factionId, delta);
 
         public string? OpenIssue(string templateId) => OpenIssueFromTemplateTx(conn, tx, State, templateId);
 

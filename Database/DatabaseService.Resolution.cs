@@ -113,6 +113,18 @@ public partial class DatabaseService
                 ("$id", faction.UserId.ToString()),
                 ("$value", Math.Clamp(Formulas.DriftToward(faction.Popularity, c.Popularity.Start, c.Popularity.Drift), c.Popularity.Min, c.Popularity.Max)));
         SpreadRegionalPopularityTx(conn, tx, c.Popularity);
+        GrantRenownTx(conn, tx, c);
+    }
+
+    private static void GrantRenownTx(SqliteConnection conn, SqliteTransaction tx, GameConstants c)
+    {
+        var factions = QueryFactionsTx(conn, tx, "status = 'Active' AND prestige > 0");
+        foreach (var faction in factions)
+        {
+            var place = Formulas.PrestigePlace(faction.Prestige, factions.Select(f => f.Prestige));
+            if (place < c.Prestige.Renown.Count && c.Prestige.Renown[place] > 0)
+                AddPopularityTx(conn, tx, faction.UserId, c.Prestige.Renown[place], c.Popularity);
+        }
     }
 
     private static void AdvanceSeasonTx(SqliteConnection conn, SqliteTransaction tx, GameState state, GameConfig config, ResolutionReport report, DateTimeOffset now)

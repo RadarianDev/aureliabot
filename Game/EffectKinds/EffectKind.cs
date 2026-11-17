@@ -19,6 +19,7 @@ public interface IEffectStore
     IReadOnlyList<Province> Provinces { get; }
     void SetDiscontent(string provinceId, double value);
     bool SetCondition(string provinceId, string conditionId, bool present);
+    string? AnnexProvince(string provinceId);
 
     Issue? Issue(string issueId);
     IReadOnlyList<Issue> OpenIssues { get; }
@@ -29,6 +30,7 @@ public interface IEffectStore
     Cabinet? SittingCabinet { get; }
     FactionRole RoleOf(ulong factionId);
     void AddPopularity(ulong factionId, double delta);
+    void AddPrestige(ulong factionId, double delta);
 
     string? OpenIssue(string templateId);
     string? CloseIssue(string issueId);
@@ -104,9 +106,11 @@ public static class EffectKinds
         new PurseEffect(),
         new DiscontentEffect(),
         new ConditionEffect(),
+        new AnnexEffect(),
         new IssueValueEffect("opinion", issue => Texts.Get("effects.summary.opinion", ("issue", issue))),
         new IssueValueEffect("salience", issue => Texts.Get("effects.summary.salience", ("issue", issue))),
         new PopularityEffect(),
+        new PrestigeEffect(),
         new OpenIssueEffect(),
         new CloseIssueEffect(),
         new BillEffect(),

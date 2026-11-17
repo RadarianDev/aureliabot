@@ -25,7 +25,7 @@ public class CampaignScenarioTests : IDisposable
     private double WeightedMean(ulong id)
     {
         var regional = Regional(id);
-        var populations = Config.Provinces.ToDictionary(p => p.Id, p => p.Population);
+        var populations = Config.ProvincesInPlay([]).ToDictionary(p => p.Id, p => p.Population);
         return regional.Sum(kv => kv.Value * populations[kv.Key]) / populations.Values.Sum();
     }
 

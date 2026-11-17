@@ -41,6 +41,7 @@ public class StatusModule : InteractionModuleBase<SocketInteractionContext>
             ("change", Standings.Change(faction.Popularity, _data.GetPopularityMarks().TryGetValue(faction.UserId, out var mark) ? mark : null)), ("seats", faction.Seats),
             ("party", party is null ? Display.Independent : Display.Party(party)), ("role", role.ToString().ToLowerInvariant())));
         if (state.SenateEstablished) sb.AppendLine(Texts.Get("me.senateSeats", ("seats", faction.SenateSeats)));
+        sb.AppendLine(Texts.Get("me.prestige", ("prestige", Display.Number(faction.Prestige)), ("rank", Standings.PrestigeRank(_data, faction.UserId)), ("count", _data.GetActiveFactions().Count)));
         if (Display.RegionalPopularity(_data, _constants.Config, faction.UserId) is { } regional) sb.AppendLine(regional);
         if (_data.GetActiveAgenda(faction.UserId) is { } hand && _constants.Config.Agendas.Find(hand.AgendaId) is { } agenda)
             sb.AppendLine(Texts.Get("secretAgenda.me", ("agenda", agenda.Name), ("wishes", AgendaWording.Wishes(agenda))));

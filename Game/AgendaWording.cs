@@ -48,6 +48,6 @@ public static class AgendaWording
             ("faction", faction), ("agenda", reveal.AgendaName),
             ("results", string.Join(Texts.Get("secretAgenda.wish.separator"), reveal.Results.Select(Result))),
             ("reward", reveal.Reward > 0
-                ? Texts.Get("secretAgenda.reveal.reward", ("popularity", Display.Number(reveal.Reward)))
+                ? Texts.Get("secretAgenda.reveal.reward", ("prestige", Display.Number(reveal.Reward)))
                 : Texts.Get("secretAgenda.reveal.noReward")));
 }

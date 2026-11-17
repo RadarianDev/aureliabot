@@ -60,7 +60,8 @@ public partial class Publisher
                 await _elections.PublishAsync(election, source);
             if (report.AgendaReveals.Count > 0)
                 await PostAsync(ChannelRole.News, Texts.Get("secretAgenda.reveal.heading") + "\n" + string.Join("\n",
-                    report.AgendaReveals.Select(r => AgendaWording.Reveal(r, Display.Faction(_data, r.FactionId)))), source);
+                    report.AgendaReveals.Select(r => AgendaWording.Reveal(r, Display.Faction(_data, r.FactionId))))
+                    + "\n\n" + Texts.Get("prestige.revealHeading") + "\n" + string.Join("\n", Standings.PrestigeLines(_data, compact: true)), source);
             if (report.SenateElection is { } senateElection)
                 await _elections.PublishSenateAsync(senateElection, source);
 
@@ -323,6 +324,7 @@ public partial class Publisher
 
         return embed
             .AddField(Texts.Get("dashboard.popularityField"), PopularityField())
+            .AddField(Texts.Get("dashboard.prestigeField"), PrestigeField())
             .AddField(Texts.Get("dashboard.issuesField"), openIssues.Count == 0 ? Texts.Get("dashboard.noIssues") : Display.Truncate(string.Join("\n", openIssues.Select(i => i.Title)), 1024))
             .AddField(Texts.Get("dashboard.economyField"), EconomyField(state))
             .AddField(Texts.Get("dashboard.realmField"), RealmField(state))
@@ -349,18 +351,26 @@ public partial class Publisher
         return lines;
     }
 
-    private string PopularityField()
+    private const int PrestigeShown = 5;
+
+    private string PopularityField() =>
+        FitField(Standings.Lines(_data, _constants.Config, compact: true), int.MaxValue,
+            count => Texts.Get("dashboard.popularityMore", ("count", count)));
+
+    private string PrestigeField() =>
+        FitField(Standings.PrestigeLines(_data, compact: true), PrestigeShown,
+            count => Texts.Get("dashboard.prestigeMore", ("count", count)));
+
+    private static string FitField(List<string> lines, int limit, Func<int, string> more)
     {
-        var lines = Standings.Lines(_data, _constants.Config, compact: true);
         if (lines.Count == 0) return Texts.Get("dashboard.noFactions");
         var shown = new List<string>();
-        foreach (var line in lines)
+        foreach (var line in lines.Take(limit))
         {
-            var more = Texts.Get("dashboard.popularityMore", ("count", lines.Count - shown.Count - 1));
-            if (string.Join("\n", [.. shown, line, more]).Length > 1024) break;
+            if (string.Join("\n", [.. shown, line, more(lines.Count - shown.Count - 1)]).Length > 1024) break;
             shown.Add(line);
         }
-        if (shown.Count < lines.Count) shown.Add(Texts.Get("dashboard.popularityMore", ("count", lines.Count - shown.Count)));
+        if (shown.Count < lines.Count) shown.Add(more(lines.Count - shown.Count));
         return string.Join("\n", shown);
     }
 

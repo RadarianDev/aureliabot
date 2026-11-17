@@ -81,3 +81,16 @@ public sealed class ConditionEffect : EffectKind
             : Texts.Get("effects.summary.conditionLost", ("province", province), ("condition", condition));
     }
 }
+
+public sealed class AnnexEffect : ContentActionEffect
+{
+    public override string Prefix => "annex";
+
+    public override string? CheckIds(Effect effect, EffectContext context) =>
+        context.Provinces.Contains(effect.Target!) ? null : Texts.Get("effects.errors.unknownProvince", ("id", effect.Target));
+
+    public override string? Apply(Effect effect, IEffectStore store) => store.AnnexProvince(effect.Target!);
+
+    public override string? SummaryLine(Effect effect, EffectNames names, DisplayConstants display) =>
+        Texts.Get("effects.summary.annex", ("province", names.Province(effect.Target!)));
+}

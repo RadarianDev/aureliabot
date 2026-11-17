@@ -5,15 +5,23 @@ public class ProvinceMapGenerator
     private static readonly string MapDirectory = Path.Combine(AppContext.BaseDirectory, "assets", "map");
     private const float FillLevel = 128f;
 
-    public MemoryStream Generate(IReadOnlyDictionary<string, string> partyColourByMapKey)
+    public static string Folder(string? variant)
+    {
+        if (variant is null) return MapDirectory;
+        var folder = Path.Combine(MapDirectory, variant);
+        return Directory.Exists(folder) ? folder : MapDirectory;
+    }
+
+    public MemoryStream Generate(IReadOnlyDictionary<string, string> partyColourByMapKey, string? variant = null)
     {
         var colourByKey = partyColourByMapKey.ToDictionary(
             entry => SKColor.Parse(entry.Key).WithAlpha(255),
             entry => SKColor.Parse(entry.Value));
 
-        using var map = LoadAsset("base.png");
-        using var index = LoadAsset("provinces.png");
-        using var overlay = LoadAsset("overlay.png");
+        var folder = Folder(variant);
+        using var map = LoadAsset(folder, "base.png");
+        using var index = LoadAsset(folder, "provinces.png");
+        using var overlay = LoadAsset(folder, "overlay.png");
 
         if (index.Width != map.Width || index.Height != map.Height
             || overlay.Width != map.Width || overlay.Height != map.Height)
@@ -48,7 +56,7 @@ public class ProvinceMapGenerator
     private static byte Scale(byte channel, byte partyChannel) =>
         (byte)Math.Min(255, Math.Round(channel * partyChannel / FillLevel));
 
-    private static SKBitmap LoadAsset(string fileName) =>
-        SKBitmap.Decode(Path.Combine(MapDirectory, fileName))
+    private static SKBitmap LoadAsset(string folder, string fileName) =>
+        SKBitmap.Decode(Path.Combine(folder, fileName))
             ?? throw new FileNotFoundException("Map asset is missing or unreadable.", fileName);
 }

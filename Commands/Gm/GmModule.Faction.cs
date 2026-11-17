@@ -49,7 +49,7 @@ public partial class GmModule
 
             character = character.Trim();
             var config = _constants.Config;
-            var province = ProvinceAutocomplete.Find(config, home);
+            var province = ProvinceAutocomplete.Find(_data, config, home);
             var refusal = (player, character, province, existing: _data.GetFaction(player.Id)) switch
             {
                 ({ IsBot: true }, _, _, _) => Texts.Get("gm.faction.create.refusedBot"),
@@ -112,7 +112,7 @@ public partial class GmModule
             character = string.IsNullOrWhiteSpace(character) ? null : character.Trim();
             var config = _constants.Config;
             ProvinceDefinition? province = null;
-            if (home is not null && (province = ProvinceAutocomplete.Find(config, home)) is null)
+            if (home is not null && (province = ProvinceAutocomplete.Find(_data, config, home)) is null)
             {
                 await RespondAsync(Texts.Get("gm.faction.noProvince", ("home", home)), ephemeral: true);
                 return;

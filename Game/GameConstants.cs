@@ -96,6 +96,13 @@ public sealed record OppositionConstants
     public double WhipCountPenalty { get; init; }
 }
 
+public sealed record PrestigeConstants
+{
+    public double NoConfidenceLeader { get; init; }
+    public double NoConfidenceSupporter { get; init; }
+    public List<double> Renown { get; init; } = [];
+}
+
 public sealed record AssemblyConstants
 {
     public double NoConfidenceShare { get; init; }
@@ -240,6 +247,7 @@ public sealed record GameConstants
     public GovernmentConstants Government { get; init; } = new();
     public OppositionConstants Opposition { get; init; } = new();
     public AssemblyConstants Assembly { get; init; } = new();
+    public PrestigeConstants Prestige { get; init; } = new();
     public ElectionConstants Election { get; init; } = new();
     public ElectionNightConstants ElectionNight { get; init; } = new();
     public SenateConstants Senate { get; init; } = new();
@@ -278,6 +286,8 @@ public sealed record ProvinceDefinition
     public string MapKey { get; init; } = "";
     public string Description { get; init; } = "";
     public List<string> Conditions { get; init; } = [];
+    public double? Discontent { get; init; }
+    public bool Annexed { get; init; } = true;
 }
 
 public sealed record ConditionDefinition
@@ -330,6 +340,12 @@ public sealed class GameConfig
     }
 
     public ProvinceDefinition? Province(string id) => _provincesById.GetValueOrDefault(id);
+
+    public IReadOnlyList<ProvinceDefinition> ProvincesInPlay(IReadOnlyCollection<string> liveIds) =>
+        liveIds.Count == 0 ? Provinces.Where(p => p.Annexed).ToList() : Provinces.Where(p => liveIds.Contains(p.Id)).ToList();
+
+    public string? MapVariant(IReadOnlyCollection<string> liveIds) =>
+        Provinces.LastOrDefault(p => !p.Annexed && liveIds.Contains(p.Id))?.Id;
 
     public ConditionDefinition? Condition(string id) => _conditionsById.GetValueOrDefault(id);
 
@@ -459,6 +475,8 @@ public sealed class ConstantsStore
             errors.Add("campaign.actionsPerTurn and campaign.actionsPerPreElectionDay must be at least 1.");
         if (c.Salience.Min >= c.Salience.Max) errors.Add("salience.min must be below salience.max.");
         if (c.Discontent.Min >= c.Discontent.Max) errors.Add("discontent.min must be below discontent.max.");
+        if (c.Prestige.NoConfidenceLeader < 0 || c.Prestige.NoConfidenceSupporter < 0 || c.Prestige.Renown.Any(r => r < 0))
+            errors.Add("prestige rewards must not be negative.");
 
         foreach (var ministry in Enum.GetValues<Ministry>())
             if (!c.DefaultAllocation.ContainsKey(ministry))
@@ -471,16 +489,20 @@ public sealed class ConstantsStore
         ValidateUnits(errors, "gendarmerie", c.Gendarmerie);
 
         foreach (var province in c.StartingForces.Divisions.Keys.Concat(c.StartingForces.Gendarmerie))
-            if (config.Province(province) is null)
+            if (config.Province(province) is not { } definition)
                 errors.Add($"startingForces names unknown province '{province}'.");
+            else if (!definition.Annexed)
+                errors.Add($"startingForces names province '{province}', which is not annexed at the start.");
 
-        if (config.Provinces.Count == 0) errors.Add("provinces.yaml has no provinces.");
+        if (!config.Provinces.Any(p => p.Annexed)) errors.Add("provinces.yaml has no annexed provinces.");
         foreach (var province in config.Provinces)
         {
             if (string.IsNullOrWhiteSpace(province.Name)) errors.Add($"Province '{province.Id}' has no name.");
             if (province.Population <= 0) errors.Add($"Province '{province.Id}' needs a positive population.");
             if (string.IsNullOrWhiteSpace(province.Description)) errors.Add($"Province '{province.Id}' has no description.");
             if (!IsHexColour(province.MapKey)) errors.Add($"Province '{province.Id}' mapKey '{province.MapKey}' is not #RRGGBB.");
+            if (province.Discontent is { } discontent && (discontent < c.Discontent.Min || discontent > c.Discontent.Max))
+                errors.Add($"Province '{province.Id}' starts with discontent outside discontent.min and discontent.max.");
             foreach (var condition in province.Conditions)
                 if (config.Condition(condition) is null)
                     errors.Add($"Province '{province.Id}' has unknown condition '{condition}'.");

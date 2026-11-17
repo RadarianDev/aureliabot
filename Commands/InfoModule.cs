@@ -17,6 +17,7 @@ public class InfoAutocomplete : AutocompleteHandler
         entries.Add((Texts.Get("info.kind.parliament"), "parliament:"));
         entries.Add((Texts.Get("info.kind.laws"), "laws:"));
         entries.Add((Texts.Get("info.kind.standings"), "standings:"));
+        entries.Add((Texts.Get("info.kind.prestige"), "prestige:"));
         entries.Add((Texts.Get("info.kind.budget"), "budget:"));
         foreach (var party in data.GetAllParties())
             entries.Add((Texts.Get("info.kind.party", ("name", party.Name)), $"party:{party.Id}"));
@@ -26,7 +27,7 @@ public class InfoAutocomplete : AutocompleteHandler
             entries.Add((Texts.Get("info.kind.bill", ("name", bill.Title)), $"bill:{bill.Id}"));
         foreach (var issue in data.GetAllIssues())
             entries.Add((Texts.Get("info.kind.issue", ("name", issue.Title)), $"issue:{issue.Id}"));
-        foreach (var province in constants.Config.Provinces)
+        foreach (var province in data.ProvincesInPlay(constants.Config))
             entries.Add((Texts.Get("info.kind.province", ("name", province.Name)), $"province:{province.Id}"));
         foreach (var project in data.GetProjects().OrderByDescending(p => p.IsLive).ThenByDescending(p => p.Id))
             entries.Add((Texts.Get("info.kind.project", ("name", project.Title)), $"project:{project.Id}"));
@@ -100,6 +101,7 @@ public partial class InfoModule : InteractionModuleBase<SocketInteractionContext
             "parliament" => ParliamentInfo(),
             "laws" => LawsInfo(),
             "standings" => StandingsInfo(),
+            "prestige" => PrestigeInfo(),
             "condition" => ConditionInfo(id),
             "event" when long.TryParse(id, out var eventId) => EventInfo(eventId),
             _ => _data.GetAllParties().FirstOrDefault(p => p.Name.Equals(thing, StringComparison.OrdinalIgnoreCase)) is { } party
@@ -255,6 +257,7 @@ public partial class InfoModule : InteractionModuleBase<SocketInteractionContext
         sb.AppendLine(Texts.Get("info.faction.popularity", ("popularity", Display.Number(faction.Popularity)),
             ("change", Standings.Change(faction.Popularity, _data.GetPopularityMarks().TryGetValue(userId, out var mark) ? mark : null))));
         if (Display.RegionalPopularity(_data, _constants.Config, faction.UserId) is { } regional) sb.AppendLine(regional);
+        sb.AppendLine(Texts.Get("info.faction.prestige", ("prestige", Display.Number(faction.Prestige))));
         sb.AppendLine(Texts.Get("info.faction.party", ("party", party is null ? Display.Independent : Display.Party(party))));
         sb.AppendLine(Texts.Get("info.seats", ("seats", faction.Seats)));
         if (_data.GetGameState().SenateEstablished) sb.AppendLine(Texts.Get("info.senateSeats", ("seats", faction.SenateSeats)));
@@ -417,7 +420,7 @@ public partial class InfoModule : InteractionModuleBase<SocketInteractionContext
 
     private string ProvinceInfo(string provinceId)
     {
-        if (_constants.Config.Province(provinceId) is not { } definition) return Texts.Get("info.province.missing");
+        if (_data.ProvincesInPlay(_constants.Config).FirstOrDefault(p => p.Id == provinceId) is not { } definition) return Texts.Get("info.province.missing");
         var live = _data.GetProvince(provinceId);
         var conditionIds = live is null ? definition.Conditions : _data.GetProvinceConditions().GetValueOrDefault(provinceId, []);
         var sb = new StringBuilder();

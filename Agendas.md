@@ -15,7 +15,11 @@ the board game *The King's Dilemma*: the mechanic, not its content.
   repeat an agenda; the bot warns but allows it.
 - On election night, after the returns, every agenda is revealed in #news and scored: a wish is met when its
   track moved the wanted way by more than the track's margin, between the turn the agenda was dealt and the
-  election. Each wish met gives `reward.perWish` popularity, and meeting all of them `reward.allBonus` more.
+  election. Each wish met gives `reward.perWish` **prestige**, and meeting all of them `reward.allBonus` more.
+  Agendas are meant to be the main source of prestige, so their reward is set well above the no-confidence
+  rewards in `constants.yaml`. Prestige is never lost and elections never count it: it ranks the
+  leaderboard (`/info prestige`, the dashboard and the post that follows the reveal), the measure of who is
+  winning the game.
 - **The future agenda:** when the pre-election opens (snap elections included), every active faction is
   told its agenda for the next term in its office channel, while parties are still open to join or leave.
   It is drawn by the same rules (the GM's waiting choice, otherwise balanced among the futures, never the

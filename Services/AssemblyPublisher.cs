@@ -162,6 +162,14 @@ public class AssemblyPublisher
             _ => Texts.Get("noConfidence.result.failed", ("tabler", tabler), ("yes", outcome.YesSeats), ("no", outcome.NoSeats), ("filled", outcome.FilledSeats),
                 ("needed", outcome.FilledSeats / 2 + 1), ("aside", Math.Max(0, outcome.FilledSeats - outcome.YesSeats - outcome.NoSeats))),
         };
+        var prestige = _constants.Current.Prestige;
+        if (outcome.PrestigeLeader is { } leader && prestige.NoConfidenceLeader > 0)
+            text += "\n" + Texts.Get("noConfidence.result.prestigeLeader",
+                ("faction", Display.Faction(_data, leader)), ("amount", Display.Number(prestige.NoConfidenceLeader)));
+        if (outcome.PrestigeSupporters.Count > 0 && prestige.NoConfidenceSupporter > 0)
+            text += "\n" + Texts.Get("noConfidence.result.prestigeSupporters",
+                ("factions", string.Join(", ", outcome.PrestigeSupporters.Select(id => Display.Faction(_data, id)))),
+                ("amount", Display.Number(prestige.NoConfidenceSupporter)));
         using var chart = outcome.Outcome is NoConfidenceStatus.Lapsed or NoConfidenceStatus.Cancelled
             ? null
             : VoteChart.Render(_data, outcome.YesSeats, outcome.NoSeats);

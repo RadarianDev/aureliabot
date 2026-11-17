@@ -82,6 +82,10 @@ it is the natural host of any peace conference, and its word on the old treaty c
 
 ## The machinery
 
+Built: both variables, the `mugian_quarter` condition, the frontier bias, the Arpal Question issue
+(`content/issues/arpal_question.yaml`) and the Tariff Act's conditional pass effects. The new bills and
+every event and crisis below are still to be written.
+
 **`var.tariff_war`**, 0 to 6: how far relations have broken down. A new entry in `config/variables.yaml`.
 
 | Value | Meaning |
@@ -353,21 +357,19 @@ assimilation, an exodus or a charter for Kolgasi) is material for the next term.
 **Kolgasi Charter** bill (Integration, For, giving the town its own council), and the first Assembly
 seats for South Arpal at the 1858 election.
 
-**What the bot needs for this.** Today provinces are only created at `/gm start`, from
-`config/provinces.yaml` (`DatabaseService.StartGame`), so a province can't join mid-game. It needs:
+**What the bot needs for this.**
 
-1. **A new effect kind, `annex.{province}`,** in `Game/EffectKinds/`. It adds the province from
-   `provinces.yaml` to the running game: its row, starting discontent and conditions. No restart, and
-   nothing already in play changes. The province is listed in `provinces.yaml` with a flag such as
-   `annexed: false`, so `/gm start` skips it and content can reference it before it joins. Effects that
-   target it before then do nothing, since they only act on live provinces.
-   The flag matters in a running game. Most of the game (effects, polls, elections) reads the live
-   province list, but some places read `provinces.yaml` directly: the `/info` province list, the
-   standings' province leaders, Senate seats, province autocomplete and `/gm peek popularity`. Without
-   the flag, South Arpal would show up there, with a Senate quota, the moment the file is saved. Those
-   places need to skip unannexed provinces.
+1. **Built: the `annex.{province}` effect** (`AnnexEffect` in `Game/EffectKinds/ProvinceEffects.cs`). It
+   adds a province from `provinces.yaml` to the running game: its row, its starting `discontent` and its
+   conditions. South Arpal is listed there with `annexed: false` and `discontent: 6`, so `/gm start`
+   skips it and content can already name it. Effects aimed at it before then are skipped with a GM
+   alert. The places that used to read `provinces.yaml` directly (the `/info` list and province page,
+   standings' province leaders, Senate seats, province autocomplete and lookups, unit orders and
+   `/gm peek popularity`) now go through `ProvincesInPlay`, the live list. Covered by `AnnexTests`.
 2. **Map assets:** South Arpal drawn into the base, index and text-overlay PNGs in `assets/map/`, with
-   its own index colour. While it isn't part of Aurelia it is drawn as foreign land.
+   its own index colour. While it isn't part of Aurelia it is drawn as foreign land. **Built:** the new
+   set is in `assets/map/south_arpal/` (index colour `#996633`), beside the untouched original set.
+   Once `annex.south_arpal` has run, every map render (election night, `/map`, `/gm peek`) uses it.
 3. **Checks everywhere provinces are counted:** seat allocation, Senate seats, polls, regional
    popularity, election night (one more province to reveal), `each: province` effects and `/info`. Most
    of these read the live `provinces` table and should just work, but each needs a test.

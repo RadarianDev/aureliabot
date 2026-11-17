@@ -26,7 +26,7 @@ public class MapModule : InteractionModuleBase<SocketInteractionContext>
         var config = _constants.Config;
         var parties = _data.GetPartySnapshots();
         var winners = ElectionPublisher.WinnersFromRows(rows);
-        using var images = ElectionPublisher.Render(null, parties, winners, config, out var failure);
+        using var images = ElectionPublisher.Render(null, parties, winners, config, _data.MapVariant(config), out var failure);
         if (images.Map is null)
         {
             Console.WriteLine($"[MapModule] Rendering failed: {failure}");

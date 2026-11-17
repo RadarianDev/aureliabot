@@ -11,7 +11,8 @@ public record Faction(
     string? HomeProvinceId,
     ulong? PrivateChannelId,
     FactionStatus Status,
-    long SenateSeats = 0)
+    long SenateSeats = 0,
+    double Prestige = 0)
 {
     public bool IsActive => Status == FactionStatus.Active;
 
@@ -23,7 +24,7 @@ public sealed record RetireResult(Faction Faction, Party? DissolvedParty, ulong?
 public partial class DatabaseService
 {
     private const string SelectFactionColumns =
-        "user_id, character_name, popularity, seats, party_id, home_province_id, private_channel_id, status, senate_seats";
+        "user_id, character_name, popularity, seats, party_id, home_province_id, private_channel_id, status, senate_seats, prestige";
 
     private static Faction ReadFaction(SqliteDataReader r) => new(
         ulong.Parse(r.GetString(0)),
@@ -34,7 +35,8 @@ public partial class DatabaseService
         r.IsDBNull(5) ? null : r.GetString(5),
         r.IsDBNull(6) ? null : ulong.Parse(r.GetString(6)),
         Enum.Parse<FactionStatus>(r.GetString(7)),
-        r.GetInt64(8));
+        r.GetInt64(8),
+        r.GetDouble(9));
 
     public bool CreateFaction(ulong userId, string characterName, string homeProvinceId, double popularity)
     {
@@ -153,6 +155,22 @@ public partial class DatabaseService
         Exec(conn, tx, "UPDATE factions SET popularity = $popularity WHERE user_id = $user;",
             ("$user", userId.ToString()),
             ("$popularity", updated));
+        return updated;
+    }
+
+    public double? AddPrestige(ulong userId, double delta)
+    {
+        using var conn = Open();
+        return AddPrestigeTx(conn, null, userId, delta);
+    }
+
+    private static double? AddPrestigeTx(SqliteConnection conn, SqliteTransaction? tx, ulong userId, double delta)
+    {
+        if (GetFactionTx(conn, tx, userId) is not { } faction) return null;
+        var updated = faction.Prestige + Math.Max(0, delta);
+        Exec(conn, tx, "UPDATE factions SET prestige = $prestige WHERE user_id = $user;",
+            ("$user", userId.ToString()),
+            ("$prestige", updated));
         return updated;
     }
 

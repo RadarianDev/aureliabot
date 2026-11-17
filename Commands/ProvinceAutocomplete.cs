@@ -8,7 +8,8 @@ public class ProvinceAutocomplete : AutocompleteHandler
         IInteractionContext context, IAutocompleteInteraction autocompleteInteraction, IParameterInfo parameter, IServiceProvider services)
     {
         var typed = autocompleteInteraction.Data.Current.Value?.ToString() ?? "";
-        var results = services.GetRequiredService<ConstantsStore>().Config.Provinces
+        var config = services.GetRequiredService<ConstantsStore>().Config;
+        var results = services.GetRequiredService<DatabaseService>().ProvincesInPlay(config)
             .Where(p => p.Name.Contains(typed, StringComparison.OrdinalIgnoreCase)
                 || p.Id.Contains(typed, StringComparison.OrdinalIgnoreCase)
                 || p.Description.Contains(typed, StringComparison.OrdinalIgnoreCase))
@@ -17,7 +18,11 @@ public class ProvinceAutocomplete : AutocompleteHandler
         return Task.FromResult(AutocompletionResult.FromSuccess(results));
     }
 
-    public static ProvinceDefinition? Find(GameConfig config, string text) =>
-        config.Province(text.Trim())
-        ?? config.Provinces.FirstOrDefault(p => p.Name.Equals(text.Trim(), StringComparison.OrdinalIgnoreCase));
+    public static ProvinceDefinition? Find(DatabaseService data, GameConfig config, string text)
+    {
+        var provinces = data.ProvincesInPlay(config);
+        var trimmed = text.Trim();
+        return provinces.FirstOrDefault(p => p.Id == trimmed)
+            ?? provinces.FirstOrDefault(p => p.Name.Equals(trimmed, StringComparison.OrdinalIgnoreCase));
+    }
 }

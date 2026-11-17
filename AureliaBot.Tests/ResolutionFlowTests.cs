@@ -77,7 +77,7 @@ public class ResolutionFlowTests : IDisposable
 
         var message = Assert.Single(report.PrivateMessages[1], m => !m.Contains("Your secret agenda"));
         Assert.Contains("Across the kingdom", message);
-        Assert.All(Config.Provinces, p => Assert.Contains(p.Name, message));
+        Assert.All(Config.ProvincesInPlay([]), p => Assert.Contains(p.Name, message));
         Assert.Contains("*", message);
         Assert.Empty(report.Actions);
     }

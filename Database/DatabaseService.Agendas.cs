@@ -136,7 +136,7 @@ public partial class DatabaseService
                 .ToList();
             var met = results.Count(r => r.Met);
             var reward = AgendaRules.Reward(met, results.Count, agendas.Reward);
-            if (reward != 0) AddPopularityTx(conn, tx, hand.FactionId, reward, config.Constants.Popularity);
+            if (reward != 0) AddPrestigeTx(conn, tx, hand.FactionId, reward);
             Exec(conn, tx, @"
                 UPDATE agendas SET status = 'Scored', wishes_met = $met, reward = $reward, scored_resolution = $resolution WHERE id = $id;",
                 ("$id", hand.Id), ("$met", met), ("$reward", reward), ("$resolution", state.ResolutionNumber));

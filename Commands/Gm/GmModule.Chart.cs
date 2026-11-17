@@ -10,7 +10,7 @@ public partial class GmModule
     {
         await DeferAsync(ephemeral: true);
         ProvinceDefinition? found = null;
-        if (province is not null && (found = ProvinceAutocomplete.Find(_constants.Config, province)) is null)
+        if (province is not null && (found = ProvinceAutocomplete.Find(_data, _constants.Config, province)) is null)
         {
             await FollowupAsync(Texts.Get("gm.peek.noProvince", ("province", province)), ephemeral: true, allowedMentions: AllowedMentions.None);
             return;

@@ -46,7 +46,9 @@ public class SmokeTests : IDisposable
     {
         var config = DatabaseFixture.Config;
         Assert.Equal(180, config.Constants.Seats);
-        Assert.Equal(10, config.Provinces.Count);
+        Assert.Equal(11, config.Provinces.Count);
+        Assert.Equal(10, config.ProvincesInPlay([]).Count);
+        Assert.False(config.Province("south_arpal")!.Annexed);
         Assert.Equal(0.20, config.Constants.DefaultAllocation[Ministry.Navy]);
         Assert.Equal(2, config.Constants.StartingForces.Divisions["aurenten"]);
         Assert.Equal(-0.2, config.Condition("lawless")!.BiasOn("social_reform"));
