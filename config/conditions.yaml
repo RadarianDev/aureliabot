@@ -57,6 +57,12 @@ lawless:
   biases: { rearmament: 0.1, social_reform: -0.2 }
   discontentRest: 1
   growth: -0.02
+blockaded:
+  name: Blockaded
+  description: Enemy ships lie off the harbour mouth, and the quays stand idle.
+  biases: { rearmament: 0.3, free_trade: 0.2 }
+  discontentRest: 1
+  growth: -0.03
 epidemic:
   name: Epidemic
   description: Fever spreads through the crowded quarters.

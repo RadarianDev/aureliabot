@@ -178,6 +178,12 @@ public partial class DatabaseService
         {
             if (QueryEventsTx(conn, tx, "id = $id AND status = 'Queued'", "id", ("$id", gameEvent.Id)).Count == 0) continue;
             var source = new EffectSource(gameEvent.Title, "event", gameEvent.Id.ToString(), PublicLedger: true);
+            if (EventSkipReasonTx(conn, tx, config, source, report, gameEvent) is { } skipped)
+            {
+                Exec(conn, tx, "UPDATE events SET status = 'Cancelled' WHERE id = $id;", ("$id", gameEvent.Id));
+                report.Alerts.Add(skipped);
+                continue;
+            }
             var result = ApplyEffectsTx(conn, tx, gameEvent.ParsedEffects, config, source, report);
             Exec(conn, tx, "UPDATE events SET status = 'Fired', fired_resolution = $resolution WHERE id = $id;",
                 ("$id", gameEvent.Id), ("$resolution", state.ResolutionNumber));
@@ -186,5 +192,23 @@ public partial class DatabaseService
 
         if (!QueryEventsTx(conn, tx, "status = 'Queued' AND fire_at_resolution <= $next", "id", ("$next", state.ResolutionNumber + 1)).Any())
             report.Alerts.Add(Texts.Get("alerts.noEventQueued", ("label", state.Label)));
+    }
+
+    private static string? EventSkipReasonTx(
+        SqliteConnection conn, SqliteTransaction tx, GameConfig config, EffectSource source, ResolutionReport report, GameEvent gameEvent)
+    {
+        if (gameEvent.When is not { } when) return null;
+        var formula = Formula.TryParse(when, out var error);
+        if (formula is null) return Texts.Get("alerts.eventWhenBroken", ("title", gameEvent.Title), ("when", when), ("error", error));
+        var check = source with { SourceType = "event-when" };
+        var store = new TxEffectStore(conn, tx, config, check, report, EffectRandom(report, check));
+        try
+        {
+            return formula.IsTrue(new StoreFormulaScope(store)) ? null : Texts.Get("alerts.eventSkipped", ("title", gameEvent.Title), ("when", when));
+        }
+        catch (FormulaException ex)
+        {
+            return Texts.Get("alerts.eventWhenBroken", ("title", gameEvent.Title), ("when", when), ("error", ex.Message));
+        }
     }
 }

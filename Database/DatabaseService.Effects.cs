@@ -60,7 +60,7 @@ public partial class DatabaseService
                         RunEffects(b.Condition.IsTrue(scope) ? b.Then : b.Else, store, applied, warnings, source, depth + 1);
                         continue;
                     case RandomBlock r:
-                        RunEffects(PickOutcome(r, store.Random), store, applied, warnings, source, depth + 1);
+                        RunEffects(PickOutcome(r, store.Random, scope), store, applied, warnings, source, depth + 1);
                         continue;
                     case EachBlock x:
                         foreach (var id in EachTargets(x, store, scope))
@@ -94,15 +94,18 @@ public partial class DatabaseService
         return null;
     }
 
-    private static IReadOnlyList<Effect> PickOutcome(RandomBlock block, IRandomSource random)
+    private static IReadOnlyList<Effect> PickOutcome(RandomBlock block, IRandomSource random, IFormulaScope scope)
     {
-        var roll = random.NextDouble() * block.Outcomes.Sum(o => o.Weight);
-        foreach (var outcome in block.Outcomes)
+        var weights = block.Outcomes.Select(o => o.WeightIn(scope)).ToList();
+        var total = weights.Sum();
+        if (total <= 0) throw new FormulaException(Texts.Get("data.effect.randomNoWeight"));
+        var roll = random.NextDouble() * total;
+        for (var i = 0; i < weights.Count; i++)
         {
-            if (roll < outcome.Weight) return outcome.Effects;
-            roll -= outcome.Weight;
+            if (roll < weights[i]) return block.Outcomes[i].Effects;
+            roll -= weights[i];
         }
-        return block.Outcomes[^1].Effects;
+        return block.Outcomes.Last(o => o.WeightIn(scope) > 0).Effects;
     }
 
     private static List<string> EachTargets(EachBlock block, IEffectStore store, IFormulaScope scope)
@@ -179,6 +182,10 @@ public partial class DatabaseService
             SetConditionTx(conn, tx, State, provinceId, conditionId, present);
 
         public string? AnnexProvince(string provinceId) => AnnexProvinceTx(conn, tx, config, State, provinceId);
+
+        public bool LawPassed(string billId) => QueryBillsTx(conn, tx, "id = $id", ("$id", billId)).FirstOrDefault() is { Status: BillStatus.Passed };
+
+        public int TimesPosted(string templateId) => GetTemplateTx(conn, tx, templateId)?.TimesPosted ?? 0;
 
         public Issue? Issue(string issueId) => GetIssueTx(conn, tx, issueId);
 

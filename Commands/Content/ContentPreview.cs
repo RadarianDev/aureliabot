@@ -126,7 +126,8 @@ public static class ContentPreview
 
     private static string Event(EventTemplate ev, Summariser summary)
     {
-        return Publisher.FormatEvent(ev.Title, ev.Text, summary.Lines(ev.Effects)) + "\n";
+        var post = Publisher.FormatEvent(ev.Title, ev.Text, summary.Lines(ev.Effects)) + "\n";
+        return ev.When is { } when ? Texts.Get("content.preview.when", ("when", when.Source)) + "\n" + post : post;
     }
 
     private static string Crisis(CrisisTemplate crisis, GameConfig config, EffectNames names, Summariser summary)

@@ -20,6 +20,8 @@ public interface IEffectStore
     void SetDiscontent(string provinceId, double value);
     bool SetCondition(string provinceId, string conditionId, bool present);
     string? AnnexProvince(string provinceId);
+    bool LawPassed(string billId);
+    int TimesPosted(string templateId);
 
     Issue? Issue(string issueId);
     IReadOnlyList<Issue> OpenIssues { get; }

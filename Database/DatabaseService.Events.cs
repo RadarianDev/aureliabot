@@ -11,7 +11,8 @@ public record GameEvent(
     EventStatus Status,
     bool FromSchedule,
     long FireAtResolution,
-    long? FiredResolution)
+    long? FiredResolution,
+    string? When = null)
 {
     public IReadOnlyList<Effect> ParsedEffects => EffectParser.Parse(Effects);
 }
@@ -19,7 +20,7 @@ public record GameEvent(
 public partial class DatabaseService
 {
     private const string SelectEventColumns =
-        "id, template_id, title, text, effects, status, from_schedule, fire_at_resolution, fired_resolution";
+        "id, template_id, title, text, effects, status, from_schedule, fire_at_resolution, fired_resolution, when_formula";
 
     private static GameEvent ReadEvent(SqliteDataReader r) => new(
         r.GetInt64(0),
@@ -30,7 +31,8 @@ public partial class DatabaseService
         Enum.Parse<EventStatus>(r.GetString(5)),
         r.GetInt64(6) != 0,
         r.GetInt64(7),
-        r.IsDBNull(8) ? null : r.GetInt64(8));
+        r.IsDBNull(8) ? null : r.GetInt64(8),
+        r.IsDBNull(9) ? null : r.GetString(9));
 
     public long QueueEvent(EventTemplate template, long fireAtResolution, bool fromSchedule)
     {
@@ -46,8 +48,8 @@ public partial class DatabaseService
         using var cmd = conn.CreateCommand();
         cmd.Transaction = tx;
         cmd.CommandText = @"
-            INSERT INTO events (template_id, title, text, effects, status, from_schedule, queued_at, fire_at_resolution)
-            VALUES ($template, $title, $text, $effects, 'Queued', $fromSchedule, $now, $fireAt)
+            INSERT INTO events (template_id, title, text, effects, status, from_schedule, queued_at, fire_at_resolution, when_formula)
+            VALUES ($template, $title, $text, $effects, 'Queued', $fromSchedule, $now, $fireAt, $when)
             RETURNING id;";
         cmd.Parameters.AddWithValue("$template", template.Id);
         cmd.Parameters.AddWithValue("$title", template.Title);
@@ -56,6 +58,7 @@ public partial class DatabaseService
         cmd.Parameters.AddWithValue("$fromSchedule", fromSchedule ? 1 : 0);
         cmd.Parameters.AddWithValue("$now", Now());
         cmd.Parameters.AddWithValue("$fireAt", fireAtResolution);
+        cmd.Parameters.AddWithValue("$when", (object?)template.When?.Source ?? DBNull.Value);
         var id = (long)cmd.ExecuteScalar()!;
         MarkTemplatePostedTx(conn, tx, template.Id);
         LogTx(conn, tx, LogKinds.StateChange, "event queue", $"Queued event {id} from {template.Id} for resolution {fireAtResolution}.");
@@ -145,15 +148,16 @@ public partial class DatabaseService
         return id;
     }
 
-    public bool UpdateQueuedEvent(long id, string title, string text, IReadOnlyList<Effect> effects)
+    public bool UpdateQueuedEvent(long id, string title, string text, IReadOnlyList<Effect> effects, Formula? when = null)
     {
         using var conn = Open();
         using var cmd = conn.CreateCommand();
-        cmd.CommandText = "UPDATE events SET title = $title, text = $text, effects = $effects WHERE id = $id AND status = 'Queued';";
+        cmd.CommandText = "UPDATE events SET title = $title, text = $text, effects = $effects, when_formula = $when WHERE id = $id AND status = 'Queued';";
         cmd.Parameters.AddWithValue("$id", id);
         cmd.Parameters.AddWithValue("$title", title);
         cmd.Parameters.AddWithValue("$text", text);
         cmd.Parameters.AddWithValue("$effects", EffectParser.Format(effects));
+        cmd.Parameters.AddWithValue("$when", (object?)when?.Source ?? DBNull.Value);
         var updated = cmd.ExecuteNonQuery() > 0;
         if (updated) LogTx(conn, null, LogKinds.GmOverride, "content edit live", $"Edited queued event {id}.");
         return updated;

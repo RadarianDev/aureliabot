@@ -52,6 +52,8 @@ public sealed record EventSchedule(Season? Season, int? Year, int? Delay);
 public sealed record EventTemplate(string Id, string Title, string Text, IReadOnlyList<Effect> Effects, EventSchedule? Schedule)
     : Template(Id, Title)
 {
+    public Formula? When { get; init; }
+
     public override TemplateKind Kind => TemplateKind.Event;
 
     public override IEnumerable<string> References => EffectParser.ReferencedTemplates(Effects);

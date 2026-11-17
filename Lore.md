@@ -18,7 +18,7 @@ Aurelia, Mugi and the lands around them were once part of the **Bon Empire**, wh
 reformed, as the **Union of Bon**. The Empire held the western half of Bonaria and a colony across the sea in Ocidaria,
 called **Ukulwia**. Anzaria, Garaztia and Arrosia were never part of it.
 
-Aurelia won its independence in a revolt. The treaty between the revolting Aurelia and the Bon Empire drew
+Aurelia won its independence in a revolt about five hundred years ago. The treaty between the revolting Aurelia and the Bon Empire drew
 the border through the Arpal country: the north became Aurelia's North Arpal, and the south stayed in the
 Empire. Mugi stayed in the Empire longer than Aurelia did, and when it left, it took **South Arpal** with
 it. The treaty under which it left also split the Ukulwian colony: Mugi took the northern coast, and the

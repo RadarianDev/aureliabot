@@ -261,7 +261,10 @@ public static class ContentRules
         if (kind is null or TemplateKind.Event
             && data.GetQueuedEvents().Where(e => e.TemplateId == id).MaxBy(e => e.Id) is { } queued)
             return new LiveTarget(TemplateKind.Event, queued.TemplateId,
-                new EventTemplate(queued.TemplateId, queued.Title, queued.Text, queued.ParsedEffects, null), queued.Id);
+                new EventTemplate(queued.TemplateId, queued.Title, queued.Text, queued.ParsedEffects, null)
+                {
+                    When = queued.When is { } when ? Formula.TryParse(when, out _) : null,
+                }, queued.Id);
 
         refusal = kind switch
         {
@@ -346,7 +349,7 @@ public static class ContentRules
             }
             case (EventTemplate ev, EventTemplate):
             {
-                if (target.RowId is not { } eventId || !data.UpdateQueuedEvent(eventId, ev.Title, ev.Text, ev.Effects))
+                if (target.RowId is not { } eventId || !data.UpdateQueuedEvent(eventId, ev.Title, ev.Text, ev.Effects, ev.When))
                     return new LiveEditResult(false, Texts.Get("content.live.eventGone"), null);
                 return new LiveEditResult(true, ev.Schedule is null
                     ? Texts.Get("content.live.eventEdited", ("eventId", eventId), ("id", ev.Id))

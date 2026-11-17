@@ -177,13 +177,21 @@ public static partial class TemplateCodec
                 {
                     var parts = BlockFields(map, field, RandomBlock.Word, "weight", "effects");
                     var weight = 1.0;
-                    if (parts.TryGetValue("weight", out var w)
-                        && (w.Value is not YamlScalarNode { Value: { } text } || !EffectParser.TryParseNumber(text, out weight) || weight <= 0))
+                    Formula? weightFormula = null;
+                    if (parts.TryGetValue("weight", out var w))
                     {
-                        Error(w.Value, Texts.Get("templates.randomWeight", ("field", field)));
-                        weight = 1;
+                        var text = (w.Value as YamlScalarNode)?.Value ?? "";
+                        if (EffectParser.TryParseNumber(text, out var number) && number > 0)
+                            weight = number;
+                        else if (text.Length > 0 && !EffectParser.TryParseNumber(text, out _))
+                        {
+                            weightFormula = Formula.TryParse(text, out var error);
+                            if (weightFormula is null) Error(w.Value, Texts.Get("templates.effectError", ("field", field), ("error", error)));
+                        }
+                        else
+                            Error(w.Value, Texts.Get("templates.randomWeight", ("field", field)));
                     }
-                    list.Add(new RandomOutcome(weight, ReadBranch(parts, "effects", field, options, scope)));
+                    list.Add(new RandomOutcome(weight, ReadBranch(parts, "effects", field, options, scope)) { WeightFormula = weightFormula });
                 }
                 else
                 {
@@ -335,7 +343,7 @@ public static partial class TemplateCodec
 
         private EventTemplate ReadEvent(YamlMappingNode root)
         {
-            var map = new Map(this, root, "", "id", "title", "text", "effects", "schedule");
+            var map = new Map(this, root, "", "id", "title", "text", "effects", "when", "schedule");
             var id = map.Slug("id", required: true) ?? "";
             var title = map.Text("title", required: true) ?? "";
             var text = map.Text("text", required: true) ?? "";
@@ -352,7 +360,7 @@ public static partial class TemplateCodec
                 else
                     schedule = new EventSchedule(node.Season("season", required: true), node.Integer("year", required: true, int.MinValue), null);
             }
-            return new EventTemplate(id, title, text, effects, schedule);
+            return new EventTemplate(id, title, text, effects, schedule) { When = map.Condition("when") };
         }
 
         private CrisisTemplate ReadCrisis(YamlMappingNode root)
@@ -614,6 +622,26 @@ public static partial class TemplateCodec
                 }
                 return effects;
             }
+
+            public Formula? Condition(string field)
+            {
+                if (!_entries.TryGetValue(field, out var entry)) return null;
+                if (entry.Value is not YamlScalarNode { Value: { Length: > 0 } text })
+                {
+                    _reader.Error(entry.Value, Texts.Get("templates.blockFormula", ("field", Name(field)), ("key", field)));
+                    return null;
+                }
+                var formula = Formula.TryParse(text, out var error);
+                if (formula is null)
+                {
+                    _reader.Error(entry.Value, Texts.Get("templates.effectError", ("field", Name(field)), ("error", error)));
+                    return null;
+                }
+                if (_reader.Context is { } context)
+                    foreach (var problem in EffectParser.CheckFormula(formula, context))
+                        _reader.Error(entry.Value, Texts.Get("templates.effectError", ("field", Name(field)), ("error", problem)));
+                return formula;
+            }
         }
 
         public EffectContext? Context => context;
@@ -671,6 +699,7 @@ public static partial class TemplateCodec
                 w.Field("", "title", ev.Title);
                 w.Field("", "text", ev.Text);
                 w.Effects("", ev.Effects);
+                if (ev.When is { } when) w.Raw("", "when", Quote(when.Source));
                 if (ev.Schedule is { } schedule)
                     w.Raw("", "schedule", schedule.Delay is { } delay
                         ? $"{{ delay: {delay.ToString(CultureInfo.InvariantCulture)} }}"
@@ -811,7 +840,9 @@ public static partial class TemplateCodec
                         Line($"{indent}- {RandomBlock.Word}:");
                         foreach (var outcome in r.Outcomes)
                         {
-                            Line($"{inner}  - weight: {Number(outcome.Weight)}");
+                            Line(outcome.WeightFormula is { } weight
+                                ? $"{inner}  - weight: {Quote(weight.Source)}"
+                                : $"{inner}  - weight: {Number(outcome.Weight)}");
                             Branch(inner + "    ", "effects", outcome.Effects);
                         }
                         break;

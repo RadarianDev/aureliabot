@@ -46,7 +46,12 @@ public sealed record IfBlock(Formula Condition, IReadOnlyList<Effect> Then, IRea
     public override IEnumerable<Formula> Formulas => [Condition];
 }
 
-public sealed record RandomOutcome(double Weight, IReadOnlyList<Effect> Effects);
+public sealed record RandomOutcome(double Weight, IReadOnlyList<Effect> Effects)
+{
+    public Formula? WeightFormula { get; init; }
+
+    public double WeightIn(IFormulaScope scope) => WeightFormula is { } formula ? Math.Max(0, formula.Evaluate(scope)) : Weight;
+}
 
 public sealed record RandomBlock(IReadOnlyList<RandomOutcome> Outcomes) : EffectBlock
 {
@@ -56,7 +61,9 @@ public sealed record RandomBlock(IReadOnlyList<RandomOutcome> Outcomes) : Effect
 
     public override IEnumerable<IReadOnlyList<Effect>> Branches => Outcomes.Select(o => o.Effects);
 
-    public override IEnumerable<Formula> Formulas => [];
+    public override IEnumerable<Formula> Formulas => Outcomes.Select(o => o.WeightFormula).OfType<Formula>();
+
+    public bool HasFormulaWeights => Outcomes.Any(o => o.WeightFormula is not null);
 }
 
 public enum EachScope { Province, Faction, Party, Issue }
@@ -118,7 +125,11 @@ public static class EffectTree
             case IfBlock b:
                 return Effect.Of(new IfBlock(b.Condition.Bind(placeholder, value), Bind(b.Then, placeholder, value), Bind(b.Else, placeholder, value)));
             case RandomBlock r:
-                return Effect.Of(new RandomBlock(r.Outcomes.Select(o => o with { Effects = Bind(o.Effects, placeholder, value) }).ToList()));
+                return Effect.Of(new RandomBlock(r.Outcomes.Select(o => o with
+                {
+                    WeightFormula = o.WeightFormula?.Bind(placeholder, value),
+                    Effects = Bind(o.Effects, placeholder, value),
+                }).ToList()));
             case EachBlock when placeholder == EachBlock.It:
                 return effect;
             case EachBlock x:
@@ -268,7 +279,11 @@ public static class EffectParser
                     CheckInto(b.Else, context, errors);
                     continue;
                 case RandomBlock r:
-                    foreach (var outcome in r.Outcomes) CheckInto(outcome.Effects, context, errors);
+                    foreach (var outcome in r.Outcomes)
+                    {
+                        if (outcome.WeightFormula is { } weight) CheckFormula(weight, context, errors);
+                        CheckInto(outcome.Effects, context, errors);
+                    }
                     continue;
                 case EachBlock x:
                     var representative = Representative(x.Scope);
@@ -296,6 +311,13 @@ public static class EffectParser
         };
     }
 
+    public static List<string> CheckFormula(Formula formula, EffectContext context)
+    {
+        var errors = new List<string>();
+        CheckFormula(formula, context, errors);
+        return errors;
+    }
+
     private static void CheckFormula(Formula formula, EffectContext context, List<string> errors)
     {
         foreach (var reference in formula.References)
@@ -307,6 +329,9 @@ public static class EffectParser
         double.TryParse(text.Replace('−', '-').Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out value);
 
     public static string FormatNumber(double value) => value.ToString("0.######", CultureInfo.InvariantCulture);
+
+    private static string FormatWeight(RandomOutcome outcome) =>
+        outcome.WeightFormula is { } formula ? $"{{{formula.Source}}}" : FormatNumber(outcome.Weight);
 
     public static string Format(IReadOnlyList<Effect> effects) => string.Join(", ", effects.Select(FormatOne));
 
@@ -324,7 +349,7 @@ public static class EffectParser
                 var text = $"if {{{b.Condition.Source}}} [{Format(b.Then)}]";
                 return b.Else.Count == 0 ? text : $"{text} else [{Format(b.Else)}]";
             case RandomBlock r:
-                return $"random [{string.Join(" | ", r.Outcomes.Select(o => $"{FormatNumber(o.Weight)}: {Format(o.Effects)}"))}]";
+                return $"random [{string.Join(" | ", r.Outcomes.Select(o => $"{FormatWeight(o)}: {Format(o.Effects)}"))}]";
             case EachBlock x:
                 var sb = new StringBuilder($"each {EachBlock.ScopeWord(x.Scope)}");
                 if (x.Where is { } where) sb.Append($" where {{{where.Source}}}");
@@ -420,12 +445,22 @@ public static class EffectParser
             while (Error is null)
             {
                 SkipSpace(newlines: true);
-                var weightText = ReadWord();
-                if (!TryParseNumber(weightText, out var weight) || weight <= 0)
-                    return Fail(Texts.Get("effects.errors.randomWeight", ("weight", weightText)));
+                Formula? weightFormula = null;
+                var weight = 1.0;
+                if (_position < text.Length && text[_position] == '{')
+                {
+                    if (ReadFormula() is not { } formula) return null;
+                    weightFormula = formula;
+                }
+                else
+                {
+                    var weightText = ReadWord();
+                    if (!TryParseNumber(weightText, out weight) || weight <= 0)
+                        return Fail(Texts.Get("effects.errors.randomWeight", ("weight", weightText)));
+                }
                 SkipSpace(newlines: false);
                 if (!Take(':')) return Fail(Texts.Get("effects.errors.expected", ("expected", ":"), ("text", Rest())));
-                outcomes.Add(new RandomOutcome(weight, ParseList()));
+                outcomes.Add(new RandomOutcome(weight, ParseList()) { WeightFormula = weightFormula });
                 SkipSpace(newlines: true);
                 if (Take('|')) continue;
                 if (Take(']')) break;

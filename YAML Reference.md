@@ -107,6 +107,8 @@ else 0). They can read:
 | `faction.{faction}.{field}` | `popularity`, `seats`, `independent`, `government`, `opposition`, `office` (1 if in the cabinet) |
 | `party.{party}.{field}` | `seats`, `members`, `popularity` (average), `government` |
 | `issue.{issue}.open` | 1 if the issue is open |
+| `law.{bill}` | 1 if that bill has passed into law, else 0 |
+| `posted.{template}` | how many times that template has been posted (an event counts when it is queued) |
 | `year`, `season`, `resolution`, `term`, `preElection` | the calendar; `season` is 1–4, and `spring`, `summer`, `autumn`, `winter` stand for 1–4 |
 
 **Conditions.** `if` takes a formula; `then` and `else` take effects. To mix plain effects and blocks,
@@ -120,14 +122,14 @@ effects:
     else: { discontent.marsh_hollow: 0.5 }
 ```
 
-**Random outcomes.** Each outcome has a `weight` (default 1) and `effects`:
+**Random outcomes.** Each outcome has a `weight` (default 1) and `effects`. A weight can be a formula, read when the block runs; one at 0 or below never comes up, and if every weight is, nothing happens and the GM is warned. The preview then shows the weights, not percentages:
 
 ```yaml
 effects:
   - random:
       - weight: 3
         effects: { threat: 5 }
-      - weight: 1
+      - weight: "max(1, var.coup_stage)"
         effects: { event.palace_coup: true }
 ```
 
@@ -154,6 +156,7 @@ Blocks nest freely. An `it` always means the innermost `each`.
 var.plague 1, economy {-0.5 * var.plague}, favour ={max(favour, 40)}
 if {var.plague >= 3} [crisis.quarantine, discontent.all 1] else [discontent.marsh_hollow 0.5]
 random [3: threat 5 | 1: event.palace_coup]
+random [{max(1, 1 + var.anger)}: event.riot | 2: threat 1]
 each province where {condition.it.striking} [discontent.it 1]
 each faction by {popularity.it} top 1 [popularity.it -3]
 ```
@@ -278,6 +281,7 @@ effects: { discontent.ocidanten: 1, salience.social_reform: 1,
 | `text` | yes | The news story. |
 | `effects` | no | Applied when it fires, and listed under the story with UP and DOWN arrows. |
 | `schedule` | no | When it fires. Without one, queue it by hand with `/gm event queue`. |
+| `when` | no | A formula checked when the event comes due. If it is false then, the event is skipped (cancelled, with a GM alert) instead of posting. Use it for flavour that only makes sense while a situation lasts: `when: "var.tariff_war >= 2"`. |
 
 `schedule` takes one of two forms:
 
@@ -578,7 +582,7 @@ lawless:
 
 **Standing** conditions describe a province and are set in `provinces.yaml`: urban, industrial, farmland,
 frontier, anzarian_border, crossroads, rugged, forested, marshland, remote, coastal, mugian_quarter. **Event**
-conditions come and go through effects: lawless, epidemic, striking, famine, booming.
+conditions come and go through effects: lawless, epidemic, striking, famine, booming, blockaded.
 
 ### `config/variables.yaml`: your own variables
 

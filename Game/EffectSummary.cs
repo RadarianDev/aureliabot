@@ -55,8 +55,9 @@ public static class EffectSummary
                     lines.Add(depth + Texts.Get("effects.preview.random"));
                     foreach (var outcome in r.Outcomes)
                     {
-                        lines.Add(depth + Nested + Texts.Get("effects.preview.chance",
-                            ("chance", (outcome.Weight / total * 100).ToString("0.#", CultureInfo.InvariantCulture))));
+                        lines.Add(depth + Nested + (r.HasFormulaWeights
+                            ? Texts.Get("effects.preview.weight", ("weight", outcome.WeightFormula?.Source ?? EffectParser.FormatNumber(outcome.Weight)))
+                            : Texts.Get("effects.preview.chance", ("chance", (outcome.Weight / total * 100).ToString("0.#", CultureInfo.InvariantCulture)))));
                         if (outcome.Effects.Count == 0) lines.Add(depth + Nested + Nested + Texts.Get("effects.preview.nothing"));
                         AddLines(outcome.Effects, names, display, preview, depth + Nested + Nested, lines);
                     }

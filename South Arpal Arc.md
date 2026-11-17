@@ -17,7 +17,7 @@ Ukulwian ranks under Mugian officers. Ukulwians can hold only a lesser native co
 crewed by Mugians alone.
 
 **The history.** Aurelia, Mugi and the lands around them were once part of the **Bon Empire**, which
-survives, reformed by the Act of Union, as today's **Union of Bon**. Aurelia won its independence in a revolt, and the treaty that ended
+survives, reformed by the Act of Union, as today's **Union of Bon**. Aurelia won its independence in a revolt about five hundred years ago, and the treaty that ended
 it drew the border through the Arpal country: the north went to Aurelia, the south stayed in the Empire.
 Mugi stayed in the Empire longer than Aurelia did, and when it left, it took South Arpal with it. Anzaria
 was never conquered by the Empire.
@@ -43,7 +43,7 @@ merchants and the market every Arpal valley sells into.
   country runs through its market *(extrapolated)*.
 - *(extrapolated)* The history gives the Arpal Question its legal quarrel. Aurelian patriots argue that
   the independence treaty gave South Arpal to the *Empire*, not to Mugi, so Mugi had no right to take it
-  when it left. Mugi answers that the treaty is a century old and the Empire that signed it has been remade
+  when it left. Mugi answers that the treaty is five centuries old and the Empire that signed it has been remade
   into a Union of princes. The Union of Bon, still the Empire in law, is the one power both sides could
   accept as judge.
 - *(extrapolated)* The "foreign gentlemen" sketching bridges in the North Arpal passes (the
@@ -399,6 +399,96 @@ Arpal and Ocidanten, and Mugi's hand in Anzaria. The default when the players ig
 | Gendarmerie in North Arpal | Keep smuggling and refugees from making it `lawless`. |
 | Opposition condemnations | Every crisis in the arc is condemnable. |
 
+## Building the acts
+
+What it takes to turn Acts I to IV into files under `content/`, checked against the content formats in
+[YAML Reference.md](YAML%20Reference.md) as of the commit that added South Arpal and prestige.
+
+### Check the live game first
+
+- **The calendar.** The Diet is scheduled for Spring 1855. A scheduled event can only be marked Ready
+  before its turn starts, so check the live date and move the schedule if needed.
+- **The Tariff Act.** Changing `tariff_act.yaml` sends the template back to Draft on the next deploy, so it
+  needs `/content ready tariff_act` again. If the bill is already available or before the Assembly, its
+  live copy keeps the old pass effects (bills copy them when made available). If it has already passed,
+  the arc starts with `tariff_war` at 1 (the Diet reads it with `law.tariff_act`).
+- **Rearmament and Free Trade.** The bills chain onto these issues, and `bill.*` fails while an issue is
+  closed. Check both are open, or open them in the beat that needs them.
+- **Ready order.** A template can be marked Ready only once every template it references is Ready. Mark
+  the arc from its leaves back to the Diet: endings, then Act III, II, I, prologue. The arc has no
+  reference cycles, and a template may reference itself.
+- **`passes_sketchers`** already exists; queue it during the 1854 campaign as foreshadowing.
+
+### Files to write
+
+| Kind | Ids |
+| --- | --- |
+| Events | `mugi_electoral_diet`, `mugi_decrees`, `arpal_smugglers`, `lanten_empty_berths`, `kolgasi_market_closed`, `south_arpal_petition`, `tsars_note`, `corvasse_mugian_gold`, `mugian_exchange_grumbles`, `mugi_remonstrance`, `senarstei_mission`, `squadron_off_lanten`, `arpal_rising`, `mugi_ultimatum`, `arpal_war`, `battle_of_the_passes`, `lanten_blockade`, `siege_of_kolgasi`, `treaty_of_bon`, `kolgasi_settlement_signed`, `rising_crushed`, `peace_victory`, `peace_defeat`, `peace_stalemate`, `exiles_from_kolgasi`, `long_tariff_war`, plus the aftermath (`kolgasi_merchants`, `south_arpal_gendarmerie`) |
+| Crises | `mugian_duties` (CommerceLabor, North Arpal, Free Trade), `arpal_petition` (Interior, North Arpal, Arpal Question), `bon_conference` (CommerceLabor), `squadron_crisis` (War, Ocidanten, Rearmament), `south_arpal_rising` (War, North Arpal, Arpal Question) |
+| Bills | `mugian_commercial_treaty` (Free Trade, For), `arpal_guarantee` (Arpal Question, For), `kolgasi_settlement` (Arpal Question, Against, with `close.arpal_question`), `war_loan` (Rearmament, For), `kolgasi_charter` (Integration, For, after annexation) |
+| Issue | `arpal_question`: done |
+
+### What works
+
+- Fixed dates (`schedule`), follow-ups a few turns later (`event.{id}: n`), crises posted by events,
+  crisis prices, leans, defaults and complications.
+- Thresholds such as "if Favour ≥ 50" as `if` blocks in effects.
+- **Flavour that only fits while a situation lasts** (Empty Berths, Grumbling in the Exchange, Mugian Gold
+  in Corvasse): give the event `when: "var.tariff_war >= 2"` (or `var.mugi_pressure >= 2`,
+  `var.tariff_war >= 2 and favour < 50`). It is checked when the event comes due, and skipped with a GM
+  alert if it no longer holds.
+- **The Tariff Act as the Tsar's grievance:** two decree events, `mugi_decrees` with
+  `when: "not law.tariff_act"` and `mugi_decrees_grievance` with `when: "law.tariff_act"`, both queued by
+  the Diet: exactly one fires. The Diet's effects can start `tariff_war` at 1 with
+  `if: "law.tariff_act"`.
+- **The Remonstrance roll**, exactly as the outline writes it: `random` weights may be formulas,
+  `weight: "max(1, 1 + var.mugi_pressure)"` and `weight: "max(1, var.tariff_war)"`.
+- **"If the Anzarian Musters haven't been used yet":** `if: "posted.anzarian_musters == 0"`.
+- **The Ultimatum's deadline:** the Ultimatum queues `arpal_war` one turn later with
+  `when: "issue.arpal_question.open"`. The Kolgasi Settlement closes the issue, so passing it in time
+  makes the war skip itself.
+- "Lawless unless the Interior holds it": `if: "gendarmerie.north_arpal >= 1"`.
+- A 50/50 negotiation: `random` with two equal outcomes.
+- Repeating effects (Ending 3's yearly easing, Ending 5's yearly bleed, the blockade's seasonal loss): an
+  event that queues itself (`event.long_tariff_war: 4`), stopped by `cancel.long_tariff_war` in whatever
+  ends it, or by its own `when`.
+- "Two to four seasons until peace": a `random` block choosing between `event.peace_*: 2`, `: 3` and `: 4`.
+- The blockade: the `blockaded` condition (discontent rests a point higher, growth slows, leans towards
+  Rearmament and Free Trade) on Ocidanten, removed at peace.
+- Battles: the GM queues each battle event, runs `/gm roll battle` with the North Arpal divisions against
+  dice for the garrison (`3d12`, or `5d12` with the colonial regiments), records the result with
+  `/gm set var.passes_held` or `var.kolgasi_taken`, and the peace event reads it.
+- Annexation: `annex.south_arpal` in `peace_victory`. The map and the 1858 seats follow on their own.
+
+**One thing stays a content choice:** bills have no price, so "the Commercial Treaty at a better price"
+means a second treaty bill with kinder effects (`mugian_commercial_treaty_bon`), made available by the
+Bon answer instead of the first.
+
+### Prestige, sparingly
+
+Agendas are the main source of prestige, so the arc awards it only at its two real triumphs, and keeps
+the amounts below a single agenda wish (4):
+
+- The Treaty of Bon: `prestige.sponsor: 2` in the Commercial Treaty's pass effects.
+- Victory and the annexation of South Arpal: `prestige.chancellor: 2` and `prestige.minister.War: 1` in
+  `peace_victory`.
+
+Nothing else in the arc awards it. The Settlement, a defeat or a crushed rising award none; prestige is
+never lost, so they simply don't add any.
+
+### Variables the content will want
+
+Add to `config/variables.yaml` alongside `tariff_war` and `mugi_pressure`: `arpal_market_rights` (the
+Bon answer won the villages their market rights), `colonial_regiments` (Mugi shipped its Ukulwian
+regiments home: +2d12 at the Passes), `passes_held` and `kolgasi_taken` (battle results the GM records
+with `/gm set`, so the peace event can choose its ending).
+
+### After the content
+
+- [Lore.md](Lore.md): the census and the province list, once South Arpal is annexed.
+- The colonial seeds in [Arcs.md](Arcs.md) hook into this arc: the Cotton Famine Petition after the
+  duty-for-duty answer, and the Admirals' Memorandum after the Squadron or the war.
+
 ## Open questions for the GM
 
-1. What is the independence treaty called, and how long ago was it signed?
+1. What is the independence treaty called? It was signed about five hundred years ago.

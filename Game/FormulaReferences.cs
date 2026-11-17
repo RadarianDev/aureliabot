@@ -5,6 +5,10 @@ public static class FormulaReferences
     private static readonly HashSet<string> FactionFields = ["popularity", "seats", "independent", "government", "opposition", "office"];
     private static readonly HashSet<string> PartyFields = ["seats", "members", "popularity", "government"];
 
+    private static bool IsTemplate(string id, EffectContext context) =>
+        context.IssueTemplates.Contains(id) || context.BillTemplates.Contains(id) || context.ProjectTemplates.Contains(id)
+        || context.CrisisTemplates.Contains(id) || context.EventTemplates is null || context.EventTemplates.Contains(id);
+
     public static string? Check(string reference, EffectContext context)
     {
         var parts = reference.Split('.');
@@ -26,6 +30,10 @@ public static class FormulaReferences
                 return long.TryParse(id, out _) ? null : Texts.Get("formula.errors.unknownParty", ("id", id));
             case ["issue", var id, "open"]:
                 return context.Issues.Contains(id) ? null : Texts.Get("effects.errors.unknownIssue", ("id", id));
+            case ["law", var id]:
+                return context.BillTemplates.Contains(id) ? null : Texts.Get("effects.errors.noBillTemplate", ("id", id));
+            case ["posted", var id]:
+                return IsTemplate(id, context) ? null : Texts.Get("formula.errors.unknownTemplate", ("id", id));
         }
 
         if (EffectKinds.Find(parts[0]) is not { IsAction: false } kind)
@@ -66,6 +74,10 @@ public static class FormulaReferences
                 return PartyField(store, partyId, field);
             case ["issue", var id, "open"]:
                 return Formula.Truth(store.Issue(id) is { Status: IssueStatus.Open });
+            case ["law", var id]:
+                return Formula.Truth(store.LawPassed(id));
+            case ["posted", var id]:
+                return store.TimesPosted(id);
             case ["popularity", ..]:
                 var targets = PopularityEffect.Targets(new Effect(reference, null), store);
                 var popular = store.ActiveFactions.Where(f => targets.Contains(f.UserId)).ToList();

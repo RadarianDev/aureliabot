@@ -1107,6 +1107,7 @@ content:
     crisisTitle: "## ⚠️ Crisis: {title}"
     crisisMeta: "-# Ministry of {ministry} · {province} · {issue}"
     crisisDue: Due at the next resolution
+    when: "-# Fires only if `{when}` holds when it is due; otherwise it is skipped."
     answer: "{number}. {label} · {lean} · {price}"
     free: free
     outcome: "-# Outcome of answer {number}:"
@@ -1253,7 +1254,7 @@ templates:
   blockField: "{field}: `{key}` doesn't belong in a `{block}` block, which takes {allowed}."
   blockFormula: "{field}: `{key}` needs a formula, such as `\"var.plague >= 3\"`."
   randomList: "{field}: `random` takes a list of outcomes, each with a `weight` and `effects`."
-  randomWeight: "{field}: a `weight` must be a positive number."
+  randomWeight: "{field}: a `weight` must be a positive number or a formula."
   eachScope: "{field}: `each` takes `province`, `faction`, `party` or `issue`."
   eachTop: "{field}: `top` and `bottom` take a whole number from 1."
   eachTopNeedsBy: "{field}: `top` and `bottom` need `by`, the score to rank by."
@@ -1279,6 +1280,7 @@ formula:
     unknownField: "`{field}` can't be read; use one of {fields}."
     unknownParty: "`{id}` is not a party id."
     unknownReference: "`{reference}` is not something a formula can read."
+    unknownTemplate: "there is no template `{id}`."
     unreadable: "`{reference}` has no value right now."
 briefing:
   summary: "{text}"
@@ -1293,7 +1295,7 @@ effects:
   errors:
     unexpected: "can't read the effects from `{text}`."
     expected: "expected `{expected}` at `{text}`."
-    randomWeight: "`{weight}` is not a weight: give each outcome a positive number, as in `random [3: threat 5 | 1: favour -2]`."
+    randomWeight: "`{weight}` is not a weight: give each outcome a positive number, as in `random [3: threat 5 | 1: favour -2]`, or a formula in braces."
     randomEmpty: a `random` block needs at least one outcome.
     eachScope: "`{scope}` is not something to go through: use `province`, `faction`, `party` or `issue`."
     eachTop: "`{count}` is not a count: give a whole number from 1."
@@ -1339,6 +1341,7 @@ effects:
     else: "Otherwise:"
     random: "One of these, by chance:"
     chance: "{chance}%:"
+    weight: "weight `{weight}`:"
     nothing: nothing happens
     each: "For each {scope}"
     where: " where `{condition}`"
@@ -1615,6 +1618,8 @@ alerts:
     changesFailed: " {count} Discord change(s) failed; see the alerts above."
   billCooldownOver: "{bill} is back from its cooldown and can be proposed again."
   noEventQueued: No event is queued for the start of the next turn, after {label}.
+  eventSkipped: "Event **{title}** was due but skipped: its `when` ({when}) is false now."
+  eventWhenBroken: "Event **{title}** was due but skipped: its `when` ({when}) could not be read: {error}"
   upkeepShort: The {ministry} purse could not cover its {due} upkeep; every {type} unit lost a training step.
 
 private:
@@ -1690,6 +1695,7 @@ data:
   effect:
     warning: "{source}: `{key}`: {warning}"
     tooMany: "{source}: the effects ran too deep or too long and were stopped; check for a block that repeats without end."
+    randomNoWeight: "every outcome of a `random` block weighs 0 or less, so nothing happens"
     cannotSet: "this value can't be set with `=`; change it by an amount instead."
     noPopularityTarget: "nobody holds that role or matches `{target}` right now"
     prestigeNegative: prestige is never lost, so a negative amount is skipped

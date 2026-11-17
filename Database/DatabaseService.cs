@@ -231,6 +231,7 @@ public partial class DatabaseService
                 message_id TEXT
             );");
         Exec(connection, "CREATE INDEX IF NOT EXISTS ix_events_queue ON events (status, fire_at_resolution, id);");
+        AddColumnIfMissing(connection, "events", "when_formula", "TEXT");
 
         Exec(connection, @"
             CREATE TABLE IF NOT EXISTS crises (
