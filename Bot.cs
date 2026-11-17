@@ -303,7 +303,7 @@ public class Bot
 
     private Task LogAsync(LogMessage log)
     {
-        Console.WriteLine(log.ToString());
+        Console.WriteLine(log.ToString(prependTimestamp: false));
         return Task.CompletedTask;
     }
 }
