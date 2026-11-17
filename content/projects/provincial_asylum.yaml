@@ -1,8 +1,8 @@
 id: provincial_asylum
-title: The Aurelle Asylum
-summary: "The first public asylum for the insane poor, on a farm outside Aurelle, with a chapel, workshops and a great many windows."
+title: The First Public Asylum
+summary: "The first public asylum for the insane poor, on a farm outside a provincial town, with a chapel, workshops and a great many windows."
 purse: Interior
-province: aurenten
+repeat: once
 price: 30
 term: 2
-effects: { discontent.here: -1, discontent.iracterie: -1 }
+effects: { discontent.here: -2 }

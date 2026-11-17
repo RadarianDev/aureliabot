@@ -4,6 +4,7 @@ summary: "A dockyard in a coastal province, good for trade and pleasing to the A
 ministerial: true
 purse: CommerceLabor
 requires: coastal
+repeat: perProvince
 price: 50
 term: 3
 effects: { economy: 10, favour: 2 }

@@ -3,6 +3,7 @@ title: The Lanten Shore Batteries
 summary: "Earthwork batteries and heavy guns covering the harbour mouths of Lanten and Saltmouth."
 purse: War
 province: ocidanten
+repeat: once
 price: 40
 term: 2
 effects: { threat: -5, discontent.here: -1 }

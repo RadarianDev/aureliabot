@@ -43,6 +43,21 @@ public static partial class TemplateCodec
         _ => kind.ToString().ToLowerInvariant() + "s",
     };
 
+    public static ProjectRepeat? ParseRepeat(string? text) => text switch
+    {
+        null or "always" => ProjectRepeat.Always,
+        "once" => ProjectRepeat.Once,
+        "perProvince" => ProjectRepeat.PerProvince,
+        _ => null,
+    };
+
+    public static string RepeatName(ProjectRepeat repeat) => repeat switch
+    {
+        ProjectRepeat.Once => "once",
+        ProjectRepeat.PerProvince => "perProvince",
+        _ => "always",
+    };
+
     public static string KindName(TemplateKind kind) => kind switch
     {
         TemplateKind.Issue => Texts.Get("names.templateKind.issue"),
@@ -298,7 +313,7 @@ public static partial class TemplateCodec
 
         private ProjectTemplate ReadProject(YamlMappingNode root)
         {
-            var map = new Map(this, root, "", "id", "title", "summary", "purse", "province", "price", "term", "effects", "bonus", "ministerial", "requires");
+            var map = new Map(this, root, "", "id", "title", "summary", "purse", "province", "price", "term", "effects", "bonus", "ministerial", "requires", "repeat");
             var id = map.Slug("id", required: true) ?? "";
             var title = map.Text("title", required: true) ?? "";
             var purse = map.Ministry("purse", required: false) ?? Ministry.CommerceLabor;
@@ -312,11 +327,13 @@ public static partial class TemplateCodec
             if (requires is not null && context is not null && !context.Conditions.Contains(requires))
                 Error(map.KeyNode("requires")!, Texts.Get("templates.unknownCondition", ("condition", requires)));
 
-            if (province is null && !ministerial && EffectTree.Plain(effects.Concat(bonus?.Effects ?? [])).Any(e => e.Parts.Skip(1).Contains(EffectParser.Here)))
-                Error(map.KeyNode("effects") ?? map.KeyNode("bonus") ?? (YamlNode)root, Texts.Get("templates.hereNeedsProvince"));
+            var repeatText = map.Text("repeat", required: false);
+            var repeat = ParseRepeat(repeatText);
+            if (repeatText is not null && repeat is null)
+                Error(map.KeyNode("repeat")!, Texts.Get("templates.unknownRepeat", ("value", repeatText)));
 
             return new ProjectTemplate(id, title, purse, province, price, term, effects, bonus, ministerial, requires)
-            { Summary = map.Text("summary", required: false) };
+            { Summary = map.Text("summary", required: false), Repeat = repeat ?? ProjectRepeat.Always };
         }
 
         private ProjectBonus? ReadBonus(Map map)
@@ -680,6 +697,7 @@ public static partial class TemplateCodec
                 w.Raw("", "purse", project.Purse.ToString());
                 if (project.Province is not null) w.Field("", "province", project.Province);
                 if (project.Requires is not null) w.Field("", "requires", project.Requires);
+                if (project.Repeat != ProjectRepeat.Always) w.Raw("", "repeat", RepeatName(project.Repeat));
                 w.Raw("", "price", Money(project.Price));
                 w.Raw("", "term", project.Term.ToString(CultureInfo.InvariantCulture));
                 w.Effects("", project.Effects);

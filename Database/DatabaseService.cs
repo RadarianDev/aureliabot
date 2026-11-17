@@ -446,6 +446,15 @@ public partial class DatabaseService
             );");
 
         Exec(connection, @"
+            CREATE TABLE IF NOT EXISTS project_sites (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                template_id TEXT NOT NULL,
+                purse TEXT NOT NULL,
+                created_resolution INTEGER NOT NULL,
+                status TEXT NOT NULL DEFAULT 'Waiting'
+            );");
+
+        Exec(connection, @"
             CREATE TABLE IF NOT EXISTS actions (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 faction_id TEXT NOT NULL REFERENCES factions(user_id),

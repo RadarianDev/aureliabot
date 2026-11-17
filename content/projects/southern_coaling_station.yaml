@@ -4,6 +4,7 @@ summary: "Colliers, stores and a dockyard party fitted out at Lanten for a coali
 purse: War
 province: ocidanten
 requires: coastal
+repeat: once
 price: 60
 term: 4
 effects: { favour: 4, favourBaseline: 2, economy: 5, var.coaling_station: 1 }

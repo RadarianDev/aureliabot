@@ -41,6 +41,10 @@ public sealed record ProjectTemplate(
 {
     public override TemplateKind Kind => TemplateKind.Project;
 
+    public ProjectRepeat Repeat { get; init; } = ProjectRepeat.Always;
+
+    public bool NeedsSite => Province is null;
+
     public override IEnumerable<string> References =>
         EffectParser.ReferencedTemplates(Effects.Concat(Bonus?.Effects ?? []));
 

@@ -3,6 +3,7 @@ title: The Forts of the Arpal Passes
 summary: "Stone forts and gun platforms above the passes from North Arpal into South Arpal, so that no army comes over them unseen."
 purse: War
 province: north_arpal
+repeat: once
 price: 60
 term: 4
 effects: { threat: -8, discontent.here: -1 }

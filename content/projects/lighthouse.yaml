@@ -4,6 +4,7 @@ summary: "A stone lighthouse and a lifeboat station on a dangerous stretch of co
 ministerial: true
 purse: CommerceLabor
 requires: coastal
+repeat: perProvince
 price: 25
 term: 2
 effects: { economy: 5, discontent.here: -1 }

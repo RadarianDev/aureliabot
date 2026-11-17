@@ -3,6 +3,7 @@ title: Telegraph line
 summary: "A telegraph wire from the province of the minister's choosing to the capital. Cheap and quick, it speeds trade and makes a far province feel nearer."
 ministerial: true
 purse: CommerceLabor
+repeat: perProvince
 price: 30
 term: 2
 effects: { economy: 8, discontent.here: -1 }

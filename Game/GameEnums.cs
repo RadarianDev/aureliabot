@@ -47,6 +47,8 @@ public enum OrderKind { Raise, Train, Station, Crackdown }
 
 public enum ProjectStatus { Active, Stalled, Finished, Halted }
 
+public enum ProjectRepeat { Always, Once, PerProvince }
+
 public enum ActionKind { Campaign, Attack, Poll }
 
 public enum OppositionActionKind { Question, Condemn, Bill, WhipCount }

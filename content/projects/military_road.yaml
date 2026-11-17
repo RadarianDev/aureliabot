@@ -4,6 +4,7 @@ summary: "A metalled road to the border in a frontier province of the minister's
 ministerial: true
 purse: War
 requires: frontier
+repeat: perProvince
 price: 30
 term: 2
 effects: { threat: -3, economy: 3 }

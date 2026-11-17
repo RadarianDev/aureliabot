@@ -4,6 +4,7 @@ summary: "A covered corn exchange in a farming province of the minister's choosi
 ministerial: true
 purse: CommerceLabor
 requires: farmland
+repeat: perProvince
 price: 25
 term: 2
 effects: { economy: 6, discontent.here: -1 }

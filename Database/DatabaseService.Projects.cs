@@ -160,27 +160,21 @@ public partial class DatabaseService
         return QueryProjectsTx(conn, null, $"status IN {LiveProjectStatuses}");
     }
 
-    public List<ProjectTemplate> GetMinisterialProjectTemplates() =>
-        GetTemplates(TemplateKind.Project, TemplateStatus.Ready)
-            .Select(row => TemplateCodec.Parse(row.Yaml, row.Id).Template)
-            .OfType<ProjectTemplate>()
-            .Where(t => t.Ministerial)
-            .OrderBy(t => t.Title)
-            .ToList();
-
     public ProjectStartResult StartMinisterialProject(ulong userId, string templateId, string provinceId, GameConfig config)
     {
         using var conn = Open();
         using var tx = conn.BeginTransaction();
         if (ReadyTemplateTx<ProjectTemplate>(conn, tx, templateId, out var problem) is not { } template)
             return new ProjectStartResult(Texts.Get("projects.refusal.unavailable", ("id", templateId), ("problem", problem)), null);
-        if (!template.Ministerial)
+        var awaitingSite = WaitingSitesTx(conn, tx, template.Id).Count > 0;
+        if (!template.Ministerial && !awaitingSite)
             return new ProjectStartResult(Texts.Get("projects.refusal.notMinisterial", ("project", template.Title)), null);
         if (ResponsibleMinisterTx(conn, tx, template.Purse) != userId)
             return new ProjectStartResult(Texts.Get("projects.refusal.notYours", ("ministry", template.Purse.DisplayName())), null);
 
         var (refusal, id) = InsertProjectTx(conn, tx, config, template, provinceId, null);
         if (refusal is not null) return new ProjectStartResult(refusal, null);
+        if (awaitingSite) PlaceSiteTx(conn, tx, template.Id);
         LogTx(conn, tx, LogKinds.StateChange, "ministry project", $"Project {id} ({template.Id}) started in {provinceId} by {userId}.", userId);
         tx.Commit();
         return new ProjectStartResult(null, GetProjectTx(conn, null, id!.Value));
@@ -245,6 +239,12 @@ public partial class DatabaseService
         SqliteConnection conn, SqliteTransaction tx, GameConfig config, string templateId, string? provinceId, EffectSource source, ResolutionReport? report)
     {
         if (ReadyTemplateTx<ProjectTemplate>(conn, tx, templateId, out var problem) is not { } template) return problem;
+        if (provinceId is null && template.NeedsSite)
+        {
+            if (AwaitSiteTx(conn, tx, template) is { } waitRefusal) return waitRefusal;
+            LogTx(conn, tx, LogKinds.StateChange, "project", $"Project {template.Id} awaits a site, from {source.SourceType} {source.SourceId}.", isPublic: true);
+            return null;
+        }
         var (refusal, id) = InsertProjectTx(conn, tx, config, template, provinceId, report);
         if (refusal is not null) return refusal;
         LogTx(conn, tx, LogKinds.StateChange, "project", $"Project {id} ({template.Id}) started by {source.SourceType} {source.SourceId}.", isPublic: true);
@@ -263,6 +263,8 @@ public partial class DatabaseService
                 ("condition", config.Condition(requires)?.Name ?? requires), ("project", template.Title)), null);
         if (LiveProjectOfTemplateTx(conn, tx, template.Id) is not null)
             return (Texts.Get("projects.warning.alreadyLive", ("project", template.Title)), null);
+        if (RepeatRefusalTx(conn, tx, template, province) is { } repeatRefusal)
+            return (repeatRefusal, null);
 
         var state = GetGameStateTx(conn, tx);
         var insideResolution = report is { CampaignDay: false } && report.ResolutionNumber == state.ResolutionNumber + 1;

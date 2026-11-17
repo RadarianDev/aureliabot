@@ -4,6 +4,7 @@ summary: "A stone breakwater on an exposed coast of the minister's choosing, whe
 ministerial: true
 purse: CommerceLabor
 requires: coastal
+repeat: perProvince
 price: 30
 term: 2
 effects: { economy: 5, discontent.here: -1 }

@@ -3,6 +3,7 @@ title: The Kolgasi Road
 summary: "A carriage road over the passes from Carden to Kolgasi, binding the new province to the old."
 purse: CommerceLabor
 province: south_arpal
+repeat: once
 price: 50
 term: 4
 effects: { economy: 10, discontent.here: -2, discontent.north_arpal: -1 }

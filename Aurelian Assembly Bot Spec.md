@@ -127,7 +127,7 @@ These are the main tables. Ids are short strings (slugs) for anything defined in
 
 A faction has no name of its own. It is shown as the player's mention, followed by the character name where that helps.
 
-**Templates:** IssueTemplate, BillTemplate, ProjectTemplate, EventTemplate and CrisisTemplate hold the same fields as their live copies, plus a status (Draft, Ready, Archived), createdAt, updatedAt and timesPosted. An EventTemplate also has an optional schedule: a season and year, or a delay. A ProjectTemplate also has `ministerial`, `requires` and a bonus deadline (a turn, or a number of seasons). A live copy records the templateId it was posted from.
+**Templates:** IssueTemplate, BillTemplate, ProjectTemplate, EventTemplate and CrisisTemplate hold the same fields as their live copies, plus a status (Draft, Ready, Archived), createdAt, updatedAt and timesPosted. An EventTemplate also has an optional schedule: a season and year, or a delay. A ProjectTemplate also has `ministerial`, `requires`, `repeat` and a bonus deadline (a turn, or a number of seasons). A live copy records the templateId it was posted from.
 
 **Stance** is an enum with values: StronglyFor = +2, For = +1, Silent = 0, Against = −1, StronglyAgainst = −2. Silent means *no stance*: it is what a party has on an issue its programme doesn't list or lists as Silent.
 
@@ -460,12 +460,13 @@ bonus:
 | Field | Meaning |
 | --- | --- |
 | `purse` | The ministry that pays and runs it: War, Interior, CommerceLabor or Treasury. Defaults to CommerceLabor. |
-| `province` | Where it is built. `here` in its effects stands for it. A ministerial project leaves it out, and the minister chooses. |
+| `province` | Where it is built. `here` in its effects stands for it. Leave it out and the minister chooses: when starting a ministerial project, or, for one a law, event or crisis started, when placing it. Until placed it waits for a site, listed on `/ministry status` and offered by `/ministry project`. |
 | `price` | The total cost. |
 | `term` | The seasons it should take. The **pace** is `price / term`, the most a season can usefully absorb. |
 | `effects` | Applied once, when it finishes, and permanent. |
 | `bonus` | Optional. Its text and effects apply as well if it finishes in time: `by: { season, year }` means by the end of that turn, and `within: n` means within `n` seasons of starting. |
 | `ministerial` | Optional, default false. If true, the purse's minister can start it with `/ministry project`, choosing the province. |
+| `repeat` | Optional: `once` (built once per game), `perProvince` (once in each province) or `always` (the default: again as soon as it finishes). A halted project doesn't count. |
 | `requires` | Optional. A condition the province must have, for example `coastal`. |
 
 - **Starting:** a `project.{id}` effect starts it, from a bill, an event, a crisis answer or another project; or, if it is ministerial, its minister does.
@@ -860,7 +861,7 @@ A faction may have at most as many pending actions as the turn allows, of any ki
 | `/war raise name province`, `/war train division`, `/war station division province`, `/war disband division` | War | Manages divisions. |
 | `/interior raise name province`, `/interior train corps`, `/interior station corps province`, `/interior disband corps` | Interior | Manages gendarmerie, the same way. |
 | `/interior crackdown province` | Interior | Orders a crackdown (section 5). |
-| `/ministry project project province` | The minister of the project's purse | Starts a ministerial project in a province that meets its `requires`. It first pays at the next resolution. |
+| `/ministry project project province` | The minister of the project's purse | Starts a ministerial project, or places one awaiting a site, in a province that meets its `requires` and its `repeat` rule. It first pays at the next resolution. |
 | `/ministry fund project amount` | The minister of the project's purse | Sets a project's spending per season, from 0 up. The reply shows the pace, how much graft would take, the expected finish and whether it beats the bonus deadline. |
 | `/chancellor nominate treasury war interior commerce` | Chancellor | Nominates the cabinet and opens the approval vote. Each nominee is told in their private channel. |
 | `/ministry resign` | A minister or the Chancellor | Resigns at once (section 5). Announced in #news. |

@@ -202,7 +202,7 @@ public class TemplateCodecTests : IDisposable
     [InlineData("id: a\ntitle: T\nprice: 1\nterm: 1\npurse: Admiralty\n", "`purse` must be `War`, `Interior`, `CommerceLabor` or `Treasury`")]
     [InlineData("id: a\ntitle: T\nprice: 1\nterm: 1\nbonus: { text: Hi }\n", "exactly one deadline")]
     [InlineData("id: a\ntitle: T\nprice: 1\nterm: 1\nbonus: { within: 2, by: { season: Spring, year: 1851 } }\n", "exactly one deadline")]
-    [InlineData("id: a\ntitle: T\nprice: 1\nterm: 1\neffects: { discontent.here: -1 }\n", "`here` needs a `province`")]
+    [InlineData("id: a\ntitle: T\nprice: 1\nterm: 1\nrepeat: twice\neffects: { discontent.here: -1 }\n", "`repeat` is `once`, `perProvince` or `always`")]
     [InlineData("id: a\ntitle: T\ntext: S\nschedule: { delay: 1, season: Spring, year: 1850 }\n", "`schedule` takes either")]
     [InlineData("id: a\ntitle: T\ntext: S\nschedule: { season: Spring }\n", "schedule.`year` is required.")]
     [InlineData("id: a\ntitle: T\ntext: S\nschedule: { season: Midsummer, year: 1850 }\n", "schedule.`season` must be")]

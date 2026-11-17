@@ -145,6 +145,14 @@ public class MinistryModule : InteractionModuleBase<SocketInteractionContext>
             lines.Add(Texts.Get("ministry.status.projects") + "\n" + string.Join("\n", projects.Select(p =>
                 Texts.Get("ministry.status.projectLine", ("line", ProjectPublisher.SummaryLine(p, state, config))))));
 
+        var sites = _data.GetWaitingSites().Where(s => s.Purse == ministry).ToList();
+        if (sites.Count > 0)
+        {
+            var titles = Publisher.Names(_data, config).ProjectTemplate;
+            lines.Add(Texts.Get("ministry.status.sites") + "\n" + string.Join("\n", sites.Select(s =>
+                Texts.Get("ministry.status.siteLine", ("project", titles(s.TemplateId))))));
+        }
+
         var crises = _data.GetCrises(CrisisStatus.Live).Where(c => c.Ministry == ministry).ToList();
         if (crises.Count > 0)
             lines.Add(Texts.Get("ministry.status.crises") + "\n" + string.Join("\n", crises.Select(c =>

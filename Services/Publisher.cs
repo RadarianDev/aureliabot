@@ -258,12 +258,16 @@ public partial class Publisher
     {
         var issues = data.GetAllIssues().ToDictionary(i => i.Id, i => i.Title);
         var templateTitles = new Dictionary<string, string>();
+        var needsSite = new HashSet<string>();
         foreach (var row in data.GetTemplates())
         {
             try
             {
                 if (TemplateCodec.Parse(row.Yaml, row.Id).Template is { } template)
+                {
                     templateTitles[row.Id] = template.Title;
+                    if (template is ProjectTemplate { NeedsSite: true }) needsSite.Add(row.Id);
+                }
             }
             catch (Exception)
             {
@@ -285,6 +289,7 @@ public partial class Publisher
             CrisisTemplate: Template)
         {
             Party = id => long.TryParse(id, out var partyId) ? data.GetParty(partyId)?.Name ?? id : id,
+            ProjectNeedsSite = needsSite.Contains,
         };
     }
 

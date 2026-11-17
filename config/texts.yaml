@@ -1096,6 +1096,9 @@ content:
     summary: "-# Its summary, shown in `/info` and its posts:\n{text}"
     hidden: "Hidden: opinion {opinion}, salience {salience}."
     ministerial: "Ministerial: the minister can start it with `/ministry project`."
+    needsSite: "No province of its own: when a law, event or crisis starts it, its minister chooses where with `/ministry project`."
+    once: "Built once per game."
+    perProvince: "Built once in each province."
     requires: Needs a province with {condition}.
     fires: "Fires at the start of {when}."
     whenQueued: "the turn it is queued for with `/gm event queue`"
@@ -1234,7 +1237,7 @@ templates:
   unknownKind: "Can't tell what kind of template this is: a crisis has `answers`, a bill `lean`, a project `price`, an event `text` and an issue `for`."
   noIssueTemplate: "`issue`: no issue template `{issue}`."
   unknownCondition: "`requires`: unknown condition `{condition}`."
-  hereNeedsProvince: "`here` needs a `province`, or `ministerial: true` so the minister chooses one."
+  unknownRepeat: "`repeat` is `once`, `perProvince` or `always`, not `{value}`."
   bonusDeadline: "`bonus` needs exactly one deadline: `by: { season, year }` or `within: <seasons>`."
   scheduleShape: "`schedule` takes either `{ season, year }` or `{ delay }`."
   answerNotMap: answer {number} must be a map with `lean`, `label`, `text` and optionally `price` and `effects`.
@@ -1376,6 +1379,7 @@ effects:
     close: "Issue closed: {issue}"
     bill: "New bill: {bill}"
     project: "Project begun: {project}"
+    projectSite: "Project awaiting a site: {project}"
     crisis: "Crisis: {crisis}"
     conditionGained: "{province} is now *{condition}*"
     conditionLost: "{province} is no longer *{condition}*"
@@ -1879,6 +1883,8 @@ ministry:
     unitLine: "- {name} · d{sides} · {province}"
     projects: "**Projects**"
     projectLine: "- {line}"
+    sites: "**Awaiting a site** (place with `/ministry project`)"
+    siteLine: "- {project}"
     crises: "**Open crises**"
     crisisLine: "- {crisis} (answer {due})"
 
@@ -2272,6 +2278,7 @@ projects:
   autocomplete:
     live: "{project} · {province} · {progress} of {price}"
     template: "{project} · {ministry} · {price} over {term} seasons"
+    waiting: "{project} · awaiting a site · {ministry} · {price} over {term} seasons"
   refusal:
     unavailable: "Project `{id}` can't be started: {problem}."
     notMinisterial: "**{project}** is not a ministerial project: only a law, an event or a crisis can start it."
@@ -2284,6 +2291,9 @@ projects:
     unknownProvince: "no province `{id}`"
     requires: "{province} is not {condition}, which {project} requires"
     alreadyLive: "{project} is already under way"
+    alreadyWaiting: "{project} is already awaiting a site"
+    builtOnce: "{project} can be built only once, and has been"
+    builtHere: "{project} has already been built there"
     noLive: "no project from `{id}` is under way"
   private:
     stalledUnfunded: "**{project}** stalled this season: its spending is 0. Fund it with `/ministry fund`."

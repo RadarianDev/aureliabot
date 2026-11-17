@@ -3,6 +3,7 @@ title: Railway
 summary: "A rail line through the province of the minister's choosing, which lifts the economy and calms local discontent."
 ministerial: true
 purse: CommerceLabor
+repeat: perProvince
 price: 60
 term: 4
 effects: { economy: 20, discontent.here: -1 }

@@ -375,4 +375,113 @@ public class ProjectTests : AssemblyTestBase
         Fund(project, 10);
         Assert.True(ProjectForecast.For(Reload(project), 10, Graft, Db.GetGameState()).BeatsBonus);
     }
+
+    private const string Monument = """
+        id: monument
+        title: The Monument
+        purse: CommerceLabor
+        province: aurenten
+        repeat: once
+        price: 2
+        term: 1
+        effects: { economy: 1 }
+        """;
+
+    private const string Lighthouse = """
+        id: lighthouse
+        title: Lighthouse
+        ministerial: true
+        purse: CommerceLabor
+        requires: coastal
+        repeat: perProvince
+        price: 2
+        term: 1
+        effects: { economy: 1 }
+        """;
+
+    private const string Library = """
+        id: library
+        title: The First Library
+        purse: CommerceLabor
+        repeat: once
+        price: 2
+        term: 1
+        effects: { discontent.here: -1 }
+        """;
+
+    private void Finish(LiveProject project)
+    {
+        Apply(new Effect($"progress.{project.TemplateId}", (double)project.Price));
+        Resolve();
+        Assert.Equal(ProjectStatus.Finished, Reload(project).Status);
+    }
+
+    [Fact]
+    public void AOnceProject_IsNeverBuiltAgain_ButAHaltedOneCanBeTriedAgain()
+    {
+        Ready("monument", Monument);
+        var first = Start("monument");
+        Apply(new Effect("halt.monument", null));
+
+        var second = Start("monument");
+        Assert.NotEqual(first.Id, second.Id);
+        Finish(second);
+
+        var refused = Db.ApplyEffects([new Effect("project.monument", null)], Config, new EffectSource("test", "test", "2"));
+        Assert.Contains(refused.Warnings, w => w.Contains("only once"));
+        Assert.Equal(2, Db.GetProjects().Count(p => p.TemplateId == "monument"));
+    }
+
+    [Fact]
+    public void APerProvinceProject_IsRefusedTwiceInOneProvince_ButBuildsInAnother()
+    {
+        Ready("lighthouse", Lighthouse);
+        Finish(Db.StartMinisterialProject(Minister, "lighthouse", "north_arpal", Config).Project!);
+
+        Assert.NotNull(Db.StartMinisterialProject(Minister, "lighthouse", "north_arpal", Config).Refusal);
+        var elsewhere = Db.StartMinisterialProject(Minister, "lighthouse", "tovrerie", Config);
+        Assert.Null(elsewhere.Refusal);
+        Assert.Equal("tovrerie", elsewhere.Project!.ProvinceId);
+    }
+
+    [Fact]
+    public void AProjectWithNoProvince_StartedByAnEffect_WaitsForItsMinisterToPlaceIt()
+    {
+        Ready("library", Library);
+
+        Apply(new Effect("project.library", null));
+        Apply(new Effect("project.library", null));
+
+        Assert.Empty(Db.GetProjects().Where(p => p.TemplateId == "library"));
+        Assert.Single(Db.GetWaitingSites());
+        Assert.NotNull(Db.StartMinisterialProject(Backbencher, "library", "iracterie", Config).Refusal);
+
+        var placed = Db.StartMinisterialProject(Minister, "library", "iracterie", Config);
+        Assert.Null(placed.Refusal);
+        Assert.Equal("iracterie", placed.Project!.ProvinceId);
+        Assert.Empty(Db.GetWaitingSites());
+        Assert.NotNull(Db.StartMinisterialProject(Minister, "library", "aurenten", Config).Refusal);
+    }
+
+    [Fact]
+    public void AWaitingProject_IsSummarisedAsAwaitingASite()
+    {
+        Ready("library", Library);
+        var lines = EffectSummary.Lines([new Effect("project.library", null), new Effect("project.works", null)],
+            Publisher.Names(Db, Config), C.Display);
+
+        Assert.Contains("Project awaiting a site: The First Library", lines);
+        Assert.Contains("Project begun: The Works", lines);
+    }
+
+    [Fact]
+    public void Repeat_RoundTrips_AndAnUnknownValueIsRefused()
+    {
+        var parsed = TemplateCodec.Parse(Lighthouse, "l.yaml");
+        Assert.Equal(ProjectRepeat.PerProvince, Assert.IsType<ProjectTemplate>(parsed.Template).Repeat);
+        Assert.Contains("repeat: perProvince", TemplateCodec.Serialize(parsed.Template!));
+
+        var bad = TemplateCodec.Parse(Lighthouse.Replace("perProvince", "sometimes"), "l.yaml");
+        Assert.False(bad.IsValid);
+    }
 }

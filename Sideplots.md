@@ -154,8 +154,8 @@ Sacs) are unscheduled; queue them when they fit.
 | `drill_hall` (ministerial) | War | 15, 1 | threat −2 |
 | `harbour_of_refuge` (ministerial, coastal) | Commerce and Labor | 30, 2 | economy +5, discontent here −1 |
 | `model_lodging_house` (ministerial, urban) | Interior | 15, 1 | discontent here −1 |
-| `provincial_asylum` The Aurelle Asylum (from the Asylums Act) | Interior | 30, 2 | Aurenten −1, Iracterie −1 |
-| `free_library` The Iracten Free Library (from the Free Libraries Act) | Interior | 15, 1 | Iracterie −1 |
+| `provincial_asylum` The First Public Asylum (from the Asylums Act; built once, the Interior chooses where) | Interior | 30, 2 | discontent there −2 |
+| `free_library` The First Free Library (from the Free Libraries Act; built once, the Interior chooses where) | Interior | 15, 1 | discontent there −1 |
 
 ## Suggested calendar
 

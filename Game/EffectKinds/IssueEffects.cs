@@ -94,7 +94,9 @@ public sealed class ProjectEffect : ContentActionEffect
     public override string? Apply(Effect effect, IEffectStore store) => store.StartProject(effect.Target!);
 
     public override string? SummaryLine(Effect effect, EffectNames names, DisplayConstants display) =>
-        Texts.Get("effects.summary.project", ("project", names.ProjectTemplate(effect.Target!)));
+        names.ProjectNeedsSite(effect.Target!)
+            ? Texts.Get("effects.summary.projectSite", ("project", names.ProjectTemplate(effect.Target!)))
+            : Texts.Get("effects.summary.project", ("project", names.ProjectTemplate(effect.Target!)));
 }
 
 public sealed class CrisisEffect : ContentActionEffect

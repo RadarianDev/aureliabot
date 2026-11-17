@@ -49,6 +49,9 @@ public static class ContentPreview
         if (template is ProjectTemplate works)
         {
             if (works.Ministerial) sb.AppendLine(Texts.Get("content.preview.ministerial"));
+            if (works.NeedsSite && !works.Ministerial) sb.AppendLine(Texts.Get("content.preview.needsSite"));
+            if (works.Repeat == ProjectRepeat.Once) sb.AppendLine(Texts.Get("content.preview.once"));
+            if (works.Repeat == ProjectRepeat.PerProvince) sb.AppendLine(Texts.Get("content.preview.perProvince"));
             if (works.Requires is { } requires)
                 sb.AppendLine(Texts.Get("content.preview.requires", ("condition", config.Condition(requires)?.Name ?? requires)));
         }

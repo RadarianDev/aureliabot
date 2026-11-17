@@ -3,6 +3,7 @@ title: Canal cut
 summary: "A short canal joining two rivers in a province of the minister's choosing, so that coal and corn go by barge instead of by cart."
 ministerial: true
 purse: CommerceLabor
+repeat: perProvince
 price: 35
 term: 3
 effects: { economy: 10 }

@@ -34,18 +34,25 @@ public class MinisterialProjectAutocomplete : AutocompleteHandler
         IInteractionContext context, IAutocompleteInteraction autocompleteInteraction, IParameterInfo parameter, IServiceProvider services)
     {
         var typed = autocompleteInteraction.Data.Current.Value?.ToString() ?? "";
-        var results = services.GetRequiredService<DatabaseService>().GetMinisterialProjectTemplates()
+        var data = services.GetRequiredService<DatabaseService>();
+        var waiting = data.GetWaitingSites().Select(s => s.TemplateId).ToHashSet();
+        var results = data.GetPlaceableProjectTemplates()
             .Where(t => t.Title.Contains(typed, StringComparison.OrdinalIgnoreCase) || t.Id.Contains(typed, StringComparison.OrdinalIgnoreCase))
             .Take(25)
-            .Select(t => new AutocompleteResult(Display.Truncate(Texts.Get("projects.autocomplete.template",
-                ("project", t.Title), ("ministry", t.Purse.DisplayName()), ("price", Display.Crowns(t.Price)), ("term", t.Term)), 100), t.Id));
+            .Select(t => new AutocompleteResult(Display.Truncate(Label(t, waiting.Contains(t.Id)), 100), t.Id));
         return Task.FromResult(AutocompletionResult.FromSuccess(results));
     }
+
+    private static string Label(ProjectTemplate t, bool waiting) => waiting
+        ? Texts.Get("projects.autocomplete.waiting", ("project", t.Title), ("ministry", t.Purse.DisplayName()),
+            ("price", Display.Crowns(t.Price)), ("term", t.Term))
+        : Texts.Get("projects.autocomplete.template", ("project", t.Title), ("ministry", t.Purse.DisplayName()),
+            ("price", Display.Crowns(t.Price)), ("term", t.Term));
 
     public static ProjectTemplate? Find(DatabaseService data, string text)
     {
         var trimmed = text.Trim();
-        var templates = data.GetMinisterialProjectTemplates();
+        var templates = data.GetPlaceableProjectTemplates();
         return templates.FirstOrDefault(t => t.Id == trimmed)
             ?? templates.FirstOrDefault(t => t.Title.Equals(trimmed, StringComparison.OrdinalIgnoreCase));
     }

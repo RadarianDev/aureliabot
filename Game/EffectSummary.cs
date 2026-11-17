@@ -11,6 +11,8 @@ public sealed record EffectNames(
     Func<string, string> CrisisTemplate)
 {
     public Func<string, string> Party { get; init; } = id => id;
+
+    public Func<string, bool> ProjectNeedsSite { get; init; } = _ => false;
 }
 
 public static class EffectSummary

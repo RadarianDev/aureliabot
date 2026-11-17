@@ -249,7 +249,7 @@ bonus:
 | `title` | yes | Display name. |
 | `summary` | no | What the works are. Shown in `/info` and when it begins. |
 | `purse` | no | `War`, `Interior`, `CommerceLabor` or `Treasury`: who pays and runs it. Defaults to `CommerceLabor`. |
-| `province` | no | Where it is built; `here` in its effects stands for it. Leave it out for a ministerial project, where the minister chooses. |
+| `province` | no | Where it is built; `here` in its effects stands for it. Leave it out and the minister of its purse chooses: when starting a ministerial project, or, when a `project.{id}` effect starts it, by placing it with `/ministry project` (until then it waits for a site). |
 | `price` | yes | Total cost. |
 | `term` | yes | Seasons it should take. The pace, `price / term`, is the most a season can usefully absorb. | At the default split Commerce and Labor gets about 60 a year, enough for one project at a pace of 15 a season.
 | `effects` | no | Applied once when finished, and permanent. |
@@ -258,6 +258,7 @@ bonus:
 | `bonus.text` / `.effects` | no | Posted and applied on top of `effects` when the bonus is earned. |
 | `ministerial` | no | `true` lets the purse's minister start it with `/ministry project`. Defaults to `false`. |
 | `requires` | no | A condition the province must have, such as `coastal`. |
+| `repeat` | no | `once` (built once per game), `perProvince` (once in each province) or `always` (again as soon as it finishes; the default). A halted project doesn't count, so it can be tried again. |
 
 A project starts through a `project.{id}` effect (from a bill, event, crisis answer or another project),
 or, if ministerial, by its minister. The minister sets its spending each season with `/ministry fund`;
