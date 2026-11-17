@@ -1,0 +1,12 @@
+id: corvasse_mugian_gold
+title: Mugian Gold in Corvasse
+text: >-
+  A Mugian banker from the northern exclave is seen at Castle Corvasse, and the Duke's retainers have new
+  boots.
+when: "var.tariff_war >= 2 and favour < 50"
+effects:
+  - { favour: -5 }
+  - if: "posted.anzarian_musters == 0 and not issue.rearmament.open"
+    then: { open.rearmament: true }
+  - if: "posted.anzarian_musters == 0"
+    then: { crisis.anzarian_musters: true }

@@ -1,0 +1,24 @@
+id: treaty_of_bon
+title: The Treaty of Bon Is Sealed
+text: >-
+  Tsar Gerau seals the treaty, and the duties come down on both sides of the border. The Arpal road
+  reopens, carters queue at Kolgasi gate, and Mugian cloth is back in the Aurelian markets within the
+  month, to the dismay of the Iracterie weavers. The Arpal Question is not answered, but for now nobody is
+  asking it.
+when: "var.south_arpal_ending == 0 or var.south_arpal_ending == 3 or var.south_arpal_ending == 7"
+effects:
+  - { economy: 30, discontent.north_arpal: -2, discontent.ocidanten: -1, salience.social_reform: 1,
+      var.tariff_war: "=0", var.mugi_pressure: "=0", var.south_arpal_ending: "=1",
+      cancel.long_tariff_war: true, cancel.arpal_duties_ease: true, cancel.mugi_remonstrance: true,
+      cancel.arpal_rising: true, cancel.mugi_ultimatum: true, cancel.arpal_war: true,
+      cancel.senarstei_mission: true, cancel.squadron_off_lanten: true, cancel.lanten_blockade: true,
+      cancel.battle_of_the_passes: true, cancel.siege_of_kolgasi: true, cancel.arpal_peace_talks: true }
+  - if: "law.tariff_act"
+    then: { discontent.iracterie: 2 }
+    else: { discontent.iracterie: 1 }
+  - if: "issue.arpal_question.open"
+    then: { salience.arpal_question: -2 }
+  - if: "condition.ocidanten.blockaded"
+    then: { condition.ocidanten.blockaded: -1 }
+  - if: "condition.north_arpal.refugees"
+    then: { condition.north_arpal.refugees: -1 }

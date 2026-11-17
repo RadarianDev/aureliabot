@@ -1,0 +1,13 @@
+id: mugi_decrees
+title: The Tsar's Decrees
+text: >-
+  Tsar Gerau's first decrees lay a duty of one part in four on Aurelian coal, iron and corn, and the
+  governor of Kolgasi closes the Arpal road to Aurelian carters "pending review".
+when: "not law.tariff_act"
+effects:
+  - { economy: -20, discontent.north_arpal: 1, discontent.iracterie: 1, salience.free_trade: 1,
+      var.tariff_war: 1, crisis.mugian_duties: true,
+      event.kolgasi_market_closed: 4, event.mugi_remonstrance: 6, event.long_tariff_war: 10,
+      event.lanten_empty_berths: 2, event.corvasse_mugian_gold: 3, event.mugian_exchange_grumbles: 5 }
+  - if: "posted.tariff_act == 0"
+    then: { bill.tariff_act: true }

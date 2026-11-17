@@ -1,0 +1,7 @@
+id: arpal_rising
+title: The Arpal Rising
+text: >-
+  The villages around Kolgasi refuse the governor's papers and drive out his tax farmers. Mugian dragoons
+  ride out from Kolgasi.
+when: "var.tariff_war >= 3 and issue.arpal_question.open and posted.arpal_war == 0"
+effects: { salience.arpal_question: 1, crisis.south_arpal_rising: true }

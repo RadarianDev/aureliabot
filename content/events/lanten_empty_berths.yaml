@@ -1,0 +1,7 @@
+id: lanten_empty_berths
+title: Empty Berths at Lanten
+text: >-
+  Mugian hulls now carry the western trade past Lanten without stopping. Half the berths on the quays
+  stand empty, and the porters stand about beside them.
+when: "var.tariff_war >= 2"
+effects: { discontent.ocidanten: 1, economy: -10 }

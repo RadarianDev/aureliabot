@@ -1,0 +1,38 @@
+id: mugian_duties
+title: The Mugian Duties
+summary: "Mugi has laid a duty of one part in four on Aurelian coal, iron and corn, and closed the Arpal road to Aurelian carters. Commerce and Labor must talk, look away, or strike back."
+ministry: CommerceLabor
+province: north_arpal
+issue: free_trade
+answers:
+  - lean: For
+    label: Approach Count Senarstei and the Board of Trade
+    price: 20
+    text: >-
+      An Aurelian agent dines quietly with Count Senarstei's people. The Count would sign a treaty
+      tomorrow, he says, but the Tsar would not, and it is the Tsar who holds the seal.
+    effects:
+      - { var.mugi_pressure: 1 }
+      - if: "posted.mugian_commercial_treaty == 0"
+        then: { bill.mugian_commercial_treaty: true }
+  - lean: Neutral
+    label: Look away from the mountain paths
+    text: >-
+      The customs men are told to watch the road and not the paths. By the next market day the Arpal
+      carters have found a dozen ways round it.
+    effects: { economy: 5, event.arpal_smugglers: 2 }
+  - lean: Against
+    label: Answer duty with duty
+    text: >-
+      Aurelia lays her own duties on Mugian wine, silk and Ukulwian cotton. The reserve fills, the
+      Iracterie mills pay more for their cotton, and in Anpurgi the merchants send for their accounts.
+    effects:
+      - { reserve: 20, economy: -15, discontent.iracterie: 1, var.tariff_war: 1, var.mugi_pressure: 1,
+          cancel.kolgasi_market_closed: true, event.kolgasi_market_closed: true }
+      - if: "posted.cotton_famine_petition == 0"
+        then: { event.cotton_famine_petition: 3 }
+default:
+  text: >-
+    Nobody in Aurelle answers the Tsar. The carters wait at the closed road, and the governor of Kolgasi
+    takes the silence for weakness.
+  effects: { economy: -20, cancel.kolgasi_market_closed: true, event.kolgasi_market_closed: 2 }

@@ -1,0 +1,6 @@
+id: south_arpal_gendarmerie
+title: Gendarmes in South Arpal
+text: >-
+  The first Aurelian gendarmes ride into Kolgasi, to cheers in the villages and closed shutters in the
+  town. Their sergeant has been told to learn some Mugian.
+effects: { gendarmerie.south_arpal: 1, discontent.south_arpal: -1, purse.Interior: -10 }

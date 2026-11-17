@@ -1,0 +1,16 @@
+id: arpal_peace_talks
+title: Peace Talks at Bon
+text: >-
+  The Union of Bon offers its good offices once more, and this time both sides send their envoys. The
+  guns fall silent along the passes while the terms are argued over.
+when: "posted.arpal_war >= 1 and (var.south_arpal_ending == 0 or var.south_arpal_ending == 3 or var.south_arpal_ending == 7)"
+effects:
+  - { cancel.lanten_blockade: true, cancel.siege_of_kolgasi: true }
+  - if: "condition.ocidanten.blockaded"
+    then: { condition.ocidanten.blockaded: -1 }
+  - if: "var.kolgasi_taken >= 1"
+    then: { event.peace_victory: true }
+    else:
+      - if: "var.passes_held >= 1"
+        then: { event.peace_stalemate: true }
+        else: { event.peace_defeat: true }

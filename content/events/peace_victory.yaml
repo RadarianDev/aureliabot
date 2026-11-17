@@ -1,0 +1,16 @@
+id: peace_victory
+title: South Arpal Is Aurelian
+text: >-
+  By the Treaty of Bon, Mugi cedes South Arpal, Kolgasi included, to the Kingdom of Aurelia. The Arpal
+  valleys become Aurelia's eleventh province, the duties are gone, and the bells ring from Carden to
+  Aurelle. In Anpurgi Tsar Gerau signs the treaty in front of a silent Diet, and does not forget it.
+effects:
+  - { annex.south_arpal: true, var.tariff_war: "=0", var.south_arpal_ending: "=4",
+      discontent.north_arpal: -3, threat: -10, popularity.government: 3,
+      prestige.chancellor: 2, prestige.minister.War: 1,
+      event.kolgasi_merchants: 1, event.south_arpal_gendarmerie: 2,
+      cancel.mugi_ultimatum: true, cancel.arpal_war: true }
+  - if: "condition.north_arpal.refugees"
+    then: { condition.north_arpal.refugees: -1 }
+  - if: "issue.integration.open and posted.kolgasi_charter == 0"
+    then: { bill.kolgasi_charter: true }

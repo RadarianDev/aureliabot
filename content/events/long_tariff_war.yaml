@@ -1,0 +1,14 @@
+id: long_tariff_war
+title: The Long Tariff War
+text: >-
+  Another year, and the Mugian duties still stand. Nobody in Aurelle or Anpurgi has given way, the
+  smugglers have bought new mules, and a Mugian banker is again seen dining in Anzaria.
+when: "(var.south_arpal_ending == 0 or var.south_arpal_ending == 7) and var.tariff_war >= 1 and posted.arpal_war == 0"
+effects:
+  - { economy: -10, favour: -2, var.south_arpal_ending: "=7", event.long_tariff_war: 4 }
+  - if: "gendarmerie.north_arpal < 1 and not condition.north_arpal.lawless"
+    then: { condition.north_arpal.lawless: 1 }
+  - if: "gendarmerie.ocidanten < 1 and not condition.ocidanten.lawless"
+    then: { condition.ocidanten.lawless: 1 }
+  - if: "posted.cotton_famine_petition == 0"
+    then: { event.cotton_famine_petition: 3 }

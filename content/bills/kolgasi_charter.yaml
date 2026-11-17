@@ -1,0 +1,11 @@
+id: kolgasi_charter
+title: The Kolgasi Charter
+summary: "Gives Kolgasi its own elected council and keeps its Mugian merchants' courts. It would calm the new province, at some cost to those who wanted it ruled like any other."
+issue: integration
+lean: For
+motion: Grant the town of Kolgasi a charter of its own, with an elected council and its merchants' courts, as part of the Kingdom.
+pass:
+  text: >-
+    Kolgasi elects its first council, half Aurelian and half Mugian, and it argues for a week over which
+    language to keep the minutes in. It keeps both.
+  effects: { discontent.south_arpal: -2, economy: 5 }

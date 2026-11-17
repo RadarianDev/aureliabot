@@ -1,0 +1,12 @@
+id: kolgasi_settlement
+title: The Kolgasi Settlement
+summary: "Renounces every Aurelian claim to South Arpal for good, in exchange for the lifting of the Mugian duties. Peace and trade return, and North Arpal will not forgive it."
+issue: arpal_question
+lean: Against
+motion: Renounce for the Crown and its heirs every claim to the lands of South Arpal, in return for the lifting of all Mugian duties on Aurelian goods.
+pass:
+  text: >-
+    The Kolgasi Settlement passes in a silent chamber. The Mugian envoy signs within the hour, and in
+    Carden the shops put up their shutters as if for a funeral.
+  effects: { close.arpal_question: true, var.tariff_war: "=0", discontent.north_arpal: 3,
+             event.kolgasi_settlement_signed: true }

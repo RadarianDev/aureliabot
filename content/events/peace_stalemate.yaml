@@ -1,0 +1,7 @@
+id: peace_stalemate
+title: A White Peace
+text: >-
+  Aurelia holds the passes and Mugi holds Kolgasi, and neither can afford another season. At Bon both
+  sides sign a peace that changes nothing on the map and drop their duties out of exhaustion. The economy
+  has paid for everything, and nobody has won anything.
+effects: { economy: -10, popularity.government: -1, var.tariff_war: "=0", var.south_arpal_ending: "=6" }

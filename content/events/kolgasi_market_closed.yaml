@@ -1,0 +1,16 @@
+id: kolgasi_market_closed
+title: The Kolgasi Market Closes
+text: >-
+  Governor Astrau decrees that only holders of Mugian papers may sell in Kolgasi market. The Aurelian
+  villages of South Arpal, whose every sack of wool and cart of cheese goes to Kolgasi, are cut off from
+  the only town they have.
+effects:
+  - if: "not issue.arpal_question.open"
+    then: { open.arpal_question: true }
+  - { discontent.north_arpal: 1, var.tariff_war: 1, event.south_arpal_petition: true }
+  - if: "posted.arpal_guarantee == 0"
+    then: { bill.arpal_guarantee: true }
+  - if: "posted.kolgasi_settlement == 0"
+    then: { bill.kolgasi_settlement: true }
+  - if: "var.tariff_war >= 5 and posted.mugi_ultimatum == 0 and posted.arpal_war == 0"
+    then: { event.mugi_ultimatum: true }

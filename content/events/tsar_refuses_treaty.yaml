@@ -1,0 +1,7 @@
+id: tsar_refuses_treaty
+title: The Tsar Returns the Treaty Unsealed
+text: >-
+  The King's Messenger comes back from Anpurgi with the commercial treaty unsealed. Tsar Gerau has read
+  it, he says, and finds nothing in it about the Arpal valleys. Count Senarstei's friends in the Diet are
+  said to be furious, though not with Aurelia.
+effects: { var.mugi_pressure: 1 }

@@ -1,0 +1,39 @@
+id: squadron_crisis
+title: The Squadron off Lanten
+summary: "A Mugian squadron is cruising off Lanten and stopping what it pleases. The War Office can ask the Anzarian fleet to sail, fortify the harbours, or offer Mugi the Kolgasi Settlement."
+ministry: War
+province: ocidanten
+issue: rearmament
+answers:
+  - lean: For
+    label: Ask the Anzarian fleet to sail
+    text: >-
+      The War Office asks the Anzarian admirals to put to sea. What they answer depends on what the
+      Anzarian lords think the union is worth to them this year.
+    effects:
+      - if: "favour >= 50"
+        then: { threat: -10, var.mugi_pressure: 1, var.admirals_demand: "=1" }
+        else: { favour: -5, threat: 5 }
+  - lean: Neutral
+    label: Fortify Lanten and Saltmouth
+    price: 30
+    text: >-
+      New batteries go up on the Lanten moles and the Saltmouth headland. The squadron keeps a respectful
+      distance, and the harbour pays for the guns.
+    effects: { discontent.ocidanten: -1, threat: -5 }
+  - lean: Against
+    label: Offer the Tsar the Kolgasi Settlement
+    text: >-
+      The Mugian envoy is told that Aurelia might give up all claim to South Arpal if the duties are
+      lifted. The squadron stays where it is until the Assembly says so too.
+    effects:
+      - if: "posted.kolgasi_settlement == 0"
+        then: { bill.kolgasi_settlement: true }
+default:
+  text: >-
+    Nobody answers the squadron. It stops Aurelian ships at the harbour mouth and sends their cargoes to
+    Mugi for inspection.
+  effects:
+    - { economy: -30, discontent.ocidanten: 2, var.tariff_war: 1 }
+    - if: "var.tariff_war >= 5 and posted.mugi_ultimatum == 0 and posted.arpal_war == 0"
+      then: { event.mugi_ultimatum: true }

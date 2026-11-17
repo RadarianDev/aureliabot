@@ -1,0 +1,7 @@
+id: arpal_refugees_settle
+title: The Arpal Camps Empty
+text: >-
+  The last of the camps on the North Arpal roads are taken down. The families from over the passes have
+  found farms, lodgings and work, and the parish rates go back to what they were.
+when: "condition.north_arpal.refugees"
+effects: { condition.north_arpal.refugees: -1, discontent.north_arpal: -1 }

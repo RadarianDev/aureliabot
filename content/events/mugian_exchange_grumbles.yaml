@@ -1,0 +1,6 @@
+id: mugian_exchange_grumbles
+title: Grumbling in the Mugian Exchange
+text: >-
+  Mugian cloth piles up unsold in the Senarstei warehouses, and the Count's cousins and in-laws in the
+  Diet ask the Tsar how long Aurelia's custom is to be thrown away.
+when: "var.mugi_pressure >= 2"

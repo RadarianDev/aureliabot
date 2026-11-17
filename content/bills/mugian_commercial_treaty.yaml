@@ -1,0 +1,15 @@
+id: mugian_commercial_treaty
+title: The Mugian Commercial Treaty
+summary: "A treaty with Mugi in which both sides cut their duties. Good for trade, the ports and North Arpal, hard on the Iracterie weavers, and it needs the Tsar's seal as well as the Assembly's vote."
+issue: free_trade
+lean: For
+motion: Ratify a treaty of commerce with Mugi, by which each side lowers its duties on the other's goods to one part in twenty.
+pass:
+  text: >-
+    The Assembly ratifies the treaty, and a King's Messenger rides west with it for the Tsar's seal. In
+    Lanten the shipowners drink to it; in Iracten the weavers do not.
+  effects:
+    - { reserve: -15 }
+    - if: "var.mugi_pressure >= 3"
+      then: { var.tariff_war: "=0", prestige.sponsor: 2, event.treaty_of_bon: true }
+      else: { event.tsar_refuses_treaty: true }

@@ -152,7 +152,7 @@ public class GameFilesService : IDisposable
                 .Where(id => !pending.Contains(id) && _data.GetSetting(FileTemplateKeyPrefix + id) is not null));
         var ready = new List<string>();
         var problems = new Dictionary<string, string>();
-        for (var pass = 0; pass < 6 && pending.Count > 0; pass++)
+        while (pending.Count > 0)
         {
             var progress = false;
             foreach (var id in pending.ToList())

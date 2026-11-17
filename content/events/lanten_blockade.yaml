@@ -1,0 +1,14 @@
+id: lanten_blockade
+title: The Lanten Blockade
+text: >-
+  The Mugian squadron still lies off Lanten, and Aurelian trade waits on the Anzarian fleet. The
+  Anzarian admirals will sail if the Anzarian lords let them; if they do not, Lanten pays for another
+  season of empty quays.
+when: "posted.arpal_war >= 1 and (var.south_arpal_ending == 0 or var.south_arpal_ending == 3 or var.south_arpal_ending == 7)"
+effects:
+  - if: "favour >= 50"
+    then:
+      - { var.mugi_pressure: 1, threat: -5 }
+      - if: "condition.ocidanten.blockaded"
+        then: { condition.ocidanten.blockaded: -1 }
+    else: { economy: -20, event.lanten_blockade: 1 }

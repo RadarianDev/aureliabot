@@ -1,0 +1,16 @@
+id: battle_of_the_passes
+title: The Battle of the Passes
+text: >-
+  The North Arpal divisions go down the passes against the Kolgasi garrison. Whether the Tsar's
+  regiments from Ukulwia have reached Kolgasi in time, nobody in Carden knows. If the passes are lost,
+  Mugi will come over them.
+when: "posted.arpal_war >= 1 and (var.south_arpal_ending == 0 or var.south_arpal_ending == 3 or var.south_arpal_ending == 7)"
+effects:
+  - { event.siege_of_kolgasi: true }
+  - random:
+      - weight: 1
+        effects: { event.arpal_peace_talks: 2 }
+      - weight: 1
+        effects: { event.arpal_peace_talks: 3 }
+      - weight: 1
+        effects: { event.arpal_peace_talks: 4 }
