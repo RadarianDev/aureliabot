@@ -7,6 +7,12 @@ public sealed record ContentLoadResult(
     public bool Changed => Imported.Count > 0;
 }
 
+public sealed record PruneResult(
+    IReadOnlyList<string> Deleted, IReadOnlyList<string> Archived, int BillsWithdrawn, int EventsCancelled, IReadOnlyList<InPlay> InPlay)
+{
+    public int Count => Deleted.Count + Archived.Count;
+}
+
 public class GameFilesService : IDisposable
 {
     private const string HashKeyPrefix = "content_file:";
@@ -171,6 +177,44 @@ public class GameFilesService : IDisposable
         }
 
         return new ContentLoadResult(imported, ready, pending.Select(id => problems.GetValueOrDefault(id, id)).ToList(), unchanged);
+    }
+
+    public IReadOnlyList<TemplateRow> Orphans() =>
+        _data.GetSettingsWithPrefix(FileTemplateKeyPrefix)
+            .Where(s => !File.Exists(Path.Combine(ContentFolder, s.Value)))
+            .Select(s => _data.GetTemplate(s.Key[FileTemplateKeyPrefix.Length..]))
+            .OfType<TemplateRow>()
+            .Where(t => t.Status != TemplateStatus.Archived)
+            .OrderBy(t => t.Kind).ThenBy(t => t.Id, StringComparer.Ordinal)
+            .ToList();
+
+    public async Task<PruneResult> PruneAsync()
+    {
+        await _gate.WaitAsync();
+        try
+        {
+            var deleted = new List<string>();
+            var archived = new List<string>();
+            var bills = 0;
+            var events = 0;
+            var inPlay = new List<InPlay>();
+            foreach (var row in Orphans())
+            {
+                inPlay.AddRange(_data.StillInPlay(row.Id));
+                if (row.Kind == TemplateKind.Bill && _data.WithdrawIdleBill(row.Id)) bills++;
+                if (row.Kind == TemplateKind.Event) events += _data.CancelQueuedEvents(row.Id);
+                var neverPosted = row.Status == TemplateStatus.Draft && row.TimesPosted == 0;
+                ContentRules.Remove(_data, row.Id);
+                (neverPosted ? deleted : archived).Add(row.Id);
+                if (_data.GetSetting(FileTemplateKeyPrefix + row.Id) is { } path) _data.SetSetting(HashKeyPrefix + path, null);
+                _data.SetSetting(FileTemplateKeyPrefix + row.Id, null);
+            }
+            return new PruneResult(deleted, archived, bills, events, inPlay);
+        }
+        finally
+        {
+            _gate.Release();
+        }
     }
 
     public static string Describe(ContentLoadResult result)

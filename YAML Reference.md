@@ -12,7 +12,8 @@ There are two kinds of file:
   moment after a file is saved, every new or changed file is imported and marked Ready if it passes the
   readiness rules (anything that doesn't stays a Draft, and #gm gets the list). A file is only
   re-imported when the file itself changes, so an edit made in Discord with `/content edit` survives until
-  the file is edited. Deleting a file never deletes its template; use `/content remove`. Templates can
+  the file is edited. Deleting a file never deletes its template by itself: `/content prune` removes every
+  template whose file is gone (or `/content remove` one at a time). Templates can
   also be imported by attaching files to `/content import`, and `/content export` writes them back out in
   the same format.
 

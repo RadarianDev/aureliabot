@@ -85,4 +85,60 @@ public class GameFilesTests : IDisposable
         Assert.Single(result.Imported, o => !o.Imported);
         Assert.Equal(TemplateStatus.Ready, Db.GetTemplate("social_reform")!.Status);
     }
+
+    private void Delete(string relative) => File.Delete(Path.Combine(_root, "content", relative));
+
+    private void Apply(string text)
+    {
+        var parsed = EffectParser.ParseText(text, Db.BuildEffectContext(DatabaseFixture.Config, allowCrisis: true));
+        Assert.True(parsed.IsValid, string.Join("\n", parsed.Errors));
+        Db.ApplyEffects(parsed.Effects, DatabaseFixture.Config, new EffectSource("test", "test", "1"));
+    }
+
+    [Fact]
+    public async Task Prune_ArchivesATemplateWhoseFileIsGone_AndForgetsTheFile()
+    {
+        await _files.LoadContentAsync();
+        Delete("projects/drill_hall.yaml");
+
+        Assert.Equal(["drill_hall"], _files.Orphans().Select(t => t.Id));
+        var result = await _files.PruneAsync();
+
+        Assert.Equal(["drill_hall"], result.Archived);
+        Assert.Equal(TemplateStatus.Archived, Db.GetTemplate("drill_hall")!.Status);
+        Assert.Empty(_files.Orphans());
+        Assert.False((await _files.LoadContentAsync()).Changed);
+    }
+
+    [Fact]
+    public async Task Prune_NeverTouchesATemplateThatHadNoFile()
+    {
+        await _files.LoadContentAsync();
+        var outcome = ContentRules.ImportOne(Db, ContentRules.ImportContext(Db, DatabaseFixture.Config), new ImportFile("custom.yaml",
+            "id: custom_issue\ntitle: Custom\nfor: Yes.\nagainst: No.\nopinion: 0\nsalience: 1\n"));
+        Assert.True(outcome.Imported);
+
+        Assert.Empty(_files.Orphans());
+        Assert.Equal(0, (await _files.PruneAsync()).Count);
+        Assert.NotNull(Db.GetTemplate("custom_issue"));
+    }
+
+    [Fact]
+    public async Task Prune_WithdrawsAnAvailableBill_AndCancelsQueuedCopiesOfAnEvent()
+    {
+        await _files.LoadContentAsync();
+        Db.StartGame(DatabaseFixture.Config, DateTimeOffset.UtcNow);
+        Apply("open.social_reform, bill.vagrancy_act, event.cobbler_member 3");
+        Delete("bills/vagrancy_act.yaml");
+        Delete("events/cobbler_member.yaml");
+
+        var result = await _files.PruneAsync();
+
+        Assert.Equal(2, result.Count);
+        Assert.Equal(1, result.BillsWithdrawn);
+        Assert.Equal(1, result.EventsCancelled);
+        Assert.Empty(result.InPlay);
+        Assert.Equal(BillStatus.Withdrawn, Db.GetBills().Single(b => b.TemplateId == "vagrancy_act").Status);
+        Assert.DoesNotContain(Db.GetQueuedEvents(), e => e.TemplateId == "cobbler_member");
+    }
 }

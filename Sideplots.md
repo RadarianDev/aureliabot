@@ -191,8 +191,8 @@ third and fourth terms are lighter on purpose, while the Garaztian war and Merid
    women of property too. The Electoral Reform issue now says so.
 2. If the live game passed any of the scrapped bills (the Ballot Act, the Reform Bill, the Ten Hours Bill,
    the Act of Union and so on), should a new bill acknowledge it, or stay as written?
-3. The scrapped templates are still in the live database; `/content remove` takes out the ones you don't
-   want in `/content browse`.
+3. *Answered:* the scrapped templates are still in the live database; `/content prune` removes them all at
+   once.
 4. Is there a shipyard on the North Arpal shore of the southern bay, as The Iron Ship assumes? Tovrerie is
    the alternative.
 5. The invented names: Pellow's match works, Josiah Penn, the Great Lake Telegraph Company, the Sorales

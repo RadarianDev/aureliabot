@@ -17,9 +17,10 @@ public partial class ContentModule : InteractionModuleBase<SocketInteractionCont
     private readonly Publisher _publisher;
     private readonly CrisisPublisher _crises;
     private readonly WorkbenchSessions _sessions;
+    private readonly GameFilesService _gameFiles;
 
     public ContentModule(DatabaseService data, ConstantsStore constants, Confirmations confirmations, Publisher publisher, CrisisPublisher crises,
-        WorkbenchSessions sessions)
+        WorkbenchSessions sessions, GameFilesService gameFiles)
     {
         _data = data;
         _constants = constants;
@@ -27,6 +28,7 @@ public partial class ContentModule : InteractionModuleBase<SocketInteractionCont
         _publisher = publisher;
         _crises = crises;
         _sessions = sessions;
+        _gameFiles = gameFiles;
     }
 
     public const string CrisisEditMode = "crisis";

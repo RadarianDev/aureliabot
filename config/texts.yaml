@@ -1023,6 +1023,22 @@ content:
     deleted: "Deleted `{id}`: it was a Draft that was never posted."
     archived: "Archived `{id}`: it is out of use, but kept for the log."
     archivedCancelled: "Archived `{id}`: it is out of use, but kept for the log. Its queued scheduled event was cancelled."
+  prune:
+    none: "Every template loaded from `content/` still has its file. Nothing to prune."
+    button: Prune
+    line: "`{id}` · {kind} · {status}"
+    more: "…and {count} more."
+    confirm: |-
+      These {count} templates were loaded from files that are no longer in `content/`. Pruning deletes the ones that are Drafts never posted, archives the rest, cancels their queued events and withdraws their bills that are only available or resting. Anything already before the Assembly, live or being built is left to finish.
+      {list}
+    done: "Pruned {count} templates: {deleted} deleted, {archived} archived. {bills} bills withdrawn, {events} queued events cancelled."
+    inPlay:
+      heading: |-
+        Still in play, left to finish or cancel by hand:
+        {list}
+      bill: "`{id}`: a bill before the Assembly"
+      crisis: "`{id}`: a live crisis (`/gm crisis cancel`)"
+      project: "`{id}`: a project being built"
   export:
     none: There are no templates to export.
     doneOne: "{count} template. Edit the files and `/content import` the zip, or single files, to bring them back."
