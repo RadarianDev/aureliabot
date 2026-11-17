@@ -1,0 +1,11 @@
+id: union_post_act
+title: The Union Penny Post Act
+summary: "Carries a letter anywhere in Aurelia and Anzaria for a single penny stamp. It draws the two realms closer and helps trade, and costs Commerce and Labor money while it grows."
+issue: integration
+lean: For
+motion: Carry any letter of half an ounce between any two places in Aurelia and Anzaria for one penny, paid in advance by stamp.
+pass:
+  text: >-
+    The King's head appears on a red penny stamp. Letters from Istralan reach Aurelle in four days, and
+    the Anzarian lords find that their tenants can now write to the newspapers.
+  effects: { purse.CommerceLabor: -10, economy: 5, favour: -2, discontent.agrinenten: -1 }

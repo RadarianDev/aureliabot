@@ -1,0 +1,12 @@
+id: corn_bounty_act
+title: The Corn Bounty Act
+summary: "Pays a bounty from the reserve on every quarter of corn shipped abroad, to keep the farmers' prices up in a glut. The farmers gain; the reserve and the bread buyers of the towns pay."
+issue: free_trade
+lean: Against
+motion: Pay a bounty from the reserve on every quarter of Aurelian corn exported, for as long as the home price stays below forty shillings.
+pass:
+  text: >-
+    The corn barges go down to the coast with the bounty paid, and the home price climbs back. The farmers
+    of Provencie Sacs drink the King's health; the bakers of Aurelle raise their loaf by a farthing.
+  effects: { reserve: -15, discontent.provencie_sacs: -1, discontent.agrinenten: -1,
+             discontent.aurenten: 1 }

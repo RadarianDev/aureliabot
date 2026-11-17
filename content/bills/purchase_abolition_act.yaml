@@ -1,0 +1,11 @@
+id: purchase_abolition_act
+title: The Abolition of Purchase Act
+summary: "Ends the sale of army commissions, so that officers rise by merit, and buys back from the War purse the commissions already sold. A better-led army; the officers of good family and their Anzarian cousins are offended."
+issue: rearmament
+lean: For
+motion: End the sale of army commissions, and buy back from the War purse every commission already purchased.
+pass:
+  text: >-
+    A colonel's commission, which cost four thousand crowns last year, is now worth nothing at all. General
+    Sir Hannibal Strake approves; his officers write home to their fathers.
+  effects: { purse.War: -10, threat: -3, favour: -2 }

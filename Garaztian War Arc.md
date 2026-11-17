@@ -89,7 +89,7 @@ the opera; between the fish and the ices he asks the Treasury for a loan. Opens 
 | Answer | Lean | Result |
 | --- | --- | --- |
 | Lend him the interest from the reserve (price 20) | For | Reserve −40, `garaztia_loan` 1, goodwill +1. The scheduled default is cancelled and queued two seasons later. |
-| Introduce him to the Bonnish bankers (price 10) | Neutral | Nothing. |
+| Introduce him to the Bonnish bankers | Neutral | Nothing, but spares the goodwill the default costs. |
 | Mention the request to the Arrosian envoy | Against | Arrosia +1, Garaztia −1. |
 | *Default* | | Garaztia −1. |
 
@@ -142,7 +142,7 @@ Gares +1. Posts **Crisis: The Gares Refugees** (`gares_refugees`, Interior):
 | Answer | Lean | Result |
 | --- | --- | --- |
 | Look the other way at the bridges | For | Garaztia +1, Arrosia −1, threat +5. |
-| Buy their muskets back (price 15) | Neutral | Gares +1. |
+| Buy their muskets back (price 15) | Neutral | Nothing: a quiet border. |
 | Arrest the ringleaders (price 10) | Against | Gares +2, Arrosia +1, Garaztia −1. |
 | *Default* | | They cross anyway: Arrosia −1, threat +5, Gares +1. |
 
@@ -169,7 +169,7 @@ Posts **Crisis: King Fernao's Appeal** (`garaztian_appeal`, War):
 | Answer | Lean | Result |
 | --- | --- | --- |
 | Send arms and officers (price 30) | For | Garaztia +2, Arrosia −2, threat +5. |
-| Sell them arms at a fair price | Neutral | Reserve +15, Garaztia +1, Arrosia −1. |
+| Sell them arms at a fair price | Neutral | Reserve +5, Garaztia +1, Arrosia −1. |
 | Refuse, and seal the arsenals | Against | Garaztia −1, Arrosia +1. |
 | *Default* | | Garaztia −1. |
 

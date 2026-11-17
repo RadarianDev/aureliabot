@@ -1,0 +1,9 @@
+id: gas_lighting
+title: Gas lighting
+summary: "Gas lamps along the main streets of a town of the minister's choosing. Safer streets at night, and a gasworks at the end of them."
+ministerial: true
+purse: Interior
+requires: urban
+price: 20
+term: 1
+effects: { discontent.here: -1, economy: 3 }

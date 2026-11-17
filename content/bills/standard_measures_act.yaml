@@ -1,0 +1,11 @@
+id: standard_measures_act
+title: The Standard Measures Act
+summary: "Abolishes the old local bushels, ells and stones, and sets one Crown measure for both realms. Trade is easier; the Anzarian markets lose their old ways."
+issue: free_trade
+lean: For
+motion: Abolish every local measure, and set one standard of weight and length, kept at Aurelle, for Aurelia and Anzaria alike.
+pass:
+  text: >-
+    Brass standards go out to every market town in the union. The Anzarian corn factors swear the new
+    bushel is smaller than the old, and they are right, by a cupful.
+  effects: { economy: 8, purse.CommerceLabor: -5, favour: -2 }

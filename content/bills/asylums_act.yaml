@@ -1,0 +1,11 @@
+id: asylums_act
+title: The Provincial Asylums Act
+summary: "Obliges every province to keep a public asylum for the insane poor, instead of the workhouse or the gaol, and builds the first at Aurelle. Humane, and paid for by the Interior."
+issue: social_reform
+lean: For
+motion: Require every province to keep a public asylum for the insane poor, under a Crown visitor, and build the first at Aurelle.
+pass:
+  text: >-
+    The lunatics are taken out of the workhouse cellars and the gaols. The architects of Aurelle draw an
+    asylum with a chapel, a farm and a great many windows, and the ratepayers count the windows.
+  effects: { purse.Interior: -10, discontent.aurenten: -1, project.provincial_asylum: true }

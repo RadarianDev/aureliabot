@@ -1,0 +1,12 @@
+id: vaccination_act
+title: The Vaccination Act
+summary: "Makes cowpox vaccination free and compulsory for every child before its first birthday, with a fine for parents who refuse. It saves lives in the towns and angers the countryside."
+issue: social_reform
+lean: For
+motion: Vaccinate every child against the smallpox before its first birthday, free of charge, and fine any parent who refuses.
+pass:
+  text: >-
+    The parish doctors set up their lancets in the vestries. In the towns the mothers queue. In Provencie
+    Sacs a farmer tells the doctor his children will grow horns, and pays the fine in copper.
+  effects: { purse.Interior: -5, discontent.aurenten: -1, discontent.iracterie: -1,
+             discontent.provencie_sacs: 1 }

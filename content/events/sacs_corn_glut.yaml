@@ -1,0 +1,7 @@
+id: sacs_corn_glut
+title: A Glut of Corn in Provencie Sacs
+text: >-
+  The best harvest in twenty years has filled every barn in Provencie Sacs, and the price of corn has
+  fallen by a third. The bakers are pleased. The farmers meet at Sagtias and ask the Crown to pay them to
+  send the surplus abroad.
+effects: { discontent.provencie_sacs: 1, economy: 5, bill.corn_bounty_act: true }

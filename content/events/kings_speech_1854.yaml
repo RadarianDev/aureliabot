@@ -1,0 +1,14 @@
+id: kings_speech_1854
+title: The King Opens the Second Assembly
+text: >-
+  King Arthas II opens the new Assembly in person. His Majesty thanks the members for their attendance,
+  and lays before them measures for pure food, honest elections, the encouragement of commerce, a cheaper
+  post between his two realms, clean air in the towns and a better-led army.
+schedule: { season: Summer, year: 1854 }
+effects:
+  - { bill.adulteration_act: true, bill.corrupt_practices_act: true, bill.limited_liability_act: true,
+      bill.smoke_nuisance_act: true }
+  - if: "issue.integration.open"
+    then: { bill.union_post_act: true }
+  - if: "issue.rearmament.open"
+    then: { bill.purchase_abolition_act: true }

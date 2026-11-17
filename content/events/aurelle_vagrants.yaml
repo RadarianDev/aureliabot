@@ -1,0 +1,7 @@
+id: aurelle_vagrants
+title: The Beggars of the Aurelle Bridges
+text: >-
+  The vestries of Aurelle complain that the river bridges are lined with beggars from end to end, and
+  that half of them came in from the country for the season. A deputation of ratepayers asks the Assembly
+  to clear the streets.
+effects: { discontent.aurenten: 1, bill.vagrancy_act: true }

@@ -5,8 +5,8 @@ Small stories that run between the arcs in [Arcs.md](Arcs.md), from the second t
 They replace the first-term content, and they give every standing issue fresh bills both ways (the Tariff
 Act stays the Against bill on Free Trade, and the Army Bill and the Militia Act stay on Rearmament).
 
-None of these events is scheduled. The GM queues each one with `/gm event queue`, at the season suggested
-below or whenever it fits. The arc-tied ones carry a `when`, so if the arc hasn't reached that situation
+Only Firedamp at Harrow Vale and the three King's Speeches are scheduled. The GM queues every other one
+with `/gm event queue`, at the season suggested below or whenever it fits. The arc-tied ones carry a `when`, so if the arc hasn't reached that situation
 when they come due they skip themselves with a GM alert.
 
 Names of people, firms, ships and places below Lore.md's level are *(extrapolated)*.
@@ -91,23 +91,96 @@ after the victory peace.
 | `gares_relief_road` | Interior | 40, 3 | Gares −2, economy +5, removes `refugees` from Gares |
 | `kolgasi_road` | Commerce and Labor | 50, 4 | economy +10, South Arpal −2, North Arpal −1 |
 
+## Firedamp at Harrow Vale
+
+*(extrapolated: the Harrow Vale colliery)* A firedamp explosion kills sixty-one colliers near Iracten.
+`harrow_vale_disaster` is **scheduled for Autumn 1853**, so it fires on its own. It makes the **Mining
+Protections Bill** (`mining_protections_bill`, Social Reform, For) available and posts the Commerce and
+Labor crisis `harrow_vale_inquiry`: pay relief and open a Crown inquiry (20), head a public subscription
+(10), or accept the coroner's verdict of accidental death.
+
+The bill is a player's proposal (`suggested-bills/suggested-bills.md`). Its motion keeps all three sections:
+ventilation, props and first aid; the owners' share of injury, disablement and widows' pay; quarterly Crown
+inspection with fines, closure, and the Crown taking a pit after twelve failed inspections. On passing:
+economy −20, Commerce and Labor −15, Iracterie −2, North Arpal −1.
+
+## The King's Speeches
+
+Each new Assembly opens with a speech that puts a slate of small bills on the order paper. They are
+scheduled, so they fire on their own. Bills on Integration and Rearmament are left out if that issue has
+closed.
+
+| Event | Season | Slate |
+| --- | --- | --- |
+| `kings_speech_1854`: The King Opens the Second Assembly | Summer 1854 | Adulteration of Food, Corrupt Practices, Limited Liability, Smoke Nuisance, Union Penny Post, Abolition of Purchase |
+| `kings_speech_1858`: The King Opens the Third Assembly | Autumn 1858 (Summer has the Garaztian default) | Provincial Asylums, Polling Places, Standard Measures, Free Libraries, Separate Seals, Army Retrenchment |
+| `kings_speech_1862`: The King Opens the Fourth Assembly | Autumn 1862 (Summer has the Iratic expedition) | Vaccination, Members' Qualification, Rates Relief, Master and Servant |
+
+## Small bills
+
+| Bill | Issue, lean | Comes in by | On passing |
+| --- | --- | --- | --- |
+| `adulteration_act` The Adulteration of Food Act | Social Reform, For | Speech 1854 | economy −5, Aurenten −1, Iracterie −1 |
+| `asylums_act` The Provincial Asylums Act | Social Reform, For | Speech 1858 | Interior −10, Aurenten −1, starts `provincial_asylum` |
+| `vaccination_act` The Vaccination Act | Social Reform, For | Speech 1862 | Interior −5, Aurenten −1, Iracterie −1, Provencie Sacs +1 |
+| `vagrancy_act` The Vagrancy Act | Social Reform, Against | `aurelle_vagrants` | Interior +5, economy +5, Aurenten +1 |
+| `master_and_servant_act` The Master and Servant Act | Social Reform, Against | Speech 1862 | economy +10, Iracterie +1, Ocidanten +1 |
+| `corrupt_practices_act` The Corrupt Practices Act | Electoral Reform, For | Speech 1854 | Interior −5, Aurenten −1, Tovrerie −1 |
+| `polling_places_act` The Polling Places Act | Electoral Reform, For | Speech 1858 | Interior −10, Provencie Gares −1, Soralenten −1 |
+| `property_qualification_act` The Members' Qualification Act | Electoral Reform, Against | Speech 1862 | Aurenten +1, Iracterie +1, Favour +2 |
+| `limited_liability_act` The Limited Liability Act | Free Trade, For | Speech 1854 | economy +12, Aurenten +1 |
+| `standard_measures_act` The Standard Measures Act | Free Trade, For | Speech 1858 | economy +8, Commerce and Labor −5, Favour −2 |
+| `corn_bounty_act` The Corn Bounty Act | Free Trade, Against | `sacs_corn_glut` | reserve −15, Provencie Sacs −1, Agrinenten −1, Aurenten +1 |
+| `union_post_act` The Union Penny Post Act | Integration, For | Speech 1854 | Commerce and Labor −10, economy +5, Favour −2, Agrinenten −1 |
+| `separate_seals_act` The Separate Seals Act | Integration, Against | Speech 1858 | Favour +3, Aurenten +1 |
+| `free_libraries_act` The Free Libraries Act | Public Works, For | Speech 1858 | Interior −5, Iracterie −1, starts `free_library` |
+| `smoke_nuisance_act` The Smoke Nuisance Act | Public Works, For | Speech 1854 | economy −10, Aurenten −1, Iracterie −1 |
+| `rates_relief_act` The Rates Relief Act | Public Works, Against | Speech 1862 | Interior +10, economy −5, Provencie Sacs −1, Provencie Gares +1 |
+| `purchase_abolition_act` The Abolition of Purchase Act | Rearmament, For | Speech 1854 | War −10, threat −3, Favour −2 |
+| `army_retrenchment_act` The Army Retrenchment Act | Rearmament, Against | Speech 1858 | reserve +15, threat +3 |
+
+`aurelle_vagrants` (The Beggars of the Aurelle Bridges) and `sacs_corn_glut` (A Glut of Corn in Provencie
+Sacs) are unscheduled; queue them when they fit.
+
+## Small projects
+
+| Project | Purse | Price, term | Effects |
+| --- | --- | --- | --- |
+| `corn_exchange` (ministerial, farmland) | Commerce and Labor | 25, 2 | economy +6, discontent here −1 |
+| `gas_lighting` (ministerial, urban) | Interior | 20, 1 | discontent here −1, economy +3 |
+| `canal_cut` (ministerial) | Commerce and Labor | 35, 3 | economy +10 |
+| `customs_house` (ministerial, coastal) | Treasury | 20, 2 | reserve +10, economy +3 |
+| `military_road` (ministerial, frontier) | War | 30, 2 | threat −3, economy +3 |
+| `drill_hall` (ministerial) | War | 15, 1 | threat −2 |
+| `harbour_of_refuge` (ministerial, coastal) | Commerce and Labor | 30, 2 | economy +5, discontent here −1 |
+| `model_lodging_house` (ministerial, urban) | Interior | 15, 1 | discontent here −1 |
+| `provincial_asylum` The Aurelle Asylum (from the Asylums Act) | Interior | 30, 2 | Aurenten −1, Iracterie −1 |
+| `free_library` The Iracten Free Library (from the Free Libraries Act) | Interior | 15, 1 | Iracterie −1 |
+
 ## Suggested calendar
 
 Avoiding the election turns (Spring 1858, Spring 1862) and the arcs' big beats (the Diet in Spring 1855,
-the King of Garaztia in Summer 1857, the Garaztian default in Summer 1858, Meridia in Summer 1862):
+the King of Garaztia in Summer 1857, the Garaztian default in Summer 1858, Meridia in Summer 1862).
+Scheduled events are marked; the rest are for the GM to queue:
 
 | Season | Sideplot |
 | --- | --- |
-| Summer 1854 | The Member Who Walked Home |
+| Autumn 1853 | Firedamp at Harrow Vale (scheduled) |
+| Winter 1853 | The Walking Gentlemen Return (scheduled, South Arpal foreshadowing) |
+| Summer 1854 | The King Opens the Second Assembly (scheduled); The Member Who Walked Home |
 | Autumn 1854 | The Iracten Match Girls |
 | Winter 1854 | The Toll Gates of Provencie Sacs |
 | Summer 1855 | The Fidacren Wire |
 | Autumn 1855 | The Sorales Burial Club Absconds |
 | Spring 1856 | The Navvies Go to the Poll |
-| Autumn 1858 | The Fever Ship at Escas |
+| Autumn 1856 | A Glut of Corn in Provencie Sacs |
+| Winter 1856 | The Beggars of the Aurelle Bridges |
+| Autumn 1858 | The King Opens the Third Assembly (scheduled) |
+| Winter 1858 | The Fever Ship at Escas |
 | Autumn 1859 | The Iron Ship |
 | Spring 1860 | The Hulls at Lanten |
-| Autumn 1862 | The Agrines Poacher |
+| Autumn 1862 | The King Opens the Fourth Assembly (scheduled) |
+| Winter 1862 | The Agrines Poacher |
 
 The second term carries most of them because the South Arpal arc leaves the most room around it. The
 third and fourth terms are lighter on purpose, while the Garaztian war and Meridia run.

@@ -12,14 +12,14 @@ answers:
       Escas is closed to shipping for a season, and Crown engineers lay a main from the upland springs.
       The fever burns out, the merchants count their spoiled fish, and the town drinks clean water for the
       first time.
-    effects: { discontent.provencie_gares: -1, economy: -10, condition.provencie_gares.epidemic: -1 }
+    effects: { discontent.provencie_gares: -2, economy: -10, condition.provencie_gares.epidemic: -1 }
   - lean: Neutral
     label: Hold the ship in quarantine
     price: 10
     text: >-
       The Maribel is towed to the outer roads and held for forty days. The fever in the town lasts a while
       longer, then fades.
-    effects: { condition.provencie_gares.epidemic: -1 }
+    effects: { discontent.provencie_gares: 1, condition.provencie_gares.epidemic: -1 }
   - lean: Against
     label: Leave it to the Escas merchants
     text: >-

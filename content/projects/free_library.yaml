@@ -1,0 +1,8 @@
+id: free_library
+title: The Iracten Free Library
+summary: "A public library and reading room in Iracten, open in the evenings so that the mill hands and colliers can use it."
+purse: Interior
+province: iracterie
+price: 15
+term: 1
+effects: { discontent.here: -1 }

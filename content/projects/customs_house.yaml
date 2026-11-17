@@ -1,0 +1,9 @@
+id: customs_house
+title: Customs house
+summary: "A new customs house on a harbour of the minister's choosing, with bonded warehouses and enough clerks to collect what is owed."
+ministerial: true
+purse: Treasury
+requires: coastal
+price: 20
+term: 2
+effects: { reserve: 10, economy: 3 }

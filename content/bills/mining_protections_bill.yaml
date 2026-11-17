@@ -1,0 +1,20 @@
+id: mining_protections_bill
+title: The Mining Protections Bill
+summary: "Sets safety rules for every mine, makes owners pay towards injured miners and widows, and sends Crown inspectors down the pits with the power to fine and close. The colliers gain; the owners and Commerce and Labor pay."
+issue: social_reform
+lean: For
+motion: >-
+  Require every mine to be ventilated by furnace or fan and propped with timber at regular intervals,
+  and every pit of more than five hundred men to keep someone trained to treat injuries. Make the owner
+  pay at least two parts in five of a miner's treatment for any injury at work, three months' wages to a
+  man disabled for life, and half a year's wages to the family of a man killed. Send a Crown inspector
+  down every mine each quarter and every major mine each month; fine the owner one part in twenty of the
+  mine's earnings for each rule broken; close the mine after six failed inspections, fine the owner
+  three parts in ten of his income after eight, and take the mine into the Crown's hands after twelve.
+pass:
+  text: >-
+    The first Crown inspectors go down Harrow Vale with safety lamps and notebooks. The owners fit fans,
+    buy timber and complain of the expense in every newspaper that will print them. In the pit villages
+    the widows' wages are paid on the quarter day, and a collier's wife can name the inspector.
+  effects: { economy: -20, purse.CommerceLabor: -15,
+             discontent.iracterie: -2, discontent.north_arpal: -1 }

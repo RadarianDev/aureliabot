@@ -17,11 +17,11 @@ answers:
         then: { event.arpal_war: true }
   - lean: Neutral
     label: Open the border to refugees
-    price: 20
+    price: 10
     text: >-
       The border posts are told to let the families through. They come over the passes with their carts
       and cattle, and the rising behind them is put down.
-    effects: { discontent.north_arpal: 2, purse.Interior: -10, condition.north_arpal.refugees: 1,
+    effects: { discontent.north_arpal: 1, purse.Interior: -10, condition.north_arpal.refugees: 1,
                event.rising_crushed: true }
   - lean: Against
     label: Seal the border

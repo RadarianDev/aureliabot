@@ -1,0 +1,11 @@
+id: vagrancy_act
+title: The Vagrancy Act
+summary: "Makes begging and sleeping rough offences, punished by the workhouse or a month in gaol. The streets are cleared and the rates lightened, at a cost to the poor of the towns."
+issue: social_reform
+lean: Against
+motion: Make begging, and sleeping in the open without visible means, offences punishable by the workhouse or a month in gaol.
+pass:
+  text: >-
+    The constables clear the bridges of Aurelle in a single night. The gaols fill, the rates fall, and the
+    beggars move one parish over, where the constables are slower.
+  effects: { purse.Interior: 5, economy: 5, discontent.aurenten: 1 }

@@ -1,0 +1,9 @@
+id: military_road
+title: Military road
+summary: "A metalled road to the border in a frontier province of the minister's choosing, so that troops and guns can reach it in days instead of weeks."
+ministerial: true
+purse: War
+requires: frontier
+price: 30
+term: 2
+effects: { threat: -3, economy: 3 }

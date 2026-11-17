@@ -17,7 +17,6 @@ answers:
     text: >-
       A War Office paymaster buys every musket in Valcarcel at a little over its value. The Baron's men go
       home richer and angrier.
-    effects: { discontent.provencie_gares: 1 }
   - lean: Against
     label: Arrest the ringleaders
     price: 10

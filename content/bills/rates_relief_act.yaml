@@ -1,0 +1,12 @@
+id: rates_relief_act
+title: The Rates Relief Act
+summary: "Caps the county rates that pay for roads, bridges and drains, and hands the savings back to the ratepayers. Landowners gain; the far provinces wait longer for their roads."
+issue: public_works
+lean: Against
+motion: Cap the county rate for roads, bridges and drains at its present level for ten years.
+pass:
+  text: >-
+    The ratepayers get their money back, a few pence each. The county surveyors put away their plans, and
+    the bridge at Escas stays shut for another winter.
+  effects: { purse.Interior: 10, economy: -5, discontent.provencie_sacs: -1,
+             discontent.provencie_gares: 1 }

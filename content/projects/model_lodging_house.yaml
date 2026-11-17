@@ -1,0 +1,9 @@
+id: model_lodging_house
+title: Model lodging house
+summary: "A clean, cheap lodging house for working men in a town of the minister's choosing, with a bed each and a washroom on every floor."
+ministerial: true
+purse: Interior
+requires: urban
+price: 15
+term: 1
+effects: { discontent.here: -1 }

@@ -1,0 +1,11 @@
+id: army_retrenchment_act
+title: The Army Retrenchment Act
+summary: "Closes the reserve depots and cuts the officers' allowances, and returns the savings to the reserve. Thrift for the Treasury; the frontier is thinner."
+issue: rearmament
+lean: Against
+motion: Reduce the army estimates by closing the reserve depots and cutting the officers' allowances, and return the savings to the reserve.
+pass:
+  text: >-
+    The depots are closed and their stores sold off. The reserve is fuller, and the Mugian newspapers note
+    the auction of four thousand pairs of Aurelian boots.
+  effects: { reserve: 15, threat: 3 }

@@ -1,0 +1,11 @@
+id: separate_seals_act
+title: The Separate Seals Act
+summary: "Keeps a Great Seal of Anzaria apart from Aurelia's, so that Anzarian grants and charters pass under their own seal and their own chancellor. The Anzarian lords are pleased; the capital is not."
+issue: integration
+lean: Against
+motion: Keep a separate Great Seal and Chancellor for Anzaria, through which every Anzarian grant, charter and commission must pass.
+pass:
+  text: >-
+    A new silver seal is cut in Sulmar, with the old Anzarian bear on it. The lords ride in to watch it
+    used for the first time, and the clerks in Aurelle now copy every paper twice.
+  effects: { favour: 3, discontent.aurenten: 1 }

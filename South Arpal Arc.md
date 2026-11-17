@@ -279,7 +279,7 @@ Rearmament):
 Posts **Crisis: The Rising in South Arpal** (War, North Arpal, issue Arpal Question):
 
 - **March to the villages' aid (price 30, For):** `tariff_war` "=6" → Ending 4, the war.
-- **Open the border to refugees (price 20, Neutral):** North Arpal +2, Interior purse −10. Refugees
+- **Open the border to refugees (price 10, Neutral):** North Arpal +1, Interior purse −10. Refugees
   flood in → Ending 3.
 - **Seal the border (Against):** North Arpal +3, the rising is crushed → Ending 3.
 - **Default:** the rising is crushed, refugees cross anyway, North Arpal `lawless` → Ending 3.

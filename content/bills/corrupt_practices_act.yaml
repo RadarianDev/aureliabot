@@ -1,0 +1,11 @@
+id: corrupt_practices_act
+title: The Corrupt Practices Act
+summary: "Caps what a candidate may spend at an election and makes treating, bribery and the hire of voters crimes that void the seat. Cleaner polls; the Interior pays for the returning officers."
+issue: electoral_reform
+lean: For
+motion: Limit each candidate's election expenses, and void the election of any member whose agents bribe, treat or hire voters.
+pass:
+  text: >-
+    The candidates at the next by-election stand their supporters nothing stronger than tea. Turnout is
+    lower, the speeches are longer, and the publicans of the market towns petition for repeal.
+  effects: { purse.Interior: -5, discontent.aurenten: -1, discontent.tovrerie: -1 }

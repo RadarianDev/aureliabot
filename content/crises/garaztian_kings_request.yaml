@@ -15,7 +15,6 @@ answers:
                cancel.garaztian_default: true, event.garaztian_default: 5 }
   - lean: Neutral
     label: Introduce him to the Bonnish bankers
-    price: 10
     text: >-
       The Treasury gives a dinner at which the King meets three Bonnish bankers. They admire his
       moustache and decline his paper.

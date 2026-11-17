@@ -1,0 +1,9 @@
+id: harbour_of_refuge
+title: Harbour of refuge
+summary: "A stone breakwater on an exposed coast of the minister's choosing, where ships can run for shelter in a gale."
+ministerial: true
+purse: CommerceLabor
+requires: coastal
+price: 30
+term: 2
+effects: { economy: 5, discontent.here: -1 }

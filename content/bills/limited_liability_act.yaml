@@ -1,0 +1,11 @@
+id: limited_liability_act
+title: The Limited Liability Act
+summary: "Lets any company of seven partners limit their debts to what they put in. Capital flows into new ventures; so do the speculators."
+issue: free_trade
+lean: For
+motion: Allow any company of seven or more partners to register with limited liability, so that no partner owes more than his shares.
+pass:
+  text: >-
+    Three hundred new companies are registered in the first season, for railways, mines, gasworks and a
+    balloon post to Sulmar. Some of them will be heard of again.
+  effects: { economy: 12, discontent.aurenten: 1 }

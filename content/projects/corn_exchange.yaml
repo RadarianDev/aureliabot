@@ -1,0 +1,9 @@
+id: corn_exchange
+title: Corn exchange
+summary: "A covered corn exchange in a farming province of the minister's choosing, where the farmers sell by sample under one roof instead of in the inn yards."
+ministerial: true
+purse: CommerceLabor
+requires: farmland
+price: 25
+term: 2
+effects: { economy: 6, discontent.here: -1 }

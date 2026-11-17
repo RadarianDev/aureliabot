@@ -14,7 +14,7 @@ answers:
     effects: { discontent.tovrerie: -1 }
   - lean: Neutral
     label: Hold the election again
-    price: 20
+    price: 10
     text: >-
       The by-election is held again, after the navvies have moved on to the next cutting. Tovres returns
       the losing candidate, and nobody is entirely satisfied.

@@ -129,4 +129,47 @@ public class SideplotTests : IDisposable
             Assert.True(releasedByTheGm.Contains(id) || content.Any(yaml => yaml.Contains($"bill.{id}:")), $"{id} is never introduced");
         }
     }
+
+    [Fact]
+    public void The_Harrow_Vale_disaster_brings_in_the_mining_bill_and_the_widows_crisis()
+    {
+        Fire("harrow_vale_disaster");
+
+        Assert.True(BillAvailable("mining_protections_bill"));
+        Assert.True(CrisisPosted("harrow_vale_inquiry"));
+    }
+
+    [Fact]
+    public void The_first_kings_speech_puts_its_whole_slate_on_the_order_paper()
+    {
+        Run("open.rearmament");
+
+        Fire("kings_speech_1854");
+
+        foreach (var bill in new[] { "adulteration_act", "corrupt_practices_act", "limited_liability_act",
+                     "smoke_nuisance_act", "union_post_act", "purchase_abolition_act" })
+            Assert.True(BillAvailable(bill), bill);
+    }
+
+    [Fact]
+    public void A_kings_speech_leaves_out_bills_whose_issue_is_closed()
+    {
+        Run("close.integration");
+
+        Fire("kings_speech_1858");
+
+        Assert.True(BillAvailable("asylums_act"));
+        Assert.False(BillAvailable("separate_seals_act"));
+        Assert.False(BillAvailable("army_retrenchment_act"));
+    }
+
+    [Theory]
+    [InlineData("aurelle_vagrants", "vagrancy_act")]
+    [InlineData("sacs_corn_glut", "corn_bounty_act")]
+    public void A_small_event_brings_in_its_bill(string eventId, string bill)
+    {
+        Fire(eventId);
+
+        Assert.True(BillAvailable(bill));
+    }
 }

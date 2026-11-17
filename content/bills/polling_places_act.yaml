@@ -1,0 +1,11 @@
+id: polling_places_act
+title: The Polling Places Act
+summary: "Opens a polling place in every parish and holds every poll on a single day, so country voters need not walk to the county town. Good for the far provinces; the Interior pays."
+issue: electoral_reform
+lean: For
+motion: Open a polling place in every parish, and hold every poll in the kingdom on the same day.
+pass:
+  text: >-
+    The hustings move from the county towns to the parish greens. In Provencie Gares a shepherd votes for
+    the first time, three miles from his door instead of thirty.
+  effects: { purse.Interior: -10, discontent.provencie_gares: -1, discontent.soralenten: -1 }

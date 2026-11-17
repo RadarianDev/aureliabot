@@ -1,0 +1,10 @@
+id: harrow_vale_disaster
+title: Firedamp at Harrow Vale
+text: >-
+  The Harrow Vale colliery, two miles out of Iracten, blew up at the start of the morning shift. Firedamp
+  gathered in the old workings, where the furnace draught never reached, and a collier's lamp found it.
+  Sixty-one men and boys are dead. The owners say the pit was as safe as any in the kingdom, which the
+  colliers say is the trouble.
+schedule: { season: Autumn, year: 1853 }
+effects: { discontent.iracterie: 1, salience.social_reform: 1,
+           crisis.harrow_vale_inquiry: true, bill.mining_protections_bill: true }

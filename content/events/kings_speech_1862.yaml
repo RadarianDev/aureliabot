@@ -1,0 +1,9 @@
+id: kings_speech_1862
+title: The King Opens the Fourth Assembly
+text: >-
+  King Arthas II opens the fourth Assembly. His Majesty asks the members to protect the kingdom's
+  children from the smallpox, to set a qualification for those who sit among them, to relieve the
+  ratepayers, and to settle the law between masters and their men.
+schedule: { season: Autumn, year: 1862 }
+effects: { bill.vaccination_act: true, bill.property_qualification_act: true,
+           bill.rates_relief_act: true, bill.master_and_servant_act: true }

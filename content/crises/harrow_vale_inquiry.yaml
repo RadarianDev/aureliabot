@@ -1,0 +1,38 @@
+id: harrow_vale_inquiry
+title: The Harrow Vale Widows
+summary: "Sixty-one colliers died in the firedamp explosion at Harrow Vale, near Iracten. Commerce and Labor must decide who pays for the widows, and who answers for the pit."
+ministry: CommerceLabor
+province: iracterie
+issue: social_reform
+answers:
+  - lean: For
+    label: Pay relief to the families and open a Crown inquiry
+    price: 20
+    text: >-
+      The Crown pays the widows a pension for the year and sends a commissioner down the pit. His report
+      finds the old workings unventilated and the props rotten, and the owners' lawyers find a great many
+      faults in his report.
+    effects: { discontent.iracterie: -2, salience.social_reform: 1 }
+  - lean: Neutral
+    label: Open a public subscription for the families
+    price: 10
+    text: >-
+      The Crown heads a public subscription with a hundred crowns, and the newspapers print the names of
+      every donor. The widows are fed for the winter, and nobody asks about the pit.
+    effects: { discontent.iracterie: -1 }
+  - lean: Against
+    label: Accept the coroner's verdict of accidental death
+    text: >-
+      The coroner's jury, six of them the owners' tenants, returns a verdict of accidental death. Harrow
+      Vale reopens within the fortnight, and the colliers go down it because there is no other work.
+    effects: { discontent.iracterie: 2, economy: 5 }
+complication:
+  text: >-
+    The relief money runs out before the funerals are paid for, and the widows march on the Iracten
+    exchange in their black.
+  effects: { discontent.iracterie: 1, discontent.aurenten: 1 }
+default:
+  text: >-
+    No word comes from the capital. The families bury their dead by subscription among the other pits,
+    and the colliers of three valleys stop work for a day to walk behind the coffins.
+  effects: { discontent.iracterie: 2, economy: -5 }

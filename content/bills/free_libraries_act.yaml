@@ -1,0 +1,11 @@
+id: free_libraries_act
+title: The Free Libraries Act
+summary: "Lets any town levy a halfpenny rate for a free public library, and opens the first in Iracten. Cheap, popular with the working towns, and a little dull for everyone else."
+issue: public_works
+lean: For
+motion: Allow any town council to levy a rate of a halfpenny in the crown for a free public library and reading room.
+pass:
+  text: >-
+    The Iracten reading room opens with four thousand books and a notice forbidding conversation. By the
+    second week the colliers outnumber the clergy.
+  effects: { purse.Interior: -5, discontent.iracterie: -1, project.free_library: true }

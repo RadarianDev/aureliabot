@@ -1,0 +1,11 @@
+id: smoke_nuisance_act
+title: The Smoke Nuisance Act
+summary: "Orders every furnace in a town to burn its own smoke, on pain of a fine. The towns breathe easier; the mills and foundries pay for new furnaces."
+issue: public_works
+lean: For
+motion: Require every furnace, mill and foundry within a town to consume its own smoke, on pain of a fine for each day it does not.
+pass:
+  text: >-
+    The mills of Iracten fit new furnaces and the sky over the town turns a paler shade of brown. A man in
+    Aurelle reports seeing the cathedral from the river for the first time in his life.
+  effects: { economy: -10, discontent.aurenten: -1, discontent.iracterie: -1 }

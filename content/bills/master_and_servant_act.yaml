@@ -1,0 +1,11 @@
+id: master_and_servant_act
+title: The Master and Servant Act
+summary: "Makes a workman who leaves his employment before his contract ends liable to gaol, while a master who breaks it pays only damages. The masters gain a steadier workforce; the mill and dock towns are angry."
+issue: social_reform
+lean: Against
+motion: Make a workman who quits his service before the end of his contract liable to three months in gaol, and a master who breaks it liable to damages.
+pass:
+  text: >-
+    The magistrates of Iracten send four spinners to gaol in the first week for leaving a mill without
+    notice. The mill owners call it the end of idleness, and the spinners call it something else.
+  effects: { economy: 10, discontent.iracterie: 1, discontent.ocidanten: 1 }

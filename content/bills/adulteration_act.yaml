@@ -1,0 +1,11 @@
+id: adulteration_act
+title: The Adulteration of Food Act
+summary: "Appoints a public analyst in every province and fines any baker, grocer or dairyman caught selling alum in bread, chalk in milk or sand in sugar. Good for the towns; the shopkeepers grumble."
+issue: social_reform
+lean: For
+motion: Appoint a public analyst in every province, and fine any trader who sells food or drink mixed with anything harmful or false.
+pass:
+  text: >-
+    The analysts set up their microscopes, and the first fines fall on a baker in Aurelle and a milkman in
+    Iracten. The bread is greyer and the milk is thinner, and both are now what they say they are.
+  effects: { economy: -5, discontent.aurenten: -1, discontent.iracterie: -1 }

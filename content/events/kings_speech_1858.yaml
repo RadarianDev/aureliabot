@@ -1,0 +1,14 @@
+id: kings_speech_1858
+title: The King Opens the Third Assembly
+text: >-
+  King Arthas II opens the third Assembly. His Majesty commends to the members the care of the insane
+  poor, a polling place in every parish, one measure for the whole union, the dignity of his Anzarian
+  seal, free libraries for the working towns and economy in the army estimates.
+schedule: { season: Autumn, year: 1858 }
+effects:
+  - { bill.asylums_act: true, bill.polling_places_act: true, bill.standard_measures_act: true,
+      bill.free_libraries_act: true }
+  - if: "issue.integration.open"
+    then: { bill.separate_seals_act: true }
+  - if: "issue.rearmament.open"
+    then: { bill.army_retrenchment_act: true }

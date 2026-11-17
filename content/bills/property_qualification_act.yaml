@@ -1,0 +1,11 @@
+id: property_qualification_act
+title: The Members' Qualification Act
+summary: "Requires every member of the Assembly to own land or funds worth three hundred crowns a year. It keeps the Assembly for men of substance, and shuts the door on candidates from the towns."
+issue: electoral_reform
+lean: Against
+motion: Require every member of the Assembly to hold land or funds yielding three hundred crowns a year.
+pass:
+  text: >-
+    Two members for the towns resign their seats rather than lie about their incomes. The rest are
+    discovered to own a surprising number of small farms, most of them bought the week before.
+  effects: { discontent.aurenten: 1, discontent.iracterie: 1, favour: 2 }

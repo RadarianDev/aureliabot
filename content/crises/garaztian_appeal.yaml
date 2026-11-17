@@ -17,7 +17,7 @@ answers:
     text: >-
       The arsenals sell King Fernao old muskets for new gold. Both kingdoms think they have had the better
       of the bargain.
-    effects: { reserve: 15, var.garaztia_goodwill: 1, var.arrosia_goodwill: -1 }
+    effects: { reserve: 5, var.garaztia_goodwill: 1, var.arrosia_goodwill: -1 }
   - lean: Against
     label: Refuse, and seal the arsenals
     text: >-

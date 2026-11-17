@@ -57,7 +57,7 @@ note two turns later.
 crisis below; queues **A Second Flag at Seravad** (two turns), **Anpurgi Considers Meridia** (four)
 and **The Emperor Offers Bon** (eight).
 
-**Crisis: The Arrosian Note on Meridia** (`meridian_note`, Treasury, Iracterie)
+**Crisis: The Arrosian Note on Meridia** (`meridian_note`, Interior, Iracterie)
 
 | Answer | Lean | Result |
 | --- | --- | --- |
