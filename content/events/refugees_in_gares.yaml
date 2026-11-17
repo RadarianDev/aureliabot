@@ -1,0 +1,9 @@
+id: refugees_in_gares
+title: Refugees on the Escas Road
+text: >-
+  Garaztian families cross into Provencie Gares with their cattle and their bedding, fleeing the
+  Arrosian columns. They camp in the churchyards and along the cliff roads, and the parishes of Escas
+  ask who is to feed them.
+when: "var.garaztia_ending == 0"
+effects: { condition.provencie_gares.refugees: 1, discontent.provencie_gares: 1,
+           crisis.gares_refugees: true }

@@ -1,0 +1,11 @@
+id: charters_echo
+title: A Toast to the Valleys
+text: >-
+  At a dinner in Sulmar the Duke of Corvasse raises his glass to the Garaztian valleys, "who have their
+  charters back from honest merchants, since they could not keep them from their kings". The Anzarian
+  lords drink. In Aurelle the newspapers ask whose charters he meant.
+when: "var.valleys == 2"
+effects:
+  - { favour: 3 }
+  - if: "issue.integration.open"
+    then: { salience.integration: 1 }

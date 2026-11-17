@@ -1,0 +1,35 @@
+id: gares_volunteers
+title: The Volunteers of Urkiola
+summary: "Baron Urkiola and other border-lord families of Provencie Gares are arming their tenants to cross and fight beside their Garaztian kin. The War Office must let them go, disarm them, or arrest them."
+ministry: War
+province: provencie_gares
+issue: garaztian_question
+answers:
+  - lean: For
+    label: Look the other way at the bridges
+    text: >-
+      The Volunteers of Urkiola cross the border at dawn with a band playing. The Arrosian envoy calls at
+      the War Office before lunch.
+    effects: { var.garaztia_goodwill: 1, var.arrosia_goodwill: -1, threat: 5 }
+  - lean: Neutral
+    label: Buy their muskets back at a fair price
+    price: 15
+    text: >-
+      A War Office paymaster buys every musket in Urkiola at a little over its value. The Baron's men go
+      home richer and angrier.
+    effects: { discontent.provencie_gares: 1 }
+  - lean: Against
+    label: Arrest the ringleaders
+    price: 10
+    text: >-
+      Dragoons ride into the courtyard at Urkiola and take the Baron to Escas gaol. The Arrosian envoy
+      sends the War Office his compliments.
+    effects: { discontent.provencie_gares: 2, var.arrosia_goodwill: 1, var.garaztia_goodwill: -1 }
+complication:
+  text: The War Office cannot pay, and the volunteers cross with the money in their pockets.
+  effects: { var.arrosia_goodwill: -1, threat: 3 }
+default:
+  text: >-
+    No orders come from the War Office. The volunteers cross anyway, and the Arrosians blame Aurelia for
+    them.
+  effects: { var.arrosia_goodwill: -1, threat: 5, discontent.provencie_gares: 1 }

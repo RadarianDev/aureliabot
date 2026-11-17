@@ -1,0 +1,35 @@
+id: arrosian_border
+title: Arrosian Columns on the Gares Border
+summary: "With the valleys open to them, Arrosian columns are marching along the Gares border, and their quartermasters want forage and remounts. The War Office must man the frontier, talk, or trade with them."
+ministry: War
+province: provencie_gares
+issue: garaztian_question
+answers:
+  - lean: For
+    label: Man the border forts
+    price: 30
+    text: >-
+      A new division takes post along the Gares border, and its pickets stand in sight of the Arrosian
+      outposts. Nobody fires.
+    effects: { division.provencie_gares: 1, threat: -5, var.arrosia_goodwill: -1 }
+  - lean: Neutral
+    label: Send a colonel to dine with their general
+    price: 10
+    text: >-
+      An Aurelian colonel dines with Colonel-Paymaster Ferrol. They agree on where the border is, and on
+      very little else.
+    effects: { threat: -3 }
+  - lean: Against
+    label: Sell their quartermasters forage and remounts
+    text: >-
+      Gares farmers sell hay and horses to the Arrosians at war prices, and the reserve does well out of
+      the duties. Their Garaztian cousins do not forgive them.
+    effects: { reserve: 20, var.arrosia_goodwill: 1, var.garaztia_goodwill: -1,
+               discontent.provencie_gares: 1 }
+complication:
+  text: The War purse cannot pay for the march, and the forts stand half empty.
+  effects: { threat: 3, discontent.provencie_gares: 1 }
+default:
+  text: >-
+    Nobody answers. Arrosian foragers cross the border for hay and take what they find.
+  effects: { threat: 5, discontent.provencie_gares: 1 }

@@ -1,0 +1,9 @@
+id: arrosian_ultimatum
+title: The Arrosian Ultimatum
+text: >-
+  The Arrosian Republic gives Garaztia one season to hand over the customs houses of its ports and its
+  border roads, "to be administered by the creditors until the debt is discharged". King Antso answers
+  that Garaztia is a kingdom, not a pawnshop.
+when: "var.garaztia_ending == 0"
+effects: { var.garaztia_war: "=2", threat: 5, salience.garaztian_question: 1,
+           crisis.arrosian_envoy: true, event.the_collection: 1 }

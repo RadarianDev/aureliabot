@@ -1,0 +1,37 @@
+id: arrosian_envoy
+title: The Envoy's Invitation
+summary: "Signor Bertran Cascall, the Arrosian envoy, invites Aurelia to take a share of the Garaztian collection, in return for the use of the Gares roads. The Treasury must answer him."
+ministry: Treasury
+province: provencie_gares
+issue: garaztian_question
+answers:
+  - lean: For
+    label: Tell him Aurelia stands by Garaztia
+    text: >-
+      The envoy is told that Aurelia will not see foreign regiments on the Gares border without concern.
+      He bows, writes it down, and asks how much concern, exactly.
+    effects: { threat: 5, var.arrosia_goodwill: -1, var.garaztia_goodwill: 1 }
+  - lean: Neutral
+    label: Offer the good offices of the Union of Bon
+    price: 15
+    text: >-
+      Aurelia proposes that the Diet of Bon look into the debt. The Arrosian houses agree to look into
+      the proposal.
+    effects:
+      - random:
+          - effects: { cancel.the_collection: true, event.the_collection: 2 }
+          - effects: { threat: 2 }
+  - lean: Against
+    label: Accept a retaining fee and listen
+    text: >-
+      The envoy leaves a draft on an Arrosian house "for the Treasury's trouble", and a map of the Gares
+      roads with the inns marked.
+    effects: { reserve: 10, var.arrosia_goodwill: 1, var.garaztia_goodwill: -1 }
+complication:
+  text: The Treasury cannot pay for the mission to Bon, and the envoy takes its silence for consent.
+  effects: { var.arrosia_goodwill: 1, var.garaztia_goodwill: -1 }
+default:
+  text: >-
+    The envoy waits a season for an answer and gets none. He writes home that Aurelia will not
+    interfere.
+  effects: { threat: 3 }

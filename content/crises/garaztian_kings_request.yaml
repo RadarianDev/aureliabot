@@ -1,0 +1,35 @@
+id: garaztian_kings_request
+title: The King's Private Request
+summary: "King Antso of Garaztia has asked the Treasury, privately, for a loan to meet the interest on his Arrosian debts. The Treasury must lend, send him elsewhere, or tell the Arrosians."
+ministry: Treasury
+province: provencie_gares
+issue: garaztian_question
+answers:
+  - lean: For
+    label: Lend him the interest from the reserve
+    price: 20
+    text: >-
+      A Treasury draft on the reserve leaves Aurelle in the King's own baggage. The Arrosian houses are
+      paid on the day, and King Antso writes that he will not forget it.
+    effects: { reserve: -40, var.garaztia_loan: "=1", var.garaztia_goodwill: 1,
+               cancel.garaztian_default: true, event.garaztian_default: 5 }
+  - lean: Neutral
+    label: Introduce him to the Bonnish bankers
+    price: 10
+    text: >-
+      The Treasury gives a dinner at which the King meets three Bonnish bankers. They admire his
+      moustache and decline his paper.
+  - lean: Against
+    label: Mention the request to the Arrosian envoy
+    text: >-
+      Over cards, a Treasury man lets the Arrosian envoy know what the King of Garaztia has been asking
+      for. The envoy is very grateful, and so, in a day or two, is the Arrosian exchange.
+    effects: { var.arrosia_goodwill: 1, var.garaztia_goodwill: -1 }
+complication:
+  text: The reserve cannot spare it, and the King is offered a smaller sum he finds insulting.
+  effects: { var.garaztia_goodwill: -1 }
+default:
+  text: >-
+    No answer comes from the Treasury. The King goes home with a gold snuffbox, the freedom of the city
+    and no loan.
+  effects: { var.garaztia_goodwill: -1 }

@@ -1,0 +1,36 @@
+id: gares_refugees
+title: The Gares Refugees
+summary: "Garaztian families fleeing the Arrosian columns are camped along the roads of Provencie Gares, and many have kin in the province. The Interior must feed them, move them on, or close the border."
+ministry: Interior
+province: provencie_gares
+issue: garaztian_question
+answers:
+  - lean: For
+    label: Open relief camps at Escas
+    price: 20
+    text: >-
+      Tents, soup and a doctor go up on the common at Escas. The refugees are fed, and in Garaztia it is
+      said that Aurelia looks after its neighbours.
+    effects: { discontent.provencie_gares: -1, var.garaztia_goodwill: 1 }
+  - lean: Neutral
+    label: Pay their passage on from Escas
+    price: 15
+    text: >-
+      The Interior charters ships at Escas and sends the refugees along the coast to wherever will take
+      them. The camps empty, and so does the Interior's purse.
+    effects: { condition.provencie_gares.refugees: -1 }
+  - lean: Against
+    label: Close the border with the gendarmerie
+    price: 10
+    text: >-
+      Gendarmes turn the carts back at the border bridges. The Arrosians are pleased. The families of
+      Gares, whose cousins are in those carts, are not.
+    effects: { discontent.provencie_gares: 2, var.arrosia_goodwill: 1, var.garaztia_goodwill: -1 }
+complication:
+  text: The money runs out before the winter, and the camps turn ugly.
+  effects: { discontent.provencie_gares: 1 }
+default:
+  text: >-
+    Nobody is sent and nothing is paid for. The refugees shift for themselves, and the back lanes of
+    Escas fill with men who have nothing to lose.
+  effects: { discontent.provencie_gares: 2, condition.provencie_gares.lawless: 1 }

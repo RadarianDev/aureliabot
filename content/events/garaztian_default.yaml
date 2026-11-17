@@ -1,0 +1,14 @@
+id: garaztian_default
+title: Garaztia Stops Paying
+text: >-
+  The Garaztian treasury announces that the interest on its Arrosian loans is "deferred until the harvest".
+  In the Arrosian exchange the merchant houses call it a default, and their clerks are seen pricing
+  Garaztian customs houses by the yard.
+schedule: { season: Summer, year: 1858 }
+when: "var.garaztia_ending == 0"
+effects:
+  - if: "not issue.garaztian_question.open"
+    then: { open.garaztian_question: true }
+  - { var.garaztia_war: "=1", salience.garaztian_question: 1, threat: 3,
+      bill.garaztian_loan: true, bill.arrosian_convention: true, bill.garaztian_neutrality: true,
+      event.arrosian_ultimatum: 1 }

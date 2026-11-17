@@ -1,0 +1,13 @@
+id: valleys_rally
+title: The Valleys Rise for Their King
+text: >-
+  The valleys burn the Arrosian offer under the oaks and send their men down to the King. The collectors
+  find the roads to the customs houses held by shepherds with old muskets, and Colonel-Paymaster Ferrol
+  writes home for more regiments and more money. King Antso writes to Aurelle for arms.
+when: "var.garaztia_ending == 0"
+effects:
+  - { var.garaztia_war: "=4", var.valleys: "=1", threat: 3, crisis.garaztian_appeal: true }
+  - random:
+      - effects: { event.garaztian_war_ends: 1 }
+      - effects: { event.garaztian_war_ends: 2 }
+      - effects: { event.garaztian_war_ends: 3 }

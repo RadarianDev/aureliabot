@@ -1,0 +1,9 @@
+id: gares_camps_close
+title: The Camps at Escas Empty
+text: >-
+  With the war over, the Garaztian families in Provencie Gares load their carts and go home, all but a
+  few hundred who have found work, or wives, in Escas. The parishes count what the winter cost them.
+effects:
+  - if: "condition.provencie_gares.refugees"
+    then: { condition.provencie_gares.refugees: -1 }
+  - { discontent.provencie_gares: -1 }

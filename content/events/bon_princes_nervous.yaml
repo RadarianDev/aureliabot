@@ -1,0 +1,8 @@
+id: bon_princes_nervous
+title: Nerves in the Diet of Bon
+text: >-
+  In the Diet of Bon the Prince-Bishop of Hallerau asks, in a trembling voice, whether the Republic means
+  to collect from every prince who owes its houses money. Several princes leave the chamber to write to
+  their bankers. The Emperor says nothing, as is his custom.
+when: "var.garaztia_war >= 3"
+effects: { threat: 2 }

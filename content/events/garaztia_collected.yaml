@@ -1,0 +1,14 @@
+id: garaztia_collected
+title: The Collection Completed
+text: >-
+  By the Treaty of Bon the Arrosian creditors keep the Garaztian customs houses until the last crown of
+  the debt is paid, which their own clerks reckon will be in about thirty years. King Antso keeps his
+  throne and his palace, and nothing else. In his capital they remember which neighbours stood and
+  watched.
+effects:
+  - { var.garaztia_ending: "=3", var.garaztia_war: "=0", var.garaztia_goodwill: -1,
+      threat: 5, economy: -10 }
+  - if: "issue.garaztian_question.open"
+    then: { close.garaztian_question: true }
+  - if: "condition.provencie_gares.refugees"
+    then: { event.gares_camps_close: 2 }
