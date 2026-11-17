@@ -55,6 +55,9 @@
 - A faction campaigns on its party's stance by default. It may take a different one, but that is announced as going **off-programme**.
 - A faction's **stance** on an issue is the last one it took in public: its party's programme, a campaign, or a vote once counted (voting Yes on a bill takes the bill's side of the issue, No takes the other). That is the stance rivals can attack. Factions of the same party can't attack each other.
 - Each province is judged on its own mood. The more factions campaign on the same side of an issue in the same province in a turn, the less each gains.
+- A province tires of hearing the same faction on the same issue: each campaign there on it wins less than the last. The tiredness halves every turn (every day in the pre-election), so a turn or two away restores most of it. A fresh campaign wins a little more than it used to, so moving around pays.
+- Campaigning off your party's programme wins less than campaigning on it.
+- Tiredness and going off-programme only shrink what a campaign wins. They never soften a campaign that loses popularity.
 - All actions are revealed together when the turn ends.
 ## Government & Opposition
 - A party is in **government** if any of its factions holds a cabinet post, and so is every cabinet member. Every other party is in **opposition**. Independents outside the cabinet are neither.

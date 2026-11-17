@@ -7,7 +7,8 @@ minHoursBetweenResolutions: 12
 preElectionDays: 3
 seasonsPerTerm: 16
 popularity: { min: 0, max: 100, start: 10, drift: 0.07, spread: 0.1 }
-campaign: { factor: 4, baseline: 0.25, actionsPerTurn: 2, actionsPerPreElectionDay: 5, crowding: true }
+campaign: { factor: 4, baseline: 0.25, actionsPerTurn: 2, actionsPerPreElectionDay: 5, crowding: true,
+            fresh: 1.2, offProgramme: 0.6, fatigue: { weight: 0.5, fade: 0.5 } }
 attack: { factor: 3, backfire: 3 }
 poll: { opinionNoise: 0.25, salienceNoise: 1 }
 strongStancePenalty: 0.5

@@ -354,7 +354,8 @@ minHoursBetweenResolutions: 12
 preElectionDays: 3
 seasonsPerTerm: 16
 popularity: { min: 0, max: 100, start: 10, drift: 0.07, spread: 0.1 }
-campaign: { factor: 4, baseline: 0.25, actionsPerTurn: 2, actionsPerPreElectionDay: 5, crowding: true }
+campaign: { factor: 4, baseline: 0.25, actionsPerTurn: 2, actionsPerPreElectionDay: 5, crowding: true,
+            fresh: 1.2, offProgramme: 0.6, fatigue: { weight: 0.5, fade: 0.5 } }
 attack: { factor: 3, backfire: 3 }
 poll: { opinionNoise: 0.25, salienceNoise: 1 }
 strongStancePenalty: 0.5
@@ -421,6 +422,10 @@ startingForces:
 | `campaign.actionsPerTurn` | Actions per faction in a normal turn. |
 | `campaign.actionsPerPreElectionDay` | Actions per faction on each day of the pre-election. |
 | `campaign.crowding` | Divide a campaign's gain by √(factions on the same side of the issue in the same province × that faction's own campaigns there). |
+| `campaign.fresh` | Multiplier on a winning campaign with no tiredness, on programme. Set so the average campaign earns what it did before tiredness and the off-programme cut (see the spec's Campaign formula). Default 1. |
+| `campaign.offProgramme` | Multiplier on a winning off-programme campaign, 0 to 1. Default 1. |
+| `campaign.fatigue.weight` | How much tiredness cuts a winning campaign: it is divided by 1 + weight × tiredness. Each campaign adds 1 tiredness for its faction, issue and province. Default 0 (off). |
+| `campaign.fatigue.fade` | What every tiredness is multiplied by each time actions resolve (each turn and each campaign day), 0 to 1. |
 | `attack.factor` | Popularity a successful attack takes. |
 | `attack.backfire` | Popularity the attacker loses when it backfires. |
 | `poll.opinionNoise` | ± noise on polled opinion. |

@@ -28,15 +28,20 @@ public static class Formulas
 
     public static double SalienceFactor(double salience) => salience / 3;
 
-    public static double CampaignGain(GameConstants constants, Stance stance, double provincialOpinion, double salience, int sameSideCampaigners)
+    public static double CampaignGain(GameConstants constants, Stance stance, double provincialOpinion, double salience, int sameSideCampaigners,
+        double fatigue = 0, bool offProgramme = false)
     {
         var crowd = constants.Campaign.Crowding ? Math.Max(1, sameSideCampaigners) : 1;
         var heard = constants.Campaign.Baseline * salience;
         var agreed = constants.Campaign.Factor
             * StanceScore(stance, provincialOpinion, constants.StrongStancePenalty)
             * SalienceFactor(salience);
-        return (heard + agreed) / Math.Sqrt(crowd);
+        var gain = (heard + agreed) / Math.Sqrt(crowd);
+        return gain > 0 ? gain * CampaignMultiplier(constants.Campaign, fatigue, offProgramme) : gain;
     }
+
+    public static double CampaignMultiplier(CampaignConstants campaign, double fatigue, bool offProgramme) =>
+        campaign.Fresh / (1 + campaign.Fatigue.Weight * Math.Max(0, fatigue)) * (offProgramme ? campaign.OffProgramme : 1);
 
     public static double RegionalPopularity(double national, double deviation, PopularityConstants range) =>
         Math.Clamp(national + deviation, range.Min, range.Max);

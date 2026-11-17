@@ -60,6 +60,7 @@ public partial class GmModule
         var preview = _data.PreviewActions(config);
         var plan = preview.Plan;
         var snapshot = preview.Snapshot;
+        var fatigue = _data.GetCampaignFatigue();
         string Title(string issueId) => snapshot.Issue(issueId)?.Title ?? issueId;
 
         var lines = new List<string> { Texts.Get("gm.peek.actions.header"), Texts.Get("gm.peek.actions.caveat") };
@@ -74,7 +75,7 @@ public partial class GmModule
             lines.Add("");
             lines.Add(Texts.Get("gm.peek.actions.factionHeading", ("faction", Display.Faction(_data, group.Key))));
             foreach (var outcome in group)
-                lines.Add(ActionLine(outcome, plan, snapshot, c, Title(outcome.Action.IssueId)));
+                lines.Add(ActionLine(outcome, plan, snapshot, c, Title(outcome.Action.IssueId), fatigue));
         }
 
         lines.Add("");
@@ -103,7 +104,8 @@ public partial class GmModule
         _ => Texts.Get("gm.peek.actions.kind.poll"),
     };
 
-    private string ActionLine(ActionOutcome outcome, ActionPlan plan, OpinionSnapshot snapshot, GameConstants c, string issue)
+    private string ActionLine(ActionOutcome outcome, ActionPlan plan, OpinionSnapshot snapshot, GameConstants c, string issue,
+        IReadOnlyDictionary<(ulong FactionId, string ProvinceId, string IssueId), double> fatigue)
     {
         var action = outcome.Action;
         if (outcome.Fizzled)
@@ -119,13 +121,24 @@ public partial class GmModule
             {
                 var stance = action.Stance!.Value;
                 var crowd = c.Campaign.Crowding ? ActionPlanner.Crowd(plan.StanceLogs, action, stance) : 1;
+                var tired = fatigue.GetValueOrDefault((action.FactionId, provinceId, action.IssueId)) * c.Campaign.Fatigue.Fade;
+                var multiplier = outcome.ActorChange > 0
+                    ? Texts.Get("gm.peek.actions.campaignMultiplier",
+                        ("multiplier", Fixed(Formulas.CampaignMultiplier(c.Campaign, tired, action.OffProgramme))))
+                    : "";
                 var line = Texts.Get("gm.peek.actions.campaign",
                     ("issue", issue), ("stance", stance.DisplayName()), ("province", province),
                     ("baseline", Fixed(c.Campaign.Baseline)),
                     ("factor", Fixed(c.Campaign.Factor)), ("score", SignedFixed(Formulas.StanceScore(stance, opinion, c.StrongStancePenalty))),
-                    ("salience", Fixed(salience)), ("crowd", crowd), ("change", SignedFixed(outcome.ActorChange)),
+                    ("salience", Fixed(salience)), ("crowd", crowd), ("multiplier", multiplier), ("change", SignedFixed(outcome.ActorChange)),
                     ("opinion", SignedFixed(opinion)));
-                return action.OffProgramme ? line + Texts.Get("gm.peek.actions.offProgramme") : line;
+                line += outcome.ActorChange > 0
+                    ? Texts.Get("gm.peek.actions.campaignWinning",
+                        ("fresh", Fixed(c.Campaign.Fresh)), ("weight", Fixed(c.Campaign.Fatigue.Weight)), ("fatigue", Fixed(tired)))
+                    : Texts.Get("gm.peek.actions.campaignLosing");
+                return action.OffProgramme
+                    ? line + Texts.Get("gm.peek.actions.offProgramme", ("offProgramme", Fixed(c.Campaign.OffProgramme)))
+                    : line;
             }
             case ActionKind.Attack:
             {

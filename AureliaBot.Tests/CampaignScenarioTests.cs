@@ -58,12 +58,18 @@ public class CampaignScenarioTests : IDisposable
         Report("start");
 
         var max = Config.Constants.Campaign.ActionsPerPreElectionDay;
+        var fade = Config.Constants.Campaign.Fatigue.Fade;
+        double strongTired = 0, plainTired = 0;
         for (var day = 1; day <= Config.Constants.PreElectionDays - 1; day++)
         {
             var snapshot = Db.LoadOpinionSnapshot(Config);
             var salience = snapshot.Salience("labour");
-            var strongEach = Formulas.CampaignGain(Config.Constants, Stance.StronglyFor, opinion, salience, 2 * max);
-            var plainOnce = Formulas.CampaignGain(Config.Constants, Stance.For, opinion, salience, 2);
+            strongTired *= fade;
+            plainTired *= fade;
+            var strongEach = Formulas.CampaignGain(Config.Constants, Stance.StronglyFor, opinion, salience, 2 * max, strongTired);
+            var plainOnce = Formulas.CampaignGain(Config.Constants, Stance.For, opinion, salience, 2, plainTired);
+            strongTired += max;
+            plainTired += 1;
             _output.WriteLine($"Day {day}: salience {salience}; expected Strong {max} × {strongEach:0.000} = {max * strongEach:0.000}, Plain {plainOnce:0.000}");
             for (var i = 0; i < max; i++)
                 Assert.Equal(SubmitActionOutcome.Submitted,

@@ -25,10 +25,10 @@ public class ActionPlannerTests
         Func<string, long?>? raised = null,
         bool crowding = true) =>
         new(Resolution, crowding, issue => issue != "closed", (_, _) => 0.5, _ => 3, raised ?? (_ => null),
-            targets ?? (_ => new AttackTarget(Stance.For, null)));
+            targets ?? (_ => new AttackTarget(Stance.For, null)), _ => 0);
 
     private static ActionScoring CountingScoring(List<Stance>? attackedStances = null) =>
-        new((_, _, _, m) => m,
+        new((_, _, _, m, _, _) => m,
             (stance, _, _) =>
             {
                 attackedStances?.Add(stance);
@@ -85,8 +85,8 @@ public class ActionPlannerTests
     public void Campaigns_AreScoredOnTheOpinionOfTheirProvince()
     {
         var start = new ActionStartState(Resolution, true, _ => true, (_, province) => province == "north" ? 0.8 : -0.8, _ => 3, _ => null,
-            _ => new AttackTarget(Stance.For, null));
-        var scoring = new ActionScoring((_, opinion, _, _) => opinion, (_, _, _) => new AttackResult(false, 0, 0), _ => "");
+            _ => new AttackTarget(Stance.For, null), _ => 0);
+        var scoring = new ActionScoring((_, opinion, _, _, _, _) => opinion, (_, _, _) => new AttackResult(false, 0, 0), _ => "");
 
         var plan = ActionPlanner.Plan([Campaign(1, 10, "labour", Stance.For, "north"), Campaign(2, 11, "labour", Stance.For, "south")], start, scoring);
 

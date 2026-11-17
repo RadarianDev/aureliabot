@@ -551,6 +551,15 @@ public partial class DatabaseService
             );");
 
         Exec(connection, @"
+            CREATE TABLE IF NOT EXISTS campaign_fatigue (
+                faction_id TEXT NOT NULL REFERENCES factions(user_id) ON DELETE CASCADE,
+                province_id TEXT NOT NULL,
+                issue_id TEXT NOT NULL,
+                level REAL NOT NULL,
+                PRIMARY KEY (faction_id, province_id, issue_id)
+            );");
+
+        Exec(connection, @"
             CREATE TABLE IF NOT EXISTS agenda_futures (
                 faction_id TEXT PRIMARY KEY REFERENCES factions(user_id) ON DELETE CASCADE,
                 agenda_id TEXT NOT NULL

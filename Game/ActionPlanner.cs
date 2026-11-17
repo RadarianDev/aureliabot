@@ -19,10 +19,13 @@ internal sealed record ActionStartState(
     Func<string, string, double> ProvincialOpinion,
     Func<string, double> Salience,
     Func<string, long?> SalienceRaisedResolution,
-    Func<PendingAction, AttackTarget> AttackTargetOf);
+    Func<PendingAction, AttackTarget> AttackTargetOf,
+    Func<PendingAction, double> Fatigue);
+
+internal delegate double CampaignGainFormula(Stance stance, double opinion, double salience, int crowd, double fatigue, bool offProgramme);
 
 internal sealed record ActionScoring(
-    Func<Stance, double, double, int, double> CampaignGain,
+    CampaignGainFormula CampaignGain,
     Func<Stance, double, double, AttackResult> Attack,
     Func<PendingAction, string> Poll);
 
@@ -132,7 +135,8 @@ internal static class ActionPlanner
             return Fizzle(action, Texts.Get("data.action.fizzledNoProvince"), Texts.Get("data.action.campaignNoProvince"));
 
         var m = start.Crowding ? Crowd(campaigns, action, stance) : 1;
-        var gain = scoring.CampaignGain(stance, start.ProvincialOpinion(action.IssueId, province), start.Salience(action.IssueId), m);
+        var gain = scoring.CampaignGain(stance, start.ProvincialOpinion(action.IssueId, province), start.Salience(action.IssueId), m,
+            start.Fatigue(action), action.OffProgramme);
         return new ActionOutcome(action, false, gain, 0, null,
             Texts.Get("data.action.campaigned", ("stance", stance.DisplayName()), ("change", Display.Signed(gain))), null);
     }

@@ -207,7 +207,7 @@ campaign:
   resolves: "It resolves at the next resolution, {when}, simultaneously with everyone else's actions; results are revealed then."
   needStanceIndependent: "As an independent you must give a stance to campaign on *{issue}*."
   needStanceSilent: "Your party's programme takes no stance on *{issue}*, so you must give one. It will not count as off-programme."
-  offProgrammeConfirm: "Your party's programme is **{programme}** on *{issue}*. Campaigning **{stance}** goes **off-programme**, and will be logged publicly as off-programme in #campaign-log at the next resolution, {when}. Confirm?"
+  offProgrammeConfirm: "Your party's programme is **{programme}** on *{issue}*. Campaigning **{stance}** goes **off-programme**: it wins less than a campaign on the programme, and will be logged publicly as off-programme in #campaign-log at the next resolution, {when}. Confirm?"
   offProgrammeButton: "Campaign off-programme"
   noSuchFaction: "There is no such faction. Pick a rival from the list."
   attackRefusal: "You cannot attack {rival} on *{issue}*: {reason}."
@@ -461,7 +461,7 @@ help:
     - **Campaign** on an issue: talking about an issue people care about always wins you some popularity there, and more if the province agrees with you.
     - **Attack** a rival's stance: they lose popularity there if the province disagrees with them; otherwise it backfires on you.
     - **Poll** an issue: how much the kingdom cares, and how every province feels about it.
-    You can run one campaign and one attack per province each turn; in the pre-election, campaigns are unlimited. Popularity is kept per province, and what you win in one province spreads to the rest of the kingdom over the following seasons.
+    You can run one campaign and one attack per province each turn; in the pre-election, campaigns are unlimited. A province tires of hearing you on the same issue: each campaign there on it wins less than the last, until you give it a rest for a turn or two. Campaigning off your party's programme wins less too. Popularity is kept per province, and what you win in one province spreads to the rest of the kingdom over the following seasons.
     All actions are revealed together when the turn ends.
   opposition: |-
     ## Opposition
@@ -808,8 +808,11 @@ gm:
         attack: "Attack"
         poll: "Poll"
       fizzled: "- {kind} on {issue}: {result}"
-      campaign: "- Campaign {stance} on {issue} in {province} (opinion there {opinion}): ({baseline} × salience {salience} + {factor} × score {score} × salience {salience}/3) ÷ √{crowd} = **{change}**"
-      offProgramme: " · off-programme"
+      campaign: "- Campaign {stance} on {issue} in {province} (opinion there {opinion}): ({baseline} × salience {salience} + {factor} × score {score} × salience {salience}/3) ÷ √{crowd}{multiplier} = **{change}**"
+      campaignMultiplier: " × {multiplier}"
+      campaignWinning: "\n  -# multiplier = fresh {fresh} ÷ (1 + {weight} × tiredness {fatigue}), × off-programme if so"
+      campaignLosing: "\n  -# a losing campaign is never softened by tiredness or off-programme"
+      offProgramme: " · off-programme × {offProgramme}"
       attackHits: "- Attack on {target}'s {stance} on {issue} in {province} (opinion there {opinion}, score {score}): lands, −{factor} × |score| × salience {salience}/3 = **{change}** to the target there"
       attackBackfires: "- Attack on {target}'s {stance} on {issue} in {province} (opinion there {opinion}, score {score}): backfires, **{change}** to the attacker there"
       poll: "- Poll {issue} in every province: salience {salience} (noise ±{opinionNoise} on each province's opinion and ±{salienceNoise} on salience)"

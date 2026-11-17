@@ -217,11 +217,16 @@ public partial class DatabaseService
             UPDATE actions SET resolved = 1, resolution_number = $resolution, result = $result
             WHERE resolved = 0 AND faction_id NOT IN (SELECT user_id FROM factions WHERE status = 'Active');",
             ("$resolution", resolutionNumber), ("$result", Texts.Get("data.action.dropped")));
-        if (actions.Count == 0) return;
+        if (actions.Count == 0)
+        {
+            TireProvincesTx(conn, tx, constants.Campaign.Fatigue, []);
+            return;
+        }
 
         var snapshot = LoadOpinionSnapshotTx(conn, tx, config);
         var plan = ActionPlanner.Plan(actions, ActionStartTx(conn, tx, state, config, snapshot, actions),
             Scoring(config, action => PollLine(config, snapshot, random, action)));
+        TireProvincesTx(conn, tx, constants.Campaign.Fatigue, plan.StanceLogs);
 
         foreach (var delta in plan.PopularityDeltas)
             AddRegionalPopularityTx(conn, tx, delta.FactionId, delta.ProvinceId, delta.Change, constants.Popularity);
@@ -290,14 +295,50 @@ public partial class DatabaseService
             snapshot.Provincial,
             snapshot.Salience,
             issueId => snapshot.Issue(issueId)?.SalienceRaisedResolution,
-            action => attackTargets[action.Id]);
+            action => attackTargets[action.Id],
+            FadedFatigue(CampaignFatigueTx(conn, tx), config.Constants.Campaign.Fatigue));
+    }
+
+    private static Func<PendingAction, double> FadedFatigue(
+        IReadOnlyDictionary<(ulong FactionId, string ProvinceId, string IssueId), double> levels, FatigueConstants fatigue) =>
+        action => action.ProvinceId is { } province
+            ? levels.GetValueOrDefault((action.FactionId, province, action.IssueId)) * fatigue.Fade
+            : 0;
+
+    private static Dictionary<(ulong FactionId, string ProvinceId, string IssueId), double> CampaignFatigueTx(SqliteConnection conn, SqliteTransaction? tx)
+    {
+        using var cmd = conn.CreateCommand();
+        cmd.Transaction = tx;
+        cmd.CommandText = "SELECT faction_id, province_id, issue_id, level FROM campaign_fatigue;";
+        var result = new Dictionary<(ulong, string, string), double>();
+        using var r = cmd.ExecuteReader();
+        while (r.Read())
+            result[(ulong.Parse(r.GetString(0)), r.GetString(1), r.GetString(2))] = r.GetDouble(3);
+        return result;
+    }
+
+    public Dictionary<(ulong FactionId, string ProvinceId, string IssueId), double> GetCampaignFatigue()
+    {
+        using var conn = Open();
+        return CampaignFatigueTx(conn, null);
+    }
+
+    private static void TireProvincesTx(SqliteConnection conn, SqliteTransaction tx, FatigueConstants fatigue, IEnumerable<PendingAction> campaigns)
+    {
+        Exec(conn, tx, "UPDATE campaign_fatigue SET level = level * $fade;", ("$fade", fatigue.Fade));
+        Exec(conn, tx, "DELETE FROM campaign_fatigue WHERE level < 0.001;");
+        foreach (var campaign in campaigns)
+            Exec(conn, tx, @"
+                INSERT INTO campaign_fatigue (faction_id, province_id, issue_id, level) VALUES ($faction, $province, $issue, 1)
+                ON CONFLICT (faction_id, province_id, issue_id) DO UPDATE SET level = level + 1;",
+                ("$faction", campaign.FactionId.ToString()), ("$province", campaign.ProvinceId!), ("$issue", campaign.IssueId));
     }
 
     private static ActionScoring Scoring(GameConfig config, Func<PendingAction, string> poll)
     {
         var constants = config.Constants;
         return new ActionScoring(
-            (stance, opinion, salience, m) => Formulas.CampaignGain(constants, stance, opinion, salience, m),
+            (stance, opinion, salience, m, fatigue, offProgramme) => Formulas.CampaignGain(constants, stance, opinion, salience, m, fatigue, offProgramme),
             (stance, opinion, salience) => Formulas.Attack(constants, stance, opinion, salience),
             poll);
     }

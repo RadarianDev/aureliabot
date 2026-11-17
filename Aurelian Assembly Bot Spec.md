@@ -175,7 +175,8 @@ minHoursBetweenResolutions: 12
 preElectionDays: 3
 seasonsPerTerm: 16
 popularity: { min: 0, max: 100, start: 10, drift: 0.07, spread: 0.1 }   # spread: share of a regional lead lost each season
-campaign: { factor: 4, baseline: 0.25, actionsPerTurn: 2, actionsPerPreElectionDay: 5, crowding: true }
+campaign: { factor: 4, baseline: 0.25, actionsPerTurn: 2, actionsPerPreElectionDay: 5, crowding: true,
+            fresh: 1.2, offProgramme: 0.6, fatigue: { weight: 0.5, fade: 0.5 } }
 attack: { factor: 3, backfire: 3 }
 poll: { opinionNoise: 0.25, salienceNoise: 1 }
 strongStancePenalty: 0.5
@@ -539,6 +540,8 @@ For stance s and opinion o:
 **Campaign** on issue i in province p (the faction's home province unless it names another)
 
 1. `ΔP_p = (campaign.baseline × salience_i + campaign.factor × g(s, o(i, p)) × k(i)) / √m`, a regional change in p. The first term is the baseline: a politician talking about an issue people care about is heard, whatever side they take, so even a *Strongly* stance in a lukewarm province gains. With the defaults it breaks even at `o(i, p)` of about +0.06 for a strong stance and −0.19 for a plain one. m is the number of factions campaigning on i in p this resolution with a stance of the same sign, this one included, times the number of campaigns this faction runs on i in p (a faction stacking n campaigns in one spot earns √n times one campaign, and its stacking never crowds anyone else). A crowded line pays less, so the most popular stance on the most salient issue is not the only sensible move. If `campaign.crowding` is off, m is 1.
+   If ΔP_p is positive it is then multiplied by `campaign.fresh / (1 + campaign.fatigue.weight × T) × (campaign.offProgramme if off-programme)`. T is the faction's **tiredness** on i in p: every time actions resolve (each turn, and each pre-election or Senate campaign day) every tiredness is first multiplied by `campaign.fatigue.fade`, campaigns are scored against it, then each campaign adds 1 to its faction's tiredness on its issue and province. A negative ΔP_p is left alone, so neither rule softens a losing campaign.
+   **Balance:** `campaign.fresh` makes up what the two cuts take away on average. The reference campaign returns to its spot every other turn, so T = fade²/(1 − fade²) (1/3 with the defaults), and one in ten goes off-programme. With the defaults it earns 0.99 of what a campaign earned before the rules existed. A first visit earns 1.2×, one repeated every turn 0.8×, and one repeated every turn off-programme 0.48×. `CampaignFatigueTests` checks the reference.
 2. Then salience of i rises by 1, at most once per issue per season.
 
 The stance s defaults to the party's programme stance on the issue. A faction may give a different stance; it is then logged publicly as **off-programme**. Where the programme takes no stance on the issue (and always for an independent), the faction must give a stance, and doing so is not off-programme. Every campaign writes the stance it used to the StanceLog.

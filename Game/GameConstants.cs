@@ -31,6 +31,15 @@ public sealed record CampaignConstants
     public int ActionsPerTurn { get; init; }
     public int ActionsPerPreElectionDay { get; init; }
     public bool Crowding { get; init; }
+    public double Fresh { get; init; } = 1;
+    public double OffProgramme { get; init; } = 1;
+    public FatigueConstants Fatigue { get; init; } = new();
+}
+
+public sealed record FatigueConstants
+{
+    public double Weight { get; init; }
+    public double Fade { get; init; }
 }
 
 public sealed record AttackConstants
@@ -442,6 +451,10 @@ public sealed class ConstantsStore
         if (c.Popularity.Min >= c.Popularity.Max) errors.Add("popularity.min must be below popularity.max.");
         if (c.Popularity.Spread is < 0 or > 1) errors.Add("popularity.spread must be between 0 and 1.");
         if (c.Campaign.Baseline < 0) errors.Add("campaign.baseline must not be negative.");
+        if (c.Campaign.Fresh <= 0) errors.Add("campaign.fresh must be positive.");
+        if (c.Campaign.OffProgramme is < 0 or > 1) errors.Add("campaign.offProgramme must be between 0 and 1.");
+        if (c.Campaign.Fatigue.Weight < 0) errors.Add("campaign.fatigue.weight must not be negative.");
+        if (c.Campaign.Fatigue.Fade is < 0 or > 1) errors.Add("campaign.fatigue.fade must be between 0 and 1.");
         if (c.Campaign.ActionsPerTurn < 1 || c.Campaign.ActionsPerPreElectionDay < 1)
             errors.Add("campaign.actionsPerTurn and campaign.actionsPerPreElectionDay must be at least 1.");
         if (c.Salience.Min >= c.Salience.Max) errors.Add("salience.min must be below salience.max.");
