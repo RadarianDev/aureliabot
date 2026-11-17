@@ -1,0 +1,13 @@
+id: meridian_claim
+title: The Bhartunian Coast Declaration
+summary: "Declares the Bhartunian coast a sphere of Aurelia-Anzaria, closed to any other power's flag. It pleases the admirals and the mills, costs the reserve for garrisons, and alarms Arrosia."
+issue: colonies
+lean: For
+motion: Declare the coast of Bhartunia, from the Seravad river to the cape, a sphere of the Crown of Aurelia and Anzaria, where no other flag shall be raised.
+pass:
+  text: >-
+    The declaration is read on the steps of the Assembly and nailed, a month later, to the gate of Port
+    Valerie. In Arrosia the exchange falls, and the Iratic Company's directors call on the Republic's
+    head before breakfast.
+  effects: { reserve: -20, threat: 10, favour: 3, var.meridia_tension: 2, var.arrosia_goodwill: -1,
+             var.colonial_foothold: "=max(var.colonial_foothold, 1)" }

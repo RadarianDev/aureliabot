@@ -1,0 +1,8 @@
+id: admirals_press_station
+title: The Admirals Press for a Station
+text: >-
+  The Anzarian admirals call on the War Office in full dress. A fleet without coal, they say, cannot reach
+  the Company's coast, and they have been patient long enough. They want the southern station they asked
+  for, and they want it this year.
+when: "posted.southern_station == 0"
+effects: { crisis.southern_station: true }

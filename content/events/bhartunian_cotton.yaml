@@ -1,0 +1,10 @@
+id: bhartunian_cotton
+title: Bhartunian Cotton at Iracten
+text: >-
+  The first bales of Bhartunian cotton reach the Iracten mills by way of Lanten, having paid no duty to
+  any Tsar. The mill masters hold a dinner, and the weavers, for once, are invited.
+when: "var.colonial_foothold >= 1"
+effects:
+  - { economy: 15, discontent.iracterie: -1 }
+  - if: "var.colonial_foothold >= 2"
+    then: { economy: 10 }

@@ -1,0 +1,12 @@
+id: southern_company_charter
+title: The Southern Company Charter
+summary: "Charters the Southern Company of Aurelia and Anzaria to trade in Meridia under the Crown's flag. It costs the reserve, and pleases the Anzarian merchants and admirals who share in it."
+issue: colonies
+lean: For
+motion: Grant the Southern Company of Aurelia and Anzaria a royal charter to trade, treat and keep warehouses on the coasts of Meridia.
+pass:
+  text: >-
+    The charter is sealed in Aurelle and countersigned in Sulmar. The Company's first two ships take on
+    cloth, rifles and a printing press at Lanten, and sail south with a band playing on the quay.
+  effects: { reserve: -30, favour: 3, prestige.sponsor: 1,
+             var.colonial_foothold: "=max(var.colonial_foothold, 1)", event.bhartunian_landing: 2 }

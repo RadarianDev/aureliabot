@@ -1,0 +1,10 @@
+id: bhartunian_landing
+title: The Company Lands in Bhartunia
+text: >-
+  The Southern Company's ships drop anchor off Seravad, a harbour town on the Bhartunian coast. The Lord
+  of Seravad receives the factor under an awning, accepts a clock and a rifle, and asks what else the
+  Company has brought, and how long it means to stay.
+when: "issue.colonies.open"
+effects: { salience.colonies: 1, crisis.bhartunian_terms: true,
+           event.arrosian_protest_mild: 1, event.arrosian_protest_sharp: 1,
+           event.bhartunian_cotton: 3, event.mugian_unease: 4 }

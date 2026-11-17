@@ -1,0 +1,11 @@
+id: meridia_renounced
+title: The Southern Flag Comes Down
+text: >-
+  With the treaty signed, the Southern Company hauls down its flag at Seravad and sells its stockade to
+  the Iratic Company for firewood prices. Whatever Meridia becomes, it will become it without
+  Aurelia-Anzaria.
+when: "var.meridia_ending == 0"
+effects:
+  - { var.meridia_ending: "=5", var.colonial_foothold: "=0" }
+  - if: "condition.ocidanten.blockaded"
+    then: { condition.ocidanten.blockaded: -1 }

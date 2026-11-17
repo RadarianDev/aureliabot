@@ -1,0 +1,7 @@
+id: mugi_backs_arrosia
+title: Mugi Signs with Arrosia
+text: >-
+  Mugi accepts the Arrosian invitation. The Mugian Admiralty, which has neither forgotten nor forgiven
+  the Arpal years, sends two frigates to show its flag beside the Iratic Company's off the Bhartunian
+  coast.
+effects: { var.mugi_stance: "=-1", threat: 10, var.meridia_tension: 1 }

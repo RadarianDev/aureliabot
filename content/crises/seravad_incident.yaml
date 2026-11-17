@@ -1,0 +1,37 @@
+id: seravad_incident
+title: The Seravad Incident
+summary: "An Iratic Company frigate has seized a Lanten brig off Seravad. The War Office can ask the Anzarian squadron to sail south, demand damages, or let the matter drop."
+ministry: War
+province: ocidanten
+issue: colonies
+answers:
+  - lean: For
+    label: Ask the Anzarian squadron to sail south
+    text: >-
+      The War Office asks the Anzarian admirals to send a squadron to Seravad. Everything now depends on
+      whether the nobles of Sulmar think Aurelia worth the coal.
+    effects:
+      - if: "favour >= 50"
+        then: { threat: -5, var.meridia_tension: 1, var.arrosia_goodwill: -1 }
+        else: { favour: -5, threat: 5 }
+  - lean: Neutral
+    label: Demand the brig back, with damages
+    price: 10
+    text: >-
+      The envoy in Arrosia presents a bill for the brig, her cargo and her captain's wounded feelings.
+      Whether it is paid depends on how the Republic feels about Aurelia this season.
+    effects:
+      - if: "var.arrosia_goodwill >= 0"
+        then: { reserve: 10 }
+        else: { var.meridia_tension: 1 }
+  - lean: Against
+    label: Let the matter drop
+    text: >-
+      The Foreign Office lets it be known that the Constance should not have been where she was. Her
+      captain writes to the newspapers again.
+    effects: { var.meridia_tension: -1, discontent.ocidanten: 1 }
+default:
+  text: >-
+    Nobody answers for the Constance. The Iratic Company sells her cargo at auction, and Lanten's
+    shipowners stop insuring voyages south.
+  effects: { var.meridia_tension: 1, economy: -10, discontent.ocidanten: 1 }

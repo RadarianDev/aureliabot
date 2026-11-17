@@ -1,0 +1,11 @@
+id: bon_meridia_offer
+title: The Emperor Offers Bon
+text: >-
+  The Emperor of Bon, speaking for a Diet of princes who have no ships and no claims in Meridia, offers
+  the old imperial city as the seat of a conference on the southern coasts. Arrosia accepts at once. The
+  question is whether there is anything left to confer about.
+when: "issue.colonies.open and var.meridia_ending == 0"
+effects:
+  - if: "var.meridia_tension >= 5"
+    then: { event.meridian_war: true }
+    else: { crisis.meridia_conference: true }

@@ -1,0 +1,8 @@
+id: incident_at_sea
+title: The Constance Is Stopped
+text: >-
+  An Iratic Company frigate has stopped the Lanten brig Constance off Seravad, searched her for
+  contraband, found her cargo of cotton, and towed her into the Arrosian anchorage. Her captain, who
+  knows every newspaper in Lanten, writes to all of them.
+when: "issue.colonies.open and var.meridia_ending == 0 and var.meridia_tension >= 2"
+effects: { discontent.ocidanten: 1, crisis.seravad_incident: true }

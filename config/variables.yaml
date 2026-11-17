@@ -83,3 +83,23 @@ meridia_tension:
   min: 0
   max: 6
   description: "The Meridia dispute: how close Aurelia-Anzaria and Arrosia are to blows over Meridia. 0 calm to 6 war."
+coaling_station:
+  start: 0
+  min: 0
+  max: 1
+  description: "The colonial arc: 1 once the southern coaling station is finished. The Anzarian squadron rolls an extra 1d12 in Meridian waters."
+mugi_stance:
+  start: 0
+  min: -1
+  max: 1
+  description: "The Meridia dispute: where Mugi stands. -1 backs Arrosia, 0 stands aside, 1 backs Aurelia-Anzaria."
+sea_battle_won:
+  start: 0
+  min: 0
+  max: 1
+  description: "The Meridia dispute: the GM sets 1 with /gm set after the Anzarian squadron wins the Battle off Seravad."
+meridia_ending:
+  start: 0
+  min: 0
+  max: 5
+  description: "How the Meridia dispute ended, for later content: 0 still running, 1 Partition of Bon, 2 Arrosian Meridia, 3 war won, 4 war lost, 5 renunciation."

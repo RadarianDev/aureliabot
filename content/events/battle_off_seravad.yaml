@@ -1,0 +1,7 @@
+id: battle_off_seravad
+title: The Squadrons off Seravad
+text: >-
+  The Anzarian squadron and the Iratic Company's frigates meet off the mouth of the Seravad river,
+  within sight of Port Valerie. On the stockade the Company's clerks climb onto the roof to watch.
+when: "var.meridia_ending == 0"
+effects: { salience.colonies: 1 }

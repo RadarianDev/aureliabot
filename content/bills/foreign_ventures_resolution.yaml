@@ -1,0 +1,11 @@
+id: foreign_ventures_resolution
+title: The Foreign Ventures Resolution
+summary: "Forbids crown money, ships or soldiers for trading ventures beyond the seas, and settles the Southern Trade for good. It saves the reserve and disappoints the admirals and the mills."
+issue: colonies
+lean: Against
+motion: Resolve that no crown money, ship or soldier shall be spent on any trading venture beyond the seas.
+pass:
+  text: >-
+    The Assembly resolves that Aurelia's business is at home. The Southern Company's shares fall to the
+    price of the paper, and the Anzarian admirals send a short and very correct letter of regret.
+  effects: { reserve: 15, favour: -5, discontent.iracterie: 1, close.colonies: true }

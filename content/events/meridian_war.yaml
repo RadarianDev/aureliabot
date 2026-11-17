@@ -1,0 +1,18 @@
+id: meridian_war
+title: War in the Southern Sea
+text: >-
+  The Iratic Company's frigates open fire on Port Valerie, and the Arrosian Republic declares that it
+  will defend its Company's rights by every means. Aurelia-Anzaria is at war with Arrosia, on a coast
+  most Aurelians could not find on a map.
+when: "var.meridia_ending == 0"
+effects:
+  - { threat: 20, economy: -20, var.meridia_tension: "=6", salience.colonies: 2,
+      event.battle_off_seravad: 1 }
+  - if: "favour < 50"
+    then: { condition.ocidanten.blockaded: 1, event.meridian_blockade_bites: 1 }
+  - if: "issue.rearmament.open"
+    then: { salience.rearmament: 2 }
+  - random:
+      - effects: { event.meridian_peace: 3 }
+      - effects: { event.meridian_peace: 4 }
+      - effects: { event.meridian_peace: 5 }

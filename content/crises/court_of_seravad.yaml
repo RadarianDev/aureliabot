@@ -1,0 +1,33 @@
+id: court_of_seravad
+title: The Court of Seravad
+summary: "The Lord of Seravad is selling his favour to the higher bidder, while the Makan's envoy watches. Commerce and Labor must outbid Arrosia, bring the Makan in, or stand back."
+ministry: CommerceLabor
+province: iracterie
+issue: colonies
+answers:
+  - lean: For
+    label: Outbid the Iratic Company
+    price: 30
+    text: >-
+      The Southern Company's chests are heavier. The Lord of Seravad signs a treaty giving it the harbour
+      and the cotton, and the Iratic agents leave the court without their silver or their manners.
+    effects: { var.colonial_foothold: "=max(var.colonial_foothold, 2)", var.meridia_tension: 1,
+               var.arrosia_goodwill: -1 }
+  - lean: Neutral
+    label: Offer the Makan a share of the customs
+    price: 20
+    text: >-
+      The Makan's envoy is offered a share of Port Valerie's customs. He accepts on his master's behalf,
+      and lets it be known that the Makan dislikes quarrels on its coasts, from anyone.
+    effects: { var.meridia_tension: -1, economy: -5 }
+  - lean: Against
+    label: Refuse to bid against Arrosia
+    text: >-
+      The factor is told to buy cotton and keep out of the court. The Lord of Seravad, disappointed,
+      grants the Iratic Company everything it asked for.
+    effects: { var.colonial_foothold: "=max(var.colonial_foothold - 1, 0)", var.meridia_tension: -1 }
+default:
+  text: >-
+    No word comes from Aurelle. The Lord of Seravad signs with the Iratic Company, and the Southern
+    Company's lease is found to have a clause nobody had read.
+  effects: { var.colonial_foothold: "=max(var.colonial_foothold - 1, 0)", var.meridia_tension: 1 }

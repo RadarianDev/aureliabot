@@ -1,0 +1,6 @@
+id: mugi_stands_aside
+title: Mugi Waits
+text: >-
+  The Mugian Diet adjourns without an answer to Arrosia. Mugi, the Anpurgi newspapers explain, is glad
+  to see the Republic challenged in the south, and in no hurry to help whoever is doing the challenging.
+effects: { var.mugi_stance: "=0" }

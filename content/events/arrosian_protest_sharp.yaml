@@ -1,0 +1,8 @@
+id: arrosian_protest_sharp
+title: A Sharp Note from Arrosia
+text: >-
+  The Arrosian envoy delivers a note on the Company's landing at Seravad. It is short. The Republic
+  reminds Aurelia-Anzaria that the Iratic Company has ships in those waters, and that ships go where
+  they are sent.
+when: "var.garaztia_war < 3"
+effects: { threat: 8, var.arrosia_goodwill: -1, var.meridia_tension: 1 }

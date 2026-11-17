@@ -1,0 +1,14 @@
+id: meridian_victory
+title: The Peace of Seravad
+text: >-
+  Beaten at sea, the Iratic Company gives up its posts on the Bhartunian coast, and the Republic signs
+  a peace at Bon recognising the whole coast, river to cape, as the sphere of Aurelia-Anzaria. The guns
+  of Port Valerie fire a salute that can be heard, the newspapers claim, in Arrosia.
+when: "var.meridia_ending == 0"
+effects:
+  - { var.meridia_ending: "=3", var.meridia_tension: "=0", var.colonial_foothold: "=3",
+      var.arrosia_goodwill: -1, economy: 10, favour: 8, threat: -10, prestige.chancellor: 2 }
+  - if: "issue.colonies.open"
+    then: { close.colonies: true }
+  - if: "condition.ocidanten.blockaded"
+    then: { condition.ocidanten.blockaded: -1 }

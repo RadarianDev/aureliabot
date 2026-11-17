@@ -1,0 +1,7 @@
+id: mugian_unease
+title: Unease in Anpurgi
+text: >-
+  The Mugian Admiralty asks, in the Anpurgi newspapers it owns, why an Aurelian flag is flying on the
+  far side of the southern sea, and what other coasts the Anzarian admirals have been studying.
+when: "var.colonial_foothold >= 2"
+effects: { threat: 3 }

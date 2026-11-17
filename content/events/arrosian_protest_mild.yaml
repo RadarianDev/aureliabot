@@ -1,0 +1,8 @@
+id: arrosian_protest_mild
+title: The Republic Protests
+text: >-
+  The Arrosian envoy delivers a protest against the Company's landing at Seravad. With its troops at the
+  Garaztian customs houses, the Republic can do no more than protest, and the protest is long, learned
+  and entirely without consequence.
+when: "var.garaztia_war >= 3"
+effects: { threat: 2, var.arrosia_goodwill: -1 }

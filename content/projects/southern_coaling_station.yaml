@@ -1,0 +1,9 @@
+id: southern_coaling_station
+title: The Southern Coaling Station
+summary: "Colliers, stores and a dockyard party fitted out at Lanten for a coaling station on the southern route, so the Anzarian fleet can reach Meridian waters."
+purse: War
+province: ocidanten
+requires: coastal
+price: 60
+term: 4
+effects: { favour: 4, favourBaseline: 2, economy: 5, var.coaling_station: 1 }

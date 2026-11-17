@@ -1,0 +1,7 @@
+id: meridian_blockade_bites
+title: Arrosian Sails off Lanten
+text: >-
+  Without the Anzarian fleet, Lanten has no answer to the Arrosian ships lying off the harbour mouth.
+  Another season's cargoes rot on the quays or go to Mugi.
+when: "var.meridia_ending == 0 and condition.ocidanten.blockaded >= 1"
+effects: { economy: -15, discontent.ocidanten: 1, event.meridian_blockade_bites: 1 }

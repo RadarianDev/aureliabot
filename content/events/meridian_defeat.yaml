@@ -1,0 +1,14 @@
+id: meridian_defeat
+title: The Loss of Port Valerie
+text: >-
+  The peace signed at Bon gives Port Valerie and the whole Bhartunian coast to Arrosia, and Aurelia-Anzaria
+  pays the Iratic Company for the cost of taking them. The Southern Company's last ship comes home to
+  Lanten with the factor, the flag and the parrot.
+when: "var.meridia_ending == 0"
+effects:
+  - { var.meridia_ending: "=4", var.meridia_tension: "=2", var.colonial_foothold: "=0",
+      reserve: -50, favour: -5, threat: 10, popularity.government: -3 }
+  - if: "issue.colonies.open"
+    then: { close.colonies: true }
+  - if: "condition.ocidanten.blockaded"
+    then: { condition.ocidanten.blockaded: -1 }
