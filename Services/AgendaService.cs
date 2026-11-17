@@ -32,20 +32,31 @@ public sealed class AgendaService
     public async Task<(AssignAgendaResult Result, bool Sent)> AssignAsync(ulong factionId, string agendaId, bool now)
     {
         var result = _data.AssignAgenda(factionId, agendaId, _constants.Config, now);
-        return (result, result.Dealt is { } hand && await SendAsync(hand));
+        var config = _constants.Config.Agendas;
+        var sent = result switch
+        {
+            { Dealt: { } hand } => await SendAsync(hand),
+            { Future: { } future } when config.Find(future) is { } agenda => await SendAsync(factionId, AgendaWording.Future(agenda, config.Reward)),
+            _ => false,
+        };
+        return (result, sent);
     }
 
     private async Task<bool> SendAsync(AgendaHand hand)
     {
         var config = _constants.Config.Agendas;
-        if (config.Find(hand.AgendaId) is not { } agenda) return false;
+        return config.Find(hand.AgendaId) is { } agenda && await SendAsync(hand.FactionId, AgendaWording.Dealt(agenda, config.Reward));
+    }
+
+    private async Task<bool> SendAsync(ulong factionId, string message)
+    {
         try
         {
-            return await _factionChannels.SendAsync(hand.FactionId, AgendaWording.Dealt(agenda, config.Reward));
+            return await _factionChannels.SendAsync(factionId, message);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[AgendaService] Sending the agenda to {hand.FactionId} failed: {ex.Message}");
+            Console.WriteLine($"[AgendaService] Sending the agenda to {factionId} failed: {ex.Message}");
             return false;
         }
     }

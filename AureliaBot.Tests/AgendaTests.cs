@@ -251,4 +251,76 @@ public class AgendaTests : IDisposable
         Assert.Equal(AgendaStatus.Void, Assert.Single(Db.GetAgendaHistory(2)).Status);
         Assert.Equal(1UL, Assert.Single(report.AgendaReveals).FactionId);
     }
+
+    private void CallElectionNextTurn()
+    {
+        var state = Db.GetGameState();
+        var (season, year) = GameCalendar.Next(state.Season, state.Year);
+        Db.SaveGameState(state with { PreElectionSeason = season, PreElectionYear = year });
+    }
+
+    [Fact]
+    public void OpeningThePreElection_TellsEachFactionItsNextAgenda_WhichIsDealtOnElectionNight()
+    {
+        var config = WithAgendas(Grower, Grower with { Id = "other", Name = "The Other" });
+        Db.StartGame(config, DateTimeOffset.UtcNow);
+        Db.CreateFaction(1, "A", "aurenten", 10);
+        Resolve(config);
+        var current = Db.GetActiveAgenda(1)!;
+
+        CallElectionNextTurn();
+        var opening = Resolve(config);
+
+        var future = Db.GetFutureAgendas()[1];
+        Assert.NotEqual(current.AgendaId, future);
+        Assert.Contains(opening.PrivateMessages[1], m => m.Contains("for the next term"));
+        Assert.Equal(current.Id, Db.GetActiveAgenda(1)!.Id);
+
+        var election = Resolve(config);
+
+        Assert.Single(election.AgendaReveals);
+        Assert.Equal(AgendaStatus.Scored, Db.GetAgendaHistory(1).Single(h => h.Id == current.Id).Status);
+        Assert.Equal(future, Db.GetActiveAgenda(1)!.AgendaId);
+        Assert.Contains(election.PrivateMessages[1], m => m.Contains("starts now"));
+        Assert.Empty(Db.GetFutureAgendas());
+    }
+
+    [Fact]
+    public void TheGmsChoice_BecomesTheFuture_AndAssigningInThePreElectionReplacesIt()
+    {
+        Db.StartGame(Config, DateTimeOffset.UtcNow);
+        Db.CreateFaction(1, "A", "aurenten", 10);
+        Resolve(Config);
+        Db.AssignAgenda(1, "general", Config, now: false);
+
+        CallElectionNextTurn();
+        Resolve(Config);
+        Assert.Equal("general", Db.GetFutureAgendas()[1]);
+        Assert.Empty(Db.GetAgendaAssignments());
+
+        var result = Db.AssignAgenda(1, "magnate", Config, now: false);
+        Assert.Equal("magnate", result.Future);
+        Assert.Empty(Db.GetAgendaAssignments());
+
+        Resolve(Config);
+        Assert.Equal("magnate", Db.GetActiveAgenda(1)!.AgendaId);
+    }
+
+    [Fact]
+    public void AFactionWithAFuture_HasAnAgendaDealtDuringThePreElectionVoided_ForItsFuture()
+    {
+        var config = WithAgendas(Grower, Grower with { Id = "other", Name = "The Other" });
+        Db.StartGame(config, DateTimeOffset.UtcNow);
+        Db.CreateFaction(1, "A", "aurenten", 10);
+        Resolve(config);
+        CallElectionNextTurn();
+        Resolve(config);
+        var future = Db.GetFutureAgendas()[1];
+
+        var redealt = Db.RedealAgenda(1, config, new Random(1))!;
+        Resolve(config);
+
+        Assert.Equal(AgendaStatus.Void, Db.GetAgendaHistory(1).Single(h => h.Id == redealt.Id).Status);
+        Assert.Equal(future, Db.GetActiveAgenda(1)!.AgendaId);
+    }
 }

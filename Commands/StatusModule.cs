@@ -44,6 +44,8 @@ public class StatusModule : InteractionModuleBase<SocketInteractionContext>
         if (Display.RegionalPopularity(_data, _constants.Config, faction.UserId) is { } regional) sb.AppendLine(regional);
         if (_data.GetActiveAgenda(faction.UserId) is { } hand && _constants.Config.Agendas.Find(hand.AgendaId) is { } agenda)
             sb.AppendLine(Texts.Get("secretAgenda.me", ("agenda", agenda.Name), ("wishes", AgendaWording.Wishes(agenda))));
+        if (_data.GetFutureAgendas().GetValueOrDefault(faction.UserId) is { } futureId && _constants.Config.Agendas.Find(futureId) is { } future)
+            sb.AppendLine(Texts.Get("secretAgenda.meFuture", ("agenda", future.Name), ("wishes", AgendaWording.Wishes(future))));
 
         var buttons = new ComponentBuilder();
         var waiting = new List<string>();

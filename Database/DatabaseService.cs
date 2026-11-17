@@ -551,6 +551,12 @@ public partial class DatabaseService
             );");
 
         Exec(connection, @"
+            CREATE TABLE IF NOT EXISTS agenda_futures (
+                faction_id TEXT PRIMARY KEY REFERENCES factions(user_id) ON DELETE CASCADE,
+                agenda_id TEXT NOT NULL
+            );");
+
+        Exec(connection, @"
             CREATE TABLE IF NOT EXISTS stat_history (
                 resolution_number INTEGER NOT NULL,
                 season TEXT NOT NULL,

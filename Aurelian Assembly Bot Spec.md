@@ -115,6 +115,7 @@ These are the main tables. Ids are short strings (slugs) for anything defined in
 | OppositionAction | id, factionId, kind (Question, Condemn, Bill, WhipCount), season, year |
 | Agenda | id, factionId, agendaId (from `config/agendas.yaml`), dealtResolution, dealtSeason, dealtYear, startValues (each track when dealt), status (Active, Scored, Void), wishesMet, reward, scoredResolution |
 | AgendaAssignment | factionId, agendaId: the GM's choice for that faction's next deal |
+| AgendaFuture | factionId, agendaId: the next term's agenda, told when the pre-election opens and dealt on election night |
 | WhipCount | id, factionId, readingId, ministerFactionId, side (Yes, No), madeAt |
 | Question | id, askerFactionId, ministry, text, askedAt, dueResolution, answerText, answeredAt |
 | Condemnation | id, factionId, crisisId, side (For, Against), madeAt |
@@ -1051,7 +1052,7 @@ Each province is coloured after the party holding the most seats there, any safe
 - **Where it is posted:** with the election results in #news, in `/gm peek mode:election` (from the preview's strengths), and on demand through `/map`, which redraws the latest term's ProvinceResult rows in each party's current colour. A province whose winning party was deleted since the election keeps the original fill.
 - **Maintaining the art:** the project copies everything under `assets/` to the build output. If the map is redrawn, keep the province fill at `#808080` (other shades inside a province tint proportionally), put text, cities and any effect that should not take the party colour in the overlay, keep all three images at the same size (or regenerate the index to match), and keep them aligned pixel for pixel. The index was made from a 718×335 cut-out of the provinces, placed at offset (100, 137) on the base map. Do not let anti-aliasing or colour-profile conversion touch the index colours, or province lookups will miss.
 
-**Secret agendas:** right after an Assembly election, snap elections included, every active agenda is scored and revealed in #news after the returns, then every active faction is dealt its next one privately: the GM's choice if one waits, otherwise a balanced draw that never repeats the faction's last agenda. Agendas dealt in the pre-election turn itself carry into the new term unscored. The full rules, tracks, scoring and edge cases are in [Agendas.md](Agendas.md), and the file format in [YAML Reference.md](YAML%20Reference.md). Senate elections leave agendas alone.
+**Secret agendas:** right after an Assembly election, snap elections included, every active agenda is scored and revealed in #news after the returns, then every active faction is dealt its next one: the future agenda it was told privately when the pre-election opened (the GM's choice if one waited, otherwise a balanced draw that never repeats the faction's current agenda), so it can pick its party with it in mind. Agendas dealt in the pre-election turn itself carry into the new term unscored. The full rules, tracks, scoring and edge cases are in [Agendas.md](Agendas.md), and the file format in [YAML Reference.md](YAML%20Reference.md). Senate elections leave agendas alone.
 
 After the election the next term begins. The outgoing cabinet stays as caretaker until the GM appoints a Chancellor and a new cabinet is approved (section 5).
 

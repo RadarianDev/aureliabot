@@ -50,6 +50,7 @@ public partial class DatabaseService
 
         if (state.Started)
         {
+            if (report.PreElectionOpened) DrawFutureAgendasTx(conn, tx, config, seed, report);
             FireDueEventsTx(conn, tx, config, report);
             OpenScheduledReadingsTx(conn, tx, config, report);
             ThresholdAlertsTx(conn, tx, before, discontentBefore, config, report);

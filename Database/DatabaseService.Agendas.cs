@@ -16,7 +16,7 @@ public sealed record AgendaReveal(ulong FactionId, string AgendaName, IReadOnlyL
 
 public enum AssignAgendaRefusal { UnknownAgenda, NotActive, NotStarted }
 
-public sealed record AssignAgendaResult(AssignAgendaRefusal? Refusal, AgendaHand? Dealt = null, bool Repeats = false);
+public sealed record AssignAgendaResult(AssignAgendaRefusal? Refusal, AgendaHand? Dealt = null, bool Repeats = false, string? Future = null);
 
 public partial class DatabaseService
 {
@@ -103,6 +103,7 @@ public partial class DatabaseService
         var state = GetGameStateTx(conn, tx);
         var now = TrackValuesTx(conn, tx);
         var random = new Random(seed);
+        var futures = FuturesTx(conn, tx);
 
         foreach (var hand in QueryAgendasTx(conn, tx, "status = 'Active'"))
         {
@@ -115,6 +116,11 @@ public partial class DatabaseService
             {
                 Exec(conn, tx, "UPDATE agendas SET status = 'Void' WHERE id = $id;", ("$id", hand.Id));
                 report.Alerts.Add(Texts.Get("secretAgenda.gm.unknownId", ("faction", $"<@{hand.FactionId}>"), ("agenda", hand.AgendaId)));
+                continue;
+            }
+            if (hand.DealtResolution == state.ResolutionNumber && futures.ContainsKey(hand.FactionId))
+            {
+                Exec(conn, tx, "UPDATE agendas SET status = 'Void' WHERE id = $id;", ("$id", hand.Id));
                 continue;
             }
             if (hand.DealtResolution == state.ResolutionNumber)
@@ -136,10 +142,66 @@ public partial class DatabaseService
         }
 
         foreach (var faction in QueryFactionsTx(conn, tx, "status = 'Active'"))
-            if (ActiveAgendaTx(conn, tx, faction.UserId) is null
-                && DealTx(conn, tx, config, faction.UserId, random) is { } hand && agendas.Find(hand.AgendaId) is { } definition)
-                report.AddPrivate(faction.UserId, AgendaWording.Dealt(definition, agendas.Reward));
+        {
+            if (ActiveAgendaTx(conn, tx, faction.UserId) is not null) continue;
+            var future = futures.GetValueOrDefault(faction.UserId);
+            Exec(conn, tx, "DELETE FROM agenda_futures WHERE faction_id = $faction;", ("$faction", faction.UserId.ToString()));
+            if (DealTx(conn, tx, config, faction.UserId, random, future) is { } hand && agendas.Find(hand.AgendaId) is { } definition)
+                report.AddPrivate(faction.UserId, future == hand.AgendaId
+                    ? AgendaWording.FutureBegins(definition)
+                    : AgendaWording.Dealt(definition, agendas.Reward));
+        }
+        Exec(conn, tx, "DELETE FROM agenda_futures;");
     }
+
+    private static void DrawFutureAgendasTx(SqliteConnection conn, SqliteTransaction tx, GameConfig config, int seed, ResolutionReport report)
+    {
+        var agendas = config.Agendas;
+        if (agendas.Agendas.Count == 0) return;
+        var random = new Random(seed + 1);
+        foreach (var faction in QueryFactionsTx(conn, tx, "status = 'Active'"))
+        {
+            if (FuturesTx(conn, tx).ContainsKey(faction.UserId)) continue;
+            var assigned = AssignmentsTx(conn, tx).GetValueOrDefault(faction.UserId);
+            Exec(conn, tx, "DELETE FROM agenda_assignments WHERE faction_id = $faction;", ("$faction", faction.UserId.ToString()));
+            var current = ActiveAgendaTx(conn, tx, faction.UserId)?.AgendaId ?? LastAgendaIdTx(conn, tx, faction.UserId);
+            var agenda = assigned is not null && agendas.Find(assigned) is { } chosen
+                ? chosen
+                : AgendaRules.Pick(agendas.Agendas, current, FutureHeldTx(conn, tx), random);
+            if (agenda is null) continue;
+            SetFutureTx(conn, tx, faction.UserId, agenda.Id);
+            report.AddPrivate(faction.UserId, AgendaWording.Future(agenda, agendas.Reward));
+        }
+    }
+
+    public Dictionary<ulong, string> GetFutureAgendas()
+    {
+        using var conn = Open();
+        return FuturesTx(conn, null);
+    }
+
+    private static Dictionary<ulong, string> FuturesTx(SqliteConnection conn, SqliteTransaction? tx)
+    {
+        using var cmd = conn.CreateCommand();
+        cmd.Transaction = tx;
+        cmd.CommandText = "SELECT faction_id, agenda_id FROM agenda_futures;";
+        var result = new Dictionary<ulong, string>();
+        using var r = cmd.ExecuteReader();
+        while (r.Read())
+            result[ulong.Parse(r.GetString(0))] = r.GetString(1);
+        return result;
+    }
+
+    private static void SetFutureTx(SqliteConnection conn, SqliteTransaction tx, ulong factionId, string agendaId) =>
+        Exec(conn, tx, @"
+            INSERT INTO agenda_futures (faction_id, agenda_id) VALUES ($faction, $agenda)
+            ON CONFLICT (faction_id) DO UPDATE SET agenda_id = excluded.agenda_id;",
+            ("$faction", factionId.ToString()), ("$agenda", agendaId));
+
+    private static Dictionary<string, int> FutureHeldTx(SqliteConnection conn, SqliteTransaction tx) =>
+        FuturesTx(conn, tx).Values.Concat(AssignmentsTx(conn, tx).Values)
+            .GroupBy(id => id)
+            .ToDictionary(g => g.Key, g => g.Count());
 
     public AssignAgendaResult AssignAgenda(ulong factionId, string agendaId, GameConfig config, bool now)
     {
@@ -157,6 +219,12 @@ public partial class DatabaseService
         {
             if (current is not null) Exec(conn, tx, "UPDATE agendas SET status = 'Void' WHERE id = $id;", ("$id", current.Id));
             dealt = DealTx(conn, tx, config, factionId, new Random(), agendaId);
+        }
+        else if (FuturesTx(conn, tx).ContainsKey(factionId))
+        {
+            SetFutureTx(conn, tx, factionId, agendaId);
+            tx.Commit();
+            return new AssignAgendaResult(null, Repeats: previous == agendaId, Future: agendaId);
         }
         else
         {
@@ -202,6 +270,7 @@ public partial class DatabaseService
     private static Dictionary<string, int> HeldTx(SqliteConnection conn, SqliteTransaction tx, ulong exceptFactionId) =>
         QueryAgendasTx(conn, tx, "status = 'Active'").Select(h => h.AgendaId)
             .Concat(AssignmentsTx(conn, tx).Where(kv => kv.Key != exceptFactionId).Select(kv => kv.Value))
+            .Concat(FuturesTx(conn, tx).Values)
             .GroupBy(id => id)
             .ToDictionary(g => g.Key, g => g.Count());
 

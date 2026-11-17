@@ -94,7 +94,8 @@
 ## Secret Agendas
 - At the start of each term every faction is secretly dealt an **agenda**: two things it wants to happen to the kingdom, such as the economy rising and the army shrinking. Nobody is dealt the same agenda twice in a row.
 - `/me` shows your agenda. Keep it secret, share it or lie about it.
-- On election night every agenda is revealed. Each wish that came true is worth popularity, and fulfilling both is worth more. Then new agendas are dealt.
+- When the pre-election opens, every faction is secretly told its agenda for the next term, so it can choose its party with it in mind. The current agenda still counts until the election.
+- On election night every agenda is revealed. Each wish that came true is worth popularity, and fulfilling both is worth more. Then the next term's agendas begin.
 - A snap election scores agendas early.
 ## Cabinet
 - After an election, *His Majesty King Arthas II* (the GM) appoints a **chancellor**, who names a cabinet of four **ministers**: Treasury, War, Interior, and Commerce and Labor. A faction holds at most one post, and the chancellor holds none. The Assembly then votes on the cabinet. If it fails, the chancellor tries again.

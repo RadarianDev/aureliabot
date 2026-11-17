@@ -71,7 +71,14 @@ secretAgenda:
       -# {results}
     reward: "**+{popularity}** popularity"
     noReward: "nothing gained"
+  future: |-
+    ## Your secret agenda for the next term: {agenda}
+    *{description}*
+    The election is coming. From election night you will want {wishes}, by the Assembly election after it. Each wish met then is worth +{perWish} popularity, and meeting them all +{allBonus} more.
+    Your current agenda still counts until this election. You learn the next one now, while parties are open, so you can choose your allies with it in mind.
+  futureBegins: "🎭 Your agenda for the new term, **{agenda}**, starts now: you want {wishes} by the next Assembly election."
   me: "Your secret agenda: **{agenda}**, wanting {wishes}. Revealed and scored at the next Assembly election."
+  meFuture: "Your agenda for the next term: **{agenda}**, wanting {wishes}. It starts counting on election night."
   gm:
     heading: "## Secret agendas (hidden from players)"
     line: "- {faction}: **{agenda}** since {season} · {progress}"
@@ -88,6 +95,8 @@ secretAgenda:
     sendFailed: "⚠️ Could not post to the office of: {factions}. Tell them their agenda yourself."
     assignedHeading: "**Chosen for the next deal**"
     assignedLine: "- {faction}: **{agenda}**"
+    futureHeading: "**Next term's agendas (already told to the factions)**"
+    assignedFuture: "{faction}'s agenda for the next term is now **{agenda}**, and they have been told. It is dealt on election night."
     balance: "-# Held · chosen: {counts}"
     count: "{agenda} {held} · {assigned}"
     unknownAgenda: "There is no agenda `{agenda}` in config/agendas.yaml. Pick one from the list."

@@ -16,7 +16,12 @@ the board game *The King's Dilemma*: the mechanic, not its content.
 - On election night, after the returns, every agenda is revealed in #news and scored: a wish is met when its
   track moved the wanted way by more than the track's margin, between the turn the agenda was dealt and the
   election. Each wish met gives `reward.perWish` popularity, and meeting all of them `reward.allBonus` more.
-- Then every active faction is dealt its next agenda, sent to its office channel.
+- **The future agenda:** when the pre-election opens (snap elections included), every active faction is
+  told its agenda for the next term in its office channel, while parties are still open to join or leave.
+  It is drawn by the same rules (the GM's waiting choice, otherwise balanced among the futures, never the
+  agenda the faction holds now), and kept as the faction's future agenda; `/me` shows both.
+- Then, on election night, every active faction is dealt its future agenda, measured from the election. A
+  faction with no future (one created during the pre-election) is dealt at random as before.
 - Only Assembly elections count, snap elections included: an early election scores agendas early. Senate
   elections do not.
 
@@ -36,7 +41,8 @@ The reveal shows only whether each track moved the wanted way, never a hidden nu
 ## Edge cases
 
 - **Dealt in a pre-election turn** (new factions, or the founding pre-election): the agenda is not scored at
-  that election. It carries into the new term, measured from the election.
+  that election. It carries into the new term, measured from the election, unless the faction holds a
+  future agenda: then it is voided and the future one dealt.
 - **Mid-term deals** (`/gm agendas deal`, a new or unretired faction): scored at the next election, from the
   turn of dealing.
 - **Retired factions:** their agenda is voided unscored at the next election.
@@ -51,9 +57,11 @@ The reveal shows only whether each track moved the wanted way, never a hidden nu
   game.
 - `/gm agendas redeal faction` voids a faction's agenda and deals a different one (or the GM's choice, if one
   is waiting).
-- `/gm agendas assign faction agenda [now]` chooses a faction's agenda, for the next deal or at once.
+- `/gm agendas assign faction agenda [now]` chooses a faction's agenda, for the next deal or at once. During
+  the pre-election, without `now`, it replaces the faction's future agenda and tells the faction.
 - `/gm agendas cancel faction` drops a choice that is waiting.
-- `/gm agendas list` also shows the choices waiting and how many factions hold each agenda.
+- `/gm agendas list` also shows the choices waiting, the future agendas, and how many factions hold each
+  agenda.
 
 ## Code
 

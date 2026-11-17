@@ -51,6 +51,15 @@ public partial class GmModule
                     ("faction", Display.Faction(_data, kv.Key)), ("agenda", config.Find(kv.Value)?.Name ?? kv.Value))));
             }
 
+            var futures = _data.GetFutureAgendas();
+            if (futures.Count > 0)
+            {
+                lines.Add("");
+                lines.Add(Texts.Get("secretAgenda.gm.futureHeading"));
+                lines.AddRange(futures.Select(kv => Texts.Get("secretAgenda.gm.assignedLine",
+                    ("faction", Display.Faction(_data, kv.Key)), ("agenda", config.Find(kv.Value)?.Name ?? kv.Value))));
+            }
+
             lines.Add("");
             lines.Add(Texts.Get("secretAgenda.gm.balance", ("counts", string.Join(Texts.Get("secretAgenda.wish.separator"), config.Agendas.Select(a =>
                 Texts.Get("secretAgenda.gm.count", ("agenda", a.Name), ("held", hands.Count(h => h.AgendaId == a.Id)),
@@ -131,11 +140,12 @@ public partial class GmModule
                     AssignAgendaRefusal.NotActive => Texts.Get("secretAgenda.gm.notActive", ("faction", name)),
                     AssignAgendaRefusal.NotStarted => Texts.Get("secretAgenda.gm.notStarted"),
                     _ when now => Texts.Get("secretAgenda.gm.assignedNow", ("faction", name), ("agenda", agendaName)),
+                    _ when result.Future is not null => Texts.Get("secretAgenda.gm.assignedFuture", ("faction", name), ("agenda", agendaName)),
                     _ => Texts.Get("secretAgenda.gm.assignedNext", ("faction", name), ("agenda", agendaName)),
                 },
             };
             if (result.Refusal is null && result.Repeats) lines.Add(Texts.Get("secretAgenda.gm.repeats", ("faction", name)));
-            if (result.Dealt is not null && !sent) lines.Add(Texts.Get("secretAgenda.gm.sendFailed", ("factions", name)));
+            if ((result.Dealt is not null || result.Future is not null) && !sent) lines.Add(Texts.Get("secretAgenda.gm.sendFailed", ("factions", name)));
             await FollowupAsync(string.Join("\n", lines), ephemeral: true, allowedMentions: AllowedMentions.None);
         }
 
