@@ -43,7 +43,7 @@ merchants and the market every Arpal valley sells into.
   country runs through its market *(extrapolated)*.
 - *(extrapolated)* The history gives the Arpal Question its legal quarrel. Aurelian patriots argue that
   the independence treaty gave South Arpal to the *Empire*, not to Mugi, so Mugi had no right to take it
-  when it left. Mugi answers that the treaty is five centuries old and the Empire that signed it has been remade
+  when it left. Mugi answers that the treaty, signed in 1352, is five centuries old and the Empire that signed it has been remade
   into a Union of princes. The Union of Bon, still the Empire in law, is the one power both sides could
   accept as judge.
 - *(extrapolated)* The "foreign gentlemen" sketching bridges in the North Arpal passes (the
@@ -538,7 +538,7 @@ Where the files settle what the outline left open:
 
 ## Open questions for the GM
 
-1. *Answered:* the independence treaty is **the Severance of Carden** (see Lore.md).
+1. *Answered:* the independence treaty is **the Severance of Carden**, signed in 1352 (see Lore.md).
 2. Should a victory also cost something lasting, say a higher threat baseline from a Mugi that wants
    revenge? Today it only lowers threat.
 3. Integration may already be closed by the time South Arpal is annexed. Should the Kolgasi Charter move to

@@ -20,8 +20,8 @@ answers:
     label: Forward the petition to the Mugian envoy
     text: >-
       The petition is sent on to the Mugian envoy with the Crown's compliments. The envoy acknowledges
-      it, and returns the copy of the Severance with a note that the Empire which signed it no longer
-      exists.
+      it, and returns the copy of the Severance with a note that the Empire which signed it in 1352
+      no longer exists.
     effects: { discontent.north_arpal: 1 }
   - lean: Against
     label: Turn the petitioners back at the border
