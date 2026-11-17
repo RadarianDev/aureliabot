@@ -151,8 +151,8 @@ Sacs) are unscheduled; queue them when they fit.
 | `canal_cut` (ministerial) | Commerce and Labor | 35, 3 | economy +10 |
 | `customs_house` (ministerial, coastal) | Treasury | 20, 2 | reserve +10, economy +3 |
 | `military_road` (ministerial, frontier) | War | 30, 2 | threat −3, economy +3 |
-| `drill_hall` (ministerial) | War | 15, 1 | threat −2 |
-| `harbour_of_refuge` (ministerial, coastal) | Commerce and Labor | 30, 2 | economy +5, discontent here −1 |
+| `drill_hall` (ministerial) | War | 20, 2 | threat −2 |
+| `harbour_of_refuge` (ministerial, coastal) | Commerce and Labor | 30, 2 | economy +5, discontent here −1, Favour +1 |
 | `model_lodging_house` (ministerial, urban) | Interior | 15, 1 | discontent here −1 |
 | `provincial_asylum` The First Public Asylum (from the Asylums Act; built once, the Interior chooses where) | Interior | 30, 2 | discontent there −2 |
 | `free_library` The First Free Library (from the Free Libraries Act; built once, the Interior chooses where) | Interior | 15, 1 | discontent there −1 |

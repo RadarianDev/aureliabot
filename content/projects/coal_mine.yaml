@@ -1,8 +1,8 @@
 id: coal_mine
 title: Coal mine
-summary: "A new pit in the province of the minister's choosing. Quick and cheap, with a modest gain for the economy."
+summary: "A new pit in the province of the minister's choosing. Quick to sink, and coal for every mill and engine in the kingdom."
 ministerial: true
 purse: CommerceLabor
 price: 40
 term: 2
-effects: { economy: 10 }
+effects: { economy: 14 }

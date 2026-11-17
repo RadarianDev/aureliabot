@@ -3,6 +3,6 @@ title: Drill hall
 summary: "A drill hall and armoury in a province of the minister's choosing, where the reserve can train through the winter."
 ministerial: true
 purse: War
-price: 15
-term: 1
+price: 20
+term: 2
 effects: { threat: -2 }
