@@ -147,8 +147,21 @@ public class SideplotTests : IDisposable
         Fire("kings_speech_1854");
 
         foreach (var bill in new[] { "adulteration_act", "corrupt_practices_act", "limited_liability_act",
-                     "smoke_nuisance_act", "union_post_act", "purchase_abolition_act" })
+                     "smoke_nuisance_act", "elementary_education_act", "union_post_act", "purchase_abolition_act" })
             Assert.True(BillAvailable(bill), bill);
+    }
+
+    [Fact]
+    public void The_education_act_leaves_the_first_schools_for_the_Interior_to_place()
+    {
+        var bill = (BillTemplate)Db.GetParsedTemplate("elementary_education_act")!;
+
+        Run(EffectParser.Format(bill.PassEffects));
+
+        Assert.Empty(Db.GetProjects().Where(p => p.TemplateId == "elementary_schools"));
+        var site = Assert.Single(Db.GetWaitingSites());
+        Assert.Equal("elementary_schools", site.TemplateId);
+        Assert.Equal(Ministry.Interior, site.Purse);
     }
 
     [Fact]

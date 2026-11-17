@@ -1,0 +1,12 @@
+id: elementary_education_act
+title: The Elementary Education Act
+summary: "Pays a Crown grant to every parish that keeps a schoolroom and a certified master, free to the children of the poor, and opens the first schools wherever the Interior chooses. The towns are glad; the farmers lose their boys at harvest."
+issue: social_reform
+lean: For
+motion: Grant from the Crown the cost of a schoolroom and a certified master to every parish that will keep a school, free to the children of the poor.
+pass:
+  text: >-
+    The Interior sends inspectors to find parishes that want a school, and a great many do. In the shires
+    the farmers ask who is to scare the crows while the boys are learning their letters.
+  effects: { purse.Interior: -10, discontent.aurenten: -1, discontent.provencie_sacs: 1,
+             project.elementary_schools: true }

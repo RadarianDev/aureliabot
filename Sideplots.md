@@ -112,7 +112,7 @@ closed.
 
 | Event | Season | Slate |
 | --- | --- | --- |
-| `kings_speech_1854`: The King Opens the Second Assembly | Summer 1854 | Adulteration of Food, Corrupt Practices, Limited Liability, Smoke Nuisance, Union Penny Post, Abolition of Purchase |
+| `kings_speech_1854`: The King Opens the Second Assembly | Summer 1854 | Adulteration of Food, Corrupt Practices, Limited Liability, Smoke Nuisance, Elementary Education, Union Penny Post, Abolition of Purchase |
 | `kings_speech_1858`: The King Opens the Third Assembly | Autumn 1858 (Summer has the Garaztian default) | Provincial Asylums, Polling Places, Standard Measures, Free Libraries, Separate Seals, Army Retrenchment |
 | `kings_speech_1862`: The King Opens the Fourth Assembly | Autumn 1862 (Summer has the Iratic expedition) | Vaccination, Members' Qualification, Rates Relief, Master and Servant |
 
@@ -121,6 +121,7 @@ closed.
 | Bill | Issue, lean | Comes in by | On passing |
 | --- | --- | --- | --- |
 | `adulteration_act` The Adulteration of Food Act | Social Reform, For | Speech 1854 | economy −5, Aurenten −1, Iracterie −1 |
+| `elementary_education_act` The Elementary Education Act | Social Reform, For | Speech 1854 | Interior −10, Aurenten −1, Provencie Sacs +1, starts `elementary_schools` (the Interior chooses where) |
 | `asylums_act` The Provincial Asylums Act | Social Reform, For | Speech 1858 | Interior −10, Aurenten −1, starts `provincial_asylum` |
 | `vaccination_act` The Vaccination Act | Social Reform, For | Speech 1862 | Interior −5, Aurenten −1, Iracterie −1, Provencie Sacs +1 |
 | `vagrancy_act` The Vagrancy Act | Social Reform, Against | `aurelle_vagrants` | Interior +5, economy +5, Aurenten +1 |
@@ -153,6 +154,7 @@ Sacs) are unscheduled; queue them when they fit.
 | `military_road` (ministerial, frontier) | War | 30, 2 | threat −3, economy +3 |
 | `drill_hall` (ministerial) | War | 20, 2 | threat −2 |
 | `harbour_of_refuge` (ministerial, coastal) | Commerce and Labor | 30, 2 | economy +5, discontent here −1, Favour +1 |
+| `elementary_schools` (ministerial, once per province) | Interior | 40, 3 | gives the province *Educated* (Electoral Reform +0.2, Social Reform +0.1, Free Trade +0.1, growth +1%), discontent here −1 |
 | `model_lodging_house` (ministerial, urban) | Interior | 15, 1 | discontent here −1 |
 | `provincial_asylum` The First Public Asylum (from the Asylums Act; built once, the Interior chooses where) | Interior | 30, 2 | discontent there −2 |
 | `free_library` The First Free Library (from the Free Libraries Act; built once, the Interior chooses where) | Interior | 15, 1 | discontent there −1 |

@@ -10,7 +10,7 @@ industrial:
 farmland:
   name: Farmland
   description: Wheat and pasture, held by landlords and worked by tenants.
-  biases: { free_trade: -0.5, rearmament: -0.2, electoral_reform: -0.1, social_reform: -0.1 }
+  biases: { free_trade: -0.5, rearmament: -0.2, electoral_reform: -0.3, social_reform: -0.3, integration: -0.2 }
 frontier:
   name: Frontier
   description: A border with a foreign power, watched from both sides.
@@ -18,15 +18,15 @@ frontier:
 anzarian_border:
   name: Anzarian Border
   description: Anzarian lords, kin and markets lie just across the line.
-  biases: { integration: -0.4, rearmament: 0.1, public_works: 0.1 }
+  biases: { integration: -0.4, rearmament: 0.1, public_works: 0.1, electoral_reform: -0.2 }
 crossroads:
   name: Crossroads
   description: Roads and rivers carry the kingdom's trade through here.
-  biases: { public_works: 0.3, free_trade: 0.3 }
+  biases: { public_works: 0.3, free_trade: 0.3, integration: 0.1 }
 rugged:
   name: Rugged
   description: Hills and uplands, hard to farm and harder to travel.
-  biases: { public_works: 0.1, free_trade: 0.1, social_reform: 0.1 }
+  biases: { public_works: 0.1, free_trade: 0.1, social_reform: 0.1, electoral_reform: -0.1 }
 forested:
   name: Forested
   description: Timber country, felling oak for ships and sleepers.
@@ -91,3 +91,8 @@ booming:
   biases: { public_works: 0.1 }
   discontentRest: -1
   growth: 0.03
+educated:
+  name: Educated
+  description: Every village has its schoolroom, and the labourers read the newspapers for themselves.
+  biases: { electoral_reform: 0.2, social_reform: 0.1, free_trade: 0.1 }
+  growth: 0.01

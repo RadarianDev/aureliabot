@@ -1,0 +1,9 @@
+id: elementary_schools
+title: Elementary schools
+summary: "A schoolroom and a certified master in every parish of the minister's choosing, free to the children of the poor. The province learns to read, and to argue."
+ministerial: true
+purse: Interior
+repeat: perProvince
+price: 40
+term: 3
+effects: { condition.here.educated: 1, discontent.here: -1 }
