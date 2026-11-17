@@ -13,10 +13,16 @@ public class TemplateCodecTests : IDisposable
 
     public static string ContentDirectory => Path.Combine(AppContext.BaseDirectory, "content");
 
-    public static IEnumerable<ImportFile> StartingFiles() =>
-        Directory.GetFiles(ContentDirectory, "*.yaml", SearchOption.AllDirectories)
+    public static string LegacyDirectory => Path.Combine(AppContext.BaseDirectory, "LegacyContent");
+
+    public static IEnumerable<ImportFile> StartingFiles() => FilesIn(ContentDirectory);
+
+    public static IEnumerable<ImportFile> LegacyFiles() => FilesIn(LegacyDirectory);
+
+    private static IEnumerable<ImportFile> FilesIn(string directory) =>
+        Directory.GetFiles(directory, "*.yaml", SearchOption.AllDirectories)
             .OrderBy(f => f, StringComparer.Ordinal)
-            .Select(f => new ImportFile(Path.GetRelativePath(ContentDirectory, f).Replace('\\', '/'), File.ReadAllText(f)));
+            .Select(f => new ImportFile(Path.GetRelativePath(directory, f).Replace('\\', '/'), File.ReadAllText(f)));
 
     public static TheoryData<string> StartingFileNames()
     {
@@ -25,7 +31,10 @@ public class TemplateCodecTests : IDisposable
         return data;
     }
 
-    private static ImportFile Starting(string name) => StartingFiles().Single(f => f.Name == name);
+    public static ImportFile Named(string name) =>
+        StartingFiles().FirstOrDefault(f => f.Name == name) ?? LegacyFiles().Single(f => f.Name == name);
+
+    private static ImportFile Starting(string name) => Named(name);
 
     private EffectContext ImportContext => ContentRules.ImportContext(Db, Config);
 
@@ -62,10 +71,10 @@ public class TemplateCodecTests : IDisposable
     public void StartingContent_IsPresent()
     {
         var names = StartingFiles().Select(f => f.Name).ToList();
-        Assert.True(names.Count(n => n.StartsWith("issues/")) >= 7);
-        Assert.True(names.Count(n => n.StartsWith("bills/")) >= 17);
-        Assert.True(names.Count(n => n.StartsWith("projects/")) >= 6);
-        Assert.Contains("events/opening_1850.yaml", names);
+        Assert.True(names.Count(n => n.StartsWith("issues/")) >= 9);
+        Assert.True(names.Count(n => n.StartsWith("bills/")) >= 4);
+        Assert.True(names.Count(n => n.StartsWith("projects/")) >= 4);
+        Assert.Contains("events/passes_sketchers.yaml", names);
     }
 
     [Fact]
@@ -300,7 +309,7 @@ public class TemplateCodecTests : IDisposable
         var files = ContentRules.ReadArchive(ContentRules.Export(Db.GetTemplates()));
         Assert.Equal(before.Count, files.Count);
         Assert.Contains(files, f => f.Name == "issues/social_reform.yaml");
-        Assert.Contains(files, f => f.Name == "events/opening_1850.yaml");
+        Assert.Contains(files, f => f.Name == "events/passes_sketchers.yaml");
 
         var outcomes = ContentRules.Import(Db, ImportContext, files);
         Assert.All(outcomes, o => Assert.True(o.Imported && o.Replaced));

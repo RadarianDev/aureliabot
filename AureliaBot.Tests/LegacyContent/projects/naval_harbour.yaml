@@ -1,0 +1,13 @@
+id: naval_harbour
+title: Naval harbour
+summary: "A dockyard in a coastal province, good for trade and pleasing to the Anzarian admirals who run the fleet."
+ministerial: true
+purse: CommerceLabor
+requires: coastal
+price: 50
+term: 3
+effects: { economy: 10, favour: 2 }
+bonus:
+  within: 2
+  text: The harbour is finished early, and the Anzarian admirals take note.
+  effects: { favour: 2 }

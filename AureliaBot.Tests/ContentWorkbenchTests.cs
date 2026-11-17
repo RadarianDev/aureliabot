@@ -11,7 +11,7 @@ public class ContentWorkbenchTests : IDisposable
 
     public void Dispose() => _fixture.Dispose();
 
-    private static string Starting(string name) => TemplateCodecTests.StartingFiles().Single(f => f.Name == name).Yaml;
+    private static string Starting(string name) => TemplateCodecTests.Named(name).Yaml;
 
     [Theory]
     [MemberData(nameof(TemplateCodecTests.StartingFileNames), MemberType = typeof(TemplateCodecTests))]

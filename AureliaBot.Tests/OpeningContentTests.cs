@@ -13,7 +13,7 @@ public class OpeningContentTests : IDisposable
 
     private void ImportAndReadyStartingContent()
     {
-        var root = Path.Combine(AppContext.BaseDirectory, "content");
+        var root = TemplateCodecTests.LegacyDirectory;
         var files = Directory.EnumerateFiles(root, "*.yaml", SearchOption.AllDirectories)
             .Select(path => new ImportFile(Path.GetFileName(path), File.ReadAllText(path)))
             .ToList();
@@ -88,9 +88,9 @@ public class OpeningContentTests : IDisposable
         Assert.Equal(6, Db.GetOpenIssues().Count);
         var introduced = Db.GetBills().Select(b => b.Id).ToHashSet();
         var releasedByTheGm = new[] { "senate_bill" };
-        var content = Directory.EnumerateFiles(Path.Combine(AppContext.BaseDirectory, "content"), "*.yaml", SearchOption.AllDirectories)
+        var content = Directory.EnumerateFiles(TemplateCodecTests.LegacyDirectory, "*.yaml", SearchOption.AllDirectories)
             .Select(File.ReadAllText).ToList();
-        foreach (var bill in Directory.EnumerateFiles(Path.Combine(AppContext.BaseDirectory, "content", "bills"), "*.yaml"))
+        foreach (var bill in Directory.EnumerateFiles(Path.Combine(TemplateCodecTests.LegacyDirectory, "bills"), "*.yaml"))
         {
             var id = Path.GetFileNameWithoutExtension(bill);
             var chained = content.Any(yaml => yaml.Contains($"bill.{id}:"));

@@ -1,0 +1,8 @@
+id: factory_district
+title: Factory district
+summary: "A quarter of mills and foundries. A good deal for the economy, at the price of some unrest among the people who live beside it."
+ministerial: true
+purse: CommerceLabor
+price: 80
+term: 4
+effects: { economy: 30, discontent.here: 1 }

@@ -12,7 +12,7 @@ public class ContentRulesTests : IDisposable
 
     private void Import(params string[] names)
     {
-        var files = TemplateCodecTests.StartingFiles().Where(f => names.Contains(f.Name)).ToList();
+        var files = names.Select(TemplateCodecTests.Named).ToList();
         Assert.Equal(names.Length, files.Count);
         var outcomes = ContentRules.Import(Db, ContentRules.ImportContext(Db, Config), files);
         Assert.All(outcomes, o => Assert.True(o.Imported, string.Join("\n", o.Errors)));
@@ -202,7 +202,7 @@ public class ContentRulesTests : IDisposable
             var text = ContentPreview.Render(Db, Config, row.Id);
             Assert.Contains("What players will see", text);
         }
-        Assert.Contains("## The Ten Hours Bill becomes law", ContentPreview.Render(Db, Config, "ten_hours_bill"));
-        Assert.Contains("The King Summons the Assembly", ContentPreview.Render(Db, Config, "opening_1850"));
+        Assert.Contains("## The Tariff Act becomes law", ContentPreview.Render(Db, Config, "tariff_act"));
+        Assert.Contains("Foreign Travellers in North Arpal", ContentPreview.Render(Db, Config, "passes_sketchers"));
     }
 }

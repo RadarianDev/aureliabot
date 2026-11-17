@@ -1,0 +1,15 @@
+id: tariff_act
+title: The Tariff Act
+summary: "Lays a duty of one part in five on foreign cloth, iron and manufactures. It fills the reserve and protects the Iracterie weavers, at a cost to the economy and the ports."
+issue: free_trade
+lean: Against
+motion: Lay a duty of one part in five on foreign cloth, iron and manufactures, and pay it into the reserve.
+pass:
+  text: >-
+    The customs houses double their clerks, and foreign cloth vanishes from the Iracterie markets. The
+    weavers go back to their looms, and in Lanten the shipowners count empty berths.
+  effects:
+    - { reserve: 40, economy: -30, discontent.iracterie: -2,
+        discontent.north_arpal: 1, discontent.ocidanten: 1 }
+    - if: "var.tariff_war >= 1"
+      then: { var.mugi_pressure: 2, var.tariff_war: 1 }

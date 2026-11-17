@@ -23,6 +23,7 @@
 
   <ItemGroup>
     <None Include="..\content\**" LinkBase="content" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="LegacyContent\**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

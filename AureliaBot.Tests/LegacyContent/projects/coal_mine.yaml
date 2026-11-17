@@ -1,0 +1,8 @@
+id: coal_mine
+title: Coal mine
+summary: "A new pit in the province of the minister's choosing. Quick and cheap, with a modest gain for the economy."
+ministerial: true
+purse: CommerceLabor
+price: 40
+term: 2
+effects: { economy: 10 }
