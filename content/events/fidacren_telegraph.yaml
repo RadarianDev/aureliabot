@@ -1,0 +1,7 @@
+id: fidacren_telegraph
+title: The Fidacren Wire
+text: >-
+  The Great Lake Telegraph Company has strung a wire from Fidacren to Aurelle and charges a crown a word.
+  The timber merchants of Silvicarie now hear the capital's prices in an hour, and the Company has twice
+  sold them early. Its directors would sell the line to the Crown, at a price.
+effects: { salience.public_works: 1, discontent.silvicarie: 1, bill.telegraph_act: true }

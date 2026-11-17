@@ -1,0 +1,8 @@
+id: escas_cholera_ship
+title: The Fever Ship at Escas
+text: >-
+  The barque Maribel has come into Escas from the north sea with cholera aboard and six of her crew
+  already dead. The harbour master wants her towed out and held; the Escas merchants want her cargo of
+  salt fish landed before it spoils; and the town wants to know where the drinking water comes from.
+effects: { discontent.provencie_gares: 1, condition.provencie_gares.epidemic: 1,
+           crisis.escas_quarantine: true }

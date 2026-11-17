@@ -1,0 +1,12 @@
+id: waterworks
+title: Waterworks
+summary: "Reservoirs, filter beds and iron mains for the chief town of a province. Clean water ends the summer fevers and calms the town, at a steady cost to the Interior."
+ministerial: true
+purse: Interior
+price: 45
+term: 3
+effects: { discontent.here: -2, condition.here.epidemic: -1 }
+bonus:
+  within: 3
+  text: The water is turned on before the summer, and the fever season passes without a death.
+  effects: { discontent.here: -1 }

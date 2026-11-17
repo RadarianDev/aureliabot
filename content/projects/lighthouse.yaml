@@ -1,0 +1,9 @@
+id: lighthouse
+title: Lighthouse
+summary: "A stone lighthouse and a lifeboat station on a dangerous stretch of coast. Fewer wrecks, cheaper insurance, and grateful fishermen."
+ministerial: true
+purse: CommerceLabor
+requires: coastal
+price: 25
+term: 2
+effects: { economy: 5, discontent.here: -1 }

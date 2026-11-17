@@ -1,0 +1,33 @@
+id: escas_quarantine
+title: The Escas Quarantine
+summary: "A cholera ship lies in Escas harbour, and the fever has reached the town. Commerce and Labor must decide between the port's trade and the town's water."
+ministry: CommerceLabor
+province: provencie_gares
+issue: public_works
+answers:
+  - lean: For
+    label: Close the port and pipe clean water to the town
+    price: 30
+    text: >-
+      Escas is closed to shipping for a season, and Crown engineers lay a main from the upland springs.
+      The fever burns out, the merchants count their spoiled fish, and the town drinks clean water for the
+      first time.
+    effects: { discontent.provencie_gares: -1, economy: -10, condition.provencie_gares.epidemic: -1 }
+  - lean: Neutral
+    label: Hold the ship in quarantine
+    price: 10
+    text: >-
+      The Maribel is towed to the outer roads and held for forty days. The fever in the town lasts a while
+      longer, then fades.
+    effects: { condition.provencie_gares.epidemic: -1 }
+  - lean: Against
+    label: Leave it to the Escas merchants
+    text: >-
+      The merchants land the fish, and the town council promises to look into the water. The fever stays
+      through the summer.
+    effects: { discontent.provencie_gares: 2, economy: 5 }
+default:
+  text: >-
+    The capital sends nothing. The fish are landed, the fever spreads along the coast, and the merchants
+    leave town for their health.
+  effects: { discontent.provencie_gares: 2, discontent.silvicarie: 1 }

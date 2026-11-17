@@ -1,0 +1,11 @@
+id: ironclad_trials
+title: The Iron Ship
+text: >-
+  At a slipway on the North Arpal shore of the southern bay, a shipbuilder has launched a frigate
+  plated in iron. She steamed through a broadside of the coast guns without a dent, and sank a wooden
+  hulk in four minutes. The Anzarian admirals have come south to look at her, and the shipbuilder has
+  named his price.
+effects:
+  - if: "not issue.rearmament.open"
+    then: { open.rearmament: true }
+  - { salience.rearmament: 1, crisis.ironclad_contract: true }

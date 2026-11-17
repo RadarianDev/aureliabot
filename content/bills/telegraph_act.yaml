@@ -1,0 +1,11 @@
+id: telegraph_act
+title: The Telegraph Act
+summary: "Buys out the private telegraph companies and runs every wire as a Crown service at a fixed price per word. Dear for the reserve, good for trade and for the provinces far from the capital."
+issue: public_works
+lean: For
+motion: Purchase every telegraph line in the kingdom for the Crown, and send messages at one fixed price per word in every province.
+pass:
+  text: >-
+    The Crown buys the wires, and the price of a word falls to a penny. The timber merchants of Fidacren
+    and the fishwives of Escas send telegrams to each other out of curiosity.
+  effects: { reserve: -40, economy: 20, discontent.silvicarie: -1, discontent.provencie_gares: -1 }

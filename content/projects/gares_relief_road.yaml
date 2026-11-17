@@ -1,0 +1,8 @@
+id: gares_relief_road
+title: The Escas Relief Road
+summary: "A road from the Garaztian border to Escas, built by refugee labour at Crown wages, which gives the camps work and a way out."
+purse: Interior
+province: provencie_gares
+price: 40
+term: 3
+effects: { discontent.here: -2, economy: 5, condition.here.refugees: -1 }

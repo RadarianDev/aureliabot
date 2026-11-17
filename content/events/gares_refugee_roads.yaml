@@ -1,0 +1,8 @@
+id: gares_refugee_roads
+title: Work for the Camps
+text: >-
+  The camps along the Garaztian border have outgrown the parish rates of Provencie Gares. The magistrates
+  of Escas propose to put the able men among the refugees to work on a road from the border to the
+  coast, paid by the Crown, so that the camps can empty along it.
+when: "condition.provencie_gares.refugees or var.garaztia_war >= 3"
+effects: { project.gares_relief_road: true }

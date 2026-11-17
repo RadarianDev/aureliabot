@@ -1,0 +1,12 @@
+id: union_excise_act
+title: The Union Excise Act
+summary: "Lays the Aurelian excise on spirits, salt and timber across Anzaria, the nobles' estates included. One tax for both realms fills the reserve, and the Anzarian lords will resent it."
+issue: integration
+lean: For
+motion: Levy the excise on spirits, salt and timber in Anzaria at the Aurelian rate, on every estate without exception.
+pass:
+  text: >-
+    Aurelian excisemen ride north with their ledgers and gauging rods. The Anzarian lords pay, and let the
+    excisemen find their own lodgings. In Agrines the inns drink to one law for everybody.
+  effects: { reserve: 30, favour: -8, discontent.agrinenten: -1, discontent.aurenten: -1,
+             discontent.soralenten: 1 }

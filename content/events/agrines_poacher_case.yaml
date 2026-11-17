@@ -1,0 +1,9 @@
+id: agrines_poacher_case
+title: The Agrines Poacher
+text: >-
+  Tom Wedder of Agrines took a hare on the wrong side of the Anzarian line. He was tried in the Baron of
+  Hesk's own manor court, by the Baron's steward, under the Baron's charter, and sentenced to seven years
+  rowing in the Anzarian fleet. In Agrines they say a man should be hanged by the King's law or not at
+  all. In Sulmar they say the hare was the Baron's.
+effects: { discontent.agrinenten: 1, salience.integration: 1,
+           bill.union_excise_act: true, bill.manorial_courts_act: true }

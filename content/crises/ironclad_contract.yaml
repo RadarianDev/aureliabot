@@ -1,0 +1,34 @@
+id: ironclad_contract
+title: The Ironclad Contract
+summary: "A North Arpal shipbuilder offers the Crown a squadron of iron warships for the Anzarian fleet. The War Office must buy them, buy a few, or leave the fleet as it is."
+ministry: War
+province: north_arpal
+issue: rearmament
+answers:
+  - lean: For
+    label: Order a squadron of ironclads
+    price: 30
+    text: >-
+      Four ironclads are laid down on the southern bay, and the Anzarian admirals send a letter of
+      thanks. The yards hire a thousand men, and every navy in the world orders its own.
+    effects: { favour: 5, threat: -5, discontent.north_arpal: -1 }
+  - lean: Neutral
+    label: Plate the old frigates in iron
+    price: 15
+    text: >-
+      Three wooden frigates are cut down and plated. They roll badly and steam slowly, and the admirals
+      call them the coffins.
+    effects: { favour: 1, threat: -2 }
+  - lean: Against
+    label: Leave the fleet to the Anzarian purse
+    text: >-
+      The War Office thanks the shipbuilder and declines. He sells his frigate to Mugi, which pays in gold
+      and asks for two more.
+    effects: { favour: -3, threat: 3 }
+complication:
+  text: The War purse cannot meet the shipbuilder's first payment, and the half-built hulls rust on the slip.
+  effects: { favour: -2, discontent.north_arpal: 1 }
+default:
+  text: >-
+    No answer comes from the War Office. The shipbuilder sells the frigate to Mugi.
+  effects: { favour: -3, threat: 5 }

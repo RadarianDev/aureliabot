@@ -1,0 +1,12 @@
+id: residence_qualification_act
+title: The Residence Qualification Act
+summary: "Lets a man vote only in a parish where he has lived and paid rates for a full year. It ends marched votes, and takes the vote from navvies, sailors and everyone else who moves for work."
+issue: electoral_reform
+lean: Against
+motion: Allow a man to vote only in a parish where he has lived and paid rates for twelve months before the poll.
+pass:
+  text: >-
+    The registers are revised, and a great many names come off them in the railway towns and the ports.
+    The parish clerks of the shires report that their voters are exactly who they always were.
+  effects: { discontent.tovrerie: 1, discontent.ocidanten: 1, discontent.iracterie: 1,
+             discontent.provencie_sacs: -1, discontent.agrinenten: -1 }

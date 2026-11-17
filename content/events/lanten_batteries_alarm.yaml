@@ -1,0 +1,8 @@
+id: lanten_batteries_alarm
+title: Alarm on the Lanten Quays
+text: >-
+  A Mugian frigate stood in close enough last week for the Lanten pilots to read her name. The harbour has
+  four old guns, two of which are ornaments. The shipowners offer to pay for shore batteries at Lanten
+  and Saltmouth, if the War Office pays for the rest.
+when: "var.tariff_war >= 4"
+effects: { discontent.ocidanten: 1, project.lanten_shore_batteries: true }

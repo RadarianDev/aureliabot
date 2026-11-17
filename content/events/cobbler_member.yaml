@@ -1,0 +1,7 @@
+id: cobbler_member
+title: The Member Who Walked Home
+text: >-
+  Mr Josiah Penn, a cobbler, was elected by the Aurelle tanneries on a subscription of halfpennies. He has
+  now resigned his seat. Members of the Assembly are not paid, and Mr Penn cannot sit in the capital and
+  keep his shop. He walked home along the river road, and a crowd walked with him.
+effects: { discontent.aurenten: 1, salience.electoral_reform: 1, bill.payment_of_members_act: true }

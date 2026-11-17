@@ -1,0 +1,11 @@
+id: payment_of_members_act
+title: The Payment of Members Act
+summary: "Pays every member of the Assembly a yearly salary, so that a working man can take his seat. Popular in the towns, and paid for by the Treasury."
+issue: electoral_reform
+lean: For
+motion: Pay every member of the Assembly a salary of three hundred crowns a year from the Treasury.
+pass:
+  text: >-
+    Members draw their first salaries at Michaelmas. Mr Penn stands again for the tanneries, and the
+    gentlemen of the Assembly complain that it now has a cobbler and a pay office.
+  effects: { purse.Treasury: -10, discontent.aurenten: -1, discontent.iracterie: -1 }
