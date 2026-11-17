@@ -7,6 +7,6 @@ motion: Declare the Crown neutral in the quarrel between Garaztia and the Arrosi
 pass:
   text: >-
     The proclamation is read in every market square of Provencie Gares. The Arrosian envoy calls it
-    statesmanlike. King Antso calls it nothing, and stops writing to Aurelle.
+    statesmanlike. King Fernao calls it nothing, and stops writing to Aurelle.
   effects: { threat: -3, var.arrosia_goodwill: 1, var.garaztia_goodwill: -1,
              discontent.provencie_gares: 1 }

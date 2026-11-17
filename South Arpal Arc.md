@@ -536,7 +536,7 @@ Where the files settle what the outline left open:
 
 ## Open questions for the GM
 
-1. What is the independence treaty called? It was signed about five hundred years ago.
+1. *Answered:* the independence treaty is **the Severance of Carden** (see Lore.md).
 2. Should a victory also cost something lasting, say a higher threat baseline from a Mugi that wants
    revenge? Today it only lowers threat.
 3. Integration may already be closed by the time South Arpal is annexed. Should the Kolgasi Charter move to

@@ -18,7 +18,7 @@ Aurelia, Mugi and the lands around them were once part of the **Bon Empire**, wh
 reformed, as the **Union of Bon**. The Empire held the western half of Bonaria and a colony across the sea in Ocidaria,
 called **Ukulwia**. Anzaria, Garaztia and Arrosia were never part of it.
 
-Aurelia won its independence in a revolt about five hundred years ago. The treaty between the revolting Aurelia and the Bon Empire drew
+Aurelia won its independence in a revolt about five hundred years ago. The treaty between the revolting Aurelia and the Bon Empire, **the Severance of Carden**, signed in the Arpal town that became North Arpal's capital, drew
 the border through the Arpal country: the north became Aurelia's North Arpal, and the south stayed in the
 Empire. Mugi stayed in the Empire longer than Aurelia did, and when it left, it took **South Arpal** with
 it. The treaty under which it left also split the Ukulwian colony: Mugi took the northern coast, and the
@@ -66,7 +66,8 @@ it.
   currency and foreign policy for the two realms.
 * **King Arthas II (Reigned 1836 - present):** Ascended 60 years after the marriage of Queen Valerie and
   King Velzan III. Known for his diplomatic skill both in Aurelian and Anzarian courts. The 1848 Aurelian
-  riots forced him to ratify the *Aurelian Constitution* with universal male suffrage.
+  riots forced him to ratify the *Aurelian Constitution* with universal male suffrage. A reform passed by
+  the first Assembly extended the vote to women of property.
 
 # The world
 
@@ -163,6 +164,8 @@ in the central sea.
   Gares as Aurelian subjects, with kin across the border.
 - Relations with Aurelia-Anzaria are cool but civil. The current King of Garaztia is outgoing and well
   liked abroad.
+- **Names** blend Spanish and Portuguese sounds, written without diacritics: King Fernao III, Baron Duarte
+  Valcarcel.
 
 # Arrosia
 
@@ -180,6 +183,8 @@ in the central sea.
   keeps loyal with trade privileges instead of taxes.
 - Where Mugi is ruled by noble houses and admirals, Arrosia is ruled by merchants and its Company. It
   prefers a treaty to a war, and fights only when it is owed money.
+- **Names** blend Basque and French sounds, written without diacritics: Sieur Benat Etcheverry,
+  Colonel-Paymaster Gaston Iribarne.
 - Having lost Lurberria, it looks for new trade to make up the loss, and Meridia is the one continent left
   unclaimed. Garaztia, between it and Aurelia-Anzaria, is its road north.
 

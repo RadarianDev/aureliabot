@@ -16,7 +16,7 @@ answers:
     label: Send a colonel to dine with their general
     price: 10
     text: >-
-      An Aurelian colonel dines with Colonel-Paymaster Ferrol. They agree on where the border is, and on
+      An Aurelian colonel dines with Colonel-Paymaster Iribarne. They agree on where the border is, and on
       very little else.
     effects: { threat: -3 }
   - lean: Against

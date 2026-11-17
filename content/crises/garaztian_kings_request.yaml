@@ -1,6 +1,6 @@
 id: garaztian_kings_request
 title: The King's Private Request
-summary: "King Antso of Garaztia has asked the Treasury, privately, for a loan to meet the interest on his Arrosian debts. The Treasury must lend, send him elsewhere, or tell the Arrosians."
+summary: "King Fernao of Garaztia has asked the Treasury, privately, for a loan to meet the interest on his Arrosian debts. The Treasury must lend, send him elsewhere, or tell the Arrosians."
 ministry: Treasury
 province: provencie_gares
 issue: garaztian_question
@@ -10,7 +10,7 @@ answers:
     price: 20
     text: >-
       A Treasury draft on the reserve leaves Aurelle in the King's own baggage. The Arrosian houses are
-      paid on the day, and King Antso writes that he will not forget it.
+      paid on the day, and King Fernao writes that he will not forget it.
     effects: { reserve: -40, var.garaztia_loan: "=1", var.garaztia_goodwill: 1,
                cancel.garaztian_default: true, event.garaztian_default: 5 }
   - lean: Neutral

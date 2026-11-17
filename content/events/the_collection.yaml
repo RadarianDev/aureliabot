@@ -2,7 +2,7 @@ id: the_collection
 title: The Arrosians Collect
 text: >-
   Arrosian regiments land at the Garaztian ports and march on the customs houses, paymasters riding
-  behind them with ledgers. Colonel-Paymaster Jaume Ferrol posts a notice: duties are now payable to the
+  behind them with ledgers. Colonel-Paymaster Gaston Iribarne posts a notice: duties are now payable to the
   creditors. Arrosia calls it a collection. Garaztia calls it an invasion, and the carts on the Escas road
   are already full of families going west.
 when: "var.garaztia_ending == 0"

@@ -2,7 +2,7 @@ id: bailiffs_paid_off
 title: The Bailiffs Paid Off
 text: >-
   Aurelian gold buys back the Garaztian customs houses one by one, with interest, costs and a fee for the
-  trouble of marching. Colonel-Paymaster Ferrol signs the receipts, shakes hands with the Aurelian agent
+  trouble of marching. Colonel-Paymaster Iribarne signs the receipts, shakes hands with the Aurelian agent
   and takes his regiments home. Garaztia is free and grateful, and Aurelia has paid for an Arrosian war.
 effects:
   - { cancel.arrosian_ultimatum: true, cancel.the_collection: true, cancel.refugees_in_gares: true,

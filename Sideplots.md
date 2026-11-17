@@ -114,9 +114,8 @@ third and fourth terms are lighter on purpose, while the Garaztian war and Merid
 
 ## Open questions for the GM
 
-1. The Electoral Reform issue says only men of property vote, aloud at the hustings, but Lore.md says the
-   1848 Constitution brought universal male suffrage. Which holds? The Payment of Members and Residence
-   Qualification Acts work under either, but their wording assumes a wide franchise.
+1. *Answered:* every man votes (the 1848 Constitution), and a reform of the first Assembly gave the vote to
+   women of property too. The Electoral Reform issue now says so.
 2. If the live game passed any of the scrapped bills (the Ballot Act, the Reform Bill, the Ten Hours Bill,
    the Act of Union and so on), should a new bill acknowledge it, or stay as written?
 3. The scrapped templates are still in the live database; `/content remove` takes out the ones you don't

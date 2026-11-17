@@ -1,5 +1,5 @@
 id: garaztian_appeal
-title: King Antso's Appeal
+title: King Fernao's Appeal
 summary: "With the valleys risen for him, the King of Garaztia asks Aurelia for arms and officers to drive the Arrosian collectors out. The War Office must send them, sell them, or refuse."
 ministry: War
 province: provencie_gares
@@ -15,7 +15,7 @@ answers:
   - lean: Neutral
     label: Sell them arms at a fair price
     text: >-
-      The arsenals sell King Antso old muskets for new gold. Both kingdoms think they have had the better
+      The arsenals sell King Fernao old muskets for new gold. Both kingdoms think they have had the better
       of the bargain.
     effects: { reserve: 15, var.garaztia_goodwill: 1, var.arrosia_goodwill: -1 }
   - lean: Against

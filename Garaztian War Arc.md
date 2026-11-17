@@ -29,10 +29,10 @@ peace, as it would any peace.
 
 | Who | Role |
 | --- | --- |
-| King Antso V of Garaztia *(extrapolated name)* | Outgoing, charming, well liked abroad and broke. Visits Aurelle in 1857. |
-| Signor Bertran Cascall *(extrapolated)* | The Arrosian envoy in Aurelle. Polite, precise, always taking notes. |
-| Colonel-Paymaster Jaume Ferrol *(extrapolated)* | Commands the collection for the creditor houses; rides with ledgers behind his regiments. |
-| Baron Ander Urkiola *(extrapolated)* | Head of a Gares border-lord family, an Aurelian subject whose grandfather held lands on both sides. |
+| King Fernao III of Garaztia *(extrapolated name)* | Outgoing, charming, well liked abroad and broke. Visits Aurelle in 1857. |
+| Sieur Benat Etcheverry *(extrapolated)* | The Arrosian envoy in Aurelle. Polite, precise, always taking notes. |
+| Colonel-Paymaster Gaston Iribarne *(extrapolated)* | Commands the collection for the creditor houses; rides with ledgers behind his regiments. |
+| Baron Duarte Valcarcel *(extrapolated)* | Head of a Gares border-lord family, an Aurelian subject whose grandfather held lands on both sides. |
 | The Prince-Bishop of Hallerau *(extrapolated)* | A Bonnish prince who owes the Arrosian houses money and says so in the Diet. |
 | The Duke of Corvasse | Existing character: toasts the valleys if they get their charters back. |
 
@@ -136,7 +136,7 @@ Gares +1. Posts **Crisis: The Gares Refugees** (`gares_refugees`, Interior):
 | Close the border with the gendarmerie (price 10) | Against | Gares +2, Arrosia +1, Garaztia −1. |
 | *Default* | | Gares +2 and `lawless`. |
 
-**Event: The Border Lords Arm** (`gares_border_lords`). Posts **Crisis: The Volunteers of Urkiola**
+**Event: The Border Lords Arm** (`gares_border_lords`). Posts **Crisis: The Volunteers of Valcarcel**
 (`gares_volunteers`, War):
 
 | Answer | Lean | Result |
@@ -164,7 +164,7 @@ by. **The GM can decide instead:** cancel the queued `valleys_choose` and queue 
 `valleys_welcome` by hand.
 
 **Branch A: The Valleys Rise for Their King** (`valleys_rally`). `garaztia_war` 4, `valleys` 1, threat +3.
-Posts **Crisis: King Antso's Appeal** (`garaztian_appeal`, War):
+Posts **Crisis: King Fernao's Appeal** (`garaztian_appeal`, War):
 
 | Answer | Lean | Result |
 | --- | --- | --- |
@@ -249,8 +249,9 @@ Only the in-time Guarantee: `prestige.sponsor: 2`. Nothing else in the arc award
 
 ## Open questions for the GM
 
-1. The names: King Antso V, Signor Cascall, Colonel-Paymaster Ferrol, Baron Urkiola, the Prince-Bishop of
-   Hallerau. Garaztia's capital is never named in the content.
+1. The names follow the GM's rule (Garaztian: Spanish and Portuguese sounds; Arrosian: Basque and French;
+   no diacritics): King Fernao III, Sieur Etcheverry, Colonel-Paymaster Iribarne, Baron Valcarcel, and the
+   Bonnish Prince-Bishop of Hallerau. They stand until the GM says otherwise. Garaztia's capital is never named in the content.
 2. Should the valleys' choice stay a roll, or would you rather decide it yourself every time?
 3. Ending 5 leaves an Arrosian garrison on the Gares border. Should it become a lasting condition on
    Provencie Gares (a new `garrisoned_border`, say), or stay story?

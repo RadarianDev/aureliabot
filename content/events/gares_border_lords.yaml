@@ -1,8 +1,8 @@
 id: gares_border_lords
 title: The Border Lords Arm
 text: >-
-  Baron Ander Urkiola, whose grandfather held lands on both sides of the Gares border before the
-  Garaztian crown took them, is drilling his tenants and cousins in the courtyard at Urkiola. They mean
+  Baron Duarte Valcarcel, whose grandfather held lands on both sides of the Gares border before the
+  Garaztian crown took them, is drilling his tenants and cousins in the courtyard at Valcarcel. They mean
   to cross and fight for their kin, and they are not the only family in Gares that does.
 when: "var.garaztia_ending == 0"
 effects: { crisis.gares_volunteers: true }
